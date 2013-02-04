@@ -1,0 +1,100 @@
+#!/bin/bash
+#
+# ruby-runner
+
+# Set library path for installation
+
+KNOWN_COMMANDS="analyze-trace ait2pml bench extract-symbols pml2ais ff2pml merge visualize"
+usage() {
+    cat <<EOF >&2
+usage: platin <command> [<args>]
+
+The following platin commands are available and supported:
+  ff2pml          ... Translate SWEET flowfacts to PML
+  extract-symbols ... Extract addresses of symbols from ELF file
+  analyze-trace   ... Generate flow facts from simulator traces
+  ait2pml         ... Add aiT analysis results to the PML database
+  pml2ais         ... Translate program information to aiT's AIS format
+  bench           ... Simulate and analyze benchmark, print execution time
+  visualize       ... Visualize IR and MC CFGs as well as relation graphs [alpha]
+  merge           ... Merge several PML file in one [alpha]
+Other commands: $(echo $(list_unknown_commands))
+
+See 'platin help <command>' for more information on a specific command.
+EOF
+}
+
+show_help() {
+    COMMAND=$1
+    shift
+    ${RUBY} -I ${LIBDIR} ${LIBDIR}/platin-"${COMMAND}".rb --help
+}
+
+list_unknown_commands() {
+    for driver in $(ls "${LIBDIR}"/platin-*.rb) ; do
+	name=$(basename "${driver}" .rb)
+	name=${name/platin-/}
+	unset known
+	for cmd in ${KNOWN_COMMANDS} ; do
+	    if [ $name == $cmd ] ; then known=yes ; break ; fi
+	done
+	if [ -z "${known}" ]; then echo ${name} ; fi
+    done
+}
+
+detect_ruby() {
+    RUBY19s="ruby1.9 ruby1.9.1 ruby1.9.2 ruby1.9.3"
+    RUBY_VERSION=`ruby -e 'puts RUBY_VERSION'`
+
+    if [[ "${RUBY_VERSION}" =~ ^1.8 ]] ; then
+	RUBY=ruby
+	RUBY18=ruby
+    elif [[ "${RUBY_VERSION}" =~ ^1.9 ]] ; then
+	RUBY=ruby
+	RUBY19=ruby
+    elif [ ! -z "${RUBY_VERSION}" ] ; then
+	RUBY=ruby
+    fi
+    if [ -z "${RUBY19}" ] ; then
+	for r19 in ${RUBY19s} ; do
+	    if [ ! -z "`which ${r19}`" ] ; then
+		RUBY=${r19}
+		RUBY19=${r19}
+		break
+	    fi
+	done
+    fi
+    if [ -z "${RUBY}" ] ; then
+	echo "ruby not found. Please install ruby (e.g., sudo aptitude install ruby1.9.1)" >&2
+	exit 1
+    elif [ -z "${RUBY19}" ] ; then
+	echo "ruby1.9 not found. Falling back to unsupported ruby version `${RUBY} -v`"
+    fi
+}
+
+detect_ruby
+
+# Set LIBDIR fallback
+if [ -z "${RELATIVE_LIBDIR}" ] ; then
+    RELATIVE_LIBDIR=lib
+fi
+if [ -z "${LIBDIR}" ] ; then
+    LIBDIR=$(dirname $0)/"${RELATIVE_LIBDIR}"
+fi
+
+# Select command
+COMMAND=$1
+shift
+if [ -z "${COMMAND}" ] ; then
+    usage
+    exit 1
+elif [ "${COMMAND}" == "help" ] ; then
+    if [ -z "${1}" ] ; then
+	usage
+    else
+	show_help $1
+    fi
+    exit 0
+fi
+# Run command
+${RUBY} -I ${LIBDIR} ${LIBDIR}/platin-"${COMMAND}".rb "${@}"
