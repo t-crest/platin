@@ -81,9 +81,17 @@ function info() {
 function install() {
     DST="${1}"
     SRC="${2}"
-    info "Installing ${SRC} -> ${DST}"
-    run mkdir -p "$(dirname "${DST}")"
-    run cp "${SRC}" "${DST}"
+
+    if [[ "${DST}" = */platin ||  "${SRC}" = */platin ]]; then
+        info "Installing ${SRC} -> ${DST}"
+        run mkdir -p "$(dirname "${DST}")"
+        run cp "${SRC}" "${DST}"
+    else
+        info "Installing (HARDLINK) ${SRC} -> ${DST}"
+        run mkdir -p "$(dirname "${DST}")"
+        run rm "${DST}"
+        run ln "${SRC}" "${DST}"
+    fi
 }
 
 function verbose() {
