@@ -65,6 +65,7 @@ if [ -z "${INSTALL_DIR}" ] ; then
     usage
 fi
 
+INSTALL_DIR="$(abspath "${INSTALL_DIR}")"
 BINARY="${INSTALL_DIR}/bin/platin"
 COMPILER="${INSTALL_DIR}/bin/patmos-clang-wcet"
 LIB_DIR="${INSTALL_DIR}/lib/platin"
