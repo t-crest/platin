@@ -27,7 +27,7 @@ global-cfgs:
     edges:
       - index: 0
         abb: 1
-        successor-edges: [ 1,2 ]
+        successor-edges: [ 1, 2]
       - index: 1
         abb: 0
         successor-edges: [ ]

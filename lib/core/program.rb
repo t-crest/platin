@@ -385,6 +385,9 @@ module PML
     def label
       data[@labelkey] || blocks.first.label
     end
+    def add_node(node)
+      @blocks.add(node)
+    end
 
     def instructions
       blocks.inject([]) { |insns,b| insns.concat(b.instructions.list) }
@@ -514,14 +517,11 @@ module PML
 
     # block successors (not ready at initialization time)
     def add_successor(block)
-      p data['successors']
-      p "#{name} -> #{block.name}"
       if not data['successors'].include?(block.name)
         data['successors'].push(block.name)
         # Undo Caching
         @successors = nil
       end
-      p [name, block.name, successors, data['successors']]
     end
 
     def successors
@@ -860,6 +860,13 @@ module PML
       lookup(@named[level], name, "#{level}-name", false)
     end
 
+
+    # Special Case, because non-standard PML list
+    def add(item)
+      list.push(item)
+      if @data ; data.push(item.data) ; end
+    end
+
     def build_lookup
       @named = { :src => {}, :dst => {} }
       @list.each do |rg|
@@ -920,6 +927,9 @@ private
     def get_function(level)
       level == :src ? @src : @dst
     end
+    def add_node(node)
+      @nodes.add(node)
+    end
     def qname
       "#{src.qname}<>#{dst.qname}"
     end
@@ -968,6 +978,12 @@ private
         ! succblock.nil? && succblock == block
       }
     end
+
+    def add_successor(node, level)
+      data["#{level}-successors"].push(node.name)
+      @successors[level] = nil
+    end
+
     def successors(level)
       return @successors[level] if @successors[level]
       @successors[level] = (data["#{level}-successors"]||[]).map { |succ|
