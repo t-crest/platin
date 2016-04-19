@@ -46,6 +46,8 @@ class GCFGTool
     rg = RelationGraph.new(data, @pml_out.bitcode_functions, @pml_out.machine_functions)
     @pml_out.relation_graphs.add(rg)
 
+    # Cut out Regions identified by the abb field of the edge object.
+    # The region is copied to the given functions, relation graphs.
     mapping = {}
     gcfg.edges.each { |edge|
       rg_region, bc_region, mc_region = copy_basic_blocks(edge, rg, bitcode_function, machine_function)
@@ -77,6 +79,30 @@ class GCFGTool
         src_rg.exit_node.add_successor(exit_node, :src)
         src_rg.exit_node.add_successor(exit_node, :dst)
       end
+    }
+
+    # Now we have to identify and copy all functions that are called
+    bc_funcs = Set.new(bitcode_function.instructions\
+                        .collect_concat { |instr| instr.callees||[] })
+    mc_funcs = Set.new(machine_function.instructions\
+                        .collect_concat { |instr| instr.callees||[] })
+    bc_funcs.each { |func|
+      func = @pml_in.bitcode_functions.by_name(func)
+      @pml_out.bitcode_functions.add_function(func.data.dup)
+    }
+    mc_funcs.each { |func|
+      data = @pml_in.machine_functions.by_label(func).data.dup
+      address += 1
+      data['name'] = address
+      @pml_out.machine_functions.add_function(data)
+      if bc_funcs.include?(data['mapsto'])
+        data = @pml_in.relation_graphs.by_name(data['mapsto'], :src).data.dup
+        data['dst']['function'] = address
+        @pml_out.relation_graphs.add(RelationGraph.new(data, @pml_out.bitcode_functions, @pml_out.machine_functions))
+      end
+    }
+    mc_funcs.intersection(bc_funcs).each { |func|
+
     }
   end
 
@@ -189,7 +215,7 @@ EOF
   address = 0
   pml_in.global_cfgs.each {|gcfg|
     rewriter.transform_gcfg(gcfg, address)
-    address += 1
+    address += 100000
   }
 
   # gcfg = pml_in.global_cfgs.by_name("system")
