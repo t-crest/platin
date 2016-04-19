@@ -146,6 +146,8 @@ module PML
     def empty? ; list.empty? ; end
     def [](index) ; list[index]; end
     def each(&block) ; list.each(&block) ; end
+    def each_with_index(&block) ; list.each_with_index(&block) ; end
+
     def push(item); add(item); end
     def dup
       self.class.new(@list.dup, data.dup)

@@ -21,13 +21,20 @@ module PML
 
     # customized constructor
     def initialize(data, opts)
-       @list = data.map { |f| Function.new(self, f, opts) }
-       set_yaml_repr(data)
-       build_index
+      @opts = opts
+      @list = data.map { |f| Function.new(self, f, opts) }
+      set_yaml_repr(data)
+      build_index
     end
 
     def by_label_or_name(key, error_if_missing = false)
       by_label(key, false) || by_name(key, error_if_missing)
+    end
+
+    # Add empty function
+    def add_function(data)
+      reset_yaml_repr
+      add(Function.new(self, data, @opts))
     end
 
     # return [rs, unresolved]
@@ -57,6 +64,25 @@ module PML
         self.each { |f| f.instructions.each { |i| @instruction_by_address[i.address] = i } }
       end
       @instruction_by_address[addr]
+    end
+  end
+
+  # List of Global Control Flow Graphs
+  class GCFGList < PMLList
+    extend PMLListGen
+    pml_name_index_list(:GCFG, [],[])
+
+    # customized constructor
+    def initialize(data, bitcode_functions, machine_functions)
+      @list = data.map { |g|
+        if g["level"] == "bitcode"
+          GCFG.new(g, bitcode_functions)
+        else
+          GCFG.new(g, machine_functions)
+        end
+      }
+       set_yaml_repr(data)
+       build_index
     end
   end
 
@@ -472,12 +498,32 @@ module PML
     end
 
     # block predecessors (not ready at initialization time)
+    def add_predecessor(block)
+      assert("Very Bad") { function.blocks.by_name(block.name) }
+      if not data['predecessors'].include?(block.name)
+        data['predecessors'].push(block.name)
+        # Undo Caching
+        @predecessors = nil
+      end
+    end
+
     def predecessors
       return @predecessors if @predecessors
       @predecessors = (data['predecessors']||[]).map { |s| function.blocks.by_name(s) }.uniq.freeze
     end
 
     # block successors (not ready at initialization time)
+    def add_successor(block)
+      p data['successors']
+      p "#{name} -> #{block.name}"
+      if not data['successors'].include?(block.name)
+        data['successors'].push(block.name)
+        # Undo Caching
+        @successors = nil
+      end
+      p [name, block.name, successors, data['successors']]
+    end
+
     def successors
       return @successors if @successors
       @successors = (data['successors']||[]).map { |s| function.blocks.by_name(s) }.uniq.freeze
@@ -595,6 +641,20 @@ module PML
 
     def to_pml_ref
       { 'function' => function.name, 'block' => name }
+    end
+
+    # Returns all blocks that are reachable from this block. Flooding
+    # of the graph is stopped at the argument block. This is useful
+    # for single-entry; single-exit regions
+    def reachable_till(stop)
+      rs = reachable_set(self) { |block|
+        if block != stop
+          block.successors
+        else
+          []
+        end
+      }
+      rs
     end
 
     # string representation
@@ -915,8 +975,103 @@ private
       }.uniq
       @successors[level]
     end
+    # Flooding of the graph is stopped at the argument node. This is useful
+    # for single-entry; single-exit regions
+    def reachable_till(stop)
+      rs = reachable_set(self) { |node|
+        if node != stop
+          node.successors(:src) + node.successors(:dst)
+        else
+          []
+        end
+      }
+      rs
+    end
     def to_s
       "#{type}:#{qname}"
+    end
+  end
+
+  class ABBList < PMLList
+    extend PMLListGen
+    pml_list(:ABB, [:name], [])
+
+    def initialize(funs, blocks)
+      @list = blocks.map { |n| ABB.new(funs, n) }
+      set_yaml_repr(data)
+      build_index
+    end
+  end
+
+  # Class representing PML Atomic Basic Block
+  class ABB < PMLObject
+    attr_reader :name, :function, :entry_block, :exit_block
+    def initialize(funs, data)
+      set_yaml_repr(data)
+      @function = funs.by_name(data['function'])
+      @name = data['name']
+      @entry_block = @function.blocks.by_name(data['entry-block'])
+      @exit_block  = @function.blocks.by_name(data['exit-block'])
+    end
+    def to_s
+      "#{@function.name}/#{@name}"
+    end
+  end
+
+  class GCFGEdgeList < PMLList
+    extend PMLListGen
+    pml_list(:GCFGEdge, [:index], [])
+
+    def initialize(blocks, edges)
+      @list = edges.map { |n| GCFGEdge.new(blocks, n) }
+      @list.each_with_index {|item, index|
+        assert("Invalid Indices of GCFG Edges; edges not sorted") {
+          item.index == index
+        }
+      }
+      @list.each { |e| e.connect(@list) }
+      set_yaml_repr(data)
+      build_index
+    end
+  end
+
+  # Class representing PML Atomic Basic Block
+  class GCFGEdge < PMLObject
+    attr_reader :abb, :successor_edges
+    def initialize(blocks, data)
+      set_yaml_repr(data)
+      @abb  = blocks[data['abb']]
+    end
+    def connect(edges)
+      @successor_edges = data['successor-edges'].map {|i| edges[i] }
+    end
+    def index
+      data['index']
+    end
+    def to_s
+      "E:#{index}(#{@abb.name})"
+    end
+    def qname
+      to_s
+    end
+  end
+
+  # Global Control Flow Graph wrapper
+  class GCFG < PMLObject
+    include QNameObject
+    attr_reader :name, :level, :blocks, :edges
+
+    def initialize(data, funs)
+      set_yaml_repr(data)
+      @name = data['name']
+      @qname = "GCFG:#{name}"
+      @level = data['level']
+      @blocks = ABBList.new(funs, data['blocks'])
+      @edges  = GCFGEdgeList.new(@blocks, data['edges'])
+    end
+
+    def to_s
+      @qname
     end
   end
 

@@ -9,7 +9,7 @@ void OSEKOS_TerminateTask(void);
 
 
 #define compute() \
-    do { counter++; } while(0)
+    for(; counter < 3; counter++)
 
 void Handler11() {
     compute();

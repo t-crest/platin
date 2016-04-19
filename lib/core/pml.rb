@@ -22,7 +22,7 @@ module PML
 # from PML files
 class PMLDoc
   attr_reader :data, :triple, :arch, :analysis_configurations
-  attr_reader :bitcode_functions,:machine_functions,:relation_graphs
+  attr_reader :bitcode_functions,:machine_functions,:relation_graphs,:global_cfgs
   attr_reader :flowfacts,:valuefacts,:timing
   attr_reader :tool_configurations
   attr_reader :sca_graph
@@ -50,6 +50,8 @@ class PMLDoc
     @machine_functions = FunctionList.new(@data['machine-functions'] || [], :labelkey => 'mapsto')
     @relation_graphs   = RelationGraphList.new(@data['relation-graphs'] || [],
                                                @bitcode_functions, @machine_functions)
+    @global_cfgs       = GCFGList.new(@data['global-cfgs'] || [], @bitcode_functions, @machine_functions)
+
 
     # usually read-only sections, but might be modified by pml-config
     @data['analysis-configurations'] ||= []
@@ -107,9 +109,9 @@ class PMLDoc
 
   def to_s
     sprintf("PMLDoc{bitcode-functions: |%d|, machine-functions: |%d|"+
-            ", flowfacts: |%s|, valuefacts: |%d|, timings: |%d|",
+            ", flowfacts: |%s|, valuefacts: |%d|, timings: |%d|, gcfgs:|%d|",
             bitcode_functions.length, machine_functions.length,
-            flowfacts.length,valuefacts.length,timing.length)
+            flowfacts.length,valuefacts.length,timing.length,global_cfgs.length)
   end
 
   def dump_to_file(filename, write_config=false)
@@ -123,6 +125,10 @@ class PMLDoc
   end
 
   def dump(io, write_config=false)
+    @data["bitcode-functions"] = @bitcode_functions.to_pml
+    @data["machine-functions"] = @machine_functions.to_pml
+    @data["relation-graphs"]   = @relation_graphs.to_pml
+
     final = deep_data_clone # eliminate sharing to enable YAML import in LLVM
 
     # XXX: we do not export machine-configuration and analysis-configurations by default for now

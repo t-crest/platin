@@ -22,7 +22,18 @@ app-split.bc: app.bc
 system: app-split.bc system.c
 	$(CC) `platin tool-config -i config.pml -t clang` -o $@ -mserialize=system.pml  $<  system.c
 
+system_visualize: system
+	@mkdir -p system.graphs
+	platin visualize -i system.pml -O system.graphs --show-instr
+
+gcfg_visualize: system
+	@mkdir -p gcfg.graphs
+	@rm -f gcfg.graphs/*
+	platin gcfg -i system.pml -i gcfg.pml -o system-transformed.pml
+	platin visualize -i system-transformed.pml -O gcfg.graphs --show-instr -f system
+
 
 
 clean:
 	rm -f system *.ll *.bc *.structure config.pml system.pml
+	rm -rf system.graphs
