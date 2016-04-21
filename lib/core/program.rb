@@ -388,6 +388,11 @@ module PML
     def add_node(node)
       @blocks.add(node)
     end
+    def add_subfunction(subfunc_data)
+      # This is a ugly hack that is here, because the PML abstraction is not clean
+      data['subfunctions'] = (data['subfunctions']||[]).push(subfunc_data)
+      @subfunctions.add(SubFunction.new(self, subfunc_data))
+    end
 
     def instructions
       blocks.inject([]) { |insns,b| insns.concat(b.instructions.list) }

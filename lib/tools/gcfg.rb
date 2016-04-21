@@ -42,7 +42,7 @@ class GCFGTool
     # Relationship Graph Container
     data = {'src'=> {'level'=>'bitcode', 'function' => bitcode_function.name},
             'dst'=> {'level'=>'machinecode', 'function' => machine_function.name},
-           'nodes'=> []}
+           'nodes'=> [], 'status'=>'valid'}
     rg = RelationGraph.new(data, @pml_out.bitcode_functions, @pml_out.machine_functions)
     @pml_out.relation_graphs.add(rg)
 
@@ -152,6 +152,23 @@ class GCFGTool
     new_bc_region = copy_region_to_function(bitcode_region, bitcode_function, Block)
     new_mc_region = copy_region_to_function(machine_region, machine_function, Block)
     new_rg_region = copy_region_to_function(rg_region, rg_graph, RelationNode)
+
+    # Each Function for the Patmos architecture is divided into
+    # different subfunctions, which are loaded into the function
+    # cache, therefore, we look for all subfunctions our abb covers.
+    rg.get_function(:dst).subfunctions.select {|subfunction|
+      blocks_included = subfunction.blocks.map {|block| machine_region.nodes.include? block }
+      if blocks_included.any?
+        assert("If one block of a subfunction is included in the region, all subfunction blocks must be included") {
+          blocks_included.all?
+        }
+        # Copy and rename subfunction to machien_code function
+        data = subfunction.data.dup
+        data['name'] = machine_region.map_name(data['name'])
+        data['blocks'] = data['blocks'].map{|x| machine_region.map_name(x) }
+        machine_function.add_subfunction(data)
+      end
+    }
 
     [new_rg_region, new_bc_region, new_mc_region]
   end

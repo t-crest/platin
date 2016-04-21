@@ -20,7 +20,8 @@ app-split.bc: app.bc
 
 
 system: app-split.bc system.c
-	$(CC) `platin tool-config -i config.pml -t clang` -o $@ -mserialize=system.pml  $<  system.c
+	$(CC) `platin tool-config -i config.pml -t clang` -o $@ -mserialize=system-compiler.pml  $<  system.c
+	platin extract-symbols -i system-compiler.pml -o system.pml $@
 
 system_visualize: system
 	@mkdir -p system.graphs

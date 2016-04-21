@@ -76,6 +76,7 @@ class WcetTool
 
   # replace this method in a benchmark subclass
   def run_analysis
+    # Comment out for transformed GCFG
     prepare_pml
     unless analysis_entry
       die("Analysis entry '#{options.analysis_entry}' not found (check for typos, inlined functions or code not reachable from program entry)")
@@ -95,7 +96,7 @@ class WcetTool
 
     # FIXME: check if this is necessary (CFRG testsuite)
     flow_srcs.push("trace.support") if options.enable_sweet && options.trace_analysis
-    
+
     # TODO we should (also?) add a 'configuration' name to the TimingEntry that refers to an analysis-configuration name
     options.timing_output = [options.timing_output,'trace'].compact.join('/') if options.use_trace_facts
 
@@ -166,7 +167,7 @@ class WcetTool
     run_wca = options.enable_wca
     if options.combine_wca
       # TODO is there a way to disable the stack cache analysis in aiT as well and use the platin analysis??
-      options.ait_icache_mode = "always-hit" 
+      options.ait_icache_mode = "always-hit"
       run_wca = true
     end
     begin
@@ -368,9 +369,9 @@ class WcetTool
     }
     if options.combine_wca
       wcet_cycles = combined_cycles
-      results.push( { 'analysis-entry' => options.analysis_entry, 
-                      'source' => 'combined', 
-		      'cycles' => combined_cycles 
+      results.push( { 'analysis-entry' => options.analysis_entry,
+                      'source' => 'combined',
+		      'cycles' => combined_cycles
 		    } )
     end
     if options.runcheck and not trace_cycles.nil?
@@ -388,7 +389,7 @@ class WcetTool
           tolerated_overestimation = (trace_cycles * options.runcheck_factor) + CHECK_OVERESTIMATION_TOLERANCE
           if te.cycles > tolerated_overestimation
             die <<-EOF.strip_heredoc.delete("\n")
-              WCET analysis check: Cycles for #{te.origin} (#{te.cycles}) #{te.cycles.fdiv(trace_cycles).round(2)} 
+              WCET analysis check: Cycles for #{te.origin} (#{te.cycles}) #{te.cycles.fdiv(trace_cycles).round(2)}
 	      times larger than measurement (#{trace_cycles})
             EOF
           end
@@ -428,7 +429,7 @@ class WcetTool
 
   def WcetTool.run(pml,options)
     needs_options(:input)
-    
+
     # Get analysis configurations from PML
     # TODO Add option to optionally specify config section name
     # TODO Support running multiple analysis configurations? Would be more efficient to let the actual analysis tool handle this
