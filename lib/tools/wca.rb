@@ -23,7 +23,7 @@ class WcaTool
     opts.on("--wca-minimal-cache","assume there is only one cache block (=false)") { |b|
       opts.options.wca_minimal_cache = b
     }
-    opts.on("--wca-data-cache-analysis","data cache analysis type (scope,always-hit,=always-miss)") { |v|
+    opts.on("--wca-data-cache-analysis ANALYSIS","data cache analysis type (scope,always-hit,=always-miss)") { |v|
       opts.options.wca_data_cache_analysis = v
     }
     opts.on("--wca-write-lp-file FILE", "write the ILP problem to an .lp file") { |f|
@@ -33,6 +33,12 @@ class WcaTool
     }
     opts.on("--wca-use-gurobi", "use Gurobi solver instead of lp_solve") { |v|
       opts.options.use_gurobi = v
+    }
+    # Disable all cache related costs.
+    opts.on("--wca-disable-cache", "disable all cache related  costs") { |f|
+      opts.options.disable_dca = true
+      opts.options.disable_sca = true
+      opts.options.disable_ica = true
     }
     opts.add_check { |options|
       options.wca_cache_regions = true if options.wca_cache_regions.nil?
