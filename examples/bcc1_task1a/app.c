@@ -8,8 +8,11 @@ void OSEKOS_ActivateTask(void);
 void OSEKOS_TerminateTask(void);
 
 
+// #define compute()                             \
+//    for(; counter < 3; counter++)
+
 #define compute() \
-    for(; counter < 3; counter++)
+    if (counter % 2 == 0) {counter++; counter *= 23;} else {counter += 3;}
 
 void Handler11() {
     compute();
@@ -19,6 +22,13 @@ void Handler11() {
 }
 
 
+void Handler12() {
+    OSEKOS_ActivateTask();
+    counter ++;
+    OSEKOS_ActivateTask();
+    counter ++;
+}
+
 
 
 int main(int argc, char** argv) {
@@ -26,6 +36,7 @@ int main(int argc, char** argv) {
   counter = rand();
 
   Handler11();
+  Handler12();
 
   return 0;
 }
