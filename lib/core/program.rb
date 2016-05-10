@@ -67,25 +67,6 @@ module PML
     end
   end
 
-  # List of Global Control Flow Graphs
-  class GCFGList < PMLList
-    extend PMLListGen
-    pml_name_index_list(:GCFG, [],[])
-
-    # customized constructor
-    def initialize(data, bitcode_functions, machine_functions)
-      @list = data.map { |g|
-        if g["level"] == "bitcode"
-          GCFG.new(g, bitcode_functions)
-        else
-          GCFG.new(g, machine_functions)
-        end
-      }
-       set_yaml_repr(data)
-       build_index
-    end
-  end
-
   # List of PML basic blocks in a function
   class BlockList < PMLList
     extend PMLListGen
@@ -1027,12 +1008,68 @@ private
   # Class representing PML Atomic Basic Block
   class ABB < PMLObject
     attr_reader :name, :function, :entry_block, :exit_block
-    def initialize(funs, data)
+    def initialize(relation_graphs, data)
       set_yaml_repr(data)
-      @function = funs.by_name(data['function'])
+      @rg = relation_graphs.by_name(data['function'], :src)
+      @function = @rg.get_function(:src)
       @name = data['name']
       @entry_block = @function.blocks.by_name(data['entry-block'])
       @exit_block  = @function.blocks.by_name(data['exit-block'])
+      @regions = nil
+    end
+    def qname
+      @name
+    end
+    class RegionContainer
+      attr_accessor :entry_node, :exit_node, :nodes
+
+      def initialize(entry_node=nil, exit_node=nil)
+        if entry_node
+          @entry_node, @exit_node = entry_node, exit_node
+          @nodes = @entry_node.reachable_till(@exit_node).to_a
+        else
+          @entry_node, @exit_node, @nodes = nil, nil, []
+        end
+      end
+    end
+
+    def get_region(level)
+      return @regions[level] if @regions
+      # Calculate the region from our data
+      entry_rg = @rg.nodes.by_basic_block(@entry_block, :src)
+      exit_rg  = @rg.nodes.by_basic_block(@exit_block, :src)
+
+      # Validity Checking on the ABB
+      assert("ABB is not well formed; Entry/Exit BB is not uniquly mappable") {
+        entry_rg.length == 1 and exit_rg.length == 1
+      }
+
+      rg_region = RegionContainer.new(entry_rg[0], exit_rg[0])
+
+      # Entry and Exit must be progress nodes (or similar)
+      assert("ABB is not well formed; Entry/Exit nodes are of wrong type") {
+        [:progress, :entry, :exit].include?(rg_region.entry_node.type) and
+          [:progress, :entry, :exit].include?(rg_region.exit_node.type)
+      }
+
+      # Generate Bitcode and Machine Regions
+      bitcode_region, machine_region = [:src, :dst].map { |type|
+        RegionContainer.new(rg_region.entry_node.get_block(type),
+                            rg_region.exit_node.get_block(type))
+      }
+
+      assert("ABB is not well formed; No Single-Entry/Single-Exit region all levels") {
+        rg_nodes_lhs = Set.new rg_region.nodes.map{|n| n.get_block(:src)}
+        rg_nodes_rhs = Set.new rg_region.nodes.map{|n| n.get_block(:dst)}
+
+        rg_nodes_lhs == Set.new(bitcode_region.nodes) and rg_nodes_rhs == Set.new(machine_region.nodes)
+      }
+      @regions = {
+        :rg => rg_region,
+        :src => bitcode_region,
+        :dst => machine_region,
+      }
+      @regions[level]
     end
     def to_s
       "#{@function.name}/#{@name}"
@@ -1058,42 +1095,87 @@ private
 
   # Class representing PML Atomic Basic Block
   class GCFGEdge < PMLObject
-    attr_reader :abb, :successor_edges
+    attr_reader :abb, :successors, :predecessors
     def initialize(blocks, data)
       set_yaml_repr(data)
       @abb  = blocks[data['abb']]
+      @predecessors = []
     end
     def connect(edges)
-      @successor_edges = data['successor-edges'].map {|i| edges[i] }
+      @successors = data['successor-edges'].map {|i| edges[i] }
+      data['successor-edges'].each {|i|
+        edges[i].add_predecessor(self)
+      }
     end
     def index
       data['index']
     end
     def to_s
-      "E:#{index}(#{@abb.name})"
+      "GCFG_E:#{index}(#{@abb.name})"
     end
     def qname
       to_s
+    end
+    def may_return?
+      return @successors.empty?
+    end
+
+    ### MOCKUP like Block
+    def edge_to(target)
+      Edge.new(self.abb.get_region(:dst).exit_node, target.abb.get_region(:dst).entry_node)
+    end
+
+    # edge to the function exit
+    def edge_to_exit
+      Edge.new(self.abb.get_region(:dst).exit_node, nil)
+    end
+
+    protected
+    def add_predecessor(edge)
+      @predecessors.push(edge)
     end
   end
 
   # Global Control Flow Graph wrapper
   class GCFG < PMLObject
     include QNameObject
-    attr_reader :name, :level, :blocks, :edges
+    attr_reader :name, :level, :blocks, :edges, :entry_edge
 
-    def initialize(data, funs)
+    def initialize(data, relation_graphs)
       set_yaml_repr(data)
       @name = data['name']
       @qname = "GCFG:#{name}"
       @level = data['level']
-      @blocks = ABBList.new(funs, data['blocks'])
+      @blocks = ABBList.new(relation_graphs, data['blocks'])
       @edges  = GCFGEdgeList.new(@blocks, data['edges'])
+      # Find the Entry Edge into the system
+      entry_edges = @edges.select {|e| e.predecessors.length == 0 }
+      unless entry_edges.length == 1
+        die("GCFG #{name} is not well formed, multiple entries")
+      end
+      @entry_edge = entry_edges[0]
     end
 
     def to_s
       @qname
     end
   end
+
+  # List of Global Control Flow Graphs
+  class GCFGList < PMLList
+    extend PMLListGen
+    pml_name_index_list(:GCFG, [],[])
+
+    # customized constructor
+    def initialize(data, relation_graphs)
+      @list = data.map { |g|
+        GCFG.new(g, relation_graphs)
+      }
+      set_yaml_repr(data)
+      build_index
+    end
+  end
+
+
 
 end # module PML

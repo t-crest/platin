@@ -55,7 +55,7 @@ class IndexedConstraint
     normalize! if @inconsistent.nil?
     return false if @op != 'less-equal' or @lhs.length != 1 or @rhs != 0
     v,c = @lhs.first
-    c == -1 
+    c == -1
   end
   def get_coeff(v)
     @lhs[v]

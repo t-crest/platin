@@ -11,22 +11,6 @@ class GCFGTool
     @pml_out = pml_in.clone_empty
   end
 
-  class RegionContainer
-    @name = nil
-    @entry_node = nil
-    @exit_node = nil
-    @nodes = nil
-    attr_accessor :name, :entry_node, :exit_node, :nodes
-
-    def initialize
-      @nodes = []
-    end
-
-    def map_name(name)
-      "#{@name}_#{name}"
-    end
-  end
-
   def transform_gcfg(gcfg, address)
     # Frist we add some functions and containers for our data
     ## Bitcode Function
@@ -112,46 +96,15 @@ class GCFGTool
     abb = gcfg_edge.abb
     rg = @pml_in.relation_graphs.by_name(abb.function.name, :src)
 
-    entry_rg = rg.nodes.by_basic_block(abb.entry_block, :src)
-    exit_rg  = rg.nodes.by_basic_block(abb.exit_block, :src)
-
-    # Validity Checking on the ABB
-    assert("ABB is not well formed; Entry/Exit BB is not uniquly mappable") {
-      entry_rg.length == 1 and exit_rg.length == 1
-    }
-    rg_region = RegionContainer.new
-    rg_region.name = "R#{gcfg_edge.index}"
-    rg_region.entry_node = entry_rg[0]
-    rg_region.exit_node = exit_rg[0]
-    rg_region.nodes =  rg_region.entry_node.reachable_till(rg_region.exit_node)
-
-    # Entry and Exit must be progress nodes (or similar)
-    assert("ABB is not well formed; Entry/Exit nodes are of wrong type") {
-      [:progress, :entry, :exit].include?(rg_region.entry_node.type) and
-        [:progress, :entry, :exit].include?(rg_region.exit_node.type)
-    }
-
-    # Generate Bitcode and Machine Regions
-    bitcode_region, machine_region = [:src, :dst].map { |type|
-      region = RegionContainer.new
-      region.name = "R#{gcfg_edge.index}"
-      region.entry_node = rg_region.entry_node.get_block(type)
-      region.exit_node  = rg_region.exit_node.get_block(type)
-      region.nodes = region.entry_node.reachable_till(region.exit_node)
-      region
-    }
-
-    assert("ABB is not well formed; No Single-Entry/Single-Exit region all levels") {
-      rg_nodes_lhs = Set.new rg_region.nodes.map{|n| n.get_block(:src)}
-      rg_nodes_rhs = Set.new rg_region.nodes.map{|n| n.get_block(:dst)}
-
-      rg_nodes_lhs == bitcode_region.nodes and rg_nodes_rhs == machine_region.nodes
-    }
+    rg_region = abb.get_region(:rg)
+    bitcode_region = abb.get_region(:src)
+    machine_region = abb.get_region(:src)
 
     # Copy Blocks to new Functions
-    new_bc_region = copy_region_to_function(bitcode_region, bitcode_function, Block)
-    new_mc_region = copy_region_to_function(machine_region, machine_function, Block)
-    new_rg_region = copy_region_to_function(rg_region, rg_graph, RelationNode)
+    name_mapper = lambda {|name| "R#{gcfg_edge.index}_#{name}" }
+    new_bc_region = copy_region_to_function(name_mapper, bitcode_region, bitcode_function, Block)
+    new_mc_region = copy_region_to_function(name_mapper, machine_region, machine_function, Block)
+    new_rg_region = copy_region_to_function(name_mapper, rg_region, rg_graph, RelationNode)
 
     # Each Function for the Patmos architecture is divided into
     # different subfunctions, which are loaded into the function
@@ -173,21 +126,21 @@ class GCFGTool
     [new_rg_region, new_bc_region, new_mc_region]
   end
 
-  def copy_region_to_function(region, function, factory)
+  def copy_region_to_function(name_mapper, region, function, factory)
     # Copy Blocks to Bitcode Functions
-    target_region = RegionContainer.new
+    target_region = ABB::RegionContainer.new
     blocks_within = Set.new region.nodes.map {|x| x.name}
     region.nodes.each {|bb_in|
       data = bb_in.data.dup
       ['name', 'mapsto', 'src-block', 'dst-block'].each {|key|
-        data[key] = region.map_name(data[key]) if data[key]
+        data[key] = name_mapper.(data[key]) if data[key]
       }
 
       map_sequence = lambda { |seq|
         seq \
           # Select only labels that are within the current region
           .select {|name| blocks_within.include? name} \
-          .map    {|name| region.map_name(name) }
+          .map    {|name| name_mapper.(name) }
       }
 
       ['successors', 'predecessors', 'src-successors', 'dst-successors', 'loops'].each {|key|

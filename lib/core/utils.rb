@@ -45,7 +45,7 @@ module PML
       @todo.push(item) unless @enqueued.include?(item)
       @enqueued.add(item)
     end
-    
+
     #
     # process queue until empty
     #
@@ -119,9 +119,13 @@ module PML
   # calculate the reachable set from entry,
   # where the provided block needs to compute
   # the successors of an item
-  def reachable_set(entry)
+  def reachable_set(entry, entry_seq = nil)
     reachable = Set.new
-    todo = [entry]
+    if entry_seq
+      todo = entry_seq.dup
+    else
+      todo = [entry]
+    end
     while !todo.empty?
       item = todo.pop
       next if reachable.include?(item)

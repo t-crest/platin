@@ -30,4 +30,7 @@ global-cfgs:
         successor-edges: [1]
       - index: 1
         abb: 0
+        successor-edges: [2]
+      - index: 2
+        abb: 0
         successor-edges: []

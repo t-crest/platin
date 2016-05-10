@@ -50,7 +50,7 @@ class PMLDoc
     @machine_functions = FunctionList.new(@data['machine-functions'] || [], :labelkey => 'mapsto')
     @relation_graphs   = RelationGraphList.new(@data['relation-graphs'] || [],
                                                @bitcode_functions, @machine_functions)
-    @global_cfgs       = GCFGList.new(@data['global-cfgs'] || [], @bitcode_functions, @machine_functions)
+    @global_cfgs       = GCFGList.new(@data['global-cfgs'] || [], @relation_graphs)
 
 
     # usually read-only sections, but might be modified by pml-config
@@ -72,6 +72,20 @@ class PMLDoc
   def valuefacts
     @valuefacts
   end
+
+  def analysis_entry(options)
+    gcfg_name = options.analysis_entry.dup
+    if gcfg_name.slice!(/^GCFG:/)
+      gcfg = global_cfgs.by_name(gcfg_name)
+      if gcfg
+        gcfg.entry_edge
+      end
+    else
+      machine_functions.by_label(options.analysis_entry)
+    end
+  end
+
+
   def functions_for_level(level)
     if level == 'bitcode'
       bitcode_functions

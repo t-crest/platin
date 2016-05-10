@@ -61,10 +61,6 @@ class WcetTool
     @additional_report_info = {}
   end
 
-  def analysis_entry
-    pml.machine_functions.by_label(options.analysis_entry)
-  end
-
   def time(descr)
     begin
       t1 = Time.now
@@ -78,7 +74,7 @@ class WcetTool
   def run_analysis
     # Comment out for transformed GCFG
     prepare_pml
-    unless analysis_entry
+    unless pml.analysis_entry(options)
       die("Analysis entry '#{options.analysis_entry}' not found (check for typos, inlined functions or code not reachable from program entry)")
     end
     options.use_trace_facts = true if options.compare_trace_facts
@@ -328,7 +324,7 @@ class WcetTool
 
   def enforce_blocks_constraint(edges_or_blocks, origin)
     attrs = { 'level' => 'machinecode', 'origin' => origin }
-    scoperef = analysis_entry
+    scoperef = pml.analysis_entry(options)
     terms = edges_or_blocks.map { |ppref|
       Term.new(ppref, -1)
     }

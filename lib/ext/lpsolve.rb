@@ -133,6 +133,7 @@ class LpSolveILP < ILP
   SLACK=10000000
   BIGM= 10000000
   def diagnose_unbounded(problem, freqmap)
+    assert(False)
     debug(options, :ilp) { "#{lp_solve_error_msg(problem)} PROBLEM - starting diagnosis" }
     @do_diagnose = false
     variables.each do |v|

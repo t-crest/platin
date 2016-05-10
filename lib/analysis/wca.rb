@@ -25,10 +25,22 @@ class WCA
     ilp = GurobiILP.new(@options) if @options.use_gurobi
     ilp = LpSolveILP.new(@options) unless ilp
 
-    machine_entry = @pml.machine_functions.by_label(entry_label)
-    bitcode_entry = @pml.bitcode_functions.by_name(entry_label)
-    entry = { 'machinecode' => machine_entry, 'bitcode' => bitcode_entry }
-
+    if entry_label.start_with?("GCFG:")
+      gcfg_entry = @pml.analysis_entry(@options)
+      machine_entry = gcfg_entry.abb.get_region(:dst).entry_node
+      entry = {'gcfg'=> gcfg_entry,
+               'machinecode'=>gcfg_entry,
+               'bitcode'=>gcfg_entry,
+              }
+      @options.gcfg_analysis = true
+    else
+      machine_entry = @pml.machine_functions.by_label(entry_label)
+      bitcode_entry = @pml.bitcode_functions.by_name(entry_label)
+      entry = { 'machinecode' => machine_entry,
+                'bitcode' => bitcode_entry,
+              }
+      @options.gcfg_analysis = false
+    end
 
     # PLAYING: VCFGs
     #bcffs,mcffs = ['bitcode','machinecode'].map { |level|
@@ -92,7 +104,7 @@ class WCA
             src.instructions[0..slot_end]
           end
         end
-      path_wcet = @pml.arch.path_wcet(ilist) 
+      path_wcet = @pml.arch.path_wcet(ilist)
       edge_wcet = @pml.arch.edge_wcet(ilist,branch_index,edge)
       debug(@options,:costs) { "WCET edge costs for #{edge}: #{path_wcet} block, #{edge_wcet} edge" }
       path_wcet + edge_wcet
@@ -133,10 +145,15 @@ class WCA
         next if v.kind_of?(IPETEdgeSCA)         # Stack-Cache Cost (graph-based)
         ref = nil
         if v.kind_of?(IPETEdge)
-          die("ILP cost: source is not a block") unless v.source.kind_of?(Block)
-          die("ILP cost: target is not a block") unless v.target == :exit || v.target.kind_of?(Block)
-          ref = ContextRef.new(v.cfg_edge, Context.empty)
-          edgefreqs[ref] = freq
+          if v.level != :gcfg
+            die("ILP cost: source is not a block") unless v.source.kind_of?(Block)
+            die("ILP cost: target is not a block") unless v.target == :exit || v.target.kind_of?(Block)
+            ref = ContextRef.new(v.cfg_edge, Context.empty)
+            edgefreqs[ref] = freq
+          else
+            ref = ContextRef.new(v.cfg_edge, Context.empty)
+            edgefreqs[ref] = freq
+          end
         elsif v.kind_of?(MemoryEdge)
           ref = ContextRef.new(v.edgeref, Context.empty)
         end
