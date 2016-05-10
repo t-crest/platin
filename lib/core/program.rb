@@ -1076,45 +1076,45 @@ private
     end
   end
 
-  class GCFGEdgeList < PMLList
+  class GCFGNodeList < PMLList
     extend PMLListGen
-    pml_list(:GCFGEdge, [:index], [])
+    pml_list(:GCFGNode, [:index], [])
 
-    def initialize(blocks, edges)
-      @list = edges.map { |n| GCFGEdge.new(blocks, n) }
+    def initialize(abbs, nodes)
+      @list = nodes.map { |n| GCFGNode.new(abbs, n) }
       @list.each_with_index {|item, index|
-        assert("Invalid Indices of GCFG Edges; edges not sorted") {
+        assert("Invalid Indices of GCFG Edges; Nodes are sorted") {
           item.index == index
         }
       }
-      @list.each { |e| e.connect(@list) }
+      @list.each { |n| n.connect(@list) }
       set_yaml_repr(data)
       build_index
     end
   end
 
-  # Class representing PML Atomic Basic Block
-  class GCFGEdge < PMLObject
+  # Class representing PML GCFG Node
+  class GCFGNode < PMLObject
     attr_reader :abb, :successors, :predecessors
-    def initialize(blocks, data)
+    def initialize(abbs, data)
       set_yaml_repr(data)
-      @abb  = blocks[data['abb']]
+      @abb  = abbs[data['abb']]
       @predecessors = []
     end
-    def connect(edges)
-      @successors = data['successor-edges'].map {|i| edges[i] }
-      data['successor-edges'].each {|i|
-        edges[i].add_predecessor(self)
+    def connect(nodes)
+      @successors = data['successors'].map {|i| nodes[i] }
+      data['successors'].each {|i|
+        nodes[i].add_predecessor(self)
       }
     end
     def index
       data['index']
     end
     def to_s
-      "GCFG_E:#{index}(#{@abb.name})"
+      "GCFG:N#{index}(#{@abb.name})"
     end
     def qname
-      to_s
+      "GCFG:N#{index}"
     end
     def may_return?
       return @successors.empty?
@@ -1131,15 +1131,15 @@ private
     end
 
     protected
-    def add_predecessor(edge)
-      @predecessors.push(edge)
+    def add_predecessor(node)
+      @predecessors.push(node)
     end
   end
 
   # Global Control Flow Graph wrapper
   class GCFG < PMLObject
     include QNameObject
-    attr_reader :name, :level, :blocks, :edges, :entry_edge
+    attr_reader :name, :level, :blocks, :nodes, :entry_node
 
     def initialize(data, relation_graphs)
       set_yaml_repr(data)
@@ -1147,13 +1147,13 @@ private
       @qname = "GCFG:#{name}"
       @level = data['level']
       @blocks = ABBList.new(relation_graphs, data['blocks'])
-      @edges  = GCFGEdgeList.new(@blocks, data['edges'])
+      @nodes  = GCFGNodeList.new(@blocks, data['nodes'])
       # Find the Entry Edge into the system
-      entry_edges = @edges.select {|e| e.predecessors.length == 0 }
-      unless entry_edges.length == 1
+      entry_nodes = @nodes.select {|e| e.predecessors.length == 0 }
+      unless entry_nodes.length == 1
         die("GCFG #{name} is not well formed, multiple entries")
       end
-      @entry_edge = entry_edges[0]
+      @entry_node = entry_nodes[0]
     end
 
     def to_s

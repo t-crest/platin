@@ -24,13 +24,13 @@ global-cfgs:
         index: 3
         entry-block: BB2
         exit-block: BB2
-    edges:
+    nodes:
       - index: 0
         abb: 0
-        successor-edges: [1]
+        successors: [1]
       - index: 1
         abb: 0
-        successor-edges: [2]
+        successors: [2]
       - index: 2
         abb: 0
-        successor-edges: []
+        successors: []

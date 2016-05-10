@@ -37,13 +37,17 @@ v.gcfg: ${B}/system
 	@mkdir -p gcfg.graphs
 	@rm -f gcfg.graphs/*
 	platin gcfg -i ${B}/system.pml -i gcfg.pml -o gcfg.graphs/system.pml
-	platin visualize -i gcfg.graphs/system.pml -O gcfg.graphs --show-instr -f system
+	platin wca -e system -i ${B}/config.pml -i gcfg.graphs/system.pml  --wca-disable-cache \
+		-o gcfg.graphs/system-wcet.pml --verbose --debug costs
+	platin visualize -i gcfg.graphs/system-wcet.pml -O gcfg.graphs --show-instr --show-timings -f system
+
+
 
 wcet.gcfg: ${B}/system
 	platin wcet -e GCFG:system -i ${B}/system.pml -i gcfg.pml \
 		--binary ${B}/system  --disable-ait --wca-disable-cache \
-		--wca-write-lp-file ${B}/gcfg.lp -o ${B}system-wcet.pml \
-		--debug ilp,ipet
+		--wca-write-lp-file ${B}/gcfg.lp -o ${B}/system-wcet.pml \
+		--debug costs
 
 clean:
 	rm -rf system.graphs  gcfg.graphs build

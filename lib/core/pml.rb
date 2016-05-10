@@ -78,7 +78,7 @@ class PMLDoc
     if gcfg_name.slice!(/^GCFG:/)
       gcfg = global_cfgs.by_name(gcfg_name)
       if gcfg
-        gcfg.entry_edge
+        gcfg.entry_node
       end
     else
       machine_functions.by_label(options.analysis_entry)

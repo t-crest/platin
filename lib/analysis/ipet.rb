@@ -149,7 +149,7 @@ class IPETEdge
     target.backedge_target?(source)
   end
   def cfg_edge?
-    if source.kind_of?(GCFGEdge) and (target == :exit || target.kind_of?(GCFGEdge))
+    if source.kind_of?(GCFGNode) and (target == :exit || target.kind_of?(GCFGNode))
       return true
     end
     return false unless source.kind_of?(Block)
@@ -494,16 +494,14 @@ class IPETBuilder
   def build_gcfg(entry, flowfacts, opts, cost_block)
     # Super Structure: set of reachable ABBs
     abbs = Set.new
-    abb_outgoing_edge = {}
-    reachable_set(@entry['gcfg']) { |edge|
-      abbs.add(edge.abb)
-      # We collect list of incoming edges
-      if not abb_outgoing_edge.include?(edge.abb)
-        abb_outgoing_edge[edge.abb] = []
-      end
+    # WITH BLOCK => Default value []
+    abb_outgoing_edge = Hash.new {|hsh, key| hsh[key] = [] }
+    reachable_set(entry['gcfg']) { |node|
+      abb = node.abb
+      abbs.add(abb)
 
       # Every Super-structure edge has a variable
-      @gcfg_model.each_gcfg_edge(edge) { |ipet_edge|
+      @gcfg_model.each_gcfg_edge(node) { |ipet_edge|
         @ilp.add_variable(ipet_edge, :gcfg)
 
         # Every GCFG Edge is also a flow between two machine blocks
@@ -514,24 +512,21 @@ class IPETBuilder
           else
             target_block = ipet_edge.target.abb.get_region(:dst).entry_node
           end
-          # FIXME:GCFG Cache the calcualated cost here
-          mc_edge = IPETEdge.new(source_block, target_block, :machinecode)
-	  cost = cost_block.call(mc_edge)
+	  cost = cost_block.call(ipet_edge)
 
 	  @ilp.add_cost(ipet_edge, cost)
 
           # Collect all outgoing super structure edges into this abb
-          abb_outgoing_edge[edge.abb].push(ipet_edge)
+          abb_outgoing_edge[abb].push(ipet_edge)
 
 	end
       }
-      @gcfg_model.add_block_constraint(edge)
-      edge.successors
+      @gcfg_model.add_block_constraint(node)
+      node.successors
     }
 
     # Add Constraint for the Super-Structure entry
-    @gcfg_model.add_gcfg_entry_constraint(@entry['gcfg'])
-
+    @gcfg_model.add_gcfg_entry_constraint(entry['gcfg'])
 
     # Super Structure: set of reachable machine basic blocks
     abb_mbbs = []

@@ -80,12 +80,25 @@ class WCA
         if (edge.kind_of?(Block))
           edge.instructions
         else
-          src = edge.source
+          # Special Case for GCFG Node+>Node Edges
+          if edge.level == :gcfg
+            src = edge.source.abb.get_region(:dst).exit_node
+            if edge.target == :exit
+              dst = :exit
+            else
+              dst = edge.target.abb.get_region(:dst).entry_node
+            end
+          else
+            src = edge.source
+            dst = edge.target
+          end
           src.instructions.each_with_index { |ins,ix|
-            if ins.returns? && edge.target == :exit
+            if ins.returns? && (dst == :exit || edge.level == :gcfg)
               branch_index = ix # last instruction that returns
-            elsif ! ins.branch_targets.empty? && ins.branch_targets.include?(edge.target)
+            elsif ! ins.branch_targets.empty? && ins.branch_targets.include?(dst)
               branch_index = ix # last instruction that branches to the target
+            elsif ! ins.branch_targets.empty? && edge.level == :gcfg && dst != :exit
+              branch_index = ix
             end
           }
           if ! branch_index

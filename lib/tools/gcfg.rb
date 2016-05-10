@@ -33,16 +33,16 @@ class GCFGTool
     # Cut out Regions identified by the abb field of the edge object.
     # The region is copied to the given functions, relation graphs.
     mapping = {}
-    gcfg.edges.each { |edge|
-      rg_region, bc_region, mc_region = copy_basic_blocks(edge, rg, bitcode_function, machine_function)
-      mapping[edge] = [rg_region, bc_region, mc_region]
+    gcfg.nodes.each { |gcfg_node|
+      rg_region, bc_region, mc_region = copy_basic_blocks(gcfg_node, rg, bitcode_function, machine_function)
+      mapping[gcfg_node] = [rg_region, bc_region, mc_region]
     }
 
     exit_node = rg.add_node(RelationNode.new(rg, {'name'=> 'RG_exit', 'type' => 'exit'}))
     # Connect Regions according to the GCFG Edges
     mapping.each { |source, value|
       src_rg, src_bc, src_mc = value
-      source.successor_edges.each { |dst|
+      source.successors.each { |dst|
         dst_rg, dst_bc, dst_mc = mapping[dst]
 
         # Add Bitcode Edges
@@ -53,13 +53,23 @@ class GCFGTool
         src_mc.exit_node.add_successor(dst_mc.entry_node)
         dst_mc.entry_node.add_predecessor(src_mc.exit_node)
 
+        src_mc.exit_node.data["instructions"].each {|instr|
+          if instr["branch-targets"]
+            idx = instr["branch-targets"].find_index(:next_node)
+            if idx != nil
+              instr["branch-targets"][idx] = dst_mc.entry_node.data["name"]
+            end
+          end
+          break
+        }
+
         # Add relationship edges
         src_rg.exit_node.add_successor(dst_rg.entry_node, :src)
         src_rg.exit_node.add_successor(dst_rg.entry_node, :dst)
       }
       # Region has no followup regions. It must be connected to an
       # Exit Region
-      if source.successor_edges.length == 0
+      if source.successors.length == 0
         src_rg.exit_node.add_successor(exit_node, :src)
         src_rg.exit_node.add_successor(exit_node, :dst)
       end
@@ -92,16 +102,16 @@ class GCFGTool
 
   private
 
-  def copy_basic_blocks(gcfg_edge, rg_graph, bitcode_function, machine_function)
-    abb = gcfg_edge.abb
+  def copy_basic_blocks(gcfg_node, rg_graph, bitcode_function, machine_function)
+    abb = gcfg_node.abb
     rg = @pml_in.relation_graphs.by_name(abb.function.name, :src)
 
     rg_region = abb.get_region(:rg)
     bitcode_region = abb.get_region(:src)
-    machine_region = abb.get_region(:src)
+    machine_region = abb.get_region(:dst)
 
     # Copy Blocks to new Functions
-    name_mapper = lambda {|name| "R#{gcfg_edge.index}_#{name}" }
+    name_mapper = lambda {|name| "#{gcfg_node.qname}_#{name}" }
     new_bc_region = copy_region_to_function(name_mapper, bitcode_region, bitcode_function, Block)
     new_mc_region = copy_region_to_function(name_mapper, machine_region, machine_function, Block)
     new_rg_region = copy_region_to_function(name_mapper, rg_region, rg_graph, RelationNode)
@@ -109,7 +119,7 @@ class GCFGTool
     # Each Function for the Patmos architecture is divided into
     # different subfunctions, which are loaded into the function
     # cache, therefore, we look for all subfunctions our abb covers.
-    rg.get_function(:dst).subfunctions.select {|subfunction|
+    rg.get_function(:dst).subfunctions.select &(lambda {|subfunction|
       blocks_included = subfunction.blocks.map {|block| machine_region.nodes.include? block }
       if blocks_included.any?
         assert("If one block of a subfunction is included in the region, all subfunction blocks must be included") {
@@ -117,11 +127,11 @@ class GCFGTool
         }
         # Copy and rename subfunction to machien_code function
         data = subfunction.data.dup
-        data['name'] = machine_region.map_name(data['name'])
-        data['blocks'] = data['blocks'].map{|x| machine_region.map_name(x) }
+        data['name'] = name_mapper.(data['name'])
+        data['blocks'] = data['blocks'].map{|x| name_mapper.(x) }
         machine_function.add_subfunction(data)
       end
-    }
+    })
 
     [new_rg_region, new_bc_region, new_mc_region]
   end
@@ -131,7 +141,7 @@ class GCFGTool
     target_region = ABB::RegionContainer.new
     blocks_within = Set.new region.nodes.map {|x| x.name}
     region.nodes.each {|bb_in|
-      data = bb_in.data.dup
+      data = Marshal.load(Marshal.dump(bb_in.data))
       ['name', 'mapsto', 'src-block', 'dst-block'].each {|key|
         data[key] = name_mapper.(data[key]) if data[key]
       }
@@ -150,7 +160,11 @@ class GCFGTool
       if data["instructions"]
         data["instructions"].each {|instr|
           if instr["branch-targets"]
-            instr["branch-targets"] = map_sequence.(instr["branch-targets"])
+            if bb_in == region.exit_node
+              instr["branch-targets"] = map_sequence.(instr["branch-targets"]) + [:next_node]
+            else
+              instr["branch-targets"] = map_sequence.(instr["branch-targets"])
+            end
           end
         }
       end

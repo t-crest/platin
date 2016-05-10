@@ -12,7 +12,7 @@ void OSEKOS_TerminateTask(void);
 //    for(; counter < 3; counter++)
 
 #define compute() \
-    if (counter % 2 == 0) {counter++; counter *= 23;} else {counter += 3;}
+    if (counter % 2 == 0) {counter++; counter *= 23; counter = counter * counter;} else {counter += 3;}
 
 void Handler11() {
     compute();
