@@ -23,17 +23,24 @@ ${B}/app-split.bc: ${B}/app.bc
 	cd ${B}; patmos-llvm-dis app-split.bc
 
 
+${B}/libos.bc: system.c thread.c thread.h
+	cat $^ > ${B}/libos.c
+	$(CC) `platin tool-config -i ${B}/config.pml -t clang` -c -emit-llvm -o $@ ${B}/libos.c -I.
 
-${B}/system: ${B}/app-split.bc system.c
-	$(CC) `platin tool-config -i ${B}/config.pml -t clang` -o $@ -mserialize=${B}/01-system.pml  $<  system.c
-	platin extract-symbols -i ${B}/01-system.pml -o ${B}/system.pml $@
 
-v.system: ${B}/system
+${B}/system: ${B}/app-split.bc ${B}/libos.bc
+	$(CC) `platin tool-config -i ${B}/config.pml -t clang` -o $@ -mserialize=${B}/01-system.pml  $^
+
+
+${B}/system.pml: ${B}/system
+	platin extract-symbols -i ${B}/01-system.pml -o $@ $<
+
+v.system: ${B}/system.pml
 	@mkdir -p system.graphs
 	@rm -f system.graphs/*
 	platin visualize -i ${B}/system.pml -O system.graphs --show-instr
 
-v.gcfg: ${B}/system
+v.gcfg: ${B}/system.pml
 	@mkdir -p gcfg.graphs
 	@rm -f gcfg.graphs/*
 	platin gcfg -i ${B}/system.pml -i gcfg.pml -o gcfg.graphs/system.pml
@@ -43,7 +50,7 @@ v.gcfg: ${B}/system
 
 
 
-wcet.gcfg: ${B}/system
+wcet.gcfg: ${B}/system.pml
 	platin wcet -e GCFG:system -i ${B}/system.pml -i gcfg.pml \
 		--binary ${B}/system  --disable-ait --wca-disable-cache \
 		--wca-write-lp-file ${B}/gcfg.lp -o ${B}/system-wcet.pml \
