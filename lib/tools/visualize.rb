@@ -147,7 +147,7 @@ class FlowGraphVisualizer < Visualizer
       elsif node.kind_of?(BlockSliceNode)
         block = node.block
         instr = block.instructions[node.first_index]
-        addr = instr ? instr.address : 0
+        addr = instr ? instr.address : block.address
         label += sprintf("0x%x: ",addr) if addr
         label += "#{block.name}"
         label << "(#{block.mapsto})" if block.mapsto
