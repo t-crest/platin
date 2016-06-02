@@ -185,8 +185,11 @@ end
 
 class IPETModel
   attr_reader :builder, :ilp, :level
+  attr_accessor :sum_incoming_override, :sum_outgoing_override
   def initialize(builder, ilp, level)
     @builder, @ilp, @level = builder, ilp, level
+    @sum_incoming_override = {}
+    @sum_outgoing_override = {}
   end
 
   def infeasible?(block, context = Context.empty)
@@ -330,12 +333,19 @@ class IPETModel
   end
 
   def sum_incoming(block, factor=1)
+    if @sum_incoming_override[block]
+      return @sum_incoming_override[block].map {|e| [e, factor] }
+    end
     block.predecessors.map { |pred|
       [IPETEdge.new(pred,block,level), factor]
     }
   end
 
   def sum_outgoing(block, factor=1)
+    if @sum_outgoing_override[block]
+      return @sum_outgoing_override[block].map {|e| [e, factor] }
+    end
+
     block.successors.map { |succ|
       [IPETEdge.new(block,succ,level), factor]
     }
@@ -414,25 +424,9 @@ class IPETBuilder
     @relation_graph_level[pml_level]
   end
 
-  # Build basic IPET structure.
-  # yields basic blocks, so the caller can compute their cost
-  def build(entry, flowfacts, opts = { :mbb_variables =>  false }, &cost_block)
-    assert("IPETBuilder#build called twice") { ! @entry }
-    @entry = entry
-    @markers = {}
-    @call_edges = []
-
-    # build refinement to prune infeasible blocks and calls
-    build_refinement(@entry, flowfacts)
-
-    if @options.gcfg_analysis
-      build_gcfg(entry, flowfacts, opts, cost_block)
-      return
-    end
-
+  def get_functions_reachable_from_function(function)
     # compute set of reachable machine functions
-    # during traversal, add ILP variables for both machine code and bitcode
-    mf_functions = reachable_set(@entry['machinecode']) do |mf_function|
+    reachable_set(function) do |mf_function|
       # inspect callsites in the current function
       succs = Set.new
       mf_function.callsites.each { |cs|
@@ -442,53 +436,102 @@ class IPETBuilder
           succs.add(f)
         }
       }
-
-      # machinecode variables + cost
-      @mc_model.each_edge(mf_function) do |edge|
-        @ilp.add_variable(edge, :machinecode)
-	if not @options.ignore_instruction_timing
-	  cost = cost_block.call(edge)
-	  @ilp.add_cost(edge, cost)
-	end
-      end
-
-      # bitcode variables and markers
-      if @bc_model
-        add_bitcode_variables(mf_function)
-      end
-      succs # return successors to reachable_set
+      succs
     end
-    mf_function_callers = {}
+  end
+
+  # Build basic IPET structure.
+  # yields basic blocks, so the caller can compute their cost
+  def build(entry, flowfacts, opts = { :mbb_variables =>  false }, &cost_block)
+    assert("IPETBuilder#build called twice") { ! @entry }
+    @entry = entry
+    @markers = {}
+    @call_edges = []
+    @mf_function_callers = {}
+    @options[:mbb_variables] = opts[:mbb_variables]
+
+    # build refinement to prune infeasible blocks and calls
+    build_refinement(@entry, flowfacts)
+
+    if @options.gcfg_analysis
+      build_gcfg(entry, flowfacts, opts, cost_block)
+      return
+    end
+
+    mf_functions = get_functions_reachable_from_function(@entry['machinecode'])
+    mf_functions.each { |mf_function |
+      add_function_with_blocks(mf_function, cost_block)
+    }
+
     mf_functions.each do |f|
       add_bitcode_constraints(f) if @bc_model
-      f.blocks.each_with_index do |block,ix|
-        next if block.predecessors.empty? && ix != 0 # exclude data blocks (for e.g. ARM)
-        if @mc_model.infeasible?(block)
-          @mc_model.add_infeasible_block_constraint(block)
-          next
-        end
-        @mc_model.add_block_constraint(block)
-        if opts[:mbb_variables]
-          @mc_model.add_block(block)
-        end
-        block.callsites.each do |cs|
-          current_call_edges = @mc_model.add_callsite(cs, @mc_model.calltargets(cs))
-          current_call_edges.each do |ce|
-            (mf_function_callers[ce.target] ||= []).push(ce)
-          end
-          @call_edges += current_call_edges
-        end
-      end
+      add_calls_in_function(f)
     end
+
     @mc_model.add_entry_constraint(@entry['machinecode'])
-    mf_function_callers.each do |f,ces|
-      @mc_model.add_function_constraint(f, ces)
-    end
+
+    add_global_call_constraints()
+
     flowfacts.each { |ff|
       debug(@options,:ipet) { "adding flowfact #{ff}" }
       add_flowfact(ff)
     }
   end
+
+  def add_function_with_blocks(mf_function, cost_block)
+    # machinecode variables + cost
+    @mc_model.each_edge(mf_function) do |edge|
+      @ilp.add_variable(edge, :machinecode)
+      if not @options.ignore_instruction_timing
+	cost = cost_block.call(edge)
+	@ilp.add_cost(edge, cost)
+      end
+    end
+
+    # bitcode variables and markers
+    if @bc_model
+      add_bitcode_variables(mf_function)
+    end
+
+    # Add block constraints
+    mf_function.blocks.each_with_index do |block, ix|
+      next if block.predecessors.empty? && ix != 0 # exclude data blocks (for e.g. ARM)
+      if @mc_model.infeasible?(block)
+        @mc_model.add_infeasible_block_constraint(block)
+        next
+      end
+      @mc_model.add_block_constraint(block)
+      if @options[:mbb_variables]
+        @mc_model.add_block(block)
+      end
+    end
+  end
+
+  ################################################################
+  # Function Calls
+  ################################################################
+  def add_calls_in_function(mf_function)
+    mf_function.blocks.each do |block|
+      add_calls_in_block(block)
+    end
+  end
+
+  def add_calls_in_block(mbb)
+    mbb.callsites.each do |cs|
+      current_call_edges = @mc_model.add_callsite(cs, @mc_model.calltargets(cs))
+      current_call_edges.each do |ce|
+        (@mf_function_callers[ce.target] ||= []).push(ce)
+      end
+      @call_edges += current_call_edges
+    end
+  end
+
+  def add_global_call_constraints()
+    @mf_function_callers.each do |f,ces|
+      @mc_model.add_function_constraint(f, ces)
+    end
+  end
+
 
   # Build basic IPET Structure, when a GCFG is present
   def build_gcfg(entry, flowfacts, opts, cost_block)
@@ -530,27 +573,45 @@ class IPETBuilder
 
     # Super Structure: set of reachable machine basic blocks
     abb_mbbs = []
+    gcfg_mfs = Set.new # Tracks all functions the super structure is working on
     abbs.each {|abb|
+      # ABB belongs to function
+      gcfg_mfs.add(abb.function)
+
       abb_mbbs += abb.get_region(:dst).nodes
-      # Add Inner structure of ABB
+      # Add inner structure of ABB
       build_gcfg_abb(abb, abb_outgoing_edge[abb], flowfacts, opts, cost_block)
     }
 
     # Super Structure: what functions are activated from the super structure?
-    abb_mfs  = Set.new
+    abb_mfs = Set.new
     abb_mbbs.each {|bb|
       bb.callsites.each { |cs|
-        # FIXME:GCFG: Infeasible blocks should be detected
         next if @mc_model.infeasible?(cs.block)
         @mc_model.calltargets(cs).each { |f|
           assert("calltargets(cs) is nil") { ! f.nil? }
-          abb_mfs.add(f)
+          funcs = get_functions_reachable_from_function(f)
+          abb_mfs += get_functions_reachable_from_function(f)
         }
       }
     }
 
-    # FIXME:GCFG: Function calls from super structure
-    die("Function calls are not implemented yet") if abb_mfs.length > 0
+    abb_mfs.each do |mf|
+      add_function_with_blocks(mf, cost_block)
+    end
+    abb_mfs.each do |mf|
+      add_calls_in_function(mf)
+    end
+    abb_mbbs.each do |bb|
+      add_calls_in_block(bb)
+    end
+
+    assert("Function calls are not allowed into the super structure") {
+      (abb_mfs & gcfg_mfs).length == 0
+    }
+
+    add_global_call_constraints()
+
     die("Bitcode contraints are not implemented yet") if @bc_model
 
 
@@ -586,6 +647,10 @@ class IPETBuilder
       outgoing = e[:out].map {|x| [x, -1]}
       ilp.add_constraint(incoming+outgoing, "equal", 0,
                        "abb_flux_#{bb.qname}", :structural)
+
+      # Override the incoming and outgoing frequencies
+      @mc_model.sum_incoming_override[bb] = e[:in]
+      @mc_model.sum_outgoing_override[bb] = e[:out]
     }
   end
   #

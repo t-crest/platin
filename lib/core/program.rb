@@ -1007,14 +1007,22 @@ private
 
   # Class representing PML Atomic Basic Block
   class ABB < PMLObject
-    attr_reader :name, :function, :entry_block, :exit_block
+    attr_reader :name, :function, :machine_function, :entry_block, :exit_block
     def initialize(relation_graphs, data)
       set_yaml_repr(data)
       @rg = relation_graphs.by_name(data['function'], :src)
+      assert("No relationship graph for #{data['function']} found") {
+        @rg != nil
+      }
       @function = @rg.get_function(:src)
+      @machine_function = @rg.get_function(:dst)
+
       @name = data['name']
       @entry_block = @function.blocks.by_name(data['entry-block'])
       @exit_block  = @function.blocks.by_name(data['exit-block'])
+      assert("Could not find ABB Entry/Exit Blocks #{data}") {
+        @entry_block != nil and @exit_block != nil
+      }
       @regions = nil
     end
     def qname
@@ -1040,7 +1048,7 @@ private
       exit_rg  = @rg.nodes.by_basic_block(@exit_block, :src)
 
       # Validity Checking on the ABB
-      assert("ABB is not well formed; Entry/Exit BB is not uniquly mappable") {
+      assert("ABB is not well formed; Entry/Exit BB is not uniquly mappable (#{to_s}, #{entry_rg}, #{exit_rg})") {
         entry_rg.length == 1 and exit_rg.length == 1
       }
 
@@ -1100,6 +1108,9 @@ private
       set_yaml_repr(data)
       @abb  = abbs[data['abb']]
       @predecessors = []
+    end
+    def function
+      abb.machine_function
     end
     def connect(nodes)
       @successors = data['successors'].map {|i| nodes[i] }

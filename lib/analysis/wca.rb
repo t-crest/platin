@@ -193,6 +193,16 @@ class WCA
       }.each { |v,cost|
         puts "  #{v}: #{freqs[v]} (#{cost} cyc)"
       }
+      puts "Function Profile:"
+      mf_costs = Hash.new {|x| 0}
+      freqs.each do |v,freq|
+        mf_costs[v.function] += freq * builder.ilp.get_cost(v)
+      end
+      mf_costs.sort_by { |v,freq|
+        [v.function || machine_entry, -freq]
+      }.each { |v,cost|
+        puts "  #{v}: #{freqs[v]} (#{cost} cyc)"
+      }
     end
     report
   end

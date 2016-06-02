@@ -81,7 +81,7 @@ end
 class FlowGraphVisualizer < Visualizer
   def initialize(pml, options) ; @pml, @options = pml, options ; end
   def extract_timing(function, timing)
-    Hash[ 
+    Hash[
       timing.select{ |t| t.profile }.map { |t|
 	profile = {}
 	t.profile.select { |e|
@@ -146,7 +146,8 @@ class FlowGraphVisualizer < Visualizer
         label += "CALL #{node.callsite.callees.map { |c| "#{c}()" }.join(",")}"
       elsif node.kind_of?(BlockSliceNode)
         block = node.block
-        addr = block.instructions[node.first_index].address
+        instr = block.instructions[node.first_index]
+        addr = instr ? instr.address : 0
         label += sprintf("0x%x: ",addr) if addr
         label += "#{block.name}"
         label << "(#{block.mapsto})" if block.mapsto
@@ -185,7 +186,7 @@ class FlowGraphVisualizer < Visualizer
 	#      them twice. No easy way to fix this tough.. If we choose to annotate only
 	#      one of those edges here, it should be edge with the longest path through
 	#      the block at least.
-	t = block_timing.map{ |origin,profile| 
+	t = block_timing.map{ |origin,profile|
 	  [origin, find_vedge_timing(profile, node, s).select{ |e| e.wcetfreq > 0 } ]
 	}.select{ |o,p| not p.empty? }
 	if not t.empty?
@@ -193,7 +194,7 @@ class FlowGraphVisualizer < Visualizer
 	  options["color"] = "#ff0000"
 	  options["penwidth"] = 2
 	  # Annotate frequency and cycles only to 'real' edges between blocks
-	  # These are edges from a block node to either a different block, a self loop, 
+	  # These are edges from a block node to either a different block, a self loop,
 	  # or edges to virtual nodes (assuming the VCFG does not insert virtual nodes
 	  # within a block)
 	  if node.block and ( node.block != s.block or s.block_start? )
@@ -207,13 +208,13 @@ class FlowGraphVisualizer < Visualizer
 	      #      In that case, ask the ext plugins (aiT,..) to do the work.
 	      freq, cycles, wcet, crit = profile.inject([0,0,0,0]) { |v,e|
 		freq, cycles, wcet, crit = v
-		[freq + e.wcetfreq, 
-		 [cycles, e.cycles].max, 
+		[freq + e.wcetfreq,
+		 [cycles, e.cycles].max,
 		 wcet + e.wcet_contribution,
 		 [crit, e.criticality || 1].max
 		]
 	      }
-	      # Avoid overlapping of the first character and the edge by starting 
+	      # Avoid overlapping of the first character and the edge by starting
 	      # the label with a space
 	      options["label"] += "\\l" if options["label"] != ""
 	      options["label"] += " -- #{origin} --" if block_timing.length > 1
@@ -273,10 +274,10 @@ class RelationGraphVisualizer < Visualizer
   def visualize(rg)
     nodes = {}
     g = GraphViz.new( :G, :type => :digraph )
-    g.node[:shape] = "rectangle" 
+    g.node[:shape] = "rectangle"
 
     # XXX: update me
-    rg = rg.data if rg.kind_of?(RelationGraph)      
+    rg = rg.data if rg.kind_of?(RelationGraph)
 
     name = "#{rg['src'].inspect}/#{rg['dst'].inspect}"
     rg['nodes'].each do |node|
@@ -408,7 +409,7 @@ class VisualizeTool
       # Visualize VCFG (machine code)
       begin
         mf = pml.machine_functions.by_label(target)
-	t = pml.timing.select { |t| 
+	t = pml.timing.select { |t|
 	  t.level == mf.level && options.show_timings &&
 	  (options.show_timings.include?(t.origin) || options.show_timings.include?("all"))
 	}
@@ -443,7 +444,7 @@ class VisualizeTool
     opts.on("-f","--function FUNCTION,...","Name of the function(s) to visualize") { |f| opts.options.functions = f.split(/\s*,\s*/) }
     opts.on("--show-calls", "Visualize call sites") { opts.options.show_calls = true }
     opts.on("--show-instr", "Show instructions in basic block nodes") { opts.options.show_instructions = true }
-    opts.on("--show-timings [ORIGIN]", Array, "Show timing results in flow graphs (=all; can be a list of origins))") { |o| 
+    opts.on("--show-timings [ORIGIN]", Array, "Show timing results in flow graphs (=all; can be a list of origins))") { |o|
       opts.options.show_timings = o ? o : ["all"]
     }
     opts.on("-O","--outdir DIR","Output directory for image files") { |d| opts.options.outdir = d }
@@ -472,4 +473,3 @@ EOF
   end
   VisualizeTool.run(PMLDoc.from_files(options.input), options)
 end
-
