@@ -28,6 +28,11 @@ class ExtractSymbols
     (@instructions[label]||={})[address] = data
   end
   def analyze
+    if @pml.machine_functions.first.address
+      info("Skip read symbols")
+      return self
+    end
+
     elf = @options.binary_file
     if ! File.exist?(elf)
       die "The binary file '#{elf}' does not exist"
@@ -53,6 +58,9 @@ class ExtractSymbols
     self
   end
   def update_pml
+    if @pml.machine_functions.first.address
+      return
+    end
     @pml.machine_functions.each do |function|
       addr = @text_symbols[function.label] || @text_symbols[function.blocks.first.label]
       (warn("No symbol for machine function #{function.to_s}");next) unless addr
