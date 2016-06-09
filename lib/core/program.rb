@@ -177,11 +177,12 @@ module PML
 
   class Edge < ProgramPoint
     attr_reader :source, :target
-    def initialize(source, target, data = nil)
+    def initialize(source, target, data = nil, level = nil)
       assert("PML::Edge: source and target need to be blocks, not #{source.class}/#{target.class}") {
         source.kind_of?(Block) && (target.nil? || target.kind_of?(Block))
       }
-      assert("PML::Edge: source and target function need to match") { target.nil? || source.function == target.function }
+      assert("PML::Edge: source and target function need to match") {
+        target.nil? || source.function == target.function || level == :gcfg}
 
       @source, @target = source, target
       @name = "#{source.name}->#{target ? target.name : '' }"
@@ -1138,12 +1139,12 @@ private
 
     ### MOCKUP like Block
     def edge_to(target)
-      Edge.new(self.abb.get_region(:dst).exit_node, target.abb.get_region(:dst).entry_node)
+      Edge.new(self.abb.get_region(:dst).exit_node, target.abb.get_region(:dst).entry_node, nil, :gcfg)
     end
 
     # edge to the function exit
     def edge_to_exit
-      Edge.new(self.abb.get_region(:dst).exit_node, nil)
+      Edge.new(self.abb.get_region(:dst).exit_node, nil, :gcfg)
     end
 
     protected
