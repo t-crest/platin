@@ -87,6 +87,103 @@ class SimulatorTrace
   end
 end
 
+class ExtractSymbols
+  def ExtractSymbols.run(extractor,pml,options)
+    r = IO.popen("#{options.objdump} -d '#{options.binary_file}'") do |io|
+      current_label, current_ix, current_function = nil, 0, nil
+      last_addr, last_size = nil, nil
+      current_label, current_function = nil, 0, nil
+      pml_instr_ix, pml_instr, pml_instr_len = 0, nil, 0
+      io.each_line do |line|
+        if line =~ RE_FUNCTION_LABEL
+          current_label = $1
+          current_function = pml.machine_functions.by_label(current_label, false)
+        elsif line =~ RE_INS_LABEL
+          addr = $1.to_i(16)
+          opcode = $2.delete(' ')
+          cond, instr, args = $3, $4, $5
+          size = opcode.length / 2
+
+          if(last_addr and (addr != last_addr + last_size))
+              die ("Cannot parse objdump. Last address (#{last_addr} #{addr}).")
+          end
+
+          # Update counters for next round
+          last_addr, last_size = addr, size
+
+          if current_function
+            instr = build_instruction(addr, cond, size, instr, args)
+            if instr
+              extractor.add_instruction(current_label, addr, instr)
+            end
+          end
+        else
+          assert("objdump parsing failed: #{line}") {
+            line[0] == "." or line == "\n" or /Disassembly of section/ =~ line
+          }
+        end
+      end
+    end
+    die "The objdump command '#{options.objdump}' exited with status #{$?.exitstatus}" unless $?.success?
+  end
+  private
+  def ExtractSymbols.build_instruction(addr, cond, size, instr, args)
+    ret = {'address' => addr, 'size' => size, 'source' => 'objdump', 'opcode' => instr}
+    reg_args = args.scan('$r').length
+    case instr
+    when "add", "sub", "and"
+      ret['opcode'] = instr.upcase + ( reg_args == 3 ? "r" : "i")
+      ret
+    when "li"
+      ret['opcode'] = (size == 8 ? "LIl" : "LIi")
+      ret
+    when "clr", "mov"
+      ret['opcode'] = "MOV"
+      ret
+    when "nop", "mfs", "mts"
+      ret['opcode'] = instr.upcase
+      ret
+    when "sws", "swm", "swl", "swc", "lwl", "lwm", "lwc"
+      ret['opcode'] = instr.upcase
+      ret['memode'] = {"s"=> "store", "l"=>"load"}[instr[0]]
+      ret['memtype'] = {"l"=> "local", "m"=>"memory", "s"=>"stack", "c"=>"cache"}[instr[2]]
+      ret
+    when "ret", "retnd", "xret"
+      ret['opcode'] = instr.upcase
+      ret['branch-type'] = "return"
+      ret
+    when "call", "callnd"
+      ret['opcode'] = instr.upcase
+      ret['branch-type'] = "call"
+      # FIXME: call target
+      # p args.strip # <- function call
+      ret
+    when "sspill", "sens"
+      ret['opcode'] = instr.upcase + (reg_args == 1 ? "r" : "i")
+      ret
+
+    else
+      ret['opcode'] = [instr, args]
+      ret['invalid'] = true
+      ret
+    end
+  end
+  RE_HEX=/[0-9A-Fa-f]/
+  RE_FUNCTION_LABEL = %r{ ^
+    ([^.: ][^: ]*):             # label
+  }x
+  RE_INS_LABEL = %r{ ^ \s+
+    ( #{RE_HEX}+ ): \t       # addr
+    ( (?: #{RE_HEX}{2}\s)+) \s+ # opcode
+    \t \s+
+    ( (?: \( [^)]+ \) )? )     # condition codes
+    \s*
+    ( \S+ )          # instruction
+    ( \t? .* )           # args
+    $
+  }x
+end
+
 class Architecture < PML::Architecture
   attr_reader :triple, :config
   def initialize(triple, config)
@@ -120,6 +217,10 @@ class Architecture < PML::Architecture
 
   def simulator_trace(options, watchpoints)
     SimulatorTrace.new(options.binary_file, self, options, watchpoints)
+  end
+
+  def extract_symbols(extractor, pml, options)
+    ExtractSymbols.run(extractor, pml, options)
   end
 
   def return_stall_cycles(ret_instruction, ret_latency)
@@ -186,7 +287,7 @@ class Architecture < PML::Architecture
   end
 
   def data_cache
-    # TODO check if this is consistent with what is configured in the 
+    # TODO check if this is consistent with what is configured in the
     #      data memory-area (but check only once!)
     dc = @config.caches.by_name('data-cache')
     return nil if dc.nil? or dc.type == 'none'
@@ -213,7 +314,7 @@ class Architecture < PML::Architecture
   #      by the generic DataCache analysis. We use the DataCache analysis
   #      to attach costs to cached and bypass loads/stores, but we skip
   #      stack and local accesses. For now we assume that stack and local
-  #      accesses always have zero latency. 
+  #      accesses always have zero latency.
   #      We should instantiate a separate DataCacheAnalysis that uses the
   #      memory named "local" and a different line-size (4) handles
   #      all local memory accesses.
@@ -391,7 +492,7 @@ class Architecture < PML::Architecture
       opts.push("--dlsize")
       opts.push(dc.block_size)
       opts.push("--dckind")
-      # Note: 'ideal' is not the same as mapping all data accesses to 
+      # Note: 'ideal' is not the same as mapping all data accesses to
       # an ideal memory; bypasses still have a latency.
       opts.push( get_cache_kind(dc) )
     else
@@ -462,7 +563,7 @@ class Architecture < PML::Architecture
 
   # Update the configuration using the given options
   def update_cache_config(options)
-   
+
    # Update data cache
     if options.data_cache_size or options.data_cache_policy
       dc_policy = options.data_cache_policy[:policy] if options.data_cache_policy
@@ -477,20 +578,20 @@ class Architecture < PML::Architecture
       if dc
 	dc.size = options.data_cache_size if options.data_cache_size
 	# We are not deleting the cache entry here, partly because it
-	# allows the user to easily edit the generated config manually, 
+	# allows the user to easily edit the generated config manually,
 	# partly because it is easier to implement.
 	dc.type = 'set-associative' if dc_policy
 	dc.type = 'none' if dc_policy == 'no'
 	dc.policy = dc_policy if dc_policy and dc_policy != 'no'
 	# Set the associativiy whenever we set a policy
 	dc.associativity = dc_assoc if dc_policy
-	
+
 	# Update the data memory area
 	dma = @config.memory_areas.by_name('data')
 	dma.cache = (dc.type != 'none' ? dc : nil) if dma
       end
     end
-   
+
    # Update stack cache
     if options.stack_cache_size or options.stack_cache_type
       # We are not using self.stack_cache here because it would return
@@ -507,7 +608,7 @@ class Architecture < PML::Architecture
 	sc.policy = options.stack_cache_type if options.stack_cache_type and options.stack_cache_type != 'no'
       end
     end
-   
+
    # Update instruction cache / method cache
     if options.instr_cache_kind or options.instr_cache_size or options.instr_cache_policy or options.instr_cache_line_size
       ic_policy = options.instr_cache_policy[:policy] if options.instr_cache_policy
@@ -533,14 +634,14 @@ class Architecture < PML::Architecture
       if ic
 	ic.size = options.instr_cache_size if options.instr_cache_size
 	# We are not deleting the cache entry here, partly because it
-	# allows the user to easily edit the generated config manually, 
+	# allows the user to easily edit the generated config manually,
 	# partly because it is easier to implement.
 	ic.type = (ic_key == 'method-cache' ? 'method-cache' : 'set-associative') if ic_policy
 	ic.type = 'none' if ic_policy == 'no'
 	ic.policy = ic_policy if ic_policy and ic_policy != 'no'
 	# Set the associativiy whenever we set a policy
 	ic.associativity = ic_assoc if ic_policy
-      
+
 	# Update the code memory area
         cma = @config.memory_areas.by_name('code')
         cma.cache = (ic.type != 'none' ? ic : nil) if cma

@@ -442,6 +442,11 @@ module PML
       data['mapsto']
     end
 
+    def instructions=(instruction_list)
+      data['instructions'] = instruction_list.data
+      @instructions= instruction_list
+    end
+
     # Returns a list of instruction bundles (array of instructions per bundle)
     def bundles
       bundle = 0

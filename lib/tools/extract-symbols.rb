@@ -14,6 +14,8 @@ class ExtractSymbols
     @text_symbols = {}
     @stats_address_count = 0
     @instruction_addresses = {}
+    @instructions = {}
+
   end
   def add_symbol(label,address)
     @text_symbols[label]=address
@@ -21,6 +23,9 @@ class ExtractSymbols
   end
   def add_instruction_address(label,index,address)
     (@instruction_addresses[label]||={})[index]=address
+  end
+  def add_instruction(label,address, data)
+    (@instructions[label]||={})[address] = data
   end
   def analyze
     elf = @options.binary_file
@@ -83,6 +88,33 @@ class ExtractSymbols
           addr += instruction.size
           ins_index += 1
         end
+
+        # Replace INLINEASM instructions
+        instruction_data = []
+        block.instructions.each do |instruction|
+          if instruction.opcode != 'INLINEASM'
+            instruction_data.push(instruction.data)
+          else # INLINEASM instruction
+            addr, size = instruction.address, instruction.size
+            debug(@options,:elf) {
+              "Replace INLINEASM block of size #{size} in #{function.label}"
+            }
+            while size > 0
+              instr = @instructions[function.label][addr]
+              assert("Could not disassemble address @ #{addr} #{instr}") { instr != nil  and !instr['invalid']}
+              instruction_data.push(instr)
+              addr += instr['size']
+              size -= instr['size']
+            end
+            assert("Could not resolve INLINEASM block") {
+              size == 0
+            }
+          end
+        end
+        # Reorder instructions
+        instruction_data.each_with_index { |e, idx| e['index'] = idx }
+        ## Update instruction list
+        block.instructions = InstructionList.new(block, instruction_data)
       end
     end
     @pml

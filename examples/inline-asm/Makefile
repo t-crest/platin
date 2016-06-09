@@ -1,7 +1,14 @@
-all: system.pml
+all: test system.pml
 
-test: test.c
-	patmos-clang test.c -mserialize=test.pml -o test
+main main.pml: main.c
+	patmos-clang $< -mserialize=main.pml -o main
 
-system.pml: test.pml test
-	platin extract-symbols -i test.pml test -o $@
+system.pml: main
+	platin extract-symbols -i main.pml main -o $@
+
+test: main main.pml system.pml
+	platin wcet -i main.pml --binary main --disable-ait
+	platin wcet -i system.pml --binary main --disable-ait
+
+
+.PHONY: system.pml

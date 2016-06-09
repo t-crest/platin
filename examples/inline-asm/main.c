@@ -4,4 +4,5 @@ int main() {
             "mfs  $r1 = $s6;"
             "add  $r1 = $r1, $r5;"
             );
+
 }
