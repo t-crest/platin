@@ -76,10 +76,7 @@ class PMLDoc
   def analysis_entry(options)
     gcfg_name = options.analysis_entry.dup
     if gcfg_name.slice!(/^GCFG:/)
-      gcfg = global_cfgs.by_name(gcfg_name)
-      if gcfg
-        gcfg.entry_node
-      end
+      global_cfgs.by_name(gcfg_name)
     else
       machine_functions.by_label(options.analysis_entry)
     end

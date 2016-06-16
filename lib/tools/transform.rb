@@ -137,7 +137,6 @@ class TransformTool
     if options.analysis_entry.start_with? "GCFG:"
       return pml # FIXME GCFG
     end
-    p options.transform_action
     machine_entry = pml.machine_functions.by_label(options.analysis_entry)
     unless machine_entry
       raise Exception.new("Analysis Entry #{options.analysis_entry} not found")

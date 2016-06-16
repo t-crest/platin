@@ -109,7 +109,7 @@ class ExtractSymbols
             }
             while size > 0
               instr = @instructions[function.label][addr]
-              assert("Could not disassemble address @ #{addr} #{instr}") { instr != nil  and !instr['invalid']}
+              assert("Could not disassemble address @ #{addr} '#{instr}'") { instr != nil  and !instr['invalid']}
               instruction_data.push(instr)
               addr += instr['size']
               size -= instr['size']

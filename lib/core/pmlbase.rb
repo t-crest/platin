@@ -144,6 +144,7 @@ module PML
     def length ; list.length ; end
     def size ; length ; end
     def empty? ; list.empty? ; end
+    def include?(x) ; list.include?(x) ; end
     def [](index) ; list[index]; end
     def each(&block) ; list.each(&block) ; end
     def each_with_index(&block) ; list.each_with_index(&block) ; end

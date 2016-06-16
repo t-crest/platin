@@ -37,6 +37,13 @@ module PML
       add(Function.new(self, data, @opts))
     end
 
+    def invalidate(scope)
+      # FIXME: generalize this mechanism
+      if scope == :instructions
+        @instruction_by_address = nil
+      end
+    end
+
     # return [rs, unresolved]
     # rs .. list of (known functions) reachable from name
     # unresolved .. set of callsites that could not be resolved
@@ -361,8 +368,23 @@ module PML
     def entry_block
       blocks.first
     end
+    def exit_block
+      # Try to find an exit node. If there is more than one, just fail
+      ret = blocks.select {|b|
+        b.successors.length == 0
+      }.to_a
+      assert("No unique exit block for #{name} (#{ret})") { ret.length != 0 }
+      ret.first
+    end
     def address
       data['address'] || blocks.first.address
+    end
+    def end_address
+      addr = blocks.last.address
+      if blocks.last.instructions.last
+        addr = [blocks.last.instructions.last.address, addr].max
+      end
+      addr
     end
     def label
       data[@labelkey] || blocks.first.label
@@ -445,7 +467,8 @@ module PML
 
     def instructions=(instruction_list)
       data['instructions'] = instruction_list.data
-      @instructions= instruction_list
+      @instructions = instruction_list
+      function.module.invalidate(:instructions)
     end
 
     # Returns a list of instruction bundles (array of instructions per bundle)
@@ -1024,10 +1047,19 @@ private
       @machine_function = @rg.get_function(:dst)
 
       @name = data['name']
-      @entry_block = @function.blocks.by_name(data['entry-block'])
-      @exit_block  = @function.blocks.by_name(data['exit-block'])
+      if data['entry-block']
+        @entry_block = @function.blocks.by_name(data['entry-block'])
+      else
+        @entry_block = @function.entry_block
+      end
+      if data['entry-block']
+        @exit_block  = @function.blocks.by_name(data['exit-block'])
+      else
+        @exit_block = @function.exit_block
+      end
+
       assert("Could not find ABB Entry/Exit Blocks #{data}") {
-        @entry_block != nil and @exit_block != nil
+        @entry_block != nil or @exit_block != nil
       }
       @regions = nil
     end
@@ -1109,15 +1141,21 @@ private
 
   # Class representing PML GCFG Node
   class GCFGNode < PMLObject
-    attr_reader :abb, :successors, :predecessors
+    attr_reader :abb, :successors, :predecessors, :frequency_variable, :force_control_flow
     def initialize(abbs, data)
       set_yaml_repr(data)
-      @abb  = abbs[data['abb']]
+      @abb  = abbs[data['abb']] if data['abb']
+      @cost = data['cost']
+      assert("Each GCFG node must either have a cost or an associated abb #{data}") { @abb or @cost }
+      @frequency_variable = data['frequency-variable'].to_sym if data['frequency-variable']
+      @force_control_flow = (data['forces-control-flow'] != false)
+      #p [@abb, @cost, @frequency_variable, @force_control_flow]
       @predecessors = []
     end
     def function
       abb.machine_function
     end
+
     def connect(nodes)
       @successors = data['successors'].map {|i| nodes[i] }
       data['successors'].each {|i|
@@ -1156,7 +1194,7 @@ private
   # Global Control Flow Graph wrapper
   class GCFG < PMLObject
     include QNameObject
-    attr_reader :name, :level, :blocks, :nodes, :entry_node
+    attr_reader :name, :level, :blocks, :nodes, :entry_nodes, :exit_nodes
 
     def initialize(data, relation_graphs)
       set_yaml_repr(data)
@@ -1166,11 +1204,11 @@ private
       @blocks = ABBList.new(relation_graphs, data['blocks'])
       @nodes  = GCFGNodeList.new(@blocks, data['nodes'])
       # Find the Entry Edge into the system
-      entry_nodes = @nodes.select {|e| e.predecessors.length == 0 }
-      unless entry_nodes.length == 1
-        die("GCFG #{name} is not well formed, multiple entries")
+      @entry_nodes = data['entry-nodes'].map {|idx| @blocks[idx] }
+      @exit_nodes = data['entry-nodes'].map {|idx| @blocks[idx] }
+      unless entry_nodes.length > 0 and exit_nodes.length > 0
+        die("GCFG #{name} is not well formed, no entry, no exit")
       end
-      @entry_node = entry_nodes[0]
     end
 
     def to_s

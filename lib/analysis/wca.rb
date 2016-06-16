@@ -158,7 +158,7 @@ class WCA
         next if v.kind_of?(IPETEdgeSCA)         # Stack-Cache Cost (graph-based)
         ref = nil
         if v.kind_of?(IPETEdge)
-          if v.level != :gcfg
+           if v.level != :gcfg
             die("ILP cost: source is not a block") unless v.source.kind_of?(Block)
             die("ILP cost: target is not a block") unless v.target == :exit || v.target.kind_of?(Block)
             ref = ContextRef.new(v.cfg_edge, Context.empty)
@@ -195,13 +195,17 @@ class WCA
       }
       puts "Function Profile:"
       mf_costs = Hash.new {|x| 0}
+      mf_freq = Hash.new
       freqs.each do |v,freq|
+        if freq > 0
+          mf_freq[v.function] = [mf_freq[v.function] || freq, freq].min
+        end
         mf_costs[v.function] += freq * builder.ilp.get_cost(v)
       end
-      mf_costs.sort_by { |v,freq|
-        [v.function || machine_entry, -freq]
+      mf_costs.sort_by { |v,cost|
+        [v.function || machine_entry, -cost]
       }.each { |v,cost|
-        puts "  #{v}: #{freqs[v]} (#{cost} cyc)"
+        puts "  #{v}: '#{mf_freq[v]}' (#{cost} cyc)"
       }
     end
     report

@@ -113,9 +113,7 @@ class ExtractSymbols
 
           if current_function
             instr = build_instruction(addr, cond, size, instr, args)
-            if instr
-              extractor.add_instruction(current_label, addr, instr)
-            end
+            extractor.add_instruction(current_label, addr, instr)
           end
         else
           assert("objdump parsing failed: #{line}") {
