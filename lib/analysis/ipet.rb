@@ -661,6 +661,8 @@ class IPETBuilder
     #################################################
     ## The ABB Super Structure is now fully in place.
     toplevel_abbs = abb_is_toplevel.select { |abb, is_toplevel| is_toplevel }.keys
+    microstructure_abbs = abb_is_toplevel.select { |abb, is_toplevel| not is_toplevel }.keys
+
 
     # Now, we insert the actual machine code blocks and functions into the ILP.
     # Super Structure: set of reachable machine basic blocks
@@ -702,7 +704,13 @@ class IPETBuilder
       add_calls_in_block(bb)
     end
 
-    # FIXME: force the ABB micro structure
+    # Force the ABB microstructure frequencies
+    microstructure_abbs.each do |abb|
+      mc_entry_block = abb.get_region(:dst).entry_node
+      lhs = @mc_model.block_frequency(mc_entry_block)
+      rhs = abb_frequency[abb].map {|edge| [edge, -1]}
+      @ilp.add_constraint(lhs+rhs, "equal", 0, "ABB_Microstructre_#{abb.qname}", :gcfg)
+    end
 
     # assert("Function calls are not allowed into the super structure") {
     #   (abb_mfs & gcfg_mfs).length == 0
