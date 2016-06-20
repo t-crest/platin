@@ -63,12 +63,12 @@ class WCA
     builder = IPETBuilder.new(@pml, @options, ilp)
 
     # flow facts
+    ff_levels = @options.gcfg_analysis ? ["machinecode", "gcfg"] : ["gcfg"]
     flowfacts = @pml.flowfacts.filter(@pml,
                                      @options.flow_fact_selection,
                                      @options.flow_fact_srcs,
-                                     ["machinecode"],
+                                     ff_levels,
                                      true)
-    ff_levels = ["machinecode"]
 
     # Build IPET using costs from @pml.arch
     builder.build(entry, flowfacts) do |edge|

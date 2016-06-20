@@ -112,6 +112,10 @@ module PML
       # markers are special global program points
       if data['marker']
         return Marker.new(data['marker'])
+      elsif data['gcfg']
+        return GlobalProgramPoint.new(data['gcfg'], data)
+      elsif data['frequency-variable']
+        return FrequencyVariable.new(data['frequency-variable'])
       end
 
       # otherwise, it is a function or part of a function
@@ -235,6 +239,44 @@ module PML
     end
     def to_pml_ref
       { 'marker' => @name }
+    end
+  end
+
+  # Markers; we use @ as marker prefix
+  class FrequencyVariable < ProgramPoint
+    attr_reader :name
+    def initialize(name, data=nil)
+      assert("FrequencyVariable#new: name must not be nil") { ! name.nil? }
+      @name = name
+      @qname = "$#{@name}"
+      set_yaml_repr(nil)
+    end
+    def function
+      # no function associated with marker
+      nil
+    end
+    def to_s
+      @qname
+    end
+    def to_pml_ref
+      { 'frequency-variable' => @name }
+    end
+  end
+
+  # The Global Program Point is valid at all places in a execution
+  class GlobalProgramPoint < ProgramPoint
+    attr_reader :name
+    def initialize(name, data = nil)
+      @name = name
+      @qname = "__global_#{name}"
+      set_yaml_repr(data)
+    end
+    def function
+      # no function associated with marker
+      nil
+    end
+    def to_s
+      @qname
     end
   end
 
@@ -1150,9 +1192,9 @@ private
       @abb  = abbs[data['abb']] if data['abb']
       @cost = data['cost']
       assert("Each GCFG node must either have a cost or an associated abb #{data}") { @abb or @cost }
-      @frequency_variable = data['frequency-variable'].to_sym if data['frequency-variable']
+      @frequency_variable = FrequencyVariable.new(data['frequency-variable']) if data['frequency-variable']
       @force_control_flow = (data['forces-control-flow'] != false)
-      @sources = (data['sources'] || []).map{|x| x.to_sym}
+      @sources = (data['sources'] || []).map{|x| ProgramPoint.from_pml(nil, x)}
       @predecessors = []
       @is_source, @is_sink = nil, nil
     end

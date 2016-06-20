@@ -1,4 +1,3 @@
-
 #
 # platin toolkit
 #
@@ -253,7 +252,7 @@ module PML
     end
 
     def FlowFact.from_pml(pml, data)
-      mod = pml.functions_for_level(data['level'])
+      mod = pml.toplevel_objects_for_level(data['level'])
       scope = ContextRef.from_pml(mod,data['scope'])
       lhs = TermList.new(data['lhs'].map { |t| Term.from_pml(mod,t) })
       attrs = ProgramInfoObject.attributes_from_pml(pml, data)
@@ -458,7 +457,7 @@ module PML
       @ppref.programpoint
     end
     def ValueFact.from_pml(pml, data)
-      fs = pml.functions_for_level(data['level'])
+      fs = pml.toplevel_objects_for_level(data['level'])
       ValueFact.new(ContextRef.from_pml(fs,data['program-point']),
                     data['variable'], data['width'],
                     ValueSet.from_pml(fs,data['values']),
@@ -533,7 +532,7 @@ module PML
       @data['profile'] = @profile.data if @data
     end
     def TimingEntry.from_pml(pml, data)
-      fs = pml.functions_for_level(data['level'])
+      fs = pml.toplevel_objects_for_level(data['level'])
       profile = data['profile'] ? Profile.from_pml(fs, data['profile']) : nil
       TimingEntry.new(ContextRef.from_pml(fs,data['scope']), data['cycles'],
                       profile,

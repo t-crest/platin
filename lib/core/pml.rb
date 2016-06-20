@@ -82,14 +82,15 @@ class PMLDoc
     end
   end
 
-
-  def functions_for_level(level)
-    if level == 'bitcode'
+  def toplevel_objects_for_level(level)
+    if level == 'gcfg'
+      global_cfgs
+    elsif level == 'bitcode'
       bitcode_functions
     elsif level == 'machinecode'
       machine_functions
     else
-      raise Exception.new("Unsupported representation level: #{level}")
+      raise Exception.new("Unsupported representation level: '#{level}'")
     end
   end
 

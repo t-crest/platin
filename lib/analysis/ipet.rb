@@ -276,9 +276,22 @@ class IPETModel
     ilp.add_constraint(function_frequency(entry_function),"equal",1,"structural_entry",:structural)
   end
 
-  def add_gcfg_entry_constraint()
-    @ilp.add_variable(:gcfg_entry, :gcfg)
-    @ilp.add_constraint([[:gcfg_entry, 1]], "equal", 1, "structural_gcfg_entry", :structural)
+  def add_gcfg_entry_constraint(gcfg)
+    @entry_variable = FrequencyVariable.new("gcfg_entry")
+    @wcet_variable = GlobalProgramPoint.new(gcfg.name)
+
+    @ilp.add_variable(@entry_variable, :gcfg)
+    @ilp.add_variable(@wcet_variable, :gcfg)
+    @ilp.add_constraint([[@entry_variable, 1]], "equal", 1, "structural_gcfg_entry", :structural)
+  end
+
+  def add_gcfg_wcet_constraint()
+    # The gcfg_wcet_constraint assigns the global worst case response
+    # time to the @wcet_variable, this variable will hold the maximal
+    # cost for this ILP.
+    lhs = [[@wcet_variable, -1]]
+    rhs = @ilp.costs.map {|e, f| [e, f] }
+    @ilp.add_constraint(lhs+rhs, "equal", 0, "__global_wcet_equality", :gcfg)
   end
 
   # frequency of function is equal to sum of all callsite frequencies
@@ -312,19 +325,18 @@ class IPETModel
     ## Frequency variables can be connected as sources
     incoming += node.sources.map {|v| [v, -1] }
     ## All source blocks (entry nodes) share one variable
-    incoming += [[:gcfg_entry, -1]] if node.is_source
+    incoming += [[@entry_variable, -1]] if node.is_source
 
     outgoing = sum_outgoing(node)
     outgoing.push [IPETEdge.new(node,:exit,level),1] if node.is_sink
 
     ilp.add_constraint(incoming+outgoing,"equal",0,"gcfg_structural_#{node.qname}",:structural)
 
+    # If this variable has a frequency variable, we copy its value into the frequency variable
     if node.frequency_variable
       ilp.add_constraint([[node.frequency_variable, -1]] + outgoing,
                          "equal",0,"frequency_variable_#{node.frequency_variable}_#{node.qname}",
                          :structural)
-
-      ilp.add_constraint([[node.frequency_variable, 1]], "equal", 1, "adsadas", :debug)
 
     end
   end
@@ -387,6 +399,10 @@ class IPETModel
     sum_incoming(loop.loopheader,factor).reject { |edge,factor|
       edge.backedge?
     }
+  end
+
+  def global_program_point(pp, factor=1)
+    [[pp, factor]]
   end
 
   # returns all edges, plus all return blocks
@@ -521,7 +537,7 @@ class IPETBuilder
     end
 
     # bitcode variables and markers
-    if @bc_model
+    if @bc_models
       add_bitcode_variables(mf_function)
     end
 
@@ -637,7 +653,7 @@ class IPETBuilder
     end
 
     # Now we have all edge variables on the super level constructed
-    @gcfg_model.add_gcfg_entry_constraint()
+    @gcfg_model.add_gcfg_entry_constraint(gcfg)
     gcfg.nodes.each do |node|
       @gcfg_model.add_gcfg_node_constraint(node)
     end
@@ -656,7 +672,7 @@ class IPETBuilder
 
       abb_mbbs += abb.get_region(:dst).nodes
       # Add inner structure of ABB
-      build_gcfg_abb(abb, abb_outgoing_flow[abb], flowfacts, opts, cost_block)
+      build_gcfg_abb(abb, abb_outgoing_flow[abb], cost_block)
     }
 
     # Super Structure: what functions are activated from the super structure?
@@ -694,10 +710,18 @@ class IPETBuilder
 
     add_global_call_constraints()
 
+    # Assign the global worst case time to wcet_variable
+    @gcfg_model.add_gcfg_wcet_constraint
+
+    flowfacts.each { |ff|
+      debug(@options, :ipet) { "adding flowfact #{ff}" }
+      add_flowfact(ff)
+    }
+
     die("Bitcode contraints are not implemented yet") if @bc_model
   end
 
-  def build_gcfg_abb(abb, outgoing_abb_flux, flowfacts, opts, cost_block)
+  def build_gcfg_abb(abb, outgoing_abb_flux, cost_block)
     # Restrict the influx of our ABB Region
     region = abb.get_region(:dst)
 
@@ -737,7 +761,7 @@ class IPETBuilder
   # Add flowfacts
   #
   def add_flowfact(ff, tag = :flowfact)
-    model = ff.level == "machinecode" ? @mc_model : @bc_model
+    model = {'machinecode'=> @mc_model, 'bitcode'=> @mc_model, 'gcfg'=> @gcfg_model}[ff.level]
     raise Exception.new("IPETBuilder#add_flowfact: cannot add bitcode flowfact without using relation graph") unless model
     unless ff.rhs.constant?
       warn("IPETBuilder#add_flowfact: cannot add flowfact with symbolic RHS to IPET: #{ff}")
@@ -751,7 +775,7 @@ class IPETBuilder
         return false
       end
     end
-    lhs, rhs = [], ff.rhs.to_i
+    lhs, rhs = [], []
     ff.lhs.each { |term|
       unless term.context.empty?
         warn("IPETBuilder#add_flowfact: context sensitive program points not supported: #{ff}")
@@ -763,6 +787,8 @@ class IPETBuilder
         lhs += model.block_frequency(term.programpoint, term.factor)
       elsif term.programpoint.kind_of?(Edge)
         lhs += model.edge_frequency(term.programpoint, term.factor)
+      elsif term.programpoint.kind_of?(FrequencyVariable)
+        lhs += [[term.programpoint, term.factor]]
       elsif term.programpoint.kind_of?(Instruction)
         # XXX: exclusively used in refinement for now
         warn("IPETBuilder#add_flowfact: references instruction, not block or edge: #{ff}")
@@ -777,16 +803,37 @@ class IPETBuilder
       return false
     end
     if scope.programpoint.kind_of?(Function)
-      lhs += model.function_frequency(scope.programpoint, -rhs)
+      rhs += model.function_frequency(scope.programpoint, -ff.rhs.to_i)
     elsif scope.programpoint.kind_of?(Loop)
-      lhs += model.sum_loop_entry(scope.programpoint, -rhs)
+      rhs += model.sum_loop_entry(scope.programpoint, -ff.rhs.to_i)
+    elsif scope.programpoint.kind_of?(GlobalProgramPoint)
+      rhs += model.global_program_point(scope.programpoint, -1)
     else
       raise Exception.new("IPETBuilder#add_flowfact: Unknown scope type: #{scope.programpoint.class}")
     end
+
     begin
       name = "ff_#{@ffcount+=1}"
-      ilp.add_constraint(lhs, ff.op, 0, name, tag)
-      name
+      # Additional Flow Fact Transformations: Minimal/Maximal Interarrival Time
+      if ff.op.end_with?("interarrival-time")
+        # The Interarrival time is the right hand side constant
+        iat = ff.rhs.to_i
+        maximal = {"maximal-interarrival-time"=>true,
+                   "minimal-interarrival-time"=> false}[ff.op]
+        # The LHS for arrival times are arrival counts, therefore, we
+        # multiply them with the interrarrival time. For MAXIAT we
+        # need the negative sum:
+        # K * vec(LHS) - SPAN <= K  (MINIAT)
+        # SPAN - K * vec(LHS) <= K  (MAXIAT)
+
+        lhs = lhs.map {|v, f| [v, (maximal ? -iat : iat) * f]}
+        rhs = rhs.map {|v, f| [v, (maximal ? -1   : 1  ) * f]}
+        const = maximal ? 0 : iat
+        ilp.add_constraint(lhs + rhs, "less-equal", const, name, tag)
+      else
+        ilp.add_constraint(lhs + rhs, ff.op, 0, name, tag)
+      end
+        name
     rescue UnknownVariableException => detail
       debug(@options,:transform) { "Skipping constraint: #{detail}" }
       debug(@options,:ipet) { "Skipping constraint: #{detail}" }
