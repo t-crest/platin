@@ -186,10 +186,11 @@ module PML
     attr_reader :source, :target
     def initialize(source, target, data = nil, level = nil)
       assert("PML::Edge: source and target need to be blocks, not #{source.class}/#{target.class}") {
-        source.kind_of?(Block) && (target.nil? || target.kind_of?(Block))
+        (source.kind_of?(Block) && (target.nil? || target.kind_of?(Block))) \
+        || (source.kind_of?(GCFGNode) && (target.nil? || target.kind_of?(GCFGNode)))
       }
       assert("PML::Edge: source and target function need to match") {
-        target.nil? || source.function == target.function || level == :gcfg}
+        level == :gcfg || target.nil? || source.function == target.function}
 
       @source, @target = source, target
       @name = "#{source.name}->#{target ? target.name : '' }"
@@ -209,8 +210,8 @@ module PML
       "#{source.to_s}->#{target ? target.qname : 'exit'}"
     end
     def to_pml_ref
-      pml = { 'function' => source.function.name,
-        'edgesource' => source.name }
+      pml = { 'edgesource' => source.name }
+      pml['function'] = source.function.name if source.kind_of?(Block)
       pml['edgetarget'] = target.name if target
       pml
     end
@@ -1117,6 +1118,7 @@ private
       }
       @regions[level]
     end
+
     def to_s
       "#{@function.name}/#{@name}"
     end
@@ -1141,7 +1143,8 @@ private
 
   # Class representing PML GCFG Node
   class GCFGNode < PMLObject
-    attr_reader :abb, :successors, :predecessors, :frequency_variable, :force_control_flow
+    attr_reader :abb, :successors, :predecessors, :cost, :frequency_variable, :force_control_flow, :sources
+    attr_accessor :is_source, :is_sink
     def initialize(abbs, data)
       set_yaml_repr(data)
       @abb  = abbs[data['abb']] if data['abb']
@@ -1149,11 +1152,12 @@ private
       assert("Each GCFG node must either have a cost or an associated abb #{data}") { @abb or @cost }
       @frequency_variable = data['frequency-variable'].to_sym if data['frequency-variable']
       @force_control_flow = (data['forces-control-flow'] != false)
-      #p [@abb, @cost, @frequency_variable, @force_control_flow]
+      @sources = (data['sources'] || []).map{|x| x.to_sym}
       @predecessors = []
+      @is_source, @is_sink = nil, nil
     end
     def function
-      abb.machine_function
+      abb.machine_function if abb
     end
 
     def connect(nodes)
@@ -1161,12 +1165,16 @@ private
       data['successors'].each {|i|
         nodes[i].add_predecessor(self)
       }
+      @is_sink = true if @successors.empty?
     end
     def index
       data['index']
     end
     def to_s
-      "GCFG:N#{index}(#{@abb.name})"
+      "GCFG:N#{index}(#{@abb.name if abb})"
+    end
+    def name
+      to_s
     end
     def qname
       "GCFG:N#{index}"
@@ -1177,12 +1185,12 @@ private
 
     ### MOCKUP like Block
     def edge_to(target)
-      Edge.new(self.abb.get_region(:dst).exit_node, target.abb.get_region(:dst).entry_node, nil, :gcfg)
+     Edge.new(self, target, nil, :gcfg)
     end
 
     # edge to the function exit
     def edge_to_exit
-      Edge.new(self.abb.get_region(:dst).exit_node, nil, :gcfg)
+     Edge.new(self, nil, :gcfg)
     end
 
     protected
@@ -1204,11 +1212,29 @@ private
       @blocks = ABBList.new(relation_graphs, data['blocks'])
       @nodes  = GCFGNodeList.new(@blocks, data['nodes'])
       # Find the Entry Edge into the system
-      @entry_nodes = data['entry-nodes'].map {|idx| @blocks[idx] }
-      @exit_nodes = data['entry-nodes'].map {|idx| @blocks[idx] }
+      @entry_nodes = data['entry-nodes'].map {|idx| @nodes[idx] }
+      @exit_nodes = data['entry-nodes'].map {|idx| @nodes[idx] }
+      # Mark them as source/sink
+      @entry_nodes.each {|n| n.is_source = true }
+      @exit_nodes.each { |n| n.is_sink = true}
       unless entry_nodes.length > 0 and exit_nodes.length > 0
         die("GCFG #{name} is not well formed, no entry, no exit")
       end
+    end
+
+    def get_entry
+      entry = {'machinecode' => [], 'bitcode'=> []}
+
+      @entry_nodes.each {|node|
+        if node.abb and not entry['bitcode'].include?(node.abb.function)
+          entry['bitcode'].push(node.abb.function)
+          entry['machinecode'].push(node.abb.machine_function)
+        end
+      }
+      assert("Multiple Entry functions, are not supported yet #{entry}") {
+        entry['bitcode'].length == 1
+      }
+      entry
     end
 
     def to_s

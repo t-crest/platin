@@ -26,14 +26,12 @@ class WCA
     ilp = LpSolveILP.new(@options) unless ilp
 
     if entry_label.start_with?("GCFG:")
-      gcfg_entry = @pml.analysis_entry(@options)
-      machine_entry = gcfg_entry.abb.get_region(:dst).entry_node
-      entry = {'gcfg'=> gcfg_entry,
-               'machinecode'=>gcfg_entry,
-               'bitcode'=>gcfg_entry,
-              }
+      entry = @pml.analysis_entry(@options)
       @options.gcfg_analysis = true
+      # FIXME: support for multiple machine_entries
+      machine_entry = entry.get_entry()['machinecode'].first
     else
+      # FIXME: Construct a trivial wrapping GCFG Node for the entry node
       machine_entry = @pml.machine_functions.by_label(entry_label)
       bitcode_entry = @pml.bitcode_functions.by_name(entry_label)
       entry = { 'machinecode' => machine_entry,
@@ -124,8 +122,9 @@ class WCA
     end
 
     # run cache analyses
+    # FIXME
     ca = CacheAnalysis.new(builder.refinement['machinecode'], @pml, @options)
-    ca.analyze(entry['machinecode'], builder)
+    #ca.analyze(entry['machinecode'], builder)
 
     # END: remove me soon
 
@@ -164,7 +163,7 @@ class WCA
             ref = ContextRef.new(v.cfg_edge, Context.empty)
             edgefreqs[ref] = freq
           else
-            ref = ContextRef.new(v.cfg_edge, Context.empty)
+            ref = ContextRef.new(v.gcfg_edge, Context.empty)
             edgefreqs[ref] = freq
           end
         elsif v.kind_of?(MemoryEdge)
@@ -183,13 +182,14 @@ class WCA
       profile.add(ProfileEntry.new(ref, edgecost, edgefreqs[ref], totalcosts[ref]))
     }
     ca.summarize(@options, freqs, Hash[freqs.map{ |v,freq| [v,freq * builder.ilp.get_cost(v)] }], report)
+
     if @options.verbose
       puts "Cycles: #{cycles}"
       puts "Edge Profile:"
       freqs.map { |v,freq|
         [v,freq * builder.ilp.get_cost(v)]
       }.sort_by { |v,freq|
-        [v.function || machine_entry, -freq]
+        [v.to_s, -freq]
       }.each { |v,cost|
         puts "  #{v}: #{freqs[v]} (#{cost} cyc)"
       }
@@ -197,15 +197,21 @@ class WCA
       mf_costs = Hash.new {|x| 0}
       mf_freq = Hash.new
       freqs.each do |v,freq|
-        if freq > 0
+        if not v.kind_of?(Symbol) and v.function and freq > 0
           mf_freq[v.function] = [mf_freq[v.function] || freq, freq].min
         end
-        mf_costs[v.function] += freq * builder.ilp.get_cost(v)
+        if v.kind_of?(Symbol)
+          mf_costs[v] += freq * builder.ilp.get_cost(v)
+          mf_freq[v] = freq
+        else
+          p [v.function, v, freq]
+          mf_costs[v.function || machine_entry] += freq * builder.ilp.get_cost(v)
+        end
       end
       mf_costs.sort_by { |v,cost|
-        [v.function || machine_entry, -cost]
+        [v.to_s, -cost]
       }.each { |v,cost|
-        puts "  #{v}: '#{mf_freq[v]}' (#{cost} cyc)"
+        puts "  #{v}: #{mf_freq[v].to_i} (#{cost} cyc)"
       }
     end
     report
