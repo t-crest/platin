@@ -31,13 +31,15 @@ class WCA
       # FIXME: support for multiple machine_entries
       machine_entry = entry.get_entry()['machinecode'].first
     else
-      # FIXME: Construct a trivial wrapping GCFG Node for the entry node
-      machine_entry = @pml.machine_functions.by_label(entry_label)
-      bitcode_entry = @pml.bitcode_functions.by_name(entry_label)
-      entry = { 'machinecode' => machine_entry,
-                'bitcode' => bitcode_entry,
-              }
-      @options.gcfg_analysis = false
+      entry = GCFG.new({'level'=>'bitcode',
+                       'name'=>'dummy-gcfg',
+                       'entry-nodes'=>[0],
+                       'exit-nodes'=>[0],
+                       'nodes'=> [{'index'=>0,  'function'=>entry_label, 'successors'=>[]}]},
+                      @pml)
+
+      machine_entry = entry.get_entry()['machinecode'].first
+      @options.gcfg_analysis = true
     end
 
     # PLAYING: VCFGs
@@ -196,9 +198,10 @@ class WCA
           }.reduce(0) {|acc, n| acc + n[1]}
 
           combined_cost = edges.map {|v, freq| freq * ilp.get_cost(v) }.inject(0, :+)
+          next if (combined_cost + activation_count) == 0
 
-          printf "%20s:", (label ? label : "<unspecified>")
-          printf " %4d cycles", combined_cost
+          printf "%42s:", (label ? label : "<unspecified>")
+          printf " %6d cycles", combined_cost
           printf " %4d activations", activation_count if print_activations
           printf "\n"
         }
@@ -211,7 +214,7 @@ class WCA
       grouped_report_by(builder.ilp, freqs, 'function')
       if @options.verbosity_level > 1
         puts "\nEdge Profile:"
-        freqs.sort_by { |v,freq| freq }.each { |v, freq|
+        freqs.sort_by { |v,freq| [v.to_s, freq] }.each { |v, freq|
           printf "%4d cyc %4d freq  %s\n", freq * builder.ilp.get_cost(v), freq, v
         }
       end

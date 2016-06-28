@@ -513,7 +513,7 @@ class IPETBuilder
     @entry = entry
     @markers = {}
     @call_edges = []
-    @mf_function_callers = {}
+    @mf_function_callers = Hash.new {|hsh, key| hsh[key] = [] }
     @options[:mbb_variables] = opts[:mbb_variables]
 
     # build refinement to prune infeasible blocks and calls
@@ -592,7 +592,7 @@ class IPETBuilder
       current_call_edges = @mc_model.add_callsite(cs, call_targets)
       current_call_edges.each do |ce|
         ce.static_context = cs.function
-        (@mf_function_callers[ce.target] ||= []).push(ce)
+        @mf_function_callers[ce.target].push(ce)
       end
       @call_edges += current_call_edges
     end
@@ -619,10 +619,17 @@ class IPETBuilder
     abb_outgoing_flow = Hash.new {|hsh, key| hsh[key] = [] }
     abb_frequency = Hash.new {|hsh, key| hsh[key] = [] }
     abb_is_toplevel = Hash.new
+    # Super Structure: what functions are activated from the super structure?
+    abb_mfs = Set.new
 
     gcfg.nodes.each do |node|
       if node.frequency_variable
         @ilp.add_variable(node.frequency_variable, :gcfg)
+      end
+      # If this GCFG Node/State encloses a function (not an ABB), we
+      # add it to the set of discovered machine functions
+      if node.function
+        abb_mfs += get_functions_reachable_from_function(node.function)
       end
 
       # Every Super-structure edge has a variable
@@ -630,6 +637,12 @@ class IPETBuilder
         @ilp.add_variable(ipet_edge, :gcfg)
         cost = 0
         cost += node.cost if node.cost
+        # If the State activates a function, the state frequency (sum
+        # of edges) is added to the function call count.
+        if node.function
+          @mf_function_callers[node.function].push(ipet_edge)
+        end
+
         # Not all GCFG Edges have a cost that stems from its internal
         # structure. There are some exceptions:
         # - GCFG Nodes can reference no block
@@ -698,13 +711,11 @@ class IPETBuilder
     }
 
     # Super Structure: what functions are activated from the super structure?
-    abb_mfs = Set.new
     abb_mbbs.each {|bb|
          bb.callsites.each { |cs|
            next if @mc_model.infeasible?(cs.block)
            @mc_model.calltargets(cs).each { |f|
              assert("calltargets(cs) is nil") { ! f.nil? }
-             funcs = get_functions_reachable_from_function(f)
              abb_mfs += get_functions_reachable_from_function(f)
            }
          }
@@ -761,11 +772,16 @@ class IPETBuilder
     edges[:exit] = {:in => [], :out => []}
 
 
+    x = [0, 0]
     @mc_model.each_intra_abb_edge(abb) { |ipet_edge|
       @ilp.add_variable(ipet_edge)
-      if not @options.ignore_instruction_timing
+      # Edges to the ABB-Exit are not assigned a cost, since the cost is added on the ABB/State level:
+      p [ipet_edge.source, ipet_edge.target, region.exit_node]
+      if not @options.ignore_instruction_timing and ipet_edge.source != region.exit_node
 	cost = cost_block.call(ipet_edge)
 	@ilp.add_cost(ipet_edge, cost)
+        x[0] += 1
+        x[1] += cost
       end
       # Collect edges
       edges[ipet_edge.source][:out].push(ipet_edge)
@@ -773,6 +789,7 @@ class IPETBuilder
       # Set the static context
       ipet_edge.static_context = abb
     }
+    p [abb, abb.get_region(:dst).nodes.length, x]
     # The first block is activated as often, as the ABB is left
     edges[region.entry_node][:in] = outgoing_abb_flux
     edges.each {|bb, e|

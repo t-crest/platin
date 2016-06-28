@@ -50,7 +50,7 @@ class PMLDoc
     @machine_functions = FunctionList.new(@data['machine-functions'] || [], :labelkey => 'mapsto')
     @relation_graphs   = RelationGraphList.new(@data['relation-graphs'] || [],
                                                @bitcode_functions, @machine_functions)
-    @global_cfgs       = GCFGList.new(@data['global-cfgs'] || [], @relation_graphs)
+    @global_cfgs       = GCFGList.new(@data['global-cfgs'] || [], self)
 
 
     # usually read-only sections, but might be modified by pml-config

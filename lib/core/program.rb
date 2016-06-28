@@ -411,13 +411,8 @@ module PML
     def entry_block
       blocks.first
     end
-    def exit_block
-      # Try to find an exit node. If there is more than one, just fail
-      ret = blocks.select {|b|
-        b.successors.length == 0
-      }.to_a
-      assert("No unique exit block for #{name} (#{ret})") { ret.length != 0 }
-      ret.first
+    def exit_blocks
+      blocks.select {|b| b.may_return? }.to_a
     end
     def address
       data['address'] || blocks.first.address
@@ -1098,10 +1093,12 @@ private
       else
         @entry_block = @function.entry_block
       end
-      if data['entry-block']
+      if data['exit-block']
         @exit_block  = @function.blocks.by_name(data['exit-block'])
       else
-        @exit_block = @function.exit_block
+        exit_blocks = @function.exit_blocks
+        assert("No unique exit block for #{name} (#{exit_blocks})") { exit_blocks.length == 1 }
+        @exit_block = exit_blocks.first
       end
 
       assert("Could not find ABB Entry/Exit Blocks #{data}") {
@@ -1153,11 +1150,15 @@ private
                             rg_region.exit_node.get_block(type))
       }
 
-      assert("ABB is not well formed; No Single-Entry/Single-Exit region all levels") {
-        rg_nodes_lhs = Set.new rg_region.nodes.map{|n| n.get_block(:src)}
-        rg_nodes_rhs = Set.new rg_region.nodes.map{|n| n.get_block(:dst)}
 
-        rg_nodes_lhs == Set.new(bitcode_region.nodes) and rg_nodes_rhs == Set.new(machine_region.nodes)
+      assert("ABB is not well formed; No Single-Entry/Single-Exit region all levels") {
+        rg_nodes_lhs = Set.new rg_region.nodes.map{|n| n.get_block(:src)} - [nil]
+        bitcode_nodes = Set.new bitcode_region.nodes
+
+        rg_nodes_rhs  = Set.new rg_region.nodes.map{|n| n.get_block(:dst)} - [nil]
+        machine_nodes = Set.new machine_region.nodes
+
+        rg_nodes_lhs == bitcode_nodes and rg_nodes_rhs == machine_nodes
       }
       @regions = {
         :rg => rg_region,
@@ -1176,8 +1177,8 @@ private
     extend PMLListGen
     pml_list(:GCFGNode, [:index], [])
 
-    def initialize(abbs, nodes)
-      @list = nodes.map { |n| GCFGNode.new(abbs, n) }
+    def initialize(functions, abbs, nodes)
+      @list = nodes.map { |n| GCFGNode.new(functions, abbs, n) }
       @list.each_with_index {|item, index|
         assert("Invalid Indices of GCFG Edges; Nodes are sorted") {
           item.index == index
@@ -1191,21 +1192,19 @@ private
 
   # Class representing PML GCFG Node
   class GCFGNode < PMLObject
-    attr_reader :abb, :successors, :predecessors, :cost, :frequency_variable, :force_control_flow, :sources
+    attr_reader :abb, :function, :cost, :successors, :predecessors, :frequency_variable, :force_control_flow, :sources
     attr_accessor :is_source, :is_sink
-    def initialize(abbs, data)
+    def initialize(functions, abbs, data)
       set_yaml_repr(data)
       @abb  = abbs[data['abb']] if data['abb']
+      @function  = functions.by_label(data['function']) if data['function']
       @cost = data['cost']
-      assert("Each GCFG node must either have a cost or an associated abb #{data}") { @abb or @cost }
+      assert("Each GCFG node must either have a cost or an associated abb #{data}") { (!!@abb ^ !!@function) or @cost }
       @frequency_variable = FrequencyVariable.new(data['frequency-variable']) if data['frequency-variable']
       @force_control_flow = (data['forces-control-flow'] != false)
       @sources = (data['sources'] || []).map{|x| ProgramPoint.from_pml(nil, x)}
       @predecessors = []
       @is_source, @is_sink = nil, nil
-    end
-    def function
-      abb.machine_function if abb
     end
 
     def connect(nodes)
@@ -1252,13 +1251,14 @@ private
     include QNameObject
     attr_reader :name, :level, :blocks, :nodes, :entry_nodes, :exit_nodes
 
-    def initialize(data, relation_graphs)
+    def initialize(data, pml)
       set_yaml_repr(data)
       @name = data['name']
+      @pml = pml
       @qname = "GCFG:#{name}"
       @level = data['level']
-      @blocks = ABBList.new(relation_graphs, data['blocks'])
-      @nodes  = GCFGNodeList.new(@blocks, data['nodes'])
+      @blocks = ABBList.new(pml.relation_graphs, data['blocks'] || [])
+      @nodes  = GCFGNodeList.new(pml.machine_functions, @blocks, data['nodes'])
       # Find the Entry Edge into the system
       @entry_nodes = data['entry-nodes'].map {|idx| @nodes[idx] }
       @exit_nodes = data['exit-nodes'].map {|idx| @nodes[idx] }
@@ -1277,7 +1277,13 @@ private
         if node.abb and not entry['bitcode'].include?(node.abb.function)
           entry['bitcode'].push(node.abb.function)
           entry['machinecode'].push(node.abb.machine_function)
+        elsif node.function
+          bf = @pml.relation_graphs.by_name(node.function.name, :dst).get_function(:src)
+          entry['bitcode'].push(bf)
+          entry['machinecode'].push(node.function)
+
         end
+
       }
       assert("Multiple Entry functions, are not supported yet #{entry}") {
         entry['bitcode'].length == 1
@@ -1296,9 +1302,9 @@ private
     pml_name_index_list(:GCFG, [],[])
 
     # customized constructor
-    def initialize(data, relation_graphs)
+    def initialize(data, pml)
       @list = data.map { |g|
-        GCFG.new(g, relation_graphs)
+        GCFG.new(g, pml)
       }
       set_yaml_repr(data)
       build_index
