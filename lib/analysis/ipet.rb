@@ -139,10 +139,13 @@ end
 # - edges between relation graph nodes
 class IPETEdge
   attr_reader :qname,:source,:target, :level
+  attr_writer :static_context
   def initialize(edge_source, edge_target, level)
     @source,@target,@level = edge_source, edge_target, level.to_sym
     arrow = {:bitcode => "~>", :machinecode => "->", :gcfg=>"+>"}[@level]
     @qname = "#{@source.qname}#{arrow}#{:exit == @target ? 'exit' : @target.qname}"
+    # The context is a object that has a static_context attribute (e.g., an Atomic Basic Block)
+    @static_context = nil
   end
   def backedge?
     return false if target == :exit
@@ -176,6 +179,20 @@ class IPETEdge
   def relation_graph_edge?
     source.kind_of?(RelationNode) || target.kind_of?(RelationNode)
   end
+  def static_context(key = nil)
+    return @static_context.static_context[key] if @static_context and key
+    return @static_context.static_context if @static_context
+    return nil
+  end
+  def is_entry_in_static_context(key)
+    if key == "function"
+      return self.source == function.entry_block if function
+    elsif key == "abb"
+      return gcfg_edge?
+    end
+
+  end
+
   def to_s
     arrow = {:bitcode => "~>", :machinecode => "->", :gcfg=>"+>"}[@level]
     "#{@source}#{arrow}#{:exit == @target ? 'exit' : @target}"
@@ -238,6 +255,7 @@ class IPETModel
     }
     c = ilp.add_constraint(terms, op, rhs_const, name, tag)
   end
+
 
   # FIXME: we do not have information on predicated calls ATM.
   # Therefore, we use <= instead of = for call equations
@@ -528,12 +546,13 @@ class IPETBuilder
 
   def add_function_with_blocks(mf_function, cost_block)
     # machinecode variables + cost
-    @mc_model.each_edge(mf_function) do |edge|
-      @ilp.add_variable(edge, :machinecode)
+    @mc_model.each_edge(mf_function) do |ipet_edge|
+      @ilp.add_variable(ipet_edge, :machinecode)
       if not @options.ignore_instruction_timing
-	cost = cost_block.call(edge)
-	@ilp.add_cost(edge, cost)
+	cost = cost_block.call(ipet_edge)
+	@ilp.add_cost(ipet_edge, cost)
       end
+      ipet_edge.static_context = mf_function
     end
 
     # bitcode variables and markers
@@ -572,7 +591,7 @@ class IPETBuilder
 
       current_call_edges = @mc_model.add_callsite(cs, call_targets)
       current_call_edges.each do |ce|
-        debug(@options, :calls) { "Add function call: #{cs} -> #{ce.target}" }
+        ce.static_context = cs.function
         (@mf_function_callers[ce.target] ||= []).push(ce)
       end
       @call_edges += current_call_edges
@@ -618,6 +637,7 @@ class IPETBuilder
         #   does not introduce jumps between two machine basic blocks
         #   -> no extra cost.
         source_abb = ipet_edge.source.abb
+        ipet_edge.static_context = source_abb
         source_block = ipet_edge.source.abb.get_region(:dst).exit_node if source_abb
         target_block = if ipet_edge.target == :exit
           :exit
@@ -727,7 +747,7 @@ class IPETBuilder
     }
 
     die("Bitcode contraints are not implemented yet") if @bc_model
-  end
+ end
 
   def build_gcfg_abb(abb, outgoing_abb_flux, cost_block)
     # Restrict the influx of our ABB Region
@@ -750,6 +770,8 @@ class IPETBuilder
       # Collect edges
       edges[ipet_edge.source][:out].push(ipet_edge)
       edges[ipet_edge.target][:in].push(ipet_edge)
+      # Set the static context
+      ipet_edge.static_context = abb
     }
     # The first block is activated as often, as the ABB is left
     edges[region.entry_node][:in] = outgoing_abb_flux

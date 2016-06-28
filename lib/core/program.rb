@@ -432,6 +432,9 @@ module PML
     def label
       data[@labelkey] || blocks.first.label
     end
+    def static_context
+      return {'function'=> label}
+    end
     def add_node(node)
       @blocks.add(node)
     end
@@ -1105,6 +1108,9 @@ private
         @entry_block != nil or @exit_block != nil
       }
       @regions = nil
+    end
+    def static_context
+      return { 'subtask'=>data['subtask'], 'function'=>data['function'], 'abb'=>data['name'] }
     end
     def qname
       @name

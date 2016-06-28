@@ -185,28 +185,36 @@ class WCA
 
     if @options.verbose
       puts "Cycles: #{cycles}"
-      puts "Edge Profile:"
-      freqs.map { |v,freq|
-        [v,freq * builder.ilp.get_cost(v)]
-      }.sort_by { |v,freq|
-        [v.to_s, -freq]
-      }.each { |v,cost|
-        puts "  #{v}: #{freqs[v]} (#{cost} cyc)"
-      }
-      puts "Function Profile:"
-      mf_costs = Hash.new {|x| 0}
-      mf_freq = Hash.new
-      freqs.each do |v,freq|
-        if not v.kind_of?(Symbol) and v.function and freq > 0
-          mf_freq[v.function] = [mf_freq[v.function] || freq, freq].min
-        end
-        mf_costs[v.function || machine_entry] += freq * builder.ilp.get_cost(v)
+      def grouped_report_by(ilp, freqs, key, print_activations=true)
+        groups = freqs.group_by { |v, freq|
+          v.static_context(key) if v.kind_of?(IPETEdge)
+        }
+
+        groups.map {|label, edges|
+          activation_count = edges.select {|v, freq|
+            v.is_entry_in_static_context(key) if v.kind_of?(IPETEdge)
+          }.reduce(0) {|acc, n| acc + n[1]}
+
+          combined_cost = edges.map {|v, freq| freq * ilp.get_cost(v) }.inject(0, :+)
+
+          printf "%20s:", (label ? label : "<unspecified>")
+          printf " %4d cycles", combined_cost
+          printf " %4d activations", activation_count if print_activations
+          printf "\n"
+        }
       end
-      mf_costs.sort_by { |v,cost|
-        [v.to_s, -cost]
-      }.each { |v,cost|
-        puts "  #{v}: #{mf_freq[v].to_i} (#{cost} cyc)"
-      }
+      puts "Subtask Profile:"
+      grouped_report_by(builder.ilp, freqs, 'subtask', false)
+      puts "ABB Profile:"
+      grouped_report_by(builder.ilp, freqs, 'abb')
+      puts "Function Profile:"
+      grouped_report_by(builder.ilp, freqs, 'function')
+      if @options.verbosity_level > 1
+        puts "\nEdge Profile:"
+        freqs.sort_by { |v,freq| freq }.each { |v, freq|
+          printf "%4d cyc %4d freq  %s\n", freq * builder.ilp.get_cost(v), freq, v
+        }
+      end
     end
     report
   end
