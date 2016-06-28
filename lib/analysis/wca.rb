@@ -200,13 +200,7 @@ class WCA
         if not v.kind_of?(Symbol) and v.function and freq > 0
           mf_freq[v.function] = [mf_freq[v.function] || freq, freq].min
         end
-        if v.kind_of?(Symbol)
-          mf_costs[v] += freq * builder.ilp.get_cost(v)
-          mf_freq[v] = freq
-        else
-          p [v.function, v, freq]
-          mf_costs[v.function || machine_entry] += freq * builder.ilp.get_cost(v)
-        end
+        mf_costs[v.function || machine_entry] += freq * builder.ilp.get_cost(v)
       end
       mf_costs.sort_by { |v,cost|
         [v.to_s, -cost]

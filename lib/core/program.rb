@@ -1207,7 +1207,7 @@ private
       data['successors'].each {|i|
         nodes[i].add_predecessor(self)
       }
-      @is_sink = true if @successors.empty?
+      @is_sink = @successors.empty?
     end
     def index
       data['index']
@@ -1255,7 +1255,7 @@ private
       @nodes  = GCFGNodeList.new(@blocks, data['nodes'])
       # Find the Entry Edge into the system
       @entry_nodes = data['entry-nodes'].map {|idx| @nodes[idx] }
-      @exit_nodes = data['entry-nodes'].map {|idx| @nodes[idx] }
+      @exit_nodes = data['exit-nodes'].map {|idx| @nodes[idx] }
       # Mark them as source/sink
       @entry_nodes.each {|n| n.is_source = true }
       @exit_nodes.each { |n| n.is_sink = true}
