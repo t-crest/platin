@@ -35,7 +35,7 @@ class WCA
                        'name'=>'dummy-gcfg',
                        'entry-nodes'=>[0],
                        'exit-nodes'=>[0],
-                       'nodes'=> [{'index'=>0,  'function'=>entry_label, 'successors'=>[]}]},
+                       'nodes'=> [{'index'=>0,  'function'=>entry_label}]},
                       @pml)
 
       machine_entry = entry.get_entry()['machinecode'].first

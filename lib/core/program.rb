@@ -1192,31 +1192,62 @@ private
 
   # Class representing PML GCFG Node
   class GCFGNode < PMLObject
-    attr_reader :abb, :function, :cost, :successors, :predecessors, :frequency_variable, :force_control_flow, :sources
+    attr_reader :abb, :function, :cost, :frequency_variable, :microstructure
     attr_accessor :is_source, :is_sink
     def initialize(functions, abbs, data)
       set_yaml_repr(data)
+      # What does this GCFG Connect to -> What object is executed upon
+      # the execution of this Node?
       @abb  = abbs[data['abb']] if data['abb']
       @function  = functions.by_label(data['function']) if data['function']
       @cost = data['cost']
       assert("Each GCFG node must either have a cost or an associated abb #{data}") { (!!@abb ^ !!@function) or @cost }
+
+      # An Node can have an attached frequency variable that catches
+      # its (total) activation count.
       @frequency_variable = FrequencyVariable.new(data['frequency-variable']) if data['frequency-variable']
-      @force_control_flow = (data['forces-control-flow'] != false)
-      @sources = (data['sources'] || []).map{|x| ProgramPoint.from_pml(nil, x)}
-      @predecessors = []
+
+      # GCFG nodes can also belong to the microstructrue. This means
+      # that their referenced object is included and activated from
+      # another ABB. This node only accounts for the execution of the
+      # referenced object.
+      @microstructure = !!data['microstructure']
+
+      # Is the node a source/sink on the global level
       @is_source, @is_sink = nil, nil
+
+      # GCFGNode#connect needs a @predecessor hash
+      @predecessors = {:local => [], :global => []}
     end
 
     def connect(nodes)
-      @successors = data['successors'].map {|i| nodes[i] }
-      data['successors'].each {|i|
-        nodes[i].add_predecessor(self)
+      # GCFG Node Successors: (thread-)local, (system-) global
+      @successors = {:local => (data['local-successors'] || []).map {|i| nodes[i] },
+                     :global=> (data['global-successors']|| []).map {|i| nodes[i] }}
+      @successors.each {|level, succs|
+        succs.each { |successor|
+          successor.add_predecessor(self, level)
+        }
       }
-      @is_sink = @successors.empty?
     end
+
+    def successors(level=nil)
+      if level == nil
+        return @successors[:local] + @successors[:global]
+      end
+      return @successors[level]
+    end
+    def predecessors(level=nil)
+      if level == nil
+        return @predecessors[:local] + @predecessors[:global]
+      end
+      return @predecessors[level]
+    end
+
     def index
       data['index']
     end
+
     def to_s
       "GCFG:N#{index}(#{@abb.name if abb})"
     end
@@ -1225,9 +1256,6 @@ private
     end
     def qname
       "GCFG:N#{index}"
-    end
-    def may_return?
-      return @successors.empty?
     end
 
     ### MOCKUP like Block
@@ -1241,8 +1269,8 @@ private
     end
 
     protected
-    def add_predecessor(node)
-      @predecessors.push(node)
+    def add_predecessor(node, level)
+      @predecessors[level].push(node)
     end
   end
 
