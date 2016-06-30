@@ -75,6 +75,11 @@ class LpSolveILP < ILP
       lp.set_col_name(ix, "v_#{ix}")
       lp.set_int(ix, true)
     end
+    sos1.each { |name, sos|
+      vars, card = sos
+      variables = vars.map { |v| [index(v), 1] }
+      lp.add_SOS(cleanup_name(name), 1, 1, variables.to_a)
+    }
     lp
   end
   # set LP ovjective

@@ -395,7 +395,6 @@ class IPETModel
   end
 
 
-
 end # end of class IPETModel
 
 
@@ -529,10 +528,35 @@ class GCFGIPETModel
       [IPETEdge.new(p, node, :gcfg), factor]
     }
     incoming.push([@entry_variable, factor]) if node.is_source
-    # FIXME: Interrupt returns
-    incoming += node.predecessors(:global).map {|p|
-      [IPETEdge.new(p, node, :gcfg), factor]
-    }
+
+    # Suspend and Return Edges (especially IRQ returns) This is a
+    # tricky one!. The Problem with our ABB super structure is, that
+    # interrupts generate loops at computation blocks, where the
+    # resumes are additional edges into the computation block.
+    ##
+    # This is double accounting of blocks (especially the deeper
+    # calling hierarchies underneath the ABB are bad). Therefore, we
+    # only count for resume edges, if no corresponding suspend edge is
+    # present.
+    resumes = node.predecessors(:global).map {|p| [IPETEdge.new(p, node, :gcfg), -1] }
+    suspends = node.successors(:global).map {|p| [IPETEdge.new(node, p, :gcfg), 1] }
+
+    if resumes.length > 0
+      debug(builder.options, :ipet_global) {
+        "Add IRQ Resume edges: #{resumes} - #{suspends}"
+      }
+      sos_name = "SOS_#{node.qname}"
+      pos = (sos_name + "_additional_resumes").to_sym
+      neg = (sos_name + "_negative_slack").to_sym
+      ilp.add_sos1(sos_name, [pos, neg])
+
+      # pos - neg = (resume - suspend) = 0;
+      ilp.add_constraint([[pos, 1], [neg, -1]] + resumes + suspends, "equal", 0,
+                         "resume_#{node.qname}", :structural)
+      ilp.add_constraint([[pos, 1]] + resumes , "less-equal", 0,
+                         "resume_ilp_happy_#{node.qname}", :structural)
+      incoming += [[pos, factor]]
+    end
 
     incoming
   end

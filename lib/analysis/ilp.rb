@@ -141,10 +141,11 @@ end
 
 # ILP base class (FIXME)
 class ILP
-  attr_reader :variables, :constraints, :costs, :options, :vartype, :solvertime
+  attr_reader :variables, :constraints, :costs, :options, :vartype, :solvertime, :sos1
   # variables ... array of distinct, comparable items
   def initialize(options = nil)
     @solvertime = 0
+    @sos1 = {}
     @options = options
     @variables = []
     @indexmap = {}
@@ -221,6 +222,16 @@ class ILP
     add_indexed_constraint({index => -1},"less-equal",0,"non_negative_v_#{index}",Set.new([:positive]))
     index
   end
+
+  def add_sos1(name, variables, card=1, vartype= :machinecode)
+    raise Exception.new("Duplicate SOS: #{name}") if @sos1[name]
+    @sos1[name] = [variables, card]
+\
+    variables.each { |v|
+      add_variable(v, vartype)
+    }
+  end
+
   # add constraint:
   # terms_lhs .. [ [v,c] ]
   # op        .. "equal" or "less-equal"
