@@ -208,11 +208,12 @@ end
 
 class IPETModel
   attr_reader :builder, :ilp, :level
-  attr_accessor :sum_incoming_override, :sum_outgoing_override
+  attr_accessor :block_frequency_override
   def initialize(builder, ilp, level)
     @builder, @ilp, @level = builder, ilp, level
     @sum_incoming_override = {}
     @sum_outgoing_override = {}
+    @block_frequency_override = {}
   end
 
   def infeasible?(block, context = Context.empty)
@@ -340,6 +341,9 @@ class IPETModel
   end
 
   def block_frequency(block, factor=1)
+    if @block_frequency_override.has_key?(block)
+      return @block_frequency_override[block].map {|e| [e, factor] }
+    end
     if block.successors.empty? # return exit edge
       [[IPETEdge.new(block,:exit,level),factor]]
     else
@@ -352,7 +356,7 @@ class IPETModel
   end
 
   def sum_incoming(block, factor=1)
-    if @sum_incoming_override[block]
+    if @sum_incoming_override.has_key?(block)
       return @sum_incoming_override[block].map {|e| [e, factor] }
     end
     block.predecessors.map { |pred|
@@ -361,7 +365,7 @@ class IPETModel
   end
 
   def sum_outgoing(block, factor=1)
-    if @sum_outgoing_override[block]
+    if @sum_outgoing_override.has_key?(block)
       return @sum_outgoing_override[block].map {|e| [e, factor] }
     end
 
@@ -404,16 +408,40 @@ class GCFGIPETModel
 
   # returns all edges, plus all return blocks
   def each_edge(gcfg_node)
-    gcfg_node.successors.each do |n_gcfg_node|
-      yield IPETEdge.new(gcfg_node,n_gcfg_node,level)
-    end
+    [:local, :global].each {|level|
+      gcfg_node.successors(level).each do |n_gcfg_node|
+        yield [IPETEdge.new(gcfg_node,n_gcfg_node,:gcfg), level]
+      end
+    }
     if gcfg_node.is_sink
-      yield IPETEdge.new(gcfg_node,:exit,level)
+      yield [IPETEdge.new(gcfg_node,:exit,:gcfg), :global]
     end
   end
   def edge_costs(gcfg_ipet_edge, cost_block)
     # Costs for the Edge between two GCFG Nodes
-    return 1
+    src, dst = gcfg_ipet_edge.source, gcfg_ipet_edge.target
+    cost = 0
+    cost += src.cost if src.cost
+    # Microstructure edges add no additional costs
+    return cost if src.microstructure
+
+    if src.abb
+      gcfg_ipet_edge.static_context = src.abb
+
+      source_block = src.abb.get_region(:dst).exit_node
+      target_block = if dst == :exit
+                       :exit
+                     elsif dst.abb
+                       dst.abb.get_region(:dst).entry_node
+                     else
+                       :idle
+                     end
+      if not builder.options.ignore_instruction_timing
+        mc_edge = IPETEdge.new(source_block, target_block, :machinecode)
+        cost += cost_block.call(mc_edge)
+      end
+    end
+    return cost
   end
 
   def add_entry_constraint(gcfg)
@@ -467,6 +495,9 @@ class GCFGIPETModel
     edges = Hash.new { |hsh, key| hsh[key]={:in=>[], :out=>[]} }
     each_intra_abb_edge(abb) { |ipet_edge|
       @ilp.add_variable(ipet_edge)
+      debug(builder.options, :ipet) {
+        "Intra-ABB Edge: #{ipet_edge}"
+      }
       # Edges to the ABB-Exit are not assigned a cost, since the cost is added on the ABB/State level:
       if not builder.options.ignore_instruction_timing and ipet_edge.target != :exit
 	cost = cost_block.call(ipet_edge)
@@ -502,6 +533,7 @@ class GCFGIPETModel
     incoming += node.predecessors(:global).map {|p|
       [IPETEdge.new(p, node, :gcfg), factor]
     }
+
     incoming
   end
 
@@ -682,7 +714,7 @@ class IPETBuilder
       end
 
       # 1.2 Every Super-structure edge has a variable
-      @gcfg_model.each_edge(node) { |ipet_edge|
+      @gcfg_model.each_edge(node) { |ipet_edge, level|
         @ilp.add_variable(ipet_edge, :gcfg)
         edge_cost = @gcfg_model.edge_costs(ipet_edge, cost_block)
         ipet_edge.static_context = node.abb if node.abb
@@ -718,13 +750,23 @@ class IPETBuilder
       microstructure = nodes.map { |x| x.microstructure }
       next if microstructure.all?
       assert("Microstructure state of #{abb} is inconsistent") { not microstructure.any? }
+
+      # Add blocks within the ABB
       basic_blocks, abb_freq = @gcfg_model.add_abb_contents(abb, cost_block)
+
+      # ABB Freq is the list of edges that have ABB.entry_node as source
+      # If this node has an ABB attached, the block frequency of the
+      region = abb.get_region(:dst)
+      @mc_model.block_frequency_override[region.entry_node] = abb_freq
+      if region.entry_node != region.exit_node
+        @mc_model.block_frequency_override[region.exit_node] = abb_freq
+      end
       debug(@options, :ipet_global) { "Added contents: #{abb} (#{basic_blocks} blocks)" }
 
       gcfg_mfs.add(abb.function)
 
       # 3.2 What functions are called from this ABB?
-      abb.get_region(:dst).nodes.each { |bb|
+      region.nodes.each { |bb|
         gcfg_mbbs.add(bb)
         bb.callsites.each { |cs|
           next if @mc_model.infeasible?(cs.block)
@@ -758,28 +800,9 @@ class IPETBuilder
     ##############################################
     # All structures/objects/functions are in place
 
-    # 4. Add missing super-structure connections
-    #    4.1 Calls from embedded functions
-    #    4.2 Calls from super-structure ABBs
-    #    4.3 Add call constraints
-    #    4.4 Global timimg variable
-
-    full_mfs.each do |mf|
-      add_calls_in_function(mf, forbidden = gcfg_mfs)
-    end
-    #    4.2 Calls from super-structure ABBs
-    gcfg_mbbs.each do |bb|
-      add_calls_in_block(bb)
-    end
-    #    4.3 Add call constraints
-    add_global_call_constraints()
-
-    #    4.4 Global timimg variable
-    @gcfg_model.add_total_time_variable
-
-    # 5. Connect the node frequencies to the underlying object
-    #    5.1 to ABB frequencies
-    #    5.2 to function frequencies
+    # 4. Connect the node frequencies to the underlying object
+    #    4.1 to ABB frequencies
+    #    4.2 to function frequencies
     abb_to_nodes.each {|abb, nodes|
       mc_entry_block = abb.get_region(:dst).entry_node
       lhs = @mc_model.block_frequency(mc_entry_block)
@@ -789,7 +812,7 @@ class IPETBuilder
       }
       @ilp.add_constraint(lhs+rhs, "equal", 0, "abb_influx_#{abb.qname}", :gcfg)
     }
-    #    5.2 to function frequencies
+    #    4.2 to function frequencies
     function_to_nodes.each {|mf, nodes|
       mc_entry_block = mf.entry_block
       lhs = @mc_model.block_frequency(mc_entry_block)
@@ -799,6 +822,27 @@ class IPETBuilder
       }
       @ilp.add_constraint(lhs+rhs, "equal", 0, "abb_influx_#{mf.qname}", :gcfg)
     }
+
+
+    # 5. Add missing super-structure connections
+    #    5.1 Calls from embedded functions
+    #    5.2 Calls from super-structure ABBs
+    #    5.3 Add call constraints
+    #    5.4 Global timimg variable
+
+    full_mfs.each do |mf|
+      add_calls_in_function(mf, forbidden = gcfg_mfs)
+    end
+    #    5.2 Calls from super-structure ABBs
+    gcfg_mbbs.each do |bb|
+      add_calls_in_block(bb)
+    end
+    #    5.3 Add call constraints
+    add_global_call_constraints()
+
+    #    5.4 Global timimg variable
+    @gcfg_model.add_total_time_variable
+
 
     flowfacts.each { |ff|
       debug(@options, :ipet) { "adding flowfact #{ff}" }
