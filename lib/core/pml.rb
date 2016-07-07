@@ -73,12 +73,22 @@ class PMLDoc
     @valuefacts
   end
 
-  def analysis_entry(options)
+  def analysis_gcfg(options)
     gcfg_name = options.analysis_entry.dup
     if gcfg_name.slice!(/^GCFG:/)
       global_cfgs.by_name(gcfg_name)
+    elsif @global_cfgs.by_name(options.analysis_entry)
+      @global_cfgs.by_name(options.analysis_entry)
     else
       machine_functions.by_label(options.analysis_entry)
+      entry = GCFG.new({'level'=>'bitcode',
+                        'name'=> options.analysis_entry,
+                        'entry-nodes'=>[0],
+                        'exit-nodes'=>[0],
+                        'nodes'=> [{'index'=>0,  'function'=>options.analysis_entry}]},
+                       self)
+      @global_cfgs.push(entry)
+      entry
     end
   end
 

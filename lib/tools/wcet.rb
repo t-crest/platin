@@ -74,7 +74,7 @@ class WcetTool
   def run_analysis
     # Comment out for transformed GCFG
     prepare_pml
-    unless pml.analysis_entry(options)
+    unless pml.analysis_gcfg(options)
       die("Analysis entry '#{options.analysis_entry}' not found (check for typos, inlined functions or code not reachable from program entry)")
     end
     options.use_trace_facts = true if options.compare_trace_facts

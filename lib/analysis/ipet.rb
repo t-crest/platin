@@ -582,13 +582,12 @@ class IPETBuilder
   def initialize(pml, options, ilp = nil)
     @ilp = ilp
     @mc_model = IPETModel.new(self, @ilp, 'machinecode')
+    @gcfg_model = GCFGIPETModel.new(self, @ilp, @mc_model, 'gcfg')
+
     if options.use_relation_graph
       @bc_model = IPETModel.new(self, @ilp, 'bitcode')
       @pml_level = { :src => 'bitcode', :dst => 'machinecode' }
       @relation_graph_level = { 'bitcode' => :src, 'machinecode' => :dst }
-    end
-    if options.gcfg_analysis
-      @gcfg_model = GCFGIPETModel.new(self, @ilp, @mc_model, 'gcfg')
     end
 
     @ffcount = 0
@@ -621,6 +620,8 @@ class IPETBuilder
 
   # Build basic IPET structure.
   # yields basic blocks, so the caller can compute their cost
+  # This Function is only used in the flow fact transformation
+  # entry = {'machinecode'=> foo/1, 'bitcode'=> foo}
   def build(entry, flowfacts, opts = { :mbb_variables =>  false }, &cost_block)
     assert("IPETBuilder#build called twice") { ! @entry }
     @entry = entry
@@ -631,11 +632,6 @@ class IPETBuilder
 
     # build refinement to prune infeasible blocks and calls
     build_refinement(@entry, flowfacts)
-
-    if @options.gcfg_analysis
-      build_gcfg(entry, flowfacts, opts, cost_block)
-      return
-    end
 
     mf_functions = get_functions_reachable_from_function(@entry['machinecode'])
     mf_functions.each { |mf_function |
@@ -669,7 +665,7 @@ class IPETBuilder
     end
 
     # bitcode variables and markers
-    if @bc_models
+    if @bc_model
       add_bitcode_variables(mf_function)
     end
 
@@ -722,7 +718,15 @@ class IPETBuilder
 
 
   # Build basic IPET Structure, when a GCFG is present
-  def build_gcfg(gcfg, flowfacts, opts, cost_block)
+  def build_gcfg(gcfg, flowfacts, opts={ :mbb_variables =>  false }, &cost_block)
+    assert("IPETBuilder#build called twice") { ! @entry }
+    @call_edges = []
+    @mf_function_callers = Hash.new {|hsh, key| hsh[key] = [] }
+    @options[:mbb_variables] = opts[:mbb_variables]
+
+    # build refinement to prune infeasible blocks and calls
+    build_refinement(gcfg, flowfacts)
+
     # For each function and each ABB we collect the nodes that activate it.
     abb_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
     function_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
@@ -881,7 +885,7 @@ class IPETBuilder
   # Add flowfacts
   #
   def add_flowfact(ff, tag = :flowfact)
-    model = {'machinecode'=> @mc_model, 'bitcode'=> @mc_model, 'gcfg'=> @gcfg_model}[ff.level]
+    model = {'machinecode'=> @mc_model, 'bitcode'=> @bc_model, 'gcfg'=> @gcfg_model}[ff.level]
     raise Exception.new("IPETBuilder#add_flowfact: cannot add bitcode flowfact without using relation graph") unless model
     unless ff.rhs.constant?
       warn("IPETBuilder#add_flowfact: cannot add flowfact with symbolic RHS to IPET: #{ff}")
@@ -901,6 +905,7 @@ class IPETBuilder
         warn("IPETBuilder#add_flowfact: context sensitive program points not supported: #{ff}")
         return false
       end
+
       if term.programpoint.kind_of?(Function)
         lhs += model.function_frequency(term.programpoint, term.factor)
       elsif term.programpoint.kind_of?(Block)
@@ -964,10 +969,10 @@ private
 
   # build the control-flow refinement (which provides additional
   # flow information used to prune the callgraph/CFG)
-  def build_refinement(gcfg, ffs)
+  def build_refinement(gcfg_or_hash, ffs)
     @refinement = {}
 
-    entry = gcfg.get_entry
+    entry = gcfg_or_hash.kind_of?(Hash) ? gcfg_or_hash: gcfg_or_hash.get_entry
 
     entry.each { |level,functions|
       cfr = ControlFlowRefinement.new(functions[0], level)
@@ -1027,6 +1032,7 @@ private
     return unless @pml.relation_graphs.has_named?(machine_function.name, :dst)
     rg = @pml.relation_graphs.by_name(machine_function.name, :dst)
     return unless rg.accept?(@options)
+
     bitcode_function = rg.get_function(:src)
     bitcode_function.blocks.each { |block|
       @bc_model.add_block_constraint(block)

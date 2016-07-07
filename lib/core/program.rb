@@ -1319,6 +1319,35 @@ private
       entry
     end
 
+    def reachable_functions(level, only_called_functions=false)
+      all_functions = (level == "bitcode") ? @pml.bitcode_functions : @pml.machine_functions
+      superstructure_funcs = Set.new
+      @nodes.each {|node|
+        if node.abb
+          superstructure_funcs.add( level == "bitcode" ? node.abb.function :  node.abb.machine_function)
+        elsif node.function
+          if level == "machinecode"
+            superstructure_funcs.add(node.function)
+          else
+            bf = @pml.relation_graphs.by_name(node.function.name, :dst).get_function(:src)
+            superstructure_funcs.add(bf)
+          end
+        end
+      }
+      rs, unresolved = Set.new, Set.new
+      superstructure_funcs.each {|f|
+        a, b = all_functions.reachable_from(f.name)
+        rs |= a
+        unresolved |= b
+      }
+
+      if only_called_functions
+        rs -= superstructure_funcs
+      end
+
+      return [rs, unresolved]
+    end
+
     def to_s
       @qname
     end

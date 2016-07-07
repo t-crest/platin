@@ -134,11 +134,8 @@ class TransformTool
     end
 
     # Analysis Entry
-    if options.analysis_entry.start_with? "GCFG:"
-      return pml # FIXME GCFG
-    end
-    machine_entry = pml.machine_functions.by_label(options.analysis_entry)
-    unless machine_entry
+    gcfg = pml.analysis_gcfg(options)
+    unless gcfg
       raise Exception.new("Analysis Entry #{options.analysis_entry} not found")
     end
 
@@ -149,18 +146,19 @@ class TransformTool
     if options.transform_action == "copy"
       fft.copy(flowfacts)
     elsif options.transform_action == "up" || options.transform_action == "down"
-      source_level, target_level, target_analysis_entry =
+      source_level, target_level =
         if options.transform_action == "up"
-          ["machinecode", "bitcode", pml.bitcode_functions.by_name(options.analysis_entry)]
+          ["machinecode", "bitcode"]
         else
-          ["bitcode", "machinecode", machine_entry]
+          ["bitcode", "machinecode"]
         end
       if flowfacts.any? { |ff| ff.level == source_level }
-        fft.transform(target_analysis_entry, flowfacts, target_level)
+        fft.transform(gcfg, flowfacts, target_level)
       end
     elsif options.transform_action == "simplify"
       # Ignore symbolic loop bounds for now
-      fft.simplify(machine_entry, flowfacts)
+      # FIXME: USE GCFG
+      fft.simplify(gcfg, flowfacts)
     else
       die("Bad transformation action --transform-action=#{options.transform_action}")
     end

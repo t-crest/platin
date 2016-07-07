@@ -371,14 +371,9 @@ class FlowFactTransformation
                new_ffs.length) if options.stats
   end
 
-  def transform(target_analysis_entry, flowfacts, target_level)
-
-    target_functions = if target_level == "machinecode"
-                         @pml.machine_functions
-		       else
-		         @pml.bitcode_functions
-		       end
-    rs, unresolved = target_functions.reachable_from(target_analysis_entry.name)
+  def transform(gcfg, flowfacts, target_level)
+    rs, unresolved = gcfg.reachable_functions(target_level)
+    target_analysis_entries = gcfg.get_entry[target_level]
 
     # partition local flow-facts by entry (if possible), rest is transformed in global scope
     flowfacts_by_entry = { }
@@ -394,7 +389,9 @@ class FlowFactTransformation
         end
 	next unless rs.include?(transform_entry)
       end
-      transform_entry = target_analysis_entry unless transform_entry
+
+      # FIXME: Multiple Entries
+      # transform_entry = target_analysis_entry unless transform_entry
       (flowfacts_by_entry[transform_entry] ||= []).push(ff)
     }
     selected_flowfacts = flowfacts_by_entry.values.flatten(1)
@@ -432,7 +429,7 @@ class FlowFactTransformation
         new_ffs += extract_flowfacts(new_constraints, entries, target_level).select { |ff|
           # FIXME: for now, we do not export interprocedural flow-facts relative to a function other than the entry,
           # because this is not supported by any of the WCET analyses
-          r = ff.local? || ff.scope.function == target_analysis_entry
+          r = ff.local? || target_analysis_entries.include?(ff.scope.function)
           unless r
             debug(options, :transform) { "Skipping unsupported flow fact scope of transformed flow fact #{ff}: "+
                  "(function: #{ff.scope.function}, local: #{ff.local?})" }

@@ -25,22 +25,8 @@ class WCA
     ilp = GurobiILP.new(@options) if @options.use_gurobi
     ilp = LpSolveILP.new(@options) unless ilp
 
-    if entry_label.start_with?("GCFG:")
-      entry = @pml.analysis_entry(@options)
-      @options.gcfg_analysis = true
-      # FIXME: support for multiple machine_entries
-      machine_entry = entry.get_entry()['machinecode'].first
-    else
-      entry = GCFG.new({'level'=>'bitcode',
-                       'name'=>'dummy-gcfg',
-                       'entry-nodes'=>[0],
-                       'exit-nodes'=>[0],
-                       'nodes'=> [{'index'=>0,  'function'=>entry_label}]},
-                      @pml)
-
-      machine_entry = entry.get_entry()['machinecode'].first
-      @options.gcfg_analysis = true
-    end
+    gcfg = @pml.analysis_gcfg(@options)
+    machine_entry = gcfg.get_entry()['machinecode'].first
 
     # PLAYING: VCFGs
     #bcffs,mcffs = ['bitcode','machinecode'].map { |level|
@@ -65,7 +51,7 @@ class WCA
     builder = IPETBuilder.new(@pml, @options, ilp)
 
     # flow facts
-    ff_levels = @options.gcfg_analysis ? ["machinecode", "gcfg"] : ["gcfg"]
+    ff_levels = ["machinecode", "gcfg"]
     flowfacts = @pml.flowfacts.filter(@pml,
                                      @options.flow_fact_selection,
                                      @options.flow_fact_srcs,
@@ -73,7 +59,7 @@ class WCA
                                      true)
 
     # Build IPET using costs from @pml.arch
-    builder.build(entry, flowfacts) do |edge|
+    builder.build_gcfg(gcfg, flowfacts) do |edge|
       # get list of executed instructions
       branch_index = nil
       ilist =
