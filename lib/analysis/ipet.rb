@@ -494,6 +494,9 @@ class GCFGIPETModel
     region.nodes.each do |mbb|
       # Followup Blocks within
       mbb.successors.each {|mbb2|
+        if mbb == region.exit_node and mbb2 == region.exit_node
+          next
+        end
         if region.nodes.member?(mbb2)
           yield IPETEdge.new(mbb, mbb2, :machinecode)
         end
@@ -508,14 +511,15 @@ class GCFGIPETModel
     edges = Hash.new { |hsh, key| hsh[key]={:in=>[], :out=>[]} }
     each_intra_abb_edge(abb) { |ipet_edge|
       @ilp.add_variable(ipet_edge)
-      debug(builder.options, :ipet) {
-        "Intra-ABB Edge: #{ipet_edge}"
-      }
       # Edges to the ABB-Exit are not assigned a cost, since the cost is added on the ABB/State level:
+      cost = 0
       if not builder.options.ignore_instruction_timing and ipet_edge.target != :exit
 	cost = cost_block.call(ipet_edge)
 	@ilp.add_cost(ipet_edge, cost)
       end
+      debug(builder.options, :ipet) {
+        "Intra-ABB Edge: #{ipet_edge} = #{cost}"
+      }
       # Collect edges
       edges[ipet_edge.source][:out].push(ipet_edge)
       edges[ipet_edge.target][:in].push(ipet_edge)
@@ -537,38 +541,42 @@ class GCFGIPETModel
     [edges.keys.length, edges[abb.get_region(:dst).entry_node][:out]]
   end
 
-  def flow_into_abb(node, factor = -1)
-    incoming = node.predecessors(:local).map {|p|
-      [IPETEdge.new(p, node, :gcfg), factor]
-    }
-    incoming.push([self.entry_to(node), factor]) if node.is_source
+  def flow_into_abb(abb, nodes, factor = -1)
+    incoming, resumes, suspends = [], [], []
 
-    # Suspend and Return Edges (especially IRQ returns) This is a
-    # tricky one!. The Problem with our ABB super structure is, that
-    # interrupts generate loops at computation blocks, where the
-    # resumes are additional edges into the computation block.
-    ##
-    # This is double accounting of blocks (especially the deeper
-    # calling hierarchies underneath the ABB are bad). Therefore, we
-    # only count for resume edges, if no corresponding suspend edge is
-    # present.
-    resumes = node.predecessors(:global).map {|p| [IPETEdge.new(p, node, :gcfg), -1] }
-    suspends = node.successors(:global).map {|p| [IPETEdge.new(node, p, :gcfg), 1] }
+    nodes.each do |node|
+      incoming += node.predecessors(:local).map {|p|
+        [IPETEdge.new(p, node, :gcfg), factor]
+      }
+      incoming.push([self.entry_to(node), factor]) if node.is_source
+
+      # Suspend and Return Edges (especially IRQ returns) This is a
+      # tricky one!. The Problem with our ABB super structure is, that
+      # interrupts generate loops at computation blocks, where the
+      # resumes are additional edges into the computation block.
+      ##
+      # This is double accounting of blocks (especially the deeper
+      # calling hierarchies underneath the ABB are bad). Therefore, we
+      # only count for resume edges, if no corresponding suspend edge is
+      # present.
+      resumes += node.predecessors(:global).map {|p| [IPETEdge.new(p, node, :gcfg), -1] }
+      suspends += node.successors(:global).map {|p| [IPETEdge.new(node, p, :gcfg), 1] }
+    end
 
     if resumes.length > 0
       debug(builder.options, :ipet_global) {
-        "Add IRQ Resume edges: #{resumes} - #{suspends}"
+        "Add IRQ Resume edges: #{abb.name} => #{resumes} - #{suspends}"
       }
-      sos_name = "SOS_#{node.qname}"
+      sos_name = "SOS_#{abb.qname}"
       pos = (sos_name + "_additional_resumes").to_sym
       neg = (sos_name + "_negative_slack").to_sym
       ilp.add_sos1(sos_name, [pos, neg])
 
       # pos - neg = (resume - suspend) = 0;
       ilp.add_constraint([[pos, 1], [neg, -1]] + resumes + suspends, "equal", 0,
-                         "resume_#{node.qname}", :structural)
+                         "resume_#{abb.qname}", :structural)
       ilp.add_constraint([[pos, 1]] + resumes , "less-equal", 0,
-                         "resume_ilp_happy_#{node.qname}", :structural)
+                         "resume_ilp_happy_#{abb.qname}", :structural)
       incoming += [[pos, factor]]
     end
 
@@ -849,20 +857,14 @@ class IPETBuilder
     abb_to_nodes.each {|abb, nodes|
       mc_entry_block = abb.get_region(:dst).entry_node
       lhs = @mc_model.block_frequency(mc_entry_block)
-      rhs = []
-      nodes.each { |node|
-        rhs += @gcfg_model.flow_into_abb(node)
-      }
+      rhs = @gcfg_model.flow_into_abb(abb, nodes)
       @ilp.add_constraint(lhs+rhs, "equal", 0, "abb_influx_#{abb.qname}", :gcfg)
     }
     #    4.2 to function frequencies
     function_to_nodes.each {|mf, nodes|
       mc_entry_block = mf.entry_block
       lhs = @mc_model.block_frequency(mc_entry_block)
-      rhs = []
-      nodes.each { |node|
-        rhs += @gcfg_model.flow_into_abb(node)
-      }
+      rhs = @gcfg_model.flow_into_abb(abb, nodes)
       @ilp.add_constraint(lhs+rhs, "equal", 0, "abb_influx_#{mf.qname}", :gcfg)
     }
 
