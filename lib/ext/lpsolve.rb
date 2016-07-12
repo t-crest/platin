@@ -141,6 +141,7 @@ class LpSolveILP < ILP
     debug(options, :ilp) { "#{lp_solve_error_msg(problem)} PROBLEM - starting diagnosis" }
     @do_diagnose = false
     variables.each do |v|
+      next if v.kind_of?(GlobalProgramPoint)
       add_constraint([[v,1]],"less-equal",BIGM,"__debug_upper_bound_v#{index(v)}",:debug)
     end
     @eps = 1.0

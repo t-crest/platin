@@ -143,7 +143,10 @@ class IPETEdge
   def initialize(edge_source, edge_target, level)
     @source,@target,@level = edge_source, edge_target, level.to_sym
     arrow = {:bitcode => "~>", :machinecode => "->", :gcfg=>"+>"}[@level]
-    @qname = "#{@source.qname}#{arrow}#{:exit == @target ? 'exit' : @target.qname}"
+    fname, tname = [@source, @target].map {|n|
+      n.kind_of?(Symbol) ? n.to_s : n.qname
+    }
+    @qname = "#{fname}#{arrow}#{tname}"
     # The context is a object that has a static_context attribute (e.g., an Atomic Basic Block)
     @static_context = nil
   end
@@ -186,7 +189,7 @@ class IPETEdge
   end
   def is_entry_in_static_context(key)
     if key == "function"
-      return self.source == function.entry_block if function
+      return self.source == self.function.entry_block if function
     elsif key == "abb"
       return gcfg_edge?
     end
@@ -403,6 +406,7 @@ class GCFGIPETModel
   def initialize(builder, ilp, mc_model, level = :gcfg)
     @builder, @ilp, @level = builder, ilp, level
     @mc_model = mc_model
+    @entry_edges = []
   end
 
   # returns all edges, plus all return blocks
@@ -444,12 +448,16 @@ class GCFGIPETModel
   end
 
   def add_entry_constraint(gcfg)
-    @entry_variable = FrequencyVariable.new("gcfg_entry")
     @wcet_variable = GlobalProgramPoint.new(gcfg.name)
-
-    @ilp.add_variable(@entry_variable, :gcfg)
     @ilp.add_variable(@wcet_variable, :gcfg)
-    @ilp.add_constraint([[@entry_variable, 1]], "equal", 1, "structural_gcfg_entry", :structural)
+
+    # Entry variables must add up to 1
+    lhs = @entry_edges.map {|e| [e, 1]}
+    @ilp.add_constraint(lhs, "equal", 1, "structural_gcfg_entry", :structural)
+  end
+
+  def entry_to(node)
+    FrequencyVariable.new("gcfg_entry_#{node.qname}")
   end
 
   # The Node frequency is, like on the machine block level constrained
@@ -457,7 +465,13 @@ class GCFGIPETModel
   def add_node_constraint(node)
     # Calculate all flows that go into this node
     incoming = node.predecessors.map { |p| [IPETEdge.new(p,node,level), -1] }
-    incoming.push([@entry_variable, -1]) if node.is_source
+    # Some nodes have an additional input edge, if they are input nodes
+    if node.is_source
+      e = self.entry_to(node)
+      @ilp.add_variable(e)
+      @entry_edges.push(e)
+      incoming.push([e, -1]) if node.is_source
+    end
 
     # Flow out of the Node
     outgoing = node.successors.map { |s| [IPETEdge.new(node, s,level), 1] }
@@ -527,7 +541,7 @@ class GCFGIPETModel
     incoming = node.predecessors(:local).map {|p|
       [IPETEdge.new(p, node, :gcfg), factor]
     }
-    incoming.push([@entry_variable, factor]) if node.is_source
+    incoming.push([self.entry_to(node), factor]) if node.is_source
 
     # Suspend and Return Edges (especially IRQ returns) This is a
     # tricky one!. The Problem with our ABB super structure is, that
@@ -756,10 +770,11 @@ class IPETBuilder
     end
 
     # 2. Connect the super structure connections
-    @gcfg_model.add_entry_constraint(gcfg)
     gcfg.nodes.each do |node|
       @gcfg_model.add_node_constraint(node)
     end
+    ## After all node constraints
+    @gcfg_model.add_entry_constraint(gcfg)
 
     #################################################
     ## The ABB Super Structure is now fully in place.
