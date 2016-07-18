@@ -37,9 +37,8 @@ class LpSolveILP < ILP
     # solve
     lp.set_add_rowmode(false)
     lp.print_lp if options.lp_debug
-    lp.write_lp(options.write_lp) if options.write_lp
-    lp.set_verbose(0)
-
+    lp.write_lp(options.write_lp) if options.write_lp and @do_diagnose
+    lp.set_verbose(1)
     debug(options, :ilp) { self.dump(DebugIO.new) }
     start = Time.now
     r = lp.solve
@@ -51,7 +50,7 @@ class LpSolveILP < ILP
     freqmap = extract_frequencies(lp.get_variables)
     if (r == LPSolve::INFEASIBLE)
       diagnose_infeasible(r, freqmap) if @do_diagnose
-    elsif (r == LPSolve::UNBOUNDED)
+    elsif (r == LPSolve::UNBOUNDED or obj.round >= (1 << 32))
       diagnose_unbounded(r, freqmap) if @do_diagnose
     end
     lp_solve_error(r) unless r == 0
@@ -141,7 +140,7 @@ class LpSolveILP < ILP
     debug(options, :ilp) { "#{lp_solve_error_msg(problem)} PROBLEM - starting diagnosis" }
     @do_diagnose = false
     variables.each do |v|
-      next if v.kind_of?(GlobalProgramPoint)
+      next if not v.kind_of?(GlobalProgramPoint)
       add_constraint([[v,1]],"less-equal",BIGM,"__debug_upper_bound_v#{index(v)}",:debug)
     end
     @eps = 1.0

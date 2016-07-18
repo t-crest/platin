@@ -71,6 +71,15 @@ class GurobiILP < ILP
       lp.print(" ", varname(index(v)))
     end
     lp.puts
+    lp.puts("SOS")
+    sos1.each { |name, sos|
+      assert("Invalid SOS crardinatlity") {sos[1] == 1}
+      lp.print("  #{name}: S1 :: ")
+      sos[0].each { |v|
+        lp.print("#{varname(index(v))}:1 ")
+      }
+      lp.puts
+    }
     lp.puts("End")
   end
   # set LP ovjective
@@ -138,7 +147,7 @@ class GurobiILP < ILP
     out = IO.popen("gurobi_cl ResultFile=#{sol} #{lp}")
     lines = out.readlines
     # Detect error messages
-    return "Gurobi terminated unexpectedly (#{$?.exitstatus})" if $?.exitstatus > 0
+    return "Gurobi terminated unexpectedly (#{$?.exitstatus})" if $? and $?.exitstatus > 0
     lines.each do |line|
       return line if line =~ /Model is infeasible/
       return line if line =~ /Model is unbounded/

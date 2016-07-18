@@ -468,6 +468,7 @@ class GCFGIPETModel
     # Some nodes have an additional input edge, if they are input nodes
     if node.is_source
       e = self.entry_to(node)
+      debug(builder.options, :ipet_global) {"Added entry edge #{e}"}
       @ilp.add_variable(e)
       @entry_edges.push(e)
       incoming.push([e, -1]) if node.is_source
@@ -575,8 +576,11 @@ class GCFGIPETModel
       # pos - neg = (resume - suspend) = 0;
       ilp.add_constraint([[pos, 1], [neg, -1]] + resumes + suspends, "equal", 0,
                          "resume_#{abb.qname}", :structural)
-      ilp.add_constraint([[pos, 1]] + resumes , "less-equal", 0,
-                         "resume_ilp_happy_#{abb.qname}", :structural)
+      # Sometimes LP Solve is an unhappy beast
+      if @ilp.kind_of?(LpSolveILP)
+        ilp.add_constraint([[pos, 1]] + resumes , "less-equal", 0,
+                           "resume_ilp_happy_#{abb.qname}", :structural)
+      end
       incoming += [[pos, factor]]
     end
 
@@ -589,7 +593,10 @@ class GCFGIPETModel
     # cost for this ILP.
     lhs = [[@wcet_variable, -1]]
     rhs = @ilp.costs.map {|e, f| [e, f] }
-    @ilp.add_constraint(lhs+rhs, "equal", 0, "__global_wcet_equality", :gcfg)
+    @ilp.add_constraint(lhs+rhs, "equal", 0, "global_wcet_equality", :gcfg)
+    if @ilp.kind_of?(LpSolveILP)
+      @ilp.add_constraint([[@wcet_variable, 1]], "less-equal", 1 << 32, "global_wcet_happy_lp_solve", :gcfg)
+    end
   end
 
   def global_program_point(pp, factor=1)
@@ -864,7 +871,7 @@ class IPETBuilder
     function_to_nodes.each {|mf, nodes|
       mc_entry_block = mf.entry_block
       lhs = @mc_model.block_frequency(mc_entry_block)
-      rhs = @gcfg_model.flow_into_abb(abb, nodes)
+      rhs = @gcfg_model.flow_into_abb(mf, nodes)
       @ilp.add_constraint(lhs+rhs, "equal", 0, "abb_influx_#{mf.qname}", :gcfg)
     }
 
@@ -891,7 +898,6 @@ class IPETBuilder
 
     flowfacts.each { |ff|
       debug(@options, :ipet) { "adding flowfact #{ff}" }
-      debug(@options, :ipet_global) { "adding flowfact #{ff}" }
       add_flowfact(ff)
     }
 
@@ -970,8 +976,9 @@ class IPETBuilder
 
         lhs = lhs.map {|v, f| [v, (maximal ? -iat : iat) * f]}
         rhs = rhs.map {|v, f| [v, (maximal ? -1   : 1  ) * f]}
-        const = maximal ? 0 : iat
+        const = maximal ? iat : 0
         ilp.add_constraint(lhs + rhs, "less-equal", const, name, tag)
+        debug(@options, :ipet_global) {"#{maximal ? "Maximal" : "Minimal"} IAT: #{lhs+rhs} <= #{const}" }
       else
         ilp.add_constraint(lhs + rhs, ff.op, 0, name, tag)
       end
