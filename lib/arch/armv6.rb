@@ -144,9 +144,35 @@ class Architecture < PML::Architecture
   def path_wcet(ilist)
     cost = ilist.reduce(0) do |cycles, instr|
       # TODO flushes for call??
-      cycles + cycle_cost(instr)
+      if (instr.callees[0] =~ /__aeabi_.*/ || instr.callees[0] =~ /__.*div.*/)
+        cycles + cycle_cost(instr) + lib_cycle_cost(instr.callees[0])
+      else
+        cycles + cycle_cost(instr)
+      end
     end
     cost
+  end
+  def edge_wcet(ilist,branch_index,edge)
+    # control flow is for free
+    0
+  end
+  def lib_cycle_cost(func)
+    case func
+    when "__aeabi_uidivmod"
+      845 + 16
+    when "__aeabi_idivmod"
+      922 + 16
+    when "__udivsi3"
+      820
+    when "__udivmodsi4"
+      845
+    when "__divsi3"
+      897
+    when "__divmodsi4"
+      922
+    else
+      die("Unknown library function: #{func}")
+    end
   end
   def cycle_cost(instr)
     case instr.opcode

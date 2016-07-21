@@ -713,7 +713,12 @@ module PML
       data['callees'].reject { |n|
         # XXX: hackish
         # filter known pseudo functions on bitcode
-        n =~ /llvm\..*/
+        n =~ /llvm\..*/ ||
+        n =~ /__aeabi_uidivmod/ ||
+        n =~ /__aeabi_idivmod/ ||
+        n =~ /__udivsi3/ ||
+        n =~ /__divsi3/ ||
+        n =~ /__udivmodsi4/
       }.map { |n|
         block.function.module.by_label_or_name(n, true)
       }
