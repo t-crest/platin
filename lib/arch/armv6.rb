@@ -141,6 +141,146 @@ class Architecture < PML::Architecture
     cmd = "arm-none-eabi-objdump"
     ExtractSymbols.run(cmd, extractor, pml, options)
   end
+  def path_wcet(ilist)
+    cost = ilist.reduce(0) do |cycles, instr|
+      # TODO flushes for call??
+      cycles + cycle_cost(instr)
+    end
+    cost
+  end
+  def cycle_cost(instr)
+    case instr.opcode
+
+    # addsub
+    when 'tADDi3', 'tSUBi3'
+      2 # is most likely 1 in reality
+
+    # assume same costs for 3 registers as for 2 registers and immediate
+    when 'tADDrr', 'tSUBrr'
+      2 # is most likely 1 in reality
+
+    # addsubsp
+    when 'tSUBspi', 'tADDspi', 'tADDrSPi'
+      1
+
+    # alu
+    when 'tAND', 'tEOR', 'tADC', 'tSBC',  'tROR', 'tTST',  'tRSB', 'tCMPr', 'tCMNz', 'tLSLrr', 'tLSRrr', 'tASRrr', 'tORR', 'tBIC', 'tMVN'
+      2
+
+    # branchcond
+    # although branchcond is documented as 2 
+    # in the documentation on zero wait states, it is set to 1
+    # since it is the result of the NEO model with enabled caches
+    when 'tBcc'
+      1 # ERROR: this is result of NEO, but in reality it is 2
+
+    # branchuncond
+    when 'tB'
+      2
+
+    # pseudo instruction mapping to 'bx lr'
+    # branchuncond or hireg => same cost
+    when 'tBX_RET'
+      2 # 2
+
+    # extend
+    when 'tSXTB', 'tSXTH', 'tUXTB', 'tUXTH'
+      2
+
+    # hireg
+    when 'tADDhirr', 'tMOVr', 'tCMPhir'
+      2
+
+    # immediate
+    when 'tMOVi8', 'tADDi8', 'tSUBi8', 'tCMPi8'
+      2
+
+    # branch and link: BL = inst32
+    when 'tBL'
+      4
+
+    # NOTE: pseudo instruction that maps to tBL
+    # branchuncond
+    when 'tBfar'
+      4
+
+    # lea
+    when 'tADR'
+      1
+
+    # NOTE pseduo instruction that maps to 'add rA, pc, #i'
+    # probably lea
+    when 'tLEApcrelJT'
+      1
+
+    # memimmediate
+    when 'tSTRi', 'tLDRi'
+      3
+
+    # NOTE: not directly considered in NEO's classes
+    # ldrh r, [r, #i] same as ldr r, [r, #i]??
+    # memimmediate
+    when 'tSTRHi', 'tLDRHi'
+      3
+
+    # NOTE: not directly considered in NEO's classes
+    # ldrb r, [r, #i] same as ldr r, [r, #i]??
+    # memmimmediate
+    when 'tSTRBi', 'tLDRBi'
+      3
+
+    # NOTE: not directly considered in NEO's classes
+    # ldrsb r, [r, #i] same as ldr r, [r, #i]??
+    # memimmediate
+    when 'tLDRSB', 'tLDRSH'
+      3
+
+    # memmultiple
+    when 'tLDMIA', 'tLDMIA_UDP', 'tSTMIA_UDP'
+      4
+
+    # mempcrel
+    when 'tLDRpci'
+      3
+
+    # memreg
+    when 'tSTRBr', 'tLDRBr', 'tLDRr', 'tSTRr', 'tLDRHr', 'tSTRHr'
+      3 # 1 in paper, but 3 should be correct for 48 MHz
+
+    # memsprel
+    when 'tSTRspi', 'tLDRspi'
+      3
+
+    # pushpop
+    when 'tPUSH', 'tPOP'
+      5
+
+    # pseudo instruction mapping to pop
+    when 'tPOP_RET'
+      5
+
+    # shift
+    when 'tLSLri', 'tLSRri', 'tASRri'
+      2 # should be 1 in reality (see reference manual)
+
+    # according to list above it it correct
+    # according to reference manual, it is implementation-specific
+    # lincenses for single-cycle-cpus and the other variants
+    #
+    # Sub-family reference manual p. 53 => single-cycle CPU
+    when 'tMUL'
+      2 # NEO says alu instruction
+      # 1 # for single-cycle CPU
+
+    # pseudo instruction translated to a 'mov pc, r2'
+    when 'tBR_JTr'
+      2
+
+    else
+      die("Unknown opcode: #{instr.opcode}")
+    end
+  end
+
   def method_cache
   # FIXME dummy stub
     nil
