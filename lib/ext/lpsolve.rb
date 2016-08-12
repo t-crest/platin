@@ -13,6 +13,7 @@ rescue Exception => details
   $stderr.puts "  ==> aptitude install liblpsolve55-dev [Debian/Ubuntu]"
   $stderr.puts "  ==> llvm/tools/platin/install.sh -i INSTALL_DIR [installs gems again]"
   $stderr.puts "Failed to load required ruby libraries"
+  $stderr.puts details
   exit 1
 end
 
