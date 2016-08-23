@@ -116,11 +116,14 @@ class OneOneCheck
         rg = pml.data['relation-graphs'].find { |f| f['src']['function'] == target or f['dst']['function'] == target }
         raise Exception.new("Relation Graph not found") unless rg
 
-        file = File.join(outdir, target + ".rg" + suffix)
-        rgv = RGVisualizer.new(options)
-        rgv.generate(rgv.visualize(rg),file)
+	is11 = is_one_one(rg)
+        puts "[OneOneCheck] #{target}: #{is11}"
 
-        puts "[OneOneCheck] #{target}: #{is_one_one(rg)}"
+        if !is11
+          file = File.join(outdir, target + ".rg.non11" + suffix)
+          rgv = RGVisualizer.new(options)
+          rgv.generate(rgv.visualize(rg),file)
+        end
 
       rescue Exception => detail
         puts "Failed to visualize relation graph of #{target}: #{detail}"
