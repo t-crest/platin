@@ -190,6 +190,10 @@ module PML
     end
     parser.parse!
     parser.check!(arg_range)
+    if ENV.key?("VERBOSE")
+      options.verbose = true
+      options.verbosity_level = (ENV["VERBOSE"] || "1").to_i
+    end
     [options, ARGV]
   end
 end
