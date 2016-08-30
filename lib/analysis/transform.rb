@@ -434,8 +434,9 @@ class FlowFactTransformation
             debug(options, :transform) { "Skipping unsupported flow fact scope of transformed flow fact #{ff}: "+
                  "(function: #{ff.scope.function}, local: #{ff.local?})" }
           end
-          puts "Transformed flowfact #{ff}" if options.verbose
-          r
+          debug(options, :transform) {
+            "Transformed flowfact #{ff}"
+          }
         }
 
         stats_num_constraints_before += ilp.constraints.length

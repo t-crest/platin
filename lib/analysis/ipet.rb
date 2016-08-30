@@ -152,6 +152,13 @@ class IPETEdge
   end
   def backedge?
     return false if target == :exit
+    # If we look at a GCFG edge, the backedge property is defined by
+    # the underlying machine basic block structure
+    if gcfg_edge?
+      t = target.abb.get_region(:dst).entry_node
+      s = source.abb.get_region(:dst).exit_node
+      return t.backedge_target?(s)
+    end
     target.backedge_target?(source)
   end
   def cfg_edge?
@@ -211,11 +218,11 @@ end
 
 class IPETModel
   attr_reader :builder, :ilp, :level
-  attr_accessor :block_frequency_override
+  attr_accessor :block_frequency_override, :sum_incoming_override
   def initialize(builder, ilp, level)
     @builder, @ilp, @level = builder, ilp, level
-    @sum_incoming_override = {}
-    @sum_outgoing_override = {}
+    @sum_incoming_override = Hash.new {|hsh, key| hsh[key] = [] }
+    @sum_outgoing_override = Hash.new {|hsh, key| hsh[key] = [] }
     @block_frequency_override = {}
   end
 
@@ -566,7 +573,7 @@ class GCFGIPETModel
 
     if resumes.length > 0
       debug(builder.options, :ipet_global) {
-        "Add IRQ Resume edges: #{abb.name} => #{resumes} - #{suspends}"
+        "Add IRQ Resume edges: #{abb.name} => resumes: #{resumes} suspends: #{suspends}"
       }
       sos_name = "SOS_#{abb.qname}"
       pos = (sos_name + "_additional_resumes").to_sym
@@ -777,6 +784,11 @@ class IPETBuilder
         ipet_edge.static_context = node.abb if node.abb
         @ilp.add_cost(ipet_edge, edge_cost)
         debug(@options, :ipet_global) { "Added edge #{ipet_edge} with cost #{edge_cost}" }
+        # Incoming Edges for a specific block
+        if not ipet_edge.target.kind_of?(Symbol) and ipet_edge.target.abb and ipet_edge.source.abb
+          target_bb = ipet_edge.target.abb.get_region(:dst).entry_node
+          @mc_model.sum_incoming_override[target_bb].push(ipet_edge)
+        end
       }
 
       # 1.3 Collect activated artifacts
@@ -976,7 +988,7 @@ class IPETBuilder
 
         lhs = lhs.map {|v, f| [v, (maximal ? -iat : iat) * f]}
         rhs = rhs.map {|v, f| [v, (maximal ? -1   : 1  ) * f]}
-        const = maximal ? iat : 0
+        const = maximal ? 0 : iat
         ilp.add_constraint(lhs + rhs, "less-equal", const, name, tag)
         debug(@options, :ipet_global) {"#{maximal ? "Maximal" : "Minimal"} IAT: #{lhs+rhs} <= #{const}" }
       else
@@ -984,8 +996,8 @@ class IPETBuilder
       end
         name
     rescue UnknownVariableException => detail
-      debug(@options,:transform) { "Skipping constraint: #{detail}" }
-      debug(@options,:ipet) { "Skipping constraint: #{detail}" }
+      debug(@options,:transform) { " ... skipped constraint: #{detail}" }
+      debug(@options,:ipet) { " ...skipped constraint: #{detail}" }
     end
   end
 
