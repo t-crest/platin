@@ -103,7 +103,7 @@ class ValueRange
 end
 
 #
-# Extend SymbolicExpression (and sublcassoes) with +#to_ais+
+# Extend SymbolicExpression (and sublcasses) with +#to_ais+
 #
 class SymbolicExpression
   def to_ais
@@ -503,7 +503,11 @@ class AISExporter
       end
     }
     loop_bounds.each { |scope,bounds_and_ffs|
-      export_loopbounds(scope, bounds_and_ffs)
+      begin
+        export_loopbounds(scope, bounds_and_ffs)
+      rescue Exception
+        warn("Not exporting loopsbounds for " + scope.to_s + ": " + $!.message)
+      end
     }
   end
 

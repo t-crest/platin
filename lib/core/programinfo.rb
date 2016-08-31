@@ -116,15 +116,15 @@ module PML
       classifier = FlowFactClassifier.new(pml)
       @list.select { |ff|
         # skip if level does not match
-        if ! ff_levels.include?(ff.level)
-          false
+        #if ! ff_levels.include?(ff.level)
+        #  false
         # skip if source is not included
-        elsif ff_srcs != "all" && ! ff_srcs.include?(ff.origin)
+        if ff_srcs != "all" && ! ff_srcs.include?(ff.origin)
           false
         elsif ! classifier.included?(ff, ff_selection)
           false
-        elsif exclude_symbolic && ! ff.rhs.constant?
-          false
+        #elsif exclude_symbolic && ! ff.rhs.constant?
+        #  false
 	# always filter unknown bounds since we cannot handle them in the analyses
 	elsif ff.rhs.kind_of?(SEUnknown)
 	  false
