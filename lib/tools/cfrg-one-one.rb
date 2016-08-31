@@ -65,8 +65,8 @@ class OneOneCheck
   #                                                        graphviz >= 1.2.2              graphviz < 1.2.2
   VALID_FORMATS = defined?(GraphViz::Constants::FORMATS) ? GraphViz::Constants::FORMATS : Constants::FORMATS
 
-  def OneOneCheck.default_targets(pml)
-    entry = pml.machine_functions.by_label("main")
+  def OneOneCheck.default_targets(pml, entryfunc)
+    entry = pml.machine_functions.by_label(entryfunc)
     pml.machine_functions.reachable_from(entry.name).first.reject { |f|
       f.label =~ /printf/
     }.map { |f|
@@ -104,8 +104,9 @@ class OneOneCheck
   end
 
   def OneOneCheck.run(pml, options)
-    targets = options.functions || OneOneCheck.default_targets(pml)
-    outdir = options.outdir || "."
+    outdir  = options.outdir || "."
+    entry   = options.entry || "main"
+    targets = options.functions || OneOneCheck.default_targets(pml, entry)
     options.graphviz_format ||= "png"
     suffix = "." + options.graphviz_format
 
@@ -136,6 +137,7 @@ class OneOneCheck
   def OneOneCheck.add_options(opts)
     opts.on("-f","--function FUNCTION,...","Name of the function(s) to check") { |f| opts.options.functions = f.split(/\s*,\s*/) }
     opts.on("-O","--outdir DIR","Output directory for image files") { |d| opts.options.outdir = d }
+    opts.on("-e","--entry FUNC","PML entry function") { |f| opts.options.entry = f }
   end
 end
 
