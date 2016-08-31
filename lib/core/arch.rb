@@ -586,4 +586,5 @@ end # module PML
 require 'arch/patmos'
 require 'arch/arm'
 require 'arch/armv6'
+require 'arch/armv7m'
 
