@@ -294,6 +294,9 @@ PIPELINE_REFILL=3
       0
     when 't2B'
       1 + PIPELINE_REFILL
+    # page 31:
+    when 't2MUL', 't2MLA', 't2MLS', 't2SMULL', 't2UMULL', 't2SMLAL', 't2UMLAL'
+      1
     else
       die("Unknown opcode: #{instr.opcode}")
     end
