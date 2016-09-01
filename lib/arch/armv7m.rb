@@ -111,13 +111,17 @@ class Architecture < PML::Architecture
     cmd = "arm-none-eabi-objdump"
     ExtractSymbols.run(cmd, extractor, pml, options)
   end
+  
+
+# xmc4500_um.pdf 8-41
+WAIT_CYCLES_FLASH_ACCESS=3
   def path_wcet(ilist)
     cost = ilist.reduce(0) do |cycles, instr|
       # TODO flushes for call??
       if (instr.callees[0] =~ /__aeabi_.*/ || instr.callees[0] =~ /__.*div.*/)
-        cycles + cycle_cost(instr) + lib_cycle_cost(instr.callees[0])
+        cycles + cycle_cost(instr) + lib_cycle_cost(instr.callees[0]) + WAIT_CYCLES_FLASH_ACCESS
       else
-        cycles + cycle_cost(instr)
+        cycles + cycle_cost(instr) + WAIT_CYCLES_FLASH_ACCESS
       end
     end
     cost
@@ -127,33 +131,36 @@ class Architecture < PML::Architecture
     0
   end
   def lib_cycle_cost(func)
-    case func
-    when "__aeabi_uidivmod"
-      845 + 16
-    when "__aeabi_idivmod"
-      922 + 16
-    when "__udivsi3"
-      820
-    when "__udivmodsi4"
-      845
-    when "__divsi3"
-      897
-    when "__divmodsi4"
-      922
-    else
+#    case func
+#    when "__aeabi_uidivmod"
+#      845 + 16
+#    when "__aeabi_idivmod"
+#      922 + 16#
+#    when "__udivsi3"
+#      820
+#    when "__udivmodsi4"
+#      845
+#    when "__divsi3"
+#      897
+#    when "__divmodsi4"
+#      922
+#    else
       die("Unknown library function: #{func}")
-    end
+#    end
   end
+
+
+NUM_REGISTERS=10
+PIPELINE_REFILL=3
   def cycle_cost(instr)
     case instr.opcode
-
     # addsub
     when 'tADDi3', 'tSUBi3'
-      2 # is most likely 1 in reality
+      1
 
     # assume same costs for 3 registers as for 2 registers and immediate
     when 'tADDrr', 'tSUBrr'
-      2 # is most likely 1 in reality
+      1
 
     # addsubsp
     when 'tSUBspi', 'tADDspi', 'tADDrSPi'
@@ -161,35 +168,35 @@ class Architecture < PML::Architecture
 
     # alu
     when 'tAND', 'tEOR', 'tADC', 'tSBC',  'tROR', 'tTST',  'tRSB', 'tCMPr', 'tCMNz', 'tLSLrr', 'tLSRrr', 'tASRrr', 'tORR', 'tBIC', 'tMVN'
-      2
+      1
 
-    # branchcond
-    # although branchcond is documented as 2 
-    # in the documentation on zero wait states, it is set to 1
-    # since it is the result of the NEO model with enabled caches
+    # branchcond (requires pipeline refill)
+    # 1 + P (P \in {1,..,3})
     when 'tBcc'
-      1 # ERROR: this is result of NEO, but in reality it is 2
+      1 + PIPELINE_REFILL
 
-    # branchuncond
+    # branchuncond (requires pipeline refill)
+    # 1 + P
     when 'tB'
-      2
+      1 + PIPELINE_REFILL
 
     # pseudo instruction mapping to 'bx lr'
-    # branchuncond or hireg => same cost
+    # 1 + P
     when 'tBX_RET'
-      2 # 2
+      1 + PIPELINE_REFILL
 
     # extend
     when 'tSXTB', 'tSXTH', 'tUXTB', 'tUXTH'
-      2
+      1
 
     # hireg
+    # TODO 
     when 'tADDhirr', 'tMOVr', 'tCMPhir'
-      2
+      1
 
     # immediate
     when 'tMOVi8', 'tADDi8', 'tSUBi8', 'tCMPi8'
-      2
+      1
 
     # branch and link: BL = inst32
     when 'tBL'
@@ -197,8 +204,9 @@ class Architecture < PML::Architecture
 
     # NOTE: pseudo instruction that maps to tBL
     # branchuncond
+    # 1 + P
     when 'tBfar'
-      4
+      1 + PIPELINE_REFILL
 
     # lea
     when 'tADR'
@@ -249,15 +257,15 @@ class Architecture < PML::Architecture
 
     # pushpop
     when 'tPUSH', 'tPOP'
-      5
+      1 + NUM_REGISTERS
 
     # pseudo instruction mapping to pop
     when 'tPOP_RET'
-      5
+      1 + NUM_REGISTERS + PIPELINE_REFILL
 
     # shift
     when 'tLSLri', 'tLSRri', 'tASRri'
-      2 # should be 1 in reality (see reference manual)
+      1
 
     # according to list above it it correct
     # according to reference manual, it is implementation-specific
@@ -273,8 +281,9 @@ class Architecture < PML::Architecture
       2
       
     # ARMv7M support
+    # TODO
     when 't2STMDB_UPD'
-      2 # TODO
+      2
     when 't2MOVi16'
       2
     when 't2MOVTi16'
@@ -283,7 +292,8 @@ class Architecture < PML::Architecture
       2
     when 'PSEUDO_LOOPBOUND'
       0
-
+    when 't2B'
+      1 + PIPELINE_REFILL
     else
       die("Unknown opcode: #{instr.opcode}")
     end
