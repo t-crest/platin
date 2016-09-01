@@ -271,6 +271,18 @@ class Architecture < PML::Architecture
     # pseudo instruction translated to a 'mov pc, r2'
     when 'tBR_JTr'
       2
+      
+    # ARMv7M support
+    when 't2STMDB_UPD'
+      2 # TODO
+    when 't2MOVi16'
+      2
+    when 't2MOVTi16'
+      2
+    when 't2MVNi', 't2STRi8', 't2TSTri', 't2Bcc', 't2SUBri', 't2ANDri', 't2LDRi8', 't2LDMIA_RET'
+      2
+    when 'PSEUDO_LOOPBOUND'
+      0
 
     else
       die("Unknown opcode: #{instr.opcode}")
