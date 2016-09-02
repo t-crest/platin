@@ -103,8 +103,13 @@ class WCA
             src.instructions[0..slot_end]
           end
         end
-      path_wcet = @pml.arch.path_wcet(ilist)
-      edge_wcet = @pml.arch.edge_wcet(ilist,branch_index,edge)
+      if @options.wca_count_instructions
+        path_wcet = ilist.length
+        edge_wcet = 0
+      else
+        path_wcet = @pml.arch.path_wcet(ilist)
+        edge_wcet = @pml.arch.edge_wcet(ilist,branch_index,edge)
+      end
       debug(@options,:costs) { "WCET edge costs for #{edge}: #{path_wcet} block, #{edge_wcet} edge" }
       path_wcet + edge_wcet
     end

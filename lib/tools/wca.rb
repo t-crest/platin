@@ -46,6 +46,13 @@ class WcaTool
       opts.options.disable_sca = true
       opts.options.disable_ica = true
     }
+    # Disable all cache related costs.
+    opts.on("--wca-count-instructions", "count only instructions (caches disabled") { |f|
+      opts.options.disable_dca = true
+      opts.options.disable_sca = true
+      opts.options.disable_ica = true
+      opts.options.wca_count_instructions = true
+    }
     opts.add_check { |options|
       options.wca_cache_regions = true if options.wca_cache_regions.nil?
       # TODO change this default to 'scope' once the scope analysis works properly
