@@ -171,36 +171,77 @@ class WCA
     }
     ca.summarize(@options, freqs, Hash[freqs.map{ |v,freq| [v,freq * builder.ilp.get_cost(v)] }], report)
 
+    def grouped_report_by(ilp, freqs, key, print_activations=true)
+      groups = freqs.group_by { |v, freq|
+        v.static_context(key) if v.kind_of?(IPETEdge)
+      }
+
+      groups.map {|label, edges|
+        activation_count = edges.select {|v, freq|
+          v.is_entry_in_static_context(key) if v.kind_of?(IPETEdge)
+        }.reduce(0) {|acc, n| acc + n[1]}
+
+        combined_cost = edges.map {|v, freq| freq * ilp.get_cost(v) }.inject(0, :+)
+        next if (combined_cost + activation_count) == 0
+
+        yield (label ? label : "<unspecified>"), combined_cost, activation_count
+      }
+    end
+
+    if @options.stats
+      statistics("WCA", "cycles" => cycles)
+      irqs, timers = 0, 0
+      grouped_report_by(builder.ilp, freqs, 'function') do
+        | label, cost, activation_count |
+        irqs   = activation_count if label == 'irq_entry'
+        timers = activation_count if label == 'timer_isr'
+        if label =~ /^timing_/
+          statistics("WCA", "functions" => {label=>activation_count})
+        end
+      end
+      # Count alarm activations
+      alarms = 0
+      freqs.each { |v, freq|
+        if v.to_s =~ /^GCFG:.*CheckAlarm.*(ActivateTask|SetEvent)/
+          alarms += freq
+        end
+      }
+      statistics("WCA",
+                 "interrupt requests" => irqs,
+                 "timer ticks" => timers,
+                 "alarm activations" => alarms)
+
+    end
+
     if @options.verbose
       puts "Cycles: #{cycles}"
-      def grouped_report_by(ilp, freqs, key, print_activations=true)
-        groups = freqs.group_by { |v, freq|
-          v.static_context(key) if v.kind_of?(IPETEdge)
-        }
-
-        groups.map {|label, edges|
-          activation_count = edges.select {|v, freq|
-            v.is_entry_in_static_context(key) if v.kind_of?(IPETEdge)
-          }.reduce(0) {|acc, n| acc + n[1]}
-
-          combined_cost = edges.map {|v, freq| freq * ilp.get_cost(v) }.inject(0, :+)
-          next if (combined_cost + activation_count) == 0
-
-          printf "%42s:", (label ? label : "<unspecified>")
-          printf " %6d cycles", combined_cost
-          printf " %4d activations", activation_count if print_activations
-          printf "\n"
-        }
-      end
       puts "Subtask Profile:"
-      grouped_report_by(builder.ilp, freqs, 'subtask', false)
+      grouped_report_by(builder.ilp, freqs, 'subtask', false) do
+        | label, cost, activation_count |
+        printf "%42s:", label
+        printf " %6d cycles", cost
+        printf "\n"
+      end
       puts "ABB Profile:"
-      grouped_report_by(builder.ilp, freqs, 'abb')
+      grouped_report_by(builder.ilp, freqs, 'abb') do
+          | label, cost, activation_count |
+        printf "%42s:", label
+        printf " %6d cycles", cost
+        printf " %4d activations", activation_count
+        printf "\n"
+      end
       puts "Function Profile:"
-      grouped_report_by(builder.ilp, freqs, 'function')
+      grouped_report_by(builder.ilp, freqs, 'function') do
+        | label, cost, activation_count |
+        printf "%42s:", label
+        printf " %6d cycles", cost
+        printf " %4d activations", activation_count
+        printf "\n"
+      end
       if @options.verbosity_level > 1
         puts "\nEdge Profile:"
         freqs.sort_by { |v,freq| [v.to_s, freq] }.each { |v, freq|
+          next if freq == 0
           printf "%4d cyc %4d freq  %s\n", freq * builder.ilp.get_cost(v), freq, v
         }
       end

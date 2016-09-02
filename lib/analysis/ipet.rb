@@ -816,12 +816,14 @@ class IPETBuilder
     full_mfs = Set.new    ## To be added
     gcfg_mfs = Set.new
     gcfg_mbbs = Set.new
+    toplevel_abb_count = 0 # statistics
 
     abb_to_nodes.each { |abb, nodes|
       # 3.1 All ABBs from nodes that are _not_ marked as microstructure
       microstructure = nodes.map { |x| x.microstructure }
       next if microstructure.all?
       assert("Microstructure state of #{abb} is inconsistent") { not microstructure.any? }
+      toplevel_abb_count += 1
 
       # Add blocks within the ABB
       basic_blocks, abb_freq = @gcfg_model.add_abb_contents(abb, cost_block)
@@ -914,6 +916,13 @@ class IPETBuilder
       debug(@options, :ipet) { "adding flowfact #{ff}" }
       add_flowfact(ff)
     }
+
+    statistics("WCA",
+               "gcfg nodes" => gcfg.nodes.length,
+               "abbs toplevel" => toplevel_abb_count,
+               "abbs microstructure" => abb_to_nodes.length - toplevel_abb_count
+               ) if @options.stats
+
 
     die("Bitcode contraints are not implemented yet") if @bc_model
  end

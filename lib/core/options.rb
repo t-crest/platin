@@ -169,7 +169,16 @@ module PML
       opts.separator("Options:")
       yield opts if block_given?
       opts.separator("")
-      opts.on("--stats", "print statistics") { options.stats = true }
+      opts.on("--stats", "print statistics") {
+        options.print_stats = true
+        options.stats = true
+      }
+      opts.on("--dref-stats <FILE>", "save statistics to file") { |v|
+        File.unlink(v) if File.exists?(v)
+        options.stats = true
+        options.dref_stats = v
+      }
+
       opts.on("--verbose", "verbose output") {
         options.verbose = true
         options.verbosity_level = (options.verbosity_level  || 0) + 1

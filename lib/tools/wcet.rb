@@ -61,12 +61,14 @@ class WcetTool
     @additional_report_info = {}
   end
 
-  def time(descr)
+  def time(descr, short=nil)
+    short = descr if short.nil?
     begin
       t1 = Time.now
       yield
       t2 = Time.now
       info("Finished #{descr.ljust(35)} in #{((t2-t1)*1000).to_i} ms")
+      statistics(short, {"run time" => ((t2-t1)*1000).to_i}) if @options.stats
     end
   end
 
@@ -107,7 +109,7 @@ class WcetTool
     warn("Problematic Relation Graphs: #{rgs.map { |rg| "#{rg.qname} / #{rg.data['status']}" }.join(", ")}") unless rgs.empty?
 
     # Extract Symbols
-    time("read symbols") do
+    time("read symbols", "SYMBOLS") do
       ExtractSymbolsTool.run(pml,options)
     end
   end
@@ -149,7 +151,7 @@ class WcetTool
   end
 
   def transform_down(srcs, output)
-    time("Flow Fact Transformation #{srcs}") do
+    time("Flow Fact Transformation #{srcs}", "TRANSFORM #{srcs}") do
       opts = options.dup
       opts.flow_fact_selection ||= "all"
       opts.flow_fact_srcs = srcs
@@ -180,7 +182,7 @@ class WcetTool
   end
 
   def wcet_analysis_platin(srcs)
-    time("run WCET analysis (platin)") do
+    time("run WCET analysis (platin)", "WCA") do
       opts = options.dup
       opts.import_block_timing = true if opts.compute_criticalities
       opts.timing_output = [opts.timing_output,'platin'].compact.join("/")
@@ -201,7 +203,7 @@ class WcetTool
   end
 
   def wcet_analysis_ait(srcs)
-    time("run WCET analysis (aiT)") do
+    time("run WCET analysis (aiT)", "AIT") do
       pml.with_temporary_sections([:flowfacts]) do
 
         # Simplify flow facts
