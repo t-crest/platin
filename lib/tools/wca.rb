@@ -6,6 +6,7 @@
 
 require 'platin'
 require 'analysis/wca'
+require 'mkmf'
 include PML
 
 class WcaTool
@@ -33,6 +34,11 @@ class WcaTool
     }
     opts.on("--wca-use-gurobi", "use Gurobi solver instead of lp_solve") { |v|
       opts.options.use_gurobi = v
+    }
+    opts.on("--wca-detect-gurobi", "use Gurobi solver if possible") { |v|
+      if find_executable0 'gurobi_cl'
+        opts.options.use_gurobi = v
+      end
     }
     # Disable all cache related costs.
     opts.on("--wca-disable-cache", "disable all cache related  costs") { |f|
