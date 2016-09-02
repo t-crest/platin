@@ -881,6 +881,11 @@ class IPETBuilder
       mc_entry_block = abb.get_region(:dst).entry_node
       lhs = @mc_model.block_frequency(mc_entry_block)
       rhs = @gcfg_model.flow_into_abb(abb, nodes)
+      if abb.frequency_variable
+        @ilp.add_variable(abb.frequency_variable, :gcfg)
+        @ilp.add_constraint(lhs + [[abb.frequency_variable, -1]], "equal", 0, "abb_freq_var_#{abb.qname}", :gcfg)
+      end
+
       @ilp.add_constraint(lhs+rhs, "equal", 0, "abb_influx_#{abb.qname}", :gcfg)
     }
     #    4.2 to function frequencies
@@ -1021,7 +1026,7 @@ class IPETBuilder
       ilp.add_constraint(lhs + rhs, operator, const, name, tag)
       name
     rescue UnknownVariableException => detail
-      debug(@options,:transform) { " ... skipped constraint: #{detail} #{lhs+rhs}" }
+      debug(@options,:transform) { " ... skipped constraint: #{detail} #{lhs+rhs} #{operator} #{const}" }
       debug(@options,:ipet) { " ...skipped constraint: #{detail}" }
     end
   end

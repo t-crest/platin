@@ -123,7 +123,7 @@ module PML
       # otherwise, it is a function or part of a function
       fname = data['function']
       assert("ProgramPoint.from_pml: no function attribute: #{data}") { fname }
-      function = mod.by_name(fname)
+      function = mod.by_label_or_name(fname)
       raise UnknownFunctionException.new(fname) unless function
 
       bname = data['block']
@@ -1100,7 +1100,7 @@ private
 
   # Class representing PML Atomic Basic Block
   class ABB < PMLObject
-    attr_reader :name, :function, :machine_function, :entry_block, :exit_block
+    attr_reader :name, :function, :machine_function, :entry_block, :exit_block, :frequency_variable
     def initialize(relation_graphs, data)
       set_yaml_repr(data)
       @rg = relation_graphs.by_name(data['function'], :src)
@@ -1109,6 +1109,10 @@ private
       }
       @function = @rg.get_function(:src)
       @machine_function = @rg.get_function(:dst)
+
+      # An ABB can have an attached frequency variable that catches
+      # its (total) internal activation count.
+      @frequency_variable = FrequencyVariable.new(data['frequency-variable']) if data['frequency-variable']
 
       @name = data['name']
       if data['entry-block']
@@ -1388,6 +1392,9 @@ private
       }
       set_yaml_repr(data)
       build_index
+    end
+    def by_label_or_name(name)
+      by_name(name)
     end
   end
 
