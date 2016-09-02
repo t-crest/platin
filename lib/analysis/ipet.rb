@@ -784,8 +784,10 @@ class IPETBuilder
         ipet_edge.static_context = node.abb if node.abb
         @ilp.add_cost(ipet_edge, edge_cost)
         debug(@options, :ipet_global) { "Added edge #{ipet_edge} with cost #{edge_cost}" }
-        # Incoming Edges for a specific block
-        if not ipet_edge.target.kind_of?(Symbol) and ipet_edge.target.abb and ipet_edge.source.abb
+        # Override Incoming Edges for Superstructure blocks. This is
+        # required for loop flowfacts on the global level.
+        if not ipet_edge.target.kind_of?(Symbol) and ipet_edge.target.abb and ipet_edge.source.abb and
+          not ipet_edge.target.microstructure and level == :local
           target_bb = ipet_edge.target.abb.get_region(:dst).entry_node
           @mc_model.sum_incoming_override[target_bb].push(ipet_edge)
         end
@@ -935,6 +937,9 @@ class IPETBuilder
       end
     end
     lhs, rhs = [], []
+    operator = ff.op
+    const = 0
+
     ff.lhs.each { |term|
       unless term.context.empty?
         warn("IPETBuilder#add_flowfact: context sensitive program points not supported: #{ff}")
@@ -947,6 +952,16 @@ class IPETBuilder
         lhs += model.block_frequency(term.programpoint, term.factor)
       elsif term.programpoint.kind_of?(Edge)
         lhs += model.edge_frequency(term.programpoint, term.factor)
+      elsif term.programpoint.kind_of?(ConstantProgramPoint)
+        # Constant Program Points can be used without declaration.
+        # They are used as mere constant within the flowfact
+        # expression. They are not eliminated in the flowfact transformation.
+        pp = term.programpoint
+        if not @ilp.has_variable?(pp)
+          @ilp.add_variable(pp)
+          @ilp.add_constraint([[pp, 1]], "equal", pp.value, pp.qname, :constant)
+        end
+        lhs += [[pp, term.factor]]
       elsif term.programpoint.kind_of?(FrequencyVariable)
         lhs += [[term.programpoint, term.factor]]
       elsif term.programpoint.kind_of?(Instruction)
@@ -964,6 +979,8 @@ class IPETBuilder
     end
     if scope.programpoint.kind_of?(Function)
       rhs += model.function_frequency(scope.programpoint, -ff.rhs.to_i)
+    elsif scope.programpoint.kind_of?(Block)
+      lhs += model.block_frequency(scope.programpoint, -ff.rhs.to_i)
     elsif scope.programpoint.kind_of?(Loop)
       rhs += model.sum_loop_entry(scope.programpoint, -ff.rhs.to_i)
     elsif scope.programpoint.kind_of?(GlobalProgramPoint)
@@ -988,15 +1005,14 @@ class IPETBuilder
 
         lhs = lhs.map {|v, f| [v, (maximal ? -iat : iat) * f]}
         rhs = rhs.map {|v, f| [v, (maximal ? -1   : 1  ) * f]}
-        const = maximal ? 0 : iat
-        ilp.add_constraint(lhs + rhs, "less-equal", const, name, tag)
         debug(@options, :ipet_global) {"#{maximal ? "Maximal" : "Minimal"} IAT: #{lhs+rhs} <= #{const}" }
-      else
-        ilp.add_constraint(lhs + rhs, ff.op, 0, name, tag)
+        operator = 'less-equal'
+        const += maximal ? 0 : iat
       end
-        name
+      ilp.add_constraint(lhs + rhs, operator, const, name, tag)
+      name
     rescue UnknownVariableException => detail
-      debug(@options,:transform) { " ... skipped constraint: #{detail}" }
+      debug(@options,:transform) { " ... skipped constraint: #{detail} #{lhs+rhs}" }
       debug(@options,:ipet) { " ...skipped constraint: #{detail}" }
     end
   end

@@ -226,7 +226,7 @@ class ILP
   def add_sos1(name, variables, card=1, vartype= :machinecode)
     raise Exception.new("Duplicate SOS: #{name}") if @sos1[name]
     @sos1[name] = [variables, card]
-\
+
     variables.each { |v|
       add_variable(v, vartype)
     }

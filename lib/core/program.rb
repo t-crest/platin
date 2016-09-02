@@ -110,7 +110,9 @@ module PML
 
     def ProgramPoint.from_pml(mod, data)
       # markers are special global program points
-      if data['marker']
+      if data['constant-value']
+        return ConstantProgramPoint.new(data)
+      elsif data['marker']
         return Marker.new(data['marker'])
       elsif data['gcfg']
         return GlobalProgramPoint.new(data['gcfg'], data)
@@ -272,11 +274,32 @@ module PML
       set_yaml_repr(data)
     end
     def function
-      # no function associated with marker
+      # no function associated with global program point
       nil
     end
     def to_s
       @qname
+    end
+  end
+
+  # The Constant  Program Point is valid at all places in a execution
+  class ConstantProgramPoint < ProgramPoint
+    attr_reader :name, :value
+    def initialize(data = nil)
+      @name = @qname
+      @value = (data and data['constant-value']) ? data['constant-value'] : 0
+      @qname = "__const__(#{@value})"
+      set_yaml_repr(data)
+    end
+    def function
+      # no function associated with global program point
+      nil
+    end
+    def to_s
+      @qname
+    end
+    def to_pml_ref
+      { 'constant-value' => value }
     end
   end
 

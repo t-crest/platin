@@ -421,7 +421,11 @@ class FlowFactTransformation
 
         # If direction up/down, eliminate all vars but dst/src
         elim_set = ilp.variables.select { |var|
-          ilp.vartype[var] != target_level.to_sym || ! var.kind_of?(IPETEdge) || ! var.cfg_edge?
+          if var.kind_of?(ConstantProgramPoint)
+            false
+          else
+            ilp.vartype[var] != target_level.to_sym || ! var.kind_of?(IPETEdge) || ! var.cfg_edge?
+          end
         }
         ve = VariableElimination.new(ilp, options)
         new_constraints = ve.eliminate_set(elim_set)
@@ -429,14 +433,16 @@ class FlowFactTransformation
         new_ffs += extract_flowfacts(new_constraints, entries, target_level).select { |ff|
           # FIXME: for now, we do not export interprocedural flow-facts relative to a function other than the entry,
           # because this is not supported by any of the WCET analyses
-          r = ff.local? || target_analysis_entries.include?(ff.scope.function)
-          unless r
+          if ff.local? || target_analysis_entries.include?(ff.scope.function)
+            debug(options, :transform) {
+              "Transformed flowfact #{ff}"
+            }
+            true
+          else
             debug(options, :transform) { "Skipping unsupported flow fact scope of transformed flow fact #{ff}: "+
-                 "(function: #{ff.scope.function}, local: #{ff.local?})" }
+                                         "(function: #{ff.scope.function}, local: #{ff.local?})" }
+            false
           end
-          debug(options, :transform) {
-            "Transformed flowfact #{ff}"
-          }
         }
 
         stats_num_constraints_before += ilp.constraints.length

@@ -319,8 +319,10 @@ module PML
     end
 
     def local?
-      lhs.all? { |term| term.programpoint.function &&
-                        term.programpoint.function == scope.function }
+      lhs.all? { |term|
+        pp = term.programpoint
+        pp.kind_of?(ConstantProgramPoint) || (pp.function && pp.function == scope.function)
+      }
     end
 
     def loop_bound?
