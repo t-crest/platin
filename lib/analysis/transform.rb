@@ -422,9 +422,16 @@ class FlowFactTransformation
         # If direction up/down, eliminate all vars but dst/src
         elim_set = ilp.variables.select { |var|
           if var.kind_of?(ConstantProgramPoint)
-            false
+            false # ConstantProgramPoints must live!
+          elsif var == entry
+            p var
+            false # Do not eliminate the entry
+          elsif ilp.vartype[var] != target_level.to_sym
+            true
+          elsif ! var.kind_of?(IPETEdge) || ! var.cfg_edge?
+            true
           else
-            ilp.vartype[var] != target_level.to_sym || ! var.kind_of?(IPETEdge) || ! var.cfg_edge?
+            false
           end
         }
         ve = VariableElimination.new(ilp, options)
