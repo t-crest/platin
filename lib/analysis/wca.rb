@@ -181,7 +181,7 @@ class WCA
         v.static_context(key) if v.kind_of?(IPETEdge)
       }
 
-      groups.map {|label, edges|
+      groups.sort_by {|k,v| k.to_s}.map {|label, edges|
         activation_count = edges.select {|v, freq|
           v.is_entry_in_static_context(key) if v.kind_of?(IPETEdge)
         }.reduce(0) {|acc, n| acc + n[1]}

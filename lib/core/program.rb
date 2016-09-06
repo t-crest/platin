@@ -1321,7 +1321,7 @@ private
       @entry_nodes.each {|n| n.is_source = true }
       @exit_nodes.each { |n| n.is_sink = true}
       unless entry_nodes.length > 0 and exit_nodes.length > 0
-        die("GCFG #{name} is not well formed, no entry, no exit")
+        die("GCFG #{name} is not well formed, no entry (#{entry_nodes}), no exit (#{exit_nodes})")
       end
     end
 
