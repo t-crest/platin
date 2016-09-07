@@ -801,7 +801,10 @@ module PML
       data['callees'].reject { |n|
         # XXX: hackish
         # filter known pseudo functions on bitcode
-        n =~ /llvm\..*/
+
+        # XXX: hashish v2: timing_print in dOSEK is never used within
+        # a circuit, we ignore them.... I feel dirty
+        n =~ /llvm\..*/ or n =~ /timing_print/
       }.map { |n|
         block.function.module.by_label_or_name(n, true)
       }

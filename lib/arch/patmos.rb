@@ -159,7 +159,9 @@ class ExtractSymbols
     when "sspill", "sens"
       ret['opcode'] = instr.upcase + (reg_args == 1 ? "r" : "i")
       ret
-
+    when "trap"
+      ret['opcode'] = "TRAP"
+      ret
     else
       ret['opcode'] = [instr, args]
       ret['invalid'] = true

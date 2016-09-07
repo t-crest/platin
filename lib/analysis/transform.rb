@@ -390,8 +390,6 @@ class FlowFactTransformation
 	next unless rs.include?(transform_entry)
       end
 
-      # FIXME: Multiple Entries
-      # transform_entry = target_analysis_entry unless transform_entry
       (flowfacts_by_entry[transform_entry] ||= []).push(ff)
     }
     selected_flowfacts = flowfacts_by_entry.values.flatten(1)
@@ -438,9 +436,10 @@ class FlowFactTransformation
         new_constraints = ve.eliminate_set(elim_set)
         # Extract and add new flow facts
         new_ffs += extract_flowfacts(new_constraints, entries, target_level).select { |ff|
-          # FIXME: for now, we do not export interprocedural flow-facts relative to a function other than the entry,
+          # FIXME: for now, we do not export interprocedural
+          # flow-facts relative to a function other than the entry,
           # because this is not supported by any of the WCET analyses
-          if ff.local? || target_analysis_entries.include?(ff.scope.function)
+          if ff.local?
             debug(options, :transform) {
               "Transformed flowfact #{ff}"
             }
