@@ -145,7 +145,17 @@ class GurobiILP < ILP
 
   def solve_lp(lp, sol)
     out = IO.popen("gurobi_cl ResultFile=#{sol} #{lp}")
-    lines = out.readlines
+    lines = []
+    backlock_idx = 0
+    while line = out.gets do
+      lines.push(line)
+      if lines.length > 200
+        while backlock_idx < lines.length do
+          puts(lines[backlock_idx])
+          backlock_idx += 1
+        end
+      end
+    end
     # Detect error messages
     return "Gurobi terminated unexpectedly (#{$?.exitstatus})" if $? and $?.exitstatus > 0
     lines.each do |line|
