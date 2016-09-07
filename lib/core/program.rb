@@ -1222,7 +1222,7 @@ private
 
   # Class representing PML GCFG Node
   class GCFGNode < PMLObject
-    attr_reader :abb, :function, :cost, :frequency_variable, :microstructure
+    attr_reader :abb, :function, :cost, :frequency_variable, :microstructure, :loops
     attr_accessor :is_source, :is_sink
     def initialize(functions, abbs, data)
       set_yaml_repr(data)
@@ -1248,6 +1248,8 @@ private
 
       # GCFGNode#connect needs a @predecessor hash
       @predecessors = {:local => [], :global => []}
+
+      @loops = data['loops'] || []
     end
 
     def connect(nodes)

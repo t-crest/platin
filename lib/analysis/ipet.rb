@@ -195,7 +195,7 @@ class IPETEdge
     return nil
   end
   def is_entry_in_static_context(key)
-    if key == "function"
+    if key == "function" and not self.source.kind_of?(Symbol)
       return self.source == self.function.entry_block if function
     elsif key == "abb"
       return gcfg_edge?
@@ -414,6 +414,8 @@ class GCFGIPETModel
     @builder, @ilp, @level = builder, ilp, level
     @mc_model = mc_model
     @entry_edges = []
+    @loops = Hash.new {|hsh, key| hsh[key] = {'entries' => [], 'backedges' => []} }
+
   end
 
   # returns all edges, plus all return blocks
@@ -463,6 +465,16 @@ class GCFGIPETModel
     @ilp.add_constraint(lhs, "equal", 1, "structural_gcfg_entry", :structural)
   end
 
+  def add_loop_contraints(gcfg)
+    @loops.each {|loop_idx, data|
+      # p loop_idx, data['entries'], data['backedges']
+      lhs = data['entries'].map {|e| [e, -10000 / data['entries'].length]}
+      rhs = data['backedges'].map {|e| [e, 1]}
+      @ilp.add_constraint(rhs+lhs, "less-equal", 0,
+                                  "gcfg_loop_#{loop_idx}", :structural)
+    }
+  end
+
   def entry_to(node)
     FrequencyVariable.new("gcfg_entry_#{node.qname}")
   end
@@ -474,7 +486,7 @@ class GCFGIPETModel
     incoming = node.predecessors.map { |p| [IPETEdge.new(p,node,level), -1] }
     # Some nodes have an additional input edge, if they are input nodes
     if node.is_source
-      e = self.entry_to(node)
+      e = IPETEdge.new(:entry, node, level)
       debug(builder.options, :ipet_global) {"Added entry edge #{e}"}
       @ilp.add_variable(e)
       @entry_edges.push(e)
@@ -495,6 +507,27 @@ class GCFGIPETModel
                          :structural)
 
     end
+
+    # Loop Handling: Finding Headers; Finding backedges
+    node.loops.each { |loop_id|
+      header = false
+      backedges = []
+      entries = []
+      incoming.each { |ipet_edge, _|
+        loop_src = ipet_edge.source.kind_of?(Symbol) ? [] : ipet_edge.source.loops
+        assert("...") { ipet_edge.target == node }
+        if loop_src.member?(loop_id)
+          backedges.push(ipet_edge)
+        else
+          entries.push(ipet_edge)
+          header = true
+        end
+      }
+      if header
+        @loops[loop_id]['entries'] += entries
+        @loops[loop_id]['backedges'] += backedges
+      end
+    }
   end
 
   def each_intra_abb_edge(abb)
@@ -556,7 +589,7 @@ class GCFGIPETModel
       incoming += node.predecessors(:local).map {|p|
         [IPETEdge.new(p, node, :gcfg), factor]
       }
-      incoming.push([self.entry_to(node), factor]) if node.is_source
+      incoming.push([IPETEdge.new(:entry, node, :gcfg), factor]) if node.is_source
 
       # Suspend and Return Edges (especially IRQ returns) This is a
       # tricky one!. The Problem with our ABB super structure is, that
@@ -791,6 +824,7 @@ class IPETBuilder
           target_bb = ipet_edge.target.abb.get_region(:dst).entry_node
           @mc_model.sum_incoming_override[target_bb].push(ipet_edge)
         end
+
       }
 
       # 1.3 Collect activated artifacts
@@ -802,8 +836,11 @@ class IPETBuilder
     gcfg.nodes.each do |node|
       @gcfg_model.add_node_constraint(node)
     end
+
     ## After all node constraints
+    # 2.1 Add entry and basic loop constraints
     @gcfg_model.add_entry_constraint(gcfg)
+    @gcfg_model.add_loop_contraints(gcfg)
 
     #################################################
     ## The ABB Super Structure is now fully in place.
