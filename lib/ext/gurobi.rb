@@ -149,7 +149,7 @@ class GurobiILP < ILP
     backlock_idx = 0
     while line = out.gets do
       lines.push(line)
-      if lines.length > 200
+      if lines.length > 35
         while backlock_idx < lines.length do
           puts(lines[backlock_idx])
           backlock_idx += 1
