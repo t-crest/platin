@@ -1276,6 +1276,10 @@ private
       return @predecessors[level]
     end
 
+    def isr_entry?
+      return data['isr_entry']
+    end
+
     def index
       data['index']
     end

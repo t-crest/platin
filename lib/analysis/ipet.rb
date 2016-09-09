@@ -415,7 +415,10 @@ class GCFGIPETModel
     @mc_model = mc_model
     @entry_edges = []
     @loops = Hash.new {|hsh, key| hsh[key] = {'entries' => [], 'backedges' => []} }
+  end
 
+  def assert_equal(lhs, rhs, name, tag)
+    @mc_model.assert_equal(lhs, rhs, name, tag)
   end
 
   # returns all edges, plus all return blocks
@@ -473,10 +476,6 @@ class GCFGIPETModel
       @ilp.add_constraint(rhs+lhs, "less-equal", 0,
                                   "gcfg_loop_#{loop_idx}", :structural)
     }
-  end
-
-  def entry_to(node)
-    FrequencyVariable.new("gcfg_entry_#{node.qname}")
   end
 
   # The Node frequency is, like on the machine block level constrained
@@ -582,11 +581,31 @@ class GCFGIPETModel
     [edges.keys.length, edges[abb.get_region(:dst).entry_node][:out]]
   end
 
-  def flow_into_abb(abb, nodes, factor = -1)
-    incoming, resumes, suspends = [], [], []
+  def flow_into_abb(abb, nodes, factor = 1)
+    incoming, irq_activations = [], []
+
+    def find_resume_edges(current_node, stop_abb, result_set, visited)
+      current_node.successors.each { |successor|
+        next if visited.member?(successor)
+        visited.add(current_node)
+
+        if successor.abb == stop_abb
+          result_set.add([current_node, successor])
+        else
+          find_resume_edges(successor, stop_abb, result_set, visited)
+        end
+      }
+      return result_set
+    end
+
+
+    irq_resume_nodes = Set.new
 
     nodes.each do |node|
-      incoming += node.predecessors(:local).map {|p|
+      # Per se a node is activated, as often, as one of its states is
+      # activated. Either by a local predecessor, by a
+      # global/dispatching predecessor, or by an concrete input edge
+      incoming += node.predecessors.map {|p|
         [IPETEdge.new(p, node, :gcfg), factor]
       }
       incoming.push([IPETEdge.new(:entry, node, :gcfg), factor]) if node.is_source
@@ -596,32 +615,63 @@ class GCFGIPETModel
       # interrupts generate loops at computation blocks, where the
       # resumes are additional edges into the computation block.
       ##
-      # This is double accounting of blocks (especially the deeper
-      # calling hierarchies underneath the ABB are bad). Therefore, we
-      # only count for resume edges, if no corresponding suspend edge is
-      # present.
-      resumes += node.predecessors(:global).map {|p| [IPETEdge.new(p, node, :gcfg), -1] }
-      suspends += node.successors(:global).map {|p| [IPETEdge.new(node, p, :gcfg), 1] }
-    end
-
-    if resumes.length > 0
-      debug(builder.options, :ipet_global) {
-        "Add IRQ Resume edges: #{abb.name} => resumes: #{resumes} suspends: #{suspends}"
+      # We remove this double accounting, by applying a quite complex
+      # construction. So here is the general outline:
+      # 1) Detect IRQ Activation Loops:
+      node.successors(:global).each {|successor|
+        #   1.1) The successor is a irq_entry node
+        next if not successor.isr_entry?
+        #   1.3) Find all possible resume edges
+        resumes = find_resume_edges(successor, node.abb, Set.new, Set.new)
+        next if resumes.length == 0
+        irq_resume_nodes.merge(resumes)
+        #   1.4) We will substract the number of irq activations
+        irq_activations.push([IPETEdge.new(node, successor, :gcfg),1])
       }
-      sos_name = "SOS_#{abb.qname}"
-      pos = (sos_name + "_additional_resumes").to_sym
-      neg = (sos_name + "_negative_slack").to_sym
+    end
+    irq_resumes = irq_resume_nodes.map {|pred, node|
+      [IPETEdge.new(pred, node, :gcfg), 1]
+    }
+
+    var = "#{abb.to_s}_in_state".to_sym
+    @ilp.add_variable(var)
+    assert_equal(incoming, [[var,1]], "abb_#{abb.qname}_in_state", :gcfg)
+
+    if irq_activations.length > 0
+      assert("There should always be a resume, if we detected an activation") {
+        irq_resumes.length > 0
+      }
+      debug(builder.options, :ipet_global) {
+        "Add IRQ Resume edges: #{abb.name} => irqs: #{irq_activations}, possible resumes: #{irq_resumes} "
+      }
+
+      sos_name = "#{abb.to_s}"
+      neg = (sos_name + "_additional_resumes").to_sym
+      pos = (sos_name + "_additional_interrupts").to_sym
       ilp.add_sos1(sos_name, [pos, neg])
 
-      # pos - neg = (resume - suspend) = 0;
-      ilp.add_constraint([[pos, 1], [neg, -1]] + resumes + suspends, "equal", 0,
-                         "resume_#{abb.qname}", :structural)
+      # pos - neg = (resumes - irqs) = 0;
+      irq_activations_var = "#{abb.to_s}_irq_activations".to_sym
+      @ilp.add_variable(irq_activations_var)
+      assert_equal(irq_activations, [[irq_activations_var,1]], "abb_#{abb.qname}_in_state", :gcfg)
+
+      irq_resumes_var = "#{abb.to_s}_irq_resumes".to_sym
+      @ilp.add_variable(irq_resumes_var)
+      assert_equal(irq_resumes, [[irq_resumes_var,1]], "abb_#{abb.qname}_in_state", :gcfg)
+
+      assert_equal([[pos, 1], [neg, -1]],
+                   [[irq_activations_var, 1], [irq_resumes_var, -1]],
+                   "resume_#{abb.qname}", :structural)
       # Sometimes LP Solve is an unhappy beast
       if @ilp.kind_of?(LpSolveILP)
-        ilp.add_constraint([[pos, 1]] + resumes , "less-equal", 0,
+        ilp.add_constraint([[pos, -1]] + resumes , "less-equal", 0,
                            "resume_ilp_happy_#{abb.qname}", :structural)
       end
-      incoming += [[pos, factor]]
+      # 2. We substract all interrupt activations, BUT add all
+      # interrupt activations, that have no corresponding resume, i.e.
+      # extra interrupts
+
+      incoming += [[irq_activations_var, -1 * factor], [pos, factor]]
     end
 
     incoming
@@ -918,12 +968,15 @@ class IPETBuilder
       mc_entry_block = abb.get_region(:dst).entry_node
       lhs = @mc_model.block_frequency(mc_entry_block)
       rhs = @gcfg_model.flow_into_abb(abb, nodes)
+      @ilp.add_variable(abb, :gcfg)
+      @gcfg_model.assert_equal(lhs, rhs, "abb_influx_#{abb.qname}", :gcfg)
+      @gcfg_model.assert_equal(lhs, [[abb, 1]], "abb_#{abb.qname}", :gcfg)
       if abb.frequency_variable
         @ilp.add_variable(abb.frequency_variable, :gcfg)
-        @ilp.add_constraint(lhs + [[abb.frequency_variable, -1]], "equal", 0, "abb_freq_var_#{abb.qname}", :gcfg)
+        @gcfg_model.assert_equal([[abb.frequency_variable, 1]],
+                                 [[abb, 1]],
+                                 "abb_copy_to_var_#{abb.qname}", :gcfg)
       end
-
-      @ilp.add_constraint(lhs+rhs, "equal", 0, "abb_influx_#{abb.qname}", :gcfg)
     }
     #    4.2 to function frequencies
     function_to_nodes.each {|mf, nodes|
@@ -1063,8 +1116,9 @@ class IPETBuilder
       ilp.add_constraint(lhs + rhs, operator, const, name, tag)
       name
     rescue UnknownVariableException => detail
-      debug(@options,:transform) { " ... skipped constraint: #{detail} #{lhs+rhs} #{operator} #{const}" }
-      debug(@options,:ipet) { " ...skipped constraint: #{detail}" }
+      debug(@options,:transform, :ipet, :ipet_global) {
+        " ... skipped constraint: #{detail} "
+      }
     end
   end
 
