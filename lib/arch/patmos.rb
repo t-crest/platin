@@ -146,7 +146,7 @@ class ExtractSymbols
       ret['memode'] = {"s"=> "store", "l"=>"load"}[instr[0]]
       ret['memtype'] = {"l"=> "local", "m"=>"memory", "s"=>"stack", "c"=>"cache"}[instr[2]]
       ret
-    when "ret", "retnd", "xret"
+    when "ret", "retnd", "xret", "xretnd"
       ret['opcode'] = instr.upcase
       ret['branch-type'] = "return"
       ret
