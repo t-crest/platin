@@ -448,7 +448,7 @@ class IPETBuilder
     @markers = {}
     @call_edges = []
     @mf_function_callers = {}
-    @options[:mbb_variables] = opts[:mbb_variables]
+    @options.mbb_variables = opts[:mbb_variables]
 
     # build refinement to prune infeasible blocks and calls
     build_refinement(@entry, flowfacts)
@@ -501,7 +501,7 @@ class IPETBuilder
         next
       end
       @mc_model.add_block_constraint(block)
-      if @options[:mbb_variables]
+      if @options.mbb_variables
         @mc_model.add_block(block)
       end
     end
