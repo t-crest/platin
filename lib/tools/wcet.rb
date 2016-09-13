@@ -436,6 +436,10 @@ class WcetTool
     if config and not options.analysis_entry
       options.analysis_entry = config.analysis_entry
     end
+    if options.analysis_entry == "GCFG:timing-"
+      warn("Defaulting to GCFG:timing-0.")
+      options.analysis_entry = "GCFG:timing-0"
+    end
     if not options.analysis_entry
       warn("Analysis entry not specified, falling back to 'main'.") if config
       options.analysis_entry = "main"

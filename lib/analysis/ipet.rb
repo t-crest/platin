@@ -983,7 +983,7 @@ class IPETBuilder
       mc_entry_block = mf.entry_block
       lhs = @mc_model.block_frequency(mc_entry_block)
       rhs = @gcfg_model.flow_into_abb(mf, nodes)
-      @ilp.add_constraint(lhs+rhs, "equal", 0, "abb_influx_#{mf.qname}", :gcfg)
+      @gcfg_model.assert_equal(lhs, rhs, "abb_influx_#{mf.qname}", :gcfg)
     }
 
 
