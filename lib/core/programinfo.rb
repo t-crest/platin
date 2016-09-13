@@ -309,6 +309,43 @@ module PML
       flowfact
     end
 
+    def FlowFact.from_string(pml, ff)
+      x = ff.split(/\s*:\s*/)
+      assert("Invalid Flow Fact format #{ff} ( <scope> : <context> : <fact> = <const> )") {
+        x.length == 3
+      }
+      scope, context, fact = x
+      assert("Only the foreach context supported ( '<>' )") {
+        context == "<>"
+      }
+      m = /\s*([^<=]*?)\s*(=|<=)\s*([0-9]*)/.match(fact)
+      lhs, op, rhs = m[1..3]
+
+      if lhs[0] != "-"
+        lhs = "+ " + lhs
+      end
+      terms = []
+      while lhs != "" do
+        m = /(?<sign>[+-])\s*((?<factor>[0-9]+)\s*)?(?<pp>[^+-]*)\s*(?<lhs>.*)/.match(lhs)
+
+        factor = (m[:factor] || "1").to_i
+        factor *= {"+"=>1, "-"=>-1}[m[:sign]]
+        terms.push ({"factor"=>factor,
+                    "program-point"=> {"function"=>m[:pp]}})
+        lhs = m[:lhs]
+      end
+
+      flowfact = {'scope'=> {'function'=> scope},
+                  'level'=> 'bitcode',
+                  'origin'=> 'user.bc',
+                  'op' => {"=" => "equal", "<=" => "less-equal"}[op],
+                  'rhs' => rhs.to_i,
+                  'lhs' => terms,
+                 }
+
+      FlowFact.from_pml(pml, flowfact)
+    end
+
     def globally_valid?(entry_function)
       # local relative flow facts are globally valid
       return true if local? && rhs.constant? && rhs.to_i == 0
@@ -323,6 +360,15 @@ module PML
         pp = term.programpoint
         pp.kind_of?(ConstantProgramPoint) || (pp.function && pp.function == scope.function)
       }
+    end
+
+    def on_function_level?
+      return scope.programpoint.kind_of?(Function) &&
+             lhs.all? { |term|
+        term.programpoint.kind_of?(Function)||
+          (term.programpoint.kind_of?(Block) && term.programpoint.function.entry_block == term.programpoint)
+      } &&
+             rhs.constant?
     end
 
     def loop_bound?

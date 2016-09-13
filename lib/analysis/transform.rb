@@ -380,7 +380,7 @@ class FlowFactTransformation
     flowfacts.each { |ff|
       next if ff.symbolic_bound? # skip symbolic flow facts
       transform_entry = nil
-      if ff.local?
+      if ff.local? || ff.on_function_level?
         transform_entry = ff.scope.function
         if ff.level == 'machinecode' && target_level == "bitcode"
           transform_entry = pml.bitcode_functions.by_name(transform_entry.name)
@@ -439,14 +439,14 @@ class FlowFactTransformation
           # FIXME: for now, we do not export interprocedural
           # flow-facts relative to a function other than the entry,
           # because this is not supported by any of the WCET analyses
-          if ff.local?
+          if ff.local? or ff.on_function_level?
             debug(options, :transform) {
               "Transformed flowfact #{ff}"
             }
             true
           else
             debug(options, :transform) { "Skipping unsupported flow fact scope of transformed flow fact #{ff}: "+
-                                         "(function: #{ff.scope.function}, local: #{ff.local?})" }
+                                         "(function: #{ff.scope.function}, local: #{ff.local? or ff.on_function_level?})" }
             false
           end
         }

@@ -112,6 +112,13 @@ class WcetTool
     time("read symbols", "SYMBOLS") do
       ExtractSymbolsTool.run(pml,options)
     end
+
+    # Load Flow Facts from command Line
+    (options.user_flowfacts || []).each { |ff|
+      ff = FlowFact.from_string(@pml, ff)
+      @pml.flowfacts.push(ff)
+    }
+
   end
 
   def trace_analysis
@@ -466,6 +473,9 @@ class WcetTool
     opts.on("--combine-wca", "run both aiT and WCA and combine cache analysis results") { |d| opts.options.combine_wca = true }
     opts.on("--compute-criticalities", "calculate block criticalities") { opts.options.compute_criticalities = true }
     opts.on("--enable-sweet", "run SWEET bitcode analyzer") { |d| opts.options.enable_sweet = true }
+    opts.on("--add-flowfact FLOWFACT", "Add Flow Facts to the analysis") { |v|
+      (opts.options.user_flowfacts ||= []).push(v)
+    }
     use_sweet = Proc.new { |options| options.enable_sweet }
     opts.bitcode_file(use_sweet)
     opts.alf_file(Proc.new { false })

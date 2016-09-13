@@ -442,7 +442,11 @@ class ContextRef < PMLObject
     ContextRef.new(pp, context, data)
   end
   def function
-    programpoint.function
+    if programpoint.kind_of?(Function)
+      programpoint
+    else
+      programpoint.function
+    end
   end
   def block
     programpoint.block
