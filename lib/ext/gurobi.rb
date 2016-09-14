@@ -159,8 +159,13 @@ class GurobiILP < ILP
     # Detect error messages
     return "Gurobi terminated unexpectedly (#{$?.exitstatus})" if $? and $?.exitstatus > 0
     lines.each do |line|
-      return line if line =~ /Model is infeasible/
-      return line if line =~ /Model is unbounded/
+      if line =~ /Model is infeasible/ || line =~ /Model is unbounded/
+        while backlock_idx < lines.length do
+          puts(lines[backlock_idx])
+          backlock_idx += 1
+        end
+        return line
+      end
       return nil if line =~ /Optimal solution found/
     end
     nil # No error
