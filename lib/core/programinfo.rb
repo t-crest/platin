@@ -336,8 +336,8 @@ module PML
       end
 
       flowfact = {'scope'=> {'function'=> scope},
-                  'level'=> 'bitcode',
-                  'origin'=> 'user.bc',
+                  'level'=> 'machinecode',
+                  'origin'=> 'user',
                   'op' => {"=" => "equal", "<=" => "less-equal"}[op],
                   'rhs' => rhs.to_i,
                   'lhs' => terms,
@@ -360,15 +360,6 @@ module PML
         pp = term.programpoint
         pp.kind_of?(ConstantProgramPoint) || (pp.function && pp.function == scope.function)
       }
-    end
-
-    def on_function_level?
-      return scope.programpoint.kind_of?(Function) &&
-             lhs.all? { |term|
-        term.programpoint.kind_of?(Function)||
-          (term.programpoint.kind_of?(Block) && term.programpoint.function.entry_block == term.programpoint)
-      } &&
-             rhs.constant?
     end
 
     def loop_bound?
