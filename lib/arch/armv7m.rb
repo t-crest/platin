@@ -297,6 +297,20 @@ PIPELINE_REFILL=3
     # page 31:
     when 't2MUL', 't2MLA', 't2MLS', 't2SMULL', 't2UMULL', 't2SMLAL', 't2UMLAL'
       1
+    # TODO: correct value?
+    when 't2LDRi12'
+      2
+    when 't2ADDrs'
+      1
+    # logical operations
+    when 't2ANDrr', 't2EORrr', 't2ORRrr', 't2ORNrr', 't2BICrr', 't2MVNrr', 't2TSTrr', 't2TEQrr'
+      1
+    # bitwise shifts
+    when 't2LSLri', 't2LSLri', 't2LSRri', 't2LSRri', 't2ASRri', 't2ASRri'
+      1
+    # subtract
+    when 't2SUBrr', 't2SBCrr', 't2RSBrs'
+      1
     else
       die("Unknown opcode: #{instr.opcode}")
     end
