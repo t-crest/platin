@@ -201,16 +201,31 @@ class PMLDoc
 
   def PMLDoc.from_files(filenames)
     streams = filenames.inject([]) { |list,f|
-      begin
-        fstream = File.open(f) { |fh|
-          stream = YAML::load_stream(fh)
-          stream.documents if stream.respond_to?(:documents) # ruby 1.8 compat
-          stream
-        }
-        list + fstream
+      t1 = Time.now
+      fm = f + ".bin"
+      ret = begin
+        if File.exists?(fm) and File.stat(fm).mtime > File.stat(f).mtime
+          fstream = File.open(fm) { |fhm|
+            Marshal.load(fhm.read)
+          }
+          list + fstream
+        else
+          fstream = File.open(f) { |fh|
+            stream = YAML::load_stream(fh)
+            stream.documents if stream.respond_to?(:documents) # ruby 1.8 compat
+            File.open(fm, "w+") { |fhm|
+              fhm.write(Marshal.dump(stream))
+            }
+            stream
+          }
+          list + fstream
+        end
       rescue Exception => detail
         die("Failed to load PML document: #{detail}")
       end
+      t2 = Time.now
+      info("Finished PML load in #{((t2-t1)*1000).to_i} ms")
+      ret
     }
     PMLDoc.new(streams)
   end
