@@ -664,7 +664,7 @@ class GCFGIPETModel
                    "resume_#{abb.qname}", :structural)
       # Sometimes LP Solve is an unhappy beast
       if @ilp.kind_of?(LpSolveILP)
-        ilp.add_constraint([[pos, -1]] + resumes , "less-equal", 0,
+        ilp.add_constraint([[irq_resumes_var, 1], [pos, -1]], "less-equal", 0,
                            "resume_ilp_happy_#{abb.qname}", :structural)
       end
       # 2. We substract all interrupt activations, BUT add all
