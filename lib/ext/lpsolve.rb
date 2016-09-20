@@ -141,7 +141,7 @@ class LpSolveILP < ILP
     debug(options, :ilp) { "#{lp_solve_error_msg(problem)} PROBLEM - starting diagnosis" }
     @do_diagnose = false
     variables.each do |v|
-      next if not v.kind_of?(GlobalProgramPoint)
+      next if v.kind_of?(GlobalProgramPoint)
       add_constraint([[v,1]],"less-equal",BIGM,"__debug_upper_bound_v#{index(v)}",:debug)
     end
     @eps = 1.0
@@ -149,6 +149,7 @@ class LpSolveILP < ILP
     unbounded = freq.map { |v,k|
       (k >= BIGM - 1.0) ? v : nil
     }.compact
+    freq.each{|v| p v }
     unbounded_functions, unbounded_loops = Set.new, Set.new
     unbounded.each { |v|
       next unless v.kind_of?(IPETEdge) && v.source.kind_of?(Block)

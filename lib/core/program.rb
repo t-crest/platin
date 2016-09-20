@@ -1403,6 +1403,9 @@ private
       build_index
     end
     def by_label_or_name(name)
+      if name =~ /^GCFG:(.*)/
+        name = $1
+      end
       by_name(name)
     end
   end

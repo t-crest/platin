@@ -19,50 +19,10 @@ class WCA
     @pml, @options = pml, options
   end
 
-  def analyze(entry_label)
-
-    # Builder and Analysis Entry
-    ilp = GurobiILP.new(@options) if @options.use_gurobi
-    ilp = LpSolveILP.new(@options) unless ilp
-
-    gcfg = @pml.analysis_gcfg(@options)
-    machine_entry = gcfg.get_entry()['machinecode'].first
-
-    # PLAYING: VCFGs
-    #bcffs,mcffs = ['bitcode','machinecode'].map { |level|
-    #  @pml.flowfacts.filter(@pml,@options.flow_fact_selection,@options.flow_fact_srcs,level)
-    #}
-    #ctxm = ContextManager.new(@options.callstring_length,1,1,2)
-    #mc_model = ControlFlowModel.new(@pml.machine_functions, machine_entry, mcffs, ctxm, @pml.arch)
-    #mc_model.build_ipet(ilp) do |edge|
-      # pseudo cost (1 cycle per instruction)
-    #  if (edge.kind_of?(Block))
-    #    edge.instructions.length
-    #  else
-    #    edge.source.instructions.length
-    #  end
-    #end
-
-    #cfbc = ControlFlowModel.new(@pml.bitcode_functions, bitcode_entry, bcffs,
-    #                            ContextManager.new(@options.callstring_length), GenericArchitecture.new)
-
-    # BEGIN: remove me soon
-    # builder
-    builder = IPETBuilder.new(@pml, @options, ilp)
-
-    # flow facts
-    ff_levels = ["machinecode", "gcfg"]
-    flowfacts = @pml.flowfacts.filter(@pml,
-                                     @options.flow_fact_selection,
-                                     @options.flow_fact_srcs,
-                                     ff_levels,
-                                     true)
-
-    # Build IPET using costs from @pml.arch
-    builder.build_gcfg(gcfg, flowfacts) do |edge|
-      # get list of executed instructions
-      branch_index = nil
-      ilist =
+  def edge_cost(edge)
+    # get list of executed instructions
+    branch_index = nil
+    ilist =
         if (edge.kind_of?(Block))
           edge.instructions
         else
@@ -112,6 +72,88 @@ class WCA
       end
       debug(@options,:costs) { "WCET edge costs for #{edge}: #{path_wcet} block, #{edge_wcet} edge" }
       path_wcet + edge_wcet
+  end
+
+  def analyze_fragment(entries, exists, blocks, &cost)
+    # Builder and Analysis Entry
+    ilp = GurobiILP.new(@options) if @options.use_gurobi
+    ilp = LpSolveILP.new(@options) unless ilp
+
+    # flow facts
+    ff_levels = ["machinecode", "gcfg"]
+    flowfacts = @pml.flowfacts.filter(@pml,
+                                      @options.flow_fact_selection,
+                                      @options.flow_fact_srcs,
+                                      ff_levels,
+                                      true)
+
+    builder = IPETBuilder.new(@pml, @options, ilp)
+    builder.build_fragment(entries, exists, blocks, flowfacts, cost)
+
+    x = @pml.machine_functions.by_label("unexpected_interrupt")
+    ilp.add_constraint([[x.blocks.first, 1]], "equal", 0, "no_unexpected_interrupts", :archane)
+
+
+    # Solve ILP
+    begin
+      cycles, freqs = ilp.solve_max
+    rescue Exception => ex
+      warn("WCA: ILP failed: #{ex}") unless @options.disable_ipet_diagnosis
+      cycles,freqs = -1, {}
+    end
+
+    if @options.verbose
+      freqs.each {|edge, freq|
+        next if freq * ilp.get_cost(edge) == 0
+        p [edge, freq, ilp.get_cost(edge)]
+      }
+    end
+    cycles
+  end
+
+
+  def analyze(entry_label)
+
+    # Builder and Analysis Entry
+    ilp = GurobiILP.new(@options) if @options.use_gurobi
+    ilp = LpSolveILP.new(@options) unless ilp
+
+    gcfg = @pml.analysis_gcfg(@options)
+    machine_entry = gcfg.get_entry()['machinecode'].first
+
+    # PLAYING: VCFGs
+    #bcffs,mcffs = ['bitcode','machinecode'].map { |level|
+    #  @pml.flowfacts.filter(@pml,@options.flow_fact_selection,@options.flow_fact_srcs,level)
+    #}
+    #ctxm = ContextManager.new(@options.callstring_length,1,1,2)
+    #mc_model = ControlFlowModel.new(@pml.machine_functions, machine_entry, mcffs, ctxm, @pml.arch)
+    #mc_model.build_ipet(ilp) do |edge|
+      # pseudo cost (1 cycle per instruction)
+    #  if (edge.kind_of?(Block))
+    #    edge.instructions.length
+    #  else
+    #    edge.source.instructions.length
+    #  end
+    #end
+
+    #cfbc = ControlFlowModel.new(@pml.bitcode_functions, bitcode_entry, bcffs,
+    #                            ContextManager.new(@options.callstring_length), GenericArchitecture.new)
+
+    # BEGIN: remove me soon
+    # builder
+    builder = IPETBuilder.new(@pml, @options, ilp)
+
+    # flow facts
+    ff_levels = ["machinecode", "gcfg"]
+    flowfacts = @pml.flowfacts.filter(@pml,
+                                     @options.flow_fact_selection,
+                                     @options.flow_fact_srcs,
+                                     ff_levels,
+                                     true)
+
+    # Build IPET using costs from @pml.arch
+    builder.build_gcfg(gcfg, flowfacts) do |edge|
+      edge_cost(edge)
     end
 
     # run cache analyses

@@ -736,6 +736,119 @@ class IPETBuilder
       succs
     end
   end
+  # Build Fragment
+  def build_fragment(entries, exits, blocks, flow_facts, cost_function)
+    @cost_function = cost_function
+    entries = entries.dup
+    exits = exits.dup
+    incoming = {}
+    outgoing = {}
+    entry_frequency = {}
+    exit_frequency = {}
+
+
+    blocks.each {|mbb|
+      incoming[mbb] = []
+      outgoing[mbb] = []
+    }
+    entry_edges = []
+    exit_edges = []
+    blocks.each { |mbb|
+      mbb.successors.each {|mbb2|
+        if ! blocks.member?(mbb2)
+          next
+        end
+        edge = IPETEdge.new(mbb, mbb2, :machinecode)
+        @ilp.add_variable(edge)
+        outgoing[mbb].push(edge)
+        incoming[mbb2].push(edge)
+      }
+
+      freq, freq_idx = mbb, 0
+      @ilp.add_variable(freq)
+      entry_frequency[mbb] = freq
+      exit_frequency[mbb] = freq
+
+      mbb.callsites.each { |cs|
+        call_edges = []
+        return_edges = []
+        assert("Return Pad for call site must reside in same block") {
+          cs.next.block == cs.block
+        }
+        cs.callees.each { |mf|
+          mf = @pml.machine_functions.by_label(mf)
+          next if incoming[mf.blocks.first].nil?
+
+          e = IPETEdge.new(freq, mf.blocks.first, :machinecode)
+          @ilp.add_variable(e)
+          incoming[mf.blocks.first].push(e)
+          call_edges.push(e)
+          # Find all return edges of target function
+          rets = mf.blocks.select {|b| b.must_return? }
+          rets.each { |ret|
+            next if ! blocks.member?(ret)
+            e = IPETEdge.new(ret, cs, :machinecode)
+            @ilp.add_variable(e)
+            outgoing[ret].push(e)
+            return_edges.push(e)
+          }
+        }
+        next if call_edges.length == 0
+        # Call is Executed as often as the last instruction frequency
+        @ilp.add_variable(cs)
+        cost = cost_function.call(mbb.instructions[freq_idx], cs)
+        @ilp.add_cost(cs, cost)
+        @ilp.add_constraint([[cs, 1], [freq, -1]], "equal", 0, "callsite_#{cs}", :callsite)
+        rhs = [[cs, -1]]
+        lhs = call_edges.map { |e| [e, 1] }
+        @ilp.add_constraint(lhs + rhs, "less-equal", 0, "call_#{cs}", :callsite)
+
+        # Call is Executed as often as the last instruction frequency
+        @ilp.add_variable(cs.next)
+        rhs = [[cs.next, 1]]
+        lhs = return_edges.map { |e| [e, -1] }
+        if exits.member?(cs)
+          exit_edges += return_edges
+          exits.delete(cs)
+        end
+        @ilp.add_constraint(lhs + rhs, "less-equal", 0, "returnsite_#{cs}", :callsite)
+
+        # Cant return more often than activated
+        @ilp.add_constraint([[cs, -1], [cs.next, 1]], "less-equal", 0, "call_ret_#{cs}", :callsite)
+        freq, freq_idx = cs.next, cs.next.index
+        exit_frequency[mbb] = cs.next
+      }
+
+      if mbb.instructions.last
+        cost = cost_function.call(mbb.instructions[freq_idx], mbb.instructions.last)
+        @ilp.add_cost(freq, cost)
+      end
+    }
+    entry_edges += entries.map { |mi|
+      e = IPETEdge.new(:entry, mi.block, :machinecode)
+      @ilp.add_variable(e)
+      incoming[mi.block].push(e)
+      e
+    }
+    exit_edges += exits.map { |mi|
+      e = IPETEdge.new(mi.block, :exit, :machinecode)
+      @ilp.add_variable(e)
+      outgoing[mi.block].push(e)
+      e
+    }
+    @ilp.add_constraint(entry_edges.map{|e| [e, 1]}, "equal", 1, "entry_constraint", :structural)
+    @ilp.add_constraint(exit_edges.map{|e| [e, 1]}, "equal", 1, "exit_constraint", :structural)
+
+    blocks.each {|mbb|
+      lhs = incoming[mbb].map{|e| [e, 1]}
+      rhs = [[entry_frequency[mbb], -1]]
+      @ilp.add_constraint(lhs+rhs, "equal", 0, "block_entry_#{mbb}", :structural)
+      lhs = outgoing[mbb].map{|e| [e, 1]}
+      rhs = [[exit_frequency[mbb], -1]]
+      @ilp.add_constraint(lhs+rhs, "equal", 0, "block_exit_#{mbb}", :structural)
+    }
+
+  end
 
   # Build basic IPET structure.
   # yields basic blocks, so the caller can compute their cost
