@@ -282,12 +282,14 @@ PIPELINE_REFILL=3
       
     # ARMv7M support
     # TODO
-    when 't2STMDB_UPD'
+    when 't2STMDB_UPD' # TODO: not in http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0439b/CHDDIGAC.html ?
       2
     when 't2MOVi16'
-      2
+      2 # 1 -> http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0439b/CHDDIGAC.html
     when 't2MOVTi16'
-      2
+      2 # 1 -> http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0439b/CHDDIGAC.html
+    when 't2MOVi'
+      2 # 1 acc. to `3.3.1. Cortex-M4 instructions`
     when 't2MVNi', 't2STRi8', 't2TSTri', 't2Bcc', 't2SUBri', 't2ANDri', 't2LDRi8', 't2LDMIA_RET'
       2
     when 'PSEUDO_LOOPBOUND'
@@ -303,13 +305,22 @@ PIPELINE_REFILL=3
     when 't2ADDrs'
       1
     # logical operations
-    when 't2ANDrr', 't2EORrr', 't2ORRrr', 't2ORNrr', 't2BICrr', 't2MVNrr', 't2TSTrr', 't2TEQrr'
+    when 't2ANDrr', 't2ANDrs', 't2EORrr', 't2EORri', 't2ORRrr', 't2ORRrs', 't2ORNrr', 't2BICrr', 't2MVNrr', 't2TSTrr', 't2TEQrr', 't2EORrs', 't2BICri'
       1
     # bitwise shifts
     when 't2LSLri', 't2LSLri', 't2LSRri', 't2LSRri', 't2ASRri', 't2ASRri'
       1
     # subtract
     when 't2SUBrr', 't2SBCrr', 't2RSBrs'
+      1
+    # store instructions
+    when 't2STRi12'
+      2
+    when 't2CMPri'
+      1
+    when 't2LDRBi12'
+      2
+    when 't2ORRri'
       1
     else
       die("Unknown opcode: #{instr.opcode}")
