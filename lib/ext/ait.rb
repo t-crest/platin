@@ -371,7 +371,7 @@ class AISExporter
   end
 
   # export loop bounds
-  def export_loopbounds(scope, bounds_and_ffs)
+  def export_loopbounds(pml, scope, bounds_and_ffs)
 
     # context-sensitive facts not yet supported
     unless scope.context.empty?
@@ -400,8 +400,24 @@ class AISExporter
 
     # As we export loop header bounds, we should say the loop header is 'at the end'
     # of the loop (confirmed by absint (Gernot))
-    loopname = dquote(loopblock.label)
-    gen_fact("loop #{loopname} max #{bound} end",
+    #loopname = dquote(loopblock.label)
+
+    func_name = loopblock.function.name
+    func      = pml.machine_functions.by_label(func_name)
+    #warn("#{loopblock.name} is in #{func}")
+
+    addr = nil
+    func.blocks.each { |b|
+      addr = b.address if b.mapsto == loopblock.name
+    }
+
+    assert("Cannot find address for #{loopblock.name}") { addr != nil }
+
+    warn("#{loopblock.name} is in #{func} at 0x#{"%x" % addr}")
+
+    #[loopblock.function])
+    loopname = loopblock.instructions[0].address
+    gen_fact("loop 0x#{"%x" % addr} max #{bound} end",
              "global loop header bound (source: #{origins.to_a.join(", ")})")
   end
 
@@ -489,7 +505,7 @@ class AISExporter
   end
 
   # export set of flow facts (minimum of loop bounds)
-  def export_flowfacts(ffs)
+  def export_flowfacts(pml, ffs)
     loop_bounds = {}
     ffs.each { |ff|
       if scope_bound = ff.get_loop_bound
@@ -504,7 +520,7 @@ class AISExporter
     }
     loop_bounds.each { |scope,bounds_and_ffs|
       begin
-        export_loopbounds(scope, bounds_and_ffs)
+        export_loopbounds(pml, scope, bounds_and_ffs)
       rescue Exception
         warn("Not exporting loopsbounds for " + scope.to_s + ": " + $!.message)
       end

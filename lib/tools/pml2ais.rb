@@ -73,7 +73,7 @@ class AisExportTool
 
       pml.machine_functions.each { |func| ais.export_jumptables(func) }
       flowfacts = pml.flowfacts.filter(pml, options.flow_fact_selection, options.flow_fact_srcs, ["machinecode"])
-      ais.export_flowfacts(flowfacts)
+      ais.export_flowfacts(pml, flowfacts)
 
       unless options.ais_disable_export.include?('mem-addresses')
         pml.valuefacts.select { |vf|
