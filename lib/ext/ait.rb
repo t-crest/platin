@@ -237,7 +237,8 @@ class AISExporter
 
     # TODO get compiler type depending on YAML arch type
     @outfile.puts '# configure compiler'
-    @outfile.puts 'compiler "patmos-llvm";'
+    # @outfile.puts 'compiler "patmos-llvm";'
+    @outfile.puts 'compiler "arm-gcc";'
     @outfile.puts ''
 
     export_machine_description
