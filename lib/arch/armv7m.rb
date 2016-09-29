@@ -113,15 +113,22 @@ class Architecture < PML::Architecture
   end
   
 
+# found out through reading register on hardware:
+# FLASH_WAIT_CYCLES=3
+#
+FLASH_WAIT_CYCLES=15 # the actual worst case, probably used in aiT
+# there is a bug in aiT that does not allow changing the "flash data wait states"
+# changing the value has no impact on the results
+
 # xmc4500_um.pdf 8-41
-WAIT_CYCLES_FLASH_ACCESS=3
+# WAIT_CYCLES_FLASH_ACCESS=3
   def path_wcet(ilist)
     cost = ilist.reduce(0) do |cycles, instr|
       # TODO flushes for call??
       if (instr.callees[0] =~ /__aeabi_.*/ || instr.callees[0] =~ /__.*div.*/)
-        cycles + cycle_cost(instr) + lib_cycle_cost(instr.callees[0]) + WAIT_CYCLES_FLASH_ACCESS
+        cycles + cycle_cost(instr) + lib_cycle_cost(instr.callees[0]) + FLASH_WAIT_CYCLES
       else
-        cycles + cycle_cost(instr) + WAIT_CYCLES_FLASH_ACCESS
+        cycles + cycle_cost(instr) + FLASH_WAIT_CYCLES # access instructions
       end
     end
     cost
@@ -152,7 +159,6 @@ WAIT_CYCLES_FLASH_ACCESS=3
 
 NUM_REGISTERS=10
 PIPELINE_REFILL=3
-FLASH_WAIT_CYCLES=3
   def cycle_cost(instr)
     case instr.opcode
     # addsub
@@ -282,8 +288,10 @@ FLASH_WAIT_CYCLES=3
       1 + FLASH_WAIT_CYCLES * NUM_REGISTERS
     when 't2MOVi16', 't2MOVTi16', 't2MOVi'
       1
+      
+    # move not, test
     when 't2MVNi', 't2TSTri', 't2SUBri', 't2ANDri'
-      2
+      1
     when 't2Bcc', 't2B'
       1 + PIPELINE_REFILL
     when 't2LDMIA_RET', 't2STRi8'
