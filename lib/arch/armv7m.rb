@@ -152,6 +152,7 @@ WAIT_CYCLES_FLASH_ACCESS=3
 
 NUM_REGISTERS=10
 PIPELINE_REFILL=3
+FLASH_WAIT_CYCLES=3
   def cycle_cost(instr)
     case instr.opcode
     # addsub
@@ -190,7 +191,6 @@ PIPELINE_REFILL=3
       1
 
     # hireg
-    # TODO 
     when 'tADDhirr', 'tMOVr', 'tCMPhir'
       1
 
@@ -200,7 +200,7 @@ PIPELINE_REFILL=3
 
     # branch and link: BL = inst32
     when 'tBL'
-      4
+      1 + PIPELINE_REFILL
 
     # NOTE: pseudo instruction that maps to tBL
     # branchuncond
@@ -219,93 +219,88 @@ PIPELINE_REFILL=3
 
     # memimmediate
     when 'tSTRi', 'tLDRi'
-      3
+      2 + FLASH_WAIT_CYCLES
 
     # NOTE: not directly considered in NEO's classes
     # ldrh r, [r, #i] same as ldr r, [r, #i]??
     # memimmediate
     when 'tSTRHi', 'tLDRHi'
-      3
+      2 + FLASH_WAIT_CYCLES
 
-    # NOTE: not directly considered in NEO's classes
     # ldrb r, [r, #i] same as ldr r, [r, #i]??
     # memmimmediate
     when 'tSTRBi', 'tLDRBi'
-      3
+      2 + FLASH_WAIT_CYCLES
 
-    # NOTE: not directly considered in NEO's classes
     # ldrsb r, [r, #i] same as ldr r, [r, #i]??
     # memimmediate
     when 'tLDRSB', 'tLDRSH'
-      3
+      2 + FLASH_WAIT_CYCLES
 
     # memmultiple
     when 'tLDMIA', 'tLDMIA_UDP', 'tSTMIA_UDP'
-      4
+      1 + (NUM_REGISTERS * FLASH_WAIT_CYCLES)
 
     # mempcrel
     when 'tLDRpci'
-      3
+      2 + FLASH_WAIT_CYCLES
 
     # memreg
     when 'tSTRBr', 'tLDRBr', 'tLDRr', 'tSTRr', 'tLDRHr', 'tSTRHr'
-      3 # 1 in paper, but 3 should be correct for 48 MHz
+      2 + FLASH_WAIT_CYCLES
 
     # memsprel
     when 'tSTRspi', 'tLDRspi'
-      3
+       2+ FLASH_WAIT_CYCLES
 
     # pushpop
     when 'tPUSH', 'tPOP'
-      1 + NUM_REGISTERS
+      1 + (NUM_REGISTERS * FLASH_WAIT_CYCLES)
 
     # pseudo instruction mapping to pop
     when 'tPOP_RET'
-      1 + NUM_REGISTERS + PIPELINE_REFILL
+      1 + (NUM_REGISTERS * FLASH_WAIT_CYCLES) + PIPELINE_REFILL
 
     # shift
     when 'tLSLri', 'tLSRri', 'tASRri'
       1
 
-    # according to list above it it correct
-    # according to reference manual, it is implementation-specific
-    # lincenses for single-cycle-cpus and the other variants
-    #
-    # Sub-family reference manual p. 53 => single-cycle CPU
+    # single-cycle multiplication
     when 'tMUL'
-      2 # NEO says alu instruction
-      # 1 # for single-cycle CPU
+      1
 
     # pseudo instruction translated to a 'mov pc, r2'
     when 'tBR_JTr'
-      2
+      1 + PIPELINE_REFILL
       
-    # ARMv7M support
-    # TODO
-    when 't2STMDB_UPD' # TODO: not in http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0439b/CHDDIGAC.html ?
+    # ARMv7M support (thumb2)
+    # http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0439b/CHDDIGAC.html
+    # 
+    # STMFD is s synonym for STMDB, and refers to its use for pushing data onto Full Descending stacks
+    # Store Multiple: 1 + N: (Number of registers: N = NUM_REGISTERS)
+    when 't2STMDB_UPD'
+      1 + FLASH_WAIT_CYCLES * NUM_REGISTERS
+    when 't2MOVi16', 't2MOVTi16', 't2MOVi'
+      1
+    when 't2MVNi', 't2TSTri', 't2SUBri', 't2ANDri'
       2
-    when 't2MOVi16'
-      2 # 1 -> http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0439b/CHDDIGAC.html
-    when 't2MOVTi16'
-      2 # 1 -> http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0439b/CHDDIGAC.html
-    when 't2MOVi'
-      2 # 1 acc. to `3.3.1. Cortex-M4 instructions`
-    when 't2MVNi', 't2STRi8', 't2TSTri', 't2Bcc', 't2SUBri', 't2ANDri', 't2LDRi8', 't2LDMIA_RET'
-      2
+    when 't2Bcc', 't2B'
+      1 + PIPELINE_REFILL
+    when 't2LDMIA_RET', 't2STRi8'
+      2 + FLASH_WAIT_CYCLES 
+    when 't2LDRi8'
+      2 + FLASH_WAIT_CYCLES
     when 'PSEUDO_LOOPBOUND'
       0
-    when 't2B'
-      1 + PIPELINE_REFILL
     # page 31:
     when 't2MUL', 't2MLA', 't2MLS', 't2SMULL', 't2UMULL', 't2SMLAL', 't2UMLAL'
       1
-    # TODO: correct value?
     when 't2LDRi12'
-      2
+      2 + FLASH_WAIT_CYCLES
     when 't2ADDrs'
       1
     # logical operations
-    when 't2ANDrr', 't2ANDrs', 't2EORrr', 't2EORri', 't2ORRrr', 't2ORRrs', 't2ORNrr', 't2BICrr', 't2MVNrr', 't2TSTrr', 't2TEQrr', 't2EORrs', 't2BICri'
+    when 't2ANDrr', 't2ANDrs', 't2EORrr', 't2EORri', 't2ORRrr', 't2ORRrs', 't2ORRri', 't2ORNrr', 't2BICrr', 't2MVNrr', 't2TSTrr', 't2TEQrr', 't2EORrs', 't2BICri'
       1
     # bitwise shifts
     when 't2LSLri', 't2LSLri', 't2LSRri', 't2LSRri', 't2ASRri', 't2ASRri'
@@ -315,12 +310,13 @@ PIPELINE_REFILL=3
       1
     # store instructions
     when 't2STRi12'
-      2
+      2 + FLASH_WAIT_CYCLES
     when 't2CMPri'
       1
     when 't2LDRBi12'
-      2
-    when 't2ORRri'
+      2 + FLASH_WAIT_CYCLES
+    # bit field, extract unsigned, extract signed, clear, insert
+    when 't2UBFX', 't2SBFX', 't2BFC', 't2BFI'
       1
     else
       die("Unknown opcode: #{instr.opcode}")
