@@ -114,11 +114,9 @@ class Architecture < PML::Architecture
   
 
 # found out through reading register on hardware:
-# FLASH_WAIT_CYCLES=3
+FLASH_WAIT_CYCLES=3
 #
-FLASH_WAIT_CYCLES=15 # the actual worst case, probably used in aiT
-# there is a bug in aiT that does not allow changing the "flash data wait states"
-# changing the value has no impact on the results
+# FLASH_WAIT_CYCLES=15 # the actual worst case
 
 # xmc4500_um.pdf 8-41
 # WAIT_CYCLES_FLASH_ACCESS=3
