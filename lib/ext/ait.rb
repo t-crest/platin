@@ -250,6 +250,10 @@ class AISExporter
   end
 
   def export_machine_description
+    if @pml.arch.triple[0] == 'armv7m'
+      return
+    end
+
     @pml.arch.config.caches.each { |cache|
       case cache.name
       when 'data-cache'
