@@ -488,6 +488,15 @@ module PML
       end
     end
 
+    # all called functions
+    def callees
+      Enumerator.new do |ss|
+        callsites.each{|cs|
+          cs.callees.each {|c| ss << c}
+        }
+      end
+    end
+
     # find all instructions that a callee may return to
     def identify_return_sites
       blocks.each { |b|

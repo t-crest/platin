@@ -325,13 +325,24 @@ module PML
         lhs = "+ " + lhs
       end
       terms = []
+      mf_scope = pml.machine_functions.by_label(scope)
       while lhs != "" do
         m = /(?<sign>[+-])\s*((?<factor>[0-9]+)\s*)?(?<pp>[^+-]*)\s*(?<lhs>.*)/.match(lhs)
 
-        factor = (m[:factor] || "1").to_i
-        factor *= {"+"=>1, "-"=>-1}[m[:sign]]
-        terms.push ({"factor"=>factor,
-                    "program-point"=> {"function"=>m[:pp]}})
+        if m[:pp][0] == "/"
+          reg = Regexp.new m[:pp][1..-2]
+          functions = pml.machine_functions\
+                      .select {|mf| mf.label =~ reg  && mf_scope.callees.member?(mf.label) }\
+                      .map {|mf| mf.label}
+        else
+          functions = [m[:pp]]
+        end
+        functions.each {|mf_label|
+          factor = (m[:factor] || "1").to_i
+          factor *= {"+"=>1, "-"=>-1}[m[:sign]]
+          terms.push ({"factor"=>factor,
+                       "program-point"=> {"function"=>mf_label}})
+        }
         lhs = m[:lhs]
       end
 
