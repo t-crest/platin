@@ -292,7 +292,7 @@ PIPELINE_REFILL=3
       1
     when 't2Bcc', 't2B'
       1 + PIPELINE_REFILL
-    when 't2LDMIA_RET', 't2STRi8'
+    when 't2LDMIA_RET', 't2STRi8' 't2STRBi8'
       2 + FLASH_WAIT_CYCLES 
     when 't2LDRi8'
       2 + FLASH_WAIT_CYCLES
@@ -312,7 +312,7 @@ PIPELINE_REFILL=3
     when 't2LSLri', 't2LSLri', 't2LSRri', 't2LSRri', 't2ASRri', 't2ASRri'
       1
     # subtract
-    when 't2SUBrr', 't2SBCrr', 't2RSBrs'
+    when 't2SUBrr', 't2SBCrr', 't2SBCri' 't2RSBrs'
       1
     # store instructions
     when 't2STRi12'
