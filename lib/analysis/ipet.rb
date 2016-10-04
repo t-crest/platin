@@ -1127,6 +1127,7 @@ class IPETBuilder
 
     statistics("WCA",
                "gcfg nodes" => gcfg.nodes.length,
+               "gcfg transitions" => gcfg.nodes.inject(0) {|acc, n| acc + n.successors.length},
                "abbs toplevel" => toplevel_abb_count,
                "abbs microstructure" => abb_to_nodes.length - toplevel_abb_count
                ) if @options.stats
