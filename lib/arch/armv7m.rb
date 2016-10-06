@@ -312,7 +312,7 @@ PIPELINE_REFILL=3
     when 't2LSLri', 't2LSLri', 't2LSRri', 't2LSRri', 't2ASRri', 't2ASRri'
       1
     # subtract
-    when 't2SUBrr', 't2SBCrr', 't2SBCri' 't2RSBrs'
+    when 't2SUBrr', 't2SBCrr', 't2SBCri', 't2RSBrs'
       1
     # store instructions
     when 't2STRi12'
