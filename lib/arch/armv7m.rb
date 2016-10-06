@@ -255,7 +255,7 @@ PIPELINE_REFILL=3
 
     # memsprel
     when 'tSTRspi', 'tLDRspi'
-       2+ FLASH_WAIT_CYCLES
+      2 + FLASH_WAIT_CYCLES
 
     # pushpop
     when 'tPUSH', 'tPOP'
@@ -292,8 +292,8 @@ PIPELINE_REFILL=3
       1
     when 't2Bcc', 't2B'
       1 + PIPELINE_REFILL
-    when 't2LDMIA_RET', 't2STRi8' 't2STRBi8'
-      2 + FLASH_WAIT_CYCLES 
+    when 't2LDMIA_RET', 't2STRi8', 't2STRBi8', 't2STRHi8'
+      2 + FLASH_WAIT_CYCLES
     when 't2LDRi8'
       2 + FLASH_WAIT_CYCLES
     when 'PSEUDO_LOOPBOUND'
