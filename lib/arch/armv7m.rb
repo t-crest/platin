@@ -294,15 +294,13 @@ PIPELINE_REFILL=3
       1 + PIPELINE_REFILL
     when 't2LDMIA_RET', 't2STRi8', 't2STRBi8', 't2STRHi8'
       2 + FLASH_WAIT_CYCLES
-    when 't2LDRi8'
+    when 't2LDRi8', 't2LDRi12', 't2LDRBi12', 't2LDRSBi12'
       2 + FLASH_WAIT_CYCLES
     when 'PSEUDO_LOOPBOUND'
       0
     # page 31:
     when 't2MUL', 't2MLA', 't2MLS', 't2SMULL', 't2UMULL', 't2SMLAL', 't2UMLAL'
       1
-    when 't2LDRi12'
-      2 + FLASH_WAIT_CYCLES
     when 't2ADDrs'
       1
     # logical operations
@@ -319,8 +317,6 @@ PIPELINE_REFILL=3
       2 + FLASH_WAIT_CYCLES
     when 't2CMPri'
       1
-    when 't2LDRBi12'
-      2 + FLASH_WAIT_CYCLES
     # bit field, extract unsigned, extract signed, clear, insert
     when 't2UBFX', 't2SBFX', 't2BFC', 't2BFI'
       1
