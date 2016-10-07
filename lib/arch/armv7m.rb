@@ -288,7 +288,7 @@ PIPELINE_REFILL=3
       1
       
     # move not, test
-    when 't2MVNi', 't2TSTri', 't2SUBri', 't2ANDri'
+    when 't2MVNi', 't2TSTri'
       1
     when 't2Bcc', 't2B'
       1 + PIPELINE_REFILL
@@ -301,21 +301,24 @@ PIPELINE_REFILL=3
     # page 31:
     when 't2MUL', 't2MLA', 't2MLS', 't2SMULL', 't2UMULL', 't2SMLAL', 't2UMLAL'
       1
-    when 't2ADDrs', 't2ADDri'
+    when 't2ADDrs', 't2ADDri', 't2ADDrr', 't2ADCrs', 't2ADCri', 't2ADCrr'
       1
     # logical operations
-    when 't2ANDrr', 't2ANDrs', 't2EORrr', 't2EORri', 't2ORRrr', 't2ORRrs', 't2ORRri', 't2ORNrr', 't2BICrr', 't2MVNrr', 't2TSTrr', 't2TEQrr', 't2EORrs', 't2BICri'
+    when 't2ANDrr', 't2ANDrs', 't2ANDri', 't2EORrr', 't2EORri', 't2ORRrr', 't2ORRrs', 't2ORRri', 't2ORNrr', 't2BICrr', 't2MVNrr', 't2TSTrr', 't2TEQrr', 't2EORrs', 't2BICri'
       1
     # bitwise shifts
     when 't2LSLri', 't2LSLri', 't2LSRri', 't2LSRri', 't2ASRri', 't2ASRri'
       1
     # subtract
-    when 't2SUBrr', 't2SBCrr', 't2SBCri', 't2RSBrs'
+    when 't2SUBrr', 't2SUBri', 't2SUBrs',  't2SBCrr', 't2SBCri', 't2RSBrs'
       1
     # store instructions
     when 't2STRi12'
       2 + FLASH_WAIT_CYCLES
     when 't2CMPri'
+      1
+    # extend
+    when 't2SXTH', 't2SXTB', 't2UXTH', 't2UXTB'
       1
     # bit field, extract unsigned, extract signed, clear, insert
     when 't2UBFX', 't2SBFX', 't2BFC', 't2BFI'
