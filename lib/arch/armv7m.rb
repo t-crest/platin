@@ -292,7 +292,7 @@ PIPELINE_REFILL=3
       1
     when 't2Bcc', 't2B'
       1 + PIPELINE_REFILL
-    when 't2LDMIA_RET', 't2STRi8', 't2STRBi8', 't2STRHi8'
+    when 't2LDMIA_RET', 't2STRi8', 't2STRBi8', 't2STRHi8', 't2STRBi12'
       2 + FLASH_WAIT_CYCLES
     when 't2LDRi8', 't2LDRi12', 't2LDRBi12', 't2LDRSBi12'
       2 + FLASH_WAIT_CYCLES
