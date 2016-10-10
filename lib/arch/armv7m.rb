@@ -323,6 +323,9 @@ PIPELINE_REFILL=3
     # bit field, extract unsigned, extract signed, clear, insert
     when 't2UBFX', 't2SBFX', 't2BFC', 't2BFI'
       1
+    # If-then-else
+    when 't2IT'
+      1
     else
       die("Unknown opcode: #{instr.opcode}")
     end
