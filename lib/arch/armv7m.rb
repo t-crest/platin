@@ -177,7 +177,7 @@ PIPELINE_REFILL=3
 
     # branchcond (requires pipeline refill)
     # 1 + P (P \in {1,..,3})
-    when 'tBcc'
+    when 'tBcc', 'tCBNZ'
       1 + PIPELINE_REFILL
 
     # branchuncond (requires pipeline refill)
