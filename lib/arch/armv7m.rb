@@ -111,7 +111,7 @@ class Architecture < PML::Architecture
     cmd = "arm-none-eabi-objdump"
     ExtractSymbols.run(cmd, extractor, pml, options)
   end
-  
+
 
 # found out through reading register on hardware:
 FLASH_WAIT_CYCLES=3
@@ -276,17 +276,17 @@ PIPELINE_REFILL=3
     # pseudo instruction translated to a 'mov pc, r2'
     when 'tBR_JTr'
       1 + PIPELINE_REFILL
-      
+
     # ARMv7M support (thumb2)
     # http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0439b/CHDDIGAC.html
-    # 
+    #
     # STMFD is s synonym for STMDB, and refers to its use for pushing data onto Full Descending stacks
     # Store Multiple: 1 + N: (Number of registers: N = NUM_REGISTERS)
     when 't2STMDB_UPD'
       1 + FLASH_WAIT_CYCLES * NUM_REGISTERS
     when 't2MOVi16', 't2MOVTi16', 't2MOVi'
       1
-      
+
     # move not, test
     when 't2MVNi', 't2TSTri'
       1
