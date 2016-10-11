@@ -306,7 +306,7 @@ PIPELINE_REFILL=3
     when 't2ADDrs', 't2ADDri', 't2ADDrr', 't2ADCrs', 't2ADCri', 't2ADCrr', 't2ADDri12'
       1
     # logical operations
-    when 't2ANDrr', 't2ANDrs', 't2ANDri', 't2EORrr', 't2EORri', 't2ORRrr', 't2ORRrs', 't2ORRri', 't2ORNrr', 't2BICrr', 't2MVNrr', 't2TSTrr', 't2TEQrr', 't2EORrs', 't2BICri'
+    when 't2ANDrr', 't2ANDrs', 't2ANDri', 't2EORrr', 't2EORri', 't2ORRrr', 't2ORRrs', 't2ORRri', 't2ORNrr', 't2BICrr', 't2MVNrr', 't2TSTrr', 't2TEQrr', 't2EORrs', 't2BICri', 't2ORNri'
       1
     # bitwise shifts
     when 't2LSLri', 't2LSLri', 't2LSRri', 't2LSRri', 't2ASRri', 't2ASRri'
