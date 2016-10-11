@@ -296,7 +296,7 @@ PIPELINE_REFILL=3
       2 + FLASH_WAIT_CYCLES
     when 't2LDRi8', 't2LDRi12', 't2LDRBi12', 't2LDRSBi12', 't2LDRSHi12', 't2LDRSHi12'
       2 + FLASH_WAIT_CYCLES
-    when 't2LDRDi8'
+    when 't2LDRDi8', 't2STRDi8'
       1 + FLASH_WAIT_CYCLES * NUM_REGISTERS
     when 'PSEUDO_LOOPBOUND'
       0
