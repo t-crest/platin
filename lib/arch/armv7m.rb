@@ -288,7 +288,7 @@ PIPELINE_REFILL=3
       1
 
     # move not, test
-    when 't2MVNi', 't2TSTri'
+    when 't2MVNi', 't2MVNr', 't2TSTri'
       1
     when 't2Bcc', 't2B'
       1 + PIPELINE_REFILL
