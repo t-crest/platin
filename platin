@@ -11,7 +11,7 @@ fi
 
 KNOWN_COMMANDS="wcet tool-config pml analyze-trace extract-symbols pml-config\
       transform visualize inspect ait2pml pml2ais pml2ffx sweet ff2pml wca late-bypass\
-      cfrg-one-one pmlstrip"
+      cfrg-one-one pmlstrip estimate-spill"
 usage() {
     cat <<EOF >&2
 usage: platin <command> [<args>]
@@ -32,6 +32,7 @@ The following platin tools are available and supported:
                       [alpha]
   cfrg-one-one    ... Check for 1:1 mappings in relation graphs
   pmlstrip        ... Strip user annotations from a .pml file
+  estimate-spill  ... Estimate the number of generated spill instructions
   inspect         ... Inspect the program structure and flow facts/loop bounds
   pml2ais         ... Translate program information to aiT's AIS format
   pml2ffx         ... Translate program information to oRange/OTAWA's F4/FFX format
