@@ -21,13 +21,13 @@ end
 
 
 class EstimateSpill
-  def EstimateSpill.default_targets(pml, entryfunc)
-    entry = pml.machine_functions.by_label(entryfunc)
-    pml.machine_functions.reachable_from(entry.name).first.reject { |f|
-      f.label =~ /printf/
-    }.map { |f|
-      f.label
+  def EstimateSpill.default_targets(pml)
+    targets = Array.new
+    pml.data['relation-graphs'].each { |func|
+      targets << func["src"]["function"]
     }
+
+    targets
   end
 
   def EstimateSpill.estimate(pml, target)
@@ -80,8 +80,7 @@ class EstimateSpill
 
   def EstimateSpill.run(pml, options)
     outdir  = options.outdir || "."
-    entry   = options.entry || "main"
-    targets = options.functions || EstimateSpill.default_targets(pml, entry)
+    targets = options.functions || EstimateSpill.default_targets(pml)
 
     targets.each do |target|
       puts "[EstimateSpill] #{target}: #{estimate(pml, target)}"
@@ -96,7 +95,7 @@ end
 
 if __FILE__ == $0
 SYNOPSIS=<<EOF if __FILE__ == $0
-Check if the control-flow relation graph is a 1:1 mapping between bc and mc
+Estimate the number of spill instructions per function
 EOF
   options, args = PML::optparse([],"", SYNOPSIS) do |opts|
     opts.needs_pml
