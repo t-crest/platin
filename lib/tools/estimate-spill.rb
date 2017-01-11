@@ -39,6 +39,7 @@ class EstimateSpill
     # XXX: update me
     rg = rg.data if rg.kind_of?(RelationGraph)
 
+    spills_per_depth = {}
     spills    = 0
     mem_src   = 0
     mem_dst   = 0
@@ -68,6 +69,8 @@ class EstimateSpill
           ls_dst = ls_dst + 1 if (instr.memmode == "store" or instr.memmode == "load")
       }
 
+      spills_per_depth[block_src.loopnest]  = 0 if NIL == spills_per_depth[block_src.loopnest]
+      spills_per_depth[block_src.loopnest] += ls_dst - ls_src
       spills += ls_dst - ls_src
       mem_src   += ls_src
       mem_dst   += ls_dst
@@ -75,7 +78,7 @@ class EstimateSpill
       instr_dst += block_dst.instructions.length
     end
 
-    { "spills" => spills, "instr_src" => instr_src, "instr_dst" => instr_dst, "mem_src" => mem_src, "mem_dst" => mem_dst }
+    { "spills" => spills, "instr_src" => instr_src, "instr_dst" => instr_dst, "mem_src" => mem_src, "mem_dst" => mem_dst, "spd" => spills_per_depth }
   end
 
   def EstimateSpill.run(pml, options)
