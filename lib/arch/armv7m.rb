@@ -317,7 +317,7 @@ PIPELINE_REFILL=3
     # store instructions
     when 't2STRi12'
       2 + FLASH_WAIT_CYCLES
-    when 't2CMPri'
+    when 't2CMPri', 't2CMPrs'
       1
     # extend
     when 't2SXTH', 't2SXTB', 't2UXTH', 't2UXTB'
