@@ -197,7 +197,7 @@ class PMLDoc
         fstream = File.open(f) { |fh|
           stream = YAML::load_stream(fh)
           stream.documents if stream.respond_to?(:documents) # ruby 1.8 compat
-          stream
+          [[f, stream]]
         }
         list + fstream
       rescue Exception => detail
@@ -209,14 +209,23 @@ class PMLDoc
 
   def PMLDoc.merge_stream(stream)
     merged_doc = {}
-    stream.each do |doc|
-      doc.each do |k,v|
-        if(v.kind_of? Array)
-          (merged_doc[k]||=[]).concat(v)
-        elsif(! merged_doc[k])
-          merged_doc[k] = doc[k]
-        elsif(merged_doc[k] != doc[k])
-          die "Mismatch in non-list attribute #{k}: #{merged_doc[k]} and #{doc[k]}"
+    stream.each do |fstream|
+      (fname, content) = fstream
+      content.each do |doc|
+        doc.each do |k,v|
+          if(v.kind_of? Array)
+            v.map! { |elem|
+              if (elem.kind_of? Hash)
+                elem['pmlsrcfile'] = fname
+              end
+              elem
+            }
+            (merged_doc[k]||=[]).concat(v)
+          elsif(! merged_doc[k])
+            merged_doc[k] = doc[k]
+          elsif(merged_doc[k] != doc[k])
+            die "Mismatch in non-list attribute #{k}: #{merged_doc[k]} and #{doc[k]}"
+          end
         end
       end
     end
