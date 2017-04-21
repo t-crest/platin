@@ -179,7 +179,7 @@ module PML
   module PMLListGen
     def pml_list(element_type, unique_indices = [], indices = [])
       all_indices = unique_indices + indices
-      module_eval %Q$
+      module_eval <<-"_end_eval", __FILE__, __LINE__
         def initialize(list, existing_data = nil)
           assert("#{self.class}#initialize: list must not be nil") { list }
           @list = list
@@ -191,7 +191,7 @@ module PML
         end
         def build_index
           #{all_indices.map { |index| "@index_#{index} = {}"}.join("; ") }
-          @list.each { |item| add_index(item) }
+          @list.each { |item| puts item; add_index(item) }
         end
         private
         def add_index(item)
@@ -211,22 +211,22 @@ module PML
            }).join(";")
           }
         end
-      $
+      _end_eval
       all_indices.each { |index|
-         module_eval %Q$
+         module_eval <<-"_end_eval", __FILE__, __LINE__
            def by_#{index}(key, error_if_missing = false)
                lookup(@index_#{index}, key, "#{index}", error_if_missing)
            end
-         $
+         _end_eval
       }
     end
     def pml_name_index_list(element_type, unique_indices = [], indices = [])
       pml_list(element_type, [:name,:qname] + unique_indices, indices)
-      module_eval %Q!
+      module_eval <<-"_end_eval", __FILE__, __LINE__
         def [](arg)
           by_name(arg)
         end
-      !
+      _end_eval
     end
   end
 end # end module pml
