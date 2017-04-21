@@ -46,6 +46,7 @@ class PMLDoc
       @arch = nil
     end
 
+    retag_machinefunctions(@data)
     @bitcode_functions = FunctionList.new(@data['bitcode-functions'] || [], :labelkey => 'name')
     @machine_functions = FunctionList.new(@data['machine-functions'] || [], :labelkey => 'mapsto')
     @relation_graphs   = RelationGraphList.new(@data['relation-graphs'] || [],
@@ -71,6 +72,44 @@ class PMLDoc
   end
   def valuefacts
     @valuefacts
+  end
+
+  # Name generation scheme
+  def qualify_machinefunction_name(file, name)
+    return file + "." + name
+  end
+
+  def retag_machinefunctions(data)
+    # Machinefunctionnames are actually counters. Those are unique only for each
+    # individual pmlfile. Therefore we qualify them via filename.
+    (data['machine-functions'] || []).each do |m|
+      assert("machine-functions have to be on machinecode level") { m['level'] == "machinecode" }
+      if m.has_key?('pmlsrcfile')
+        m['name'] = qualify_machinefunction_name(m['pmlsrcfile'], m['name'])
+      end
+    end
+
+    (data['relation-graphs'] || []).each do |m|
+      if m.has_key?('pmlsrcfile')
+        mcode = nil
+        if m['src']['level'] == 'machinecode'
+          mcode = m['src']
+        elsif m['dst']['level'] == 'machinecode'
+          mcode = m['dst']
+        end
+
+        assert("relationship graphs map between bitcode and machinecode level") { mcode != nil };
+        mcode['function'] = qualify_machinefunction_name(m['pmlsrcfile'], mcode['function'])
+      end
+    end
+
+		(data['valuefacts'] || []).each do |v|
+			if v['level'] == "machinecode" && v.has_key?('pmlsrcfile')
+				pp = v['program-point']
+				assert("valuefacts require a program point") { pp != nil }
+				pp['function'] = qualify_machinefunction_name(v['pmlsrcfile'], pp['function'])
+			end
+		end
   end
 
   def analysis_entry(options)
