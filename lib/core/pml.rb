@@ -50,6 +50,8 @@ class PMLDoc
       retag_machinefunctions(@data)
     end
 
+    run_linker(@data)
+
     @bitcode_functions = FunctionList.new(@data['bitcode-functions'] || [], :labelkey => 'name')
     @machine_functions = FunctionList.new(@data['machine-functions'] || [], :labelkey => 'mapsto')
     @relation_graphs   = RelationGraphList.new(@data['relation-graphs'] || [],
@@ -113,6 +115,89 @@ class PMLDoc
         pp['function'] = qualify_machinefunction_name(v['pmlsrcfile'], pp['function'])
       end
     end
+  end
+
+  class LinkerInfo
+    attr_reader :name, :file, :linkage
+
+    # We expect a to be a representation of `llvm::GlobalValue::LinkageTypes
+    # This Enum consists of:
+    #  - ExternalLinkage
+    #      Externally visible function.
+    #  - AvailableExternallyLinkage
+    #      Available for inspection, not emission.
+    #  - LinkOnceAnyLinkage
+    #      Keep one copy of function when linking (inline)
+    #  - LinkOnceODRLinkage
+    #      Same, but only replaced by something equivalent.
+    #  - WeakAnyLinkage
+    #      Keep one copy of named function when linking (weak)
+    #  - WeakODRLinkage
+    #      Same, but only replaced by something equivalent.
+    #  - AppendingLinkage
+    #      Special purpose, only applies to global arrays.
+    #  - InternalLinkage
+    #      Rename collisions when linking (static functions).
+    #  - PrivateLinkage
+    #      Like Internal, but omit from symbol table.
+    #  - ExternalWeakLinkage
+    #      ExternalWeak linkage description.
+    #  - CommonLinkage
+    #      Tentative definitions.
+
+    def initialize(name, file, linkage)
+      @name    = name
+      @file    = file
+      @linkage = linkage
+    end
+
+    def is_external?
+      return (@linkage == "ExternalLinkage")
+    end
+
+    def is_weak?
+      # FIXME: What is ExternalWeakLinkage
+      return (@linkage == "WeakAnyLinkage" || @linkage == "WeakODRLinkage")
+    end
+
+    def to_s
+      return "#{@name}(#{@file}, #{@linkage})"
+    end
+  end
+
+  def run_linker(data)
+    # Collect LinkerInfos for all functions
+    symbols = {}
+    data['bitcode-functions'].each do |mf|
+      assert("#{mf}: Can only link when linkage info is provided") { mf.has_key?('linkage') }
+      (symbols[mf['name']] ||= []) << LinkerInfo.new(mf['name'], mf['pmlsrcfile'], mf['linkage'])
+    end
+
+    # Now the actual linking
+    resolved = {}
+    symbols.each do |k,v|
+      r = nil
+      if v.length == 1
+        r = v[0]
+      else
+        # Our algorithm here is rather basic and currently merely handles the
+        # special case of weak symbols vs strong symbols
+        #   The strong symbols dominate weak symbols
+        # This misses other valid, but undecideable linking situations, e.g.
+        # multiple weak symbols or LinkOnces.
+        # In those cases, one of the symbols would be chosen (based on link
+        # order), which we cannot know on pml level
+        #  -> Die and let the user resolve it in accordance to the binary
+        strong_symbols = v.select {|s| s.is_external? }
+        assert("Cannot link \"#{k}\" automatically: #{v}") { strong_symbols.length == 1 }
+        r = strong_symbols[0]
+      end
+      resolved[k] = r.file
+    end
+
+    # TODO: Purge information here
+
+    return data
   end
 
   def analysis_entry(options)
