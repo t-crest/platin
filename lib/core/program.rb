@@ -123,7 +123,7 @@ module PML
           block
         }
         if iname
-          instruction = block.instructions[iname]
+          instruction = block.instructions[Integer(iname)]
           return instruction
         elsif lname
           return block.loop
