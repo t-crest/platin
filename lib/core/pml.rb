@@ -106,13 +106,13 @@ class PMLDoc
       end
     end
 
-		(data['valuefacts'] || []).each do |v|
-			if v['level'] == "machinecode" && v.has_key?('pmlsrcfile')
-				pp = v['program-point']
-				assert("valuefacts require a program point") { pp != nil }
-				pp['function'] = qualify_machinefunction_name(v['pmlsrcfile'], pp['function'])
-			end
-		end
+    (data['valuefacts'] || []).each do |v|
+      if v['level'] == "machinecode" && v.has_key?('pmlsrcfile')
+        pp = v['program-point']
+        assert("valuefacts require a program point") { pp != nil }
+        pp['function'] = qualify_machinefunction_name(v['pmlsrcfile'], pp['function'])
+      end
+    end
   end
 
   def analysis_entry(options)
