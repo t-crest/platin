@@ -104,5 +104,5 @@ EOF
     opts.needs_pml
     EstimateSpill.add_options(opts)
   end
-  EstimateSpill.run(PMLDoc.from_files(options.input), options)
+  EstimateSpill.run(PMLDoc.from_files(options.input, options), options)
 end

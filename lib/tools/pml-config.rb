@@ -219,7 +219,7 @@ if __FILE__ == $0
     PMLConfigTool.add_options(opts)
   end
   if options.input
-    pml = PMLDoc.from_files(options.input)
+    pml = PMLDoc.from_files(options.input, options)
     if options.triple and options.triple != pml.data['triple']
       die("PML triple #{pml.data['triple']} does not match option --target #{options.triple}")
     end
@@ -231,7 +231,7 @@ if __FILE__ == $0
     #      generated .pml files from pml-config and patmos-llc.
     data['format'] = "pml-0.1"
     data['triple'] = options.triple
-    pml = PMLDoc.new(data)
+    pml = PMLDoc.new(data, options)
   end
   outpml = PMLConfigTool.run(pml, options)
   outpml.dump_to_file(options.output, true) if options.output

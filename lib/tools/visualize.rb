@@ -472,5 +472,5 @@ EOF
     opts.callstring_length
     VisualizeTool.add_options(opts)
   end
-  VisualizeTool.run(PMLDoc.from_files(options.input), options)
+  VisualizeTool.run(PMLDoc.from_files(options.input, options), options)
 end

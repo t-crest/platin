@@ -169,7 +169,7 @@ if __FILE__ == $0
     opts.needs_pml
     PMLModTool.add_options(opts)
   end
-  updated_pml = PMLModTool.run(PMLDoc.from_files(options.input), options)
+  updated_pml = PMLModTool.run(PMLDoc.from_files(options.input, options), options)
   updated_pml.dump_to_file(options.output) if options.output
 end
 

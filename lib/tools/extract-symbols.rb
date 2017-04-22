@@ -163,5 +163,5 @@ EOF
     opts.writes_pml
     ExtractSymbolsTool.add_options(opts)
   end
-  ExtractSymbolsTool.run(PMLDoc.from_files(options.input), options).dump_to_file(options.output)
+  ExtractSymbolsTool.run(PMLDoc.from_files(options.input, options), options).dump_to_file(options.output)
 end

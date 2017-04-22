@@ -207,6 +207,6 @@ if __FILE__ == $0
     opts.needs_pml
     PMLTool.add_options(opts)
   end
-  updated_pml = PMLTool.run(PMLDoc.from_files(options.input), options)
+  updated_pml = PMLTool.run(PMLDoc.from_files(options.input, options), options)
   updated_pml.dump_to_file(options.output) if options.output
 end

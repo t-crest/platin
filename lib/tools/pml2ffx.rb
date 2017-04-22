@@ -142,7 +142,7 @@ EOF
     FFXExportTool.add_options(opts, false)
     OSXExportTool.add_options(opts, false)
   end
-  pml = PMLDoc.from_files([options.input])
+  pml = PMLDoc.from_files([options.input], options)
 
   if options.ff_file.nil? and options.otawa_platform_file.nil?
     die_usage("Please speficy at least one of the F4/FF$ output file and the OSX platform file.")

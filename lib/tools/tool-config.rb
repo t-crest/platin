@@ -80,6 +80,6 @@ if __FILE__ == $0
     opts.needs_pml
     ToolConfigTool.add_options(opts)
   end
-  ToolConfigTool.run(PMLDoc.from_files(options.input), options)
+  ToolConfigTool.run(PMLDoc.from_files(options.input, options), options)
 end
 

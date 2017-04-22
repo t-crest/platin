@@ -86,5 +86,5 @@ if __FILE__ == $0
     opts.needs_pml
     InspectTool.add_options(opts)
   end
-  InspectTool.run(PMLDoc.from_files(options.input), options)
+  InspectTool.run(PMLDoc.from_files(options.input, options), options)
 end

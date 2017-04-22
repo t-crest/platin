@@ -193,7 +193,7 @@ EOF
     opts.needs_pml
     opts.writes_pml
   end
-  pml_in = PMLDoc.from_files(options.input)
+  pml_in = PMLDoc.from_files(options.input, options)
 
   rewriter = GCFGTool.new(pml_in, options)
   address = 0

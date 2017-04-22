@@ -150,5 +150,5 @@ EOF
     opts.callstring_length
     OneOneCheck.add_options(opts)
   end
-  OneOneCheck.run(PMLDoc.from_files(options.input), options)
+  OneOneCheck.run(PMLDoc.from_files(options.input, options), options)
 end

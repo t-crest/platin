@@ -76,5 +76,5 @@ EOF
     opts.writes_pml
     WcaTool.add_options(opts)
   end
-  WcaTool.run(PMLDoc.from_files(options.input), options).dump_to_file(options.output)
+  WcaTool.run(PMLDoc.from_files(options.input, options), options).dump_to_file(options.output)
 end

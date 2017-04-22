@@ -180,5 +180,5 @@ EOF
     opts.writes_pml
     TransformTool.add_options(opts)
   end
-  TransformTool.run(PMLDoc.from_files(options.input), options).dump_to_file(options.output)
+  TransformTool.run(PMLDoc.from_files(options.input, options), options).dump_to_file(options.output)
 end

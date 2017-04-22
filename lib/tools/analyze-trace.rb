@@ -201,6 +201,6 @@ EOF
     AnalyzeTraceTool.add_options(opts)
   end
   options.console_output = true unless options.output
-  pml = AnalyzeTraceTool.run(PMLDoc.from_files(options.input), options)
+  pml = AnalyzeTraceTool.run(PMLDoc.from_files(options.input, options), options)
   pml.dump_to_file(options.output) if options.output
 end

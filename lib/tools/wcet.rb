@@ -497,6 +497,6 @@ EOF
     die("Computing criticalities is not possible in combined-WCA mode")
   end
 
-  updated_pml = WcetTool.run(PMLDoc.from_files(options.input), options)
+  updated_pml = WcetTool.run(PMLDoc.from_files(options.input, options), options)
   updated_pml.dump_to_file(options.output) if options.output
 end

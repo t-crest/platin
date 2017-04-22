@@ -45,15 +45,16 @@ module PML
     end
     # tool needs input PML option
     def needs_pml
-      self.on("-i", "--input FILE", "PML input files (can be specified multiple times)") { |f|
-        (options.input||=[]).push(f)
-      }
+      reads_pml
       needs(:input, "No input PML file specified")
     end
     # tool can have input PML option
     def reads_pml
       self.on("-i", "--input FILE", "PML input files (can be specified multiple times)") { |f|
         (options.input||=[]).push(f)
+      }
+      self.on("--qualifiy-machinecode", "Qualifies machinecodenames by the filename") { |v|
+        options.qualify_machinecode = v
       }
     end
     # tool writes PML file (if output is specified)

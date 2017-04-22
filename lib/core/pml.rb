@@ -28,7 +28,7 @@ class PMLDoc
   attr_reader :sca_graph
 
   # constructor expects a YAML document or a list of YAML documents
-  def initialize(stream)
+  def initialize(stream, options = OpenStruct.new)
     stream = [stream] unless stream.kind_of?(Array)
     if stream.length == 1
       @data = stream[0]
@@ -46,7 +46,10 @@ class PMLDoc
       @arch = nil
     end
 
-    retag_machinefunctions(@data)
+    if options.qualify_machinecode
+      retag_machinefunctions(@data)
+    end
+
     @bitcode_functions = FunctionList.new(@data['bitcode-functions'] || [], :labelkey => 'name')
     @machine_functions = FunctionList.new(@data['machine-functions'] || [], :labelkey => 'mapsto')
     @relation_graphs   = RelationGraphList.new(@data['relation-graphs'] || [],
@@ -230,7 +233,7 @@ class PMLDoc
       %w{memcpy memmove memset}
   end
 
-  def PMLDoc.from_files(filenames)
+  def PMLDoc.from_files(filenames, options)
     streams = filenames.inject([]) { |list,f|
       begin
         fstream = File.open(f) { |fh|
@@ -243,7 +246,7 @@ class PMLDoc
         die("Failed to load PML document: #{detail}")
       end
     }
-    PMLDoc.new(streams)
+    PMLDoc.new(streams, options)
   end
 
   def PMLDoc.merge_stream(stream)

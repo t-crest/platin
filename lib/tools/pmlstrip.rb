@@ -16,7 +16,7 @@ EOF
     opts.writes_pml
   end
 
-  pml = PMLDoc.from_files(options.input)
+  pml = PMLDoc.from_files(options.input, options)
 
   pml.flowfacts.delete_if { |ff|
     ff.origin == "user.bc"

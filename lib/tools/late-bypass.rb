@@ -93,5 +93,5 @@ EOF
     opts.writes_pml
     LateBypassTool.add_options(opts)
   end
-  LateBypassTool.run(PMLDoc.from_files(options.input), options).dump_to_file(options.output)
+  LateBypassTool.run(PMLDoc.from_files(options.input, options), options).dump_to_file(options.output)
 end
