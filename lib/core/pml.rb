@@ -52,7 +52,9 @@ class PMLDoc
       retag_machinefunctions(@data)
     end
 
-    run_linker(@data)
+    if options.run_linker
+      run_linker(@data)
+    end
 
     @bitcode_functions = FunctionList.new(@data['bitcode-functions'] || [], :labelkey => 'name')
     @machine_functions = FunctionList.new(@data['machine-functions'] || [], :labelkey => 'mapsto')

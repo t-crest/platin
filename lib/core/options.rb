@@ -56,6 +56,9 @@ module PML
       self.on("--qualify-machinecode", "Qualifies machinecodenames by the filename") { |v|
         options.qualify_machinecode = v
       }
+      self.on("--link", "Link duplicate symbols on pmlfile level") { |v|
+        options.run_linker = v
+      }
     end
     # tool writes PML file (if output is specified)
     def writes_pml
