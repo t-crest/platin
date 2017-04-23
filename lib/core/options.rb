@@ -53,7 +53,7 @@ module PML
       self.on("-i", "--input FILE", "PML input files (can be specified multiple times)") { |f|
         (options.input||=[]).push(f)
       }
-      self.on("--qualifiy-machinecode", "Qualifies machinecodenames by the filename") { |v|
+      self.on("--qualify-machinecode", "Qualifies machinecodenames by the filename") { |v|
         options.qualify_machinecode = v
       }
     end
