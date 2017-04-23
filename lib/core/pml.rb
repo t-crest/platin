@@ -11,6 +11,8 @@ require 'core/context'
 require 'core/program'
 require 'core/programinfo'
 
+require 'set'
+
 # preferably, we would have something like:
 # include PML::Kernel
 # to have assert and friends in scope
@@ -165,6 +167,117 @@ class PMLDoc
     end
   end
 
+  def purge_unlinked_symbols(data, resolved)
+    # Parameters:
+    #    data:     the yaml-data array
+    #    resolved: Hash mapping symbol names to the file holiding the selected
+    #              instance
+
+    # Purging is an multistep process:
+    # 1. Purge bitcode functions (trivial)
+    # 2. Purge machinecode functions that map to obsolete function
+    #    Collect a list of purged machineinfo functions
+    # 3. Purge relationship graphs for both functions and machinefunctions
+    # 4. Purge flowfacts based on both
+    # 5. Purge valuefacts based on both
+
+    # Step 1: bit-code
+    (data['bitcode-functions'] || []).reject! do |fun|
+      symname = fun['name']
+      assert ("Insufficient data for bitcode-function: #{symname}") {
+        fun.has_key?('name') && resolved.has_key?(symname) && fun.has_key?('pmlsrcfile')
+      }
+      resolved[symname] != fun['pmlsrcfile']
+    end
+
+    # Step 2: machine-code
+    pruned_machinefunctions = Set.new # Collection of mf to prune
+    (data['machine-functions'] || []).reject! do |fun|
+      mapped = fun['mapsto']
+      assert ("Insufficient data for machine-function: #{fun['name']} -> mapped") {
+           fun.has_key?('mapsto') && resolved.has_key?(mapped) && fun.has_key?('pmlsrcfile')
+      }
+      if resolved[mapped] != fun['pmlsrcfile']
+        # prune
+        pruned_machinefunctions.add(fun['name'])
+        true
+      else
+        false
+      end
+    end
+
+    # Step 3: relation-graphs
+    (data['relation-graphs'] || []).reject! do |graph|
+      prune = false
+      ["src", "dst"].each do |locdesc|
+        loc = graph[locdesc]
+        assert ("Insufficient data for relation-graph(#{locdesc}): #{graph['src']} <-> #{graph['dst']}") {
+          graph.has_key?(locdesc) && loc.has_key?('level') &&
+          loc.has_key?('function') && graph.has_key?('pmlsrcfile')
+        }
+        case loc['level']
+        when 'bitcode'
+          prune ||= resolved[loc['function']] != loc['pmlsrcfile']
+        when 'machinecode'
+          prune ||= pruned_machinefunctions.include?(loc['function'])
+        else
+          assert ("No such level: #{loc['level']}") { false }
+        end
+      end
+      prune
+    end
+
+    # Step 4: flowfacts
+    (data['flowfacts'] || []).reject! do |ff|
+      assert ("Incomplete flowfact: #{ff}") {
+        ff.has_key?('scope') && ff['scope'].has_key?('function') && ff.has_key?('level')
+      }
+
+      prune = false
+      fun = ff['scope']['function']
+
+      case ff['level']
+      when 'bitcode'
+        assert ("No such function: #{fun}") { resolved.has_key?(fun) && ff.has_key?('pmlsrcfile') }
+        prune ||= resolved[fun] != ff['pmlsrcfile']
+      when 'machinecode'
+        prune ||= pruned_machinefunctions.include?(fun)
+      else
+        assert ("No such level: #{ff['level']}") { false }
+      end
+
+      prune
+    end
+
+    # Step 5: valuefacts
+    (data['valuefacts'] || []).reject! do |vf|
+      assert ("Incomplete valuefacts: #{vf}") {
+        vf.has_key?('program-point') && vf['program-point'].has_key?('function') && vf.has_key?('level')
+      }
+
+      prune = false
+      fun = vf['program-point']['function']
+
+      case vf['level']
+      when 'bitcode'
+        assert ("No such function: #{fun}") { resolved.has_key?(fun) && vf.has_key?('pmlsrcfile') }
+        prune ||= resolved[fun] != vf['pmlsrcfile']
+      when 'machinecode'
+        prune ||= pruned_machinefunctions.include?(fun)
+      else
+        assert ("No such level: #{vf['level']}") { false }
+      end
+
+      prune
+    end
+
+    return data
+  end
+
+  # The linker operates on pmlfile level. Therefore it assumes that each pml
+  # file in the input represents a complete compilation unit that comprises
+  # bitcode-functions, machine-functions, relation-graphs, flowfacts and
+  # valuefacts.  Linking discards unlinked units at this level.
   def run_linker(data)
     # Collect LinkerInfos for all functions
     symbols = {}
@@ -195,7 +308,8 @@ class PMLDoc
       resolved[k] = r.file
     end
 
-    # TODO: Purge information here
+    # Purge obsolete information from data
+    purge_unlinked_symbols(data, resolved)
 
     return data
   end
