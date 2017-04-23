@@ -191,7 +191,7 @@ module PML
         end
         def build_index
           #{all_indices.map { |index| "@index_#{index} = {}"}.join("; ") }
-          @list.each { |item| puts item; add_index(item) }
+          @list.each { |item| add_index(item) }
         end
         private
         def add_index(item)
