@@ -219,7 +219,8 @@ class PMLDoc
         }
         case loc['level']
         when 'bitcode'
-          prune ||= resolved[loc['function']] != loc['pmlsrcfile']
+          assert ("Unresolved function #{loc['function']}") { resolved.has_key?(loc['function']) }
+          prune ||= resolved[loc['function']] != graph['pmlsrcfile']
         when 'machinecode'
           prune ||= pruned_machinefunctions.include?(loc['function'])
         else
