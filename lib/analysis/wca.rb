@@ -124,8 +124,9 @@ class WCA
     end
 
     # run cache analyses
-    ca = CacheAnalysis.new(builder.refinement['machinecode'], @pml, @options)
-    ca.analyze(entry['machinecode'], builder)
+    # FIXME: CacheAnalysis is currently broken for armv7
+    #ca = CacheAnalysis.new(builder.refinement['machinecode'], @pml, @options)
+    #ca.analyze(entry['machinecode'], builder)
 
     # END: remove me soon
 
@@ -182,7 +183,8 @@ class WCA
       edgefreq = edgefreqs[ref]
       profile.add(ProfileEntry.new(ref, edgecost, edgefreqs[ref], totalcosts[ref]))
     }
-    ca.summarize(@options, freqs, Hash[freqs.map{ |v,freq| [v,freq * builder.ilp.get_cost(v)] }], report)
+    # FIXME: CacheAnalysis is currently broken for armv7
+    #ca.summarize(@options, freqs, Hash[freqs.map{ |v,freq| [v,freq * builder.ilp.get_cost(v)] }], report)
     if @options.verbose
       puts "Cycles: #{cycles}"
       puts "Edge Profile:"
