@@ -85,7 +85,7 @@ class ExtractSymbols
     ( #{RE_HEX}{8} ) \s # address
     <([^>]+)>:          # label
   }x
-  RE_INS_LABEL = %r{ ^ \s+
+  RE_INS_LABEL = %r{ ^\s*
     ( #{RE_HEX}+ ): \s* # address
     ( \S+ )             # instruction
     # rest
