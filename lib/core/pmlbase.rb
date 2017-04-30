@@ -219,6 +219,13 @@ module PML
            end
          _end_eval
       }
+      all_indices.each { |index|
+         module_eval <<-"_end_eval", __FILE__, __LINE__
+           def keys_#{index}()
+               @index_#{index}.keys
+           end
+         _end_eval
+      }
     end
     def pml_name_index_list(element_type, unique_indices = [], indices = [])
       pml_list(element_type, [:name,:qname] + unique_indices, indices)
