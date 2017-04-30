@@ -28,6 +28,7 @@ class PMLDoc
   attr_reader :flowfacts,:valuefacts,:timing
   attr_reader :tool_configurations
   attr_reader :sca_graph
+  attr_accessor :text_symbols
 
   # constructor expects a YAML document or a list of YAML documents
   def initialize(stream, options = OpenStruct.new)
@@ -78,6 +79,7 @@ class PMLDoc
     @timing = TimingList.from_pml(self, @data['timing'])
     @sca_graph = SCAGraph.new(self, @data['sca-graph']) if @data.include?('sca-graph')
     @sca_graph ||= nil
+    @text_symbols ||= nil
   end
   def valuefacts
     @valuefacts

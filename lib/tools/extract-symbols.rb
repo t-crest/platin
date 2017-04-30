@@ -117,6 +117,7 @@ class ExtractSymbols
         block.instructions = InstructionList.new(block, instruction_data)
       end
     end
+    @pml.text_symbols = @text_symbols
     @pml
   end
   private

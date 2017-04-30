@@ -107,8 +107,12 @@ class WcetTool
     warn("Problematic Relation Graphs: #{rgs.map { |rg| "#{rg.qname} / #{rg.data['status']}" }.join(", ")}") unless rgs.empty?
 
     # Extract Symbols
-    time("read symbols") do
-      ExtractSymbolsTool.run(pml,options)
+    if pml.text_symbols
+      puts("Using cached text-symbols")
+    else
+      time("read symbols") do
+        ExtractSymbolsTool.run(pml,options)
+      end
     end
   end
 
