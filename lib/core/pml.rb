@@ -25,7 +25,7 @@ module PML
 class PMLDoc
   attr_reader :data, :triple, :arch, :analysis_configurations
   attr_reader :bitcode_functions,:machine_functions,:relation_graphs,:global_cfgs
-  attr_reader :flowfacts,:valuefacts,:timing
+  attr_reader :flowfacts,:valuefacts,:modelfacts,:timing
   attr_reader :tool_configurations
   attr_reader :sca_graph
   attr_accessor :text_symbols
@@ -75,6 +75,8 @@ class PMLDoc
     @flowfacts = FlowFactList.from_pml(self, @data['flowfacts'])
     @data['valuefacts'] ||= []
     @valuefacts = ValueFactList.from_pml(self, @data['valuefacts'])
+    @data['modelfacts'] ||= []
+    @modelfacts = ModelFactList.from_pml(self, @data['modelfacts'])
     @data['timing'] ||= []
     @timing = TimingList.from_pml(self, @data['timing'])
     @sca_graph = SCAGraph.new(self, @data['sca-graph']) if @data.include?('sca-graph')
@@ -118,6 +120,14 @@ class PMLDoc
       if v['level'] == "machinecode" && v.has_key?('pmlsrcfile')
         pp = v['program-point']
         assert("valuefacts require a program point") { pp != nil }
+        pp['function'] = qualify_machinefunction_name(v['pmlsrcfile'], pp['function'])
+      end
+    end
+
+    (data['modelfacts'] || []).each do |v|
+      if v['level'] == "machinecode" && v.has_key?('pmlsrcfile')
+        pp = v['program-point']
+        assert("modelfacts require a program point") { pp != nil }
         pp['function'] = qualify_machinefunction_name(v['pmlsrcfile'], pp['function'])
       end
     end
@@ -276,6 +286,27 @@ class PMLDoc
       prune
     end
 
+    (data['modelfacts'] || []).reject! do |mf|
+      assert ("Incomplete modelfacts: #{mf}") {
+        mf.has_key?('program-point') && mf['program-point'].has_key?('function') && mf.has_key?('level')
+      }
+
+      prune = false
+      fun = mf['program-point']['function']
+
+      case mf['level']
+      when 'bitcode'
+        assert ("No such function: #{fun}") { resolved.has_key?(fun) && mf.has_key?('pmlsrcfile') }
+        prune ||= resolved[fun] != mf['pmlsrcfile']
+      when 'machinecode'
+        prune ||= pruned_machinefunctions.include?(fun)
+      else
+        assert ("No such level: #{mf['level']}") { false }
+      end
+
+      prune
+    end
+
     return data
   end
 
@@ -369,9 +400,10 @@ class PMLDoc
 
   def to_s
     sprintf("PMLDoc{bitcode-functions: |%d|, machine-functions: |%d|"+
-            ", flowfacts: |%s|, valuefacts: |%d|, timings: |%d|, gcfgs:|%d|",
+            ", flowfacts: |%s|, valuefacts: |%d|, modelfacts: |%d|" +
+            ", timings: |%d|, gcfgs:|%d|",
             bitcode_functions.length, machine_functions.length,
-            flowfacts.length,valuefacts.length,timing.length,global_cfgs.length)
+            flowfacts.length,valuefacts.length,modelfacts.length,timing.length,global_cfgs.length)
   end
 
   def dump_to_file(filename, write_config=false)

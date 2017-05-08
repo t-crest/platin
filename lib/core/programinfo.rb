@@ -205,6 +205,130 @@ module PML
     end
   end
 
+  # List of modelfacts (modifiable)
+  class ModelFactList < PMLList
+    extend PMLListGen
+    # pml_list(element_type, unique_indices = [], indices = [])
+    pml_list(:ModelFact,[],[:origin,:type])
+    # customized by_origin implementation
+    def by_origin(origin)
+      if origin.kind_of?(String)
+        @list.select { |mf| origin == mf.origin }
+      else
+        @list.select { |mf| origin.include?(mf.origin) }
+      end
+    end
+
+    def add_copies(flowfacts, new_origin)
+      copies = []
+      flowfacts.each { |mf|
+        mf_copy = mf.deep_clone
+        mf_copy.origin = new_origin
+        add(mf_copy)
+        copies.push(mf_copy)
+      }
+      copies
+    end
+
+    def reject!
+      rejects = []
+      @list.reject! { |mf| r = yield mf ; rejects.push(r); r }
+      data.reject! { |mf| rejects.shift }
+    end
+
+    def stats(pml)
+      assert("Unimplemented") {false}
+    end
+
+    def dump_stats(pml, io=$stderr)
+      assert("Unimplemented") {false}
+    end
+  end
+
+  # Model Fact utility class
+  # Kind of flow facts of interest
+  # guard:    * boolexpr         ... specifies code (blocks) not executed
+  class ModelFact < PMLObject
+    attr_reader :attributes, :ppref, :type, :expr
+    include ProgramInfoObject
+
+    def initialize(ppref, type, expr, attrs, data = nil)
+      assert("ModelFact#initialize: program point reference has wrong type (#{ppref.class})") { ppref.kind_of?(ContextRef) }
+      @ppref, @type, @expr = ppref, type, expr
+      @attributes = attrs
+      set_yaml_repr(data)
+    end
+    def programpoint
+      @ppref.programpoint
+    end
+    def ModelFact.from_pml(pml, data)
+      fs = pml.functions_for_level(data['level'])
+      ModelFact.new(ContextRef.from_pml(fs,data['program-point']),
+                    data['type'], data['expression'],
+                    ProgramInfoObject.attributes_from_pml(pml, data),
+                    data)
+    end
+    def to_pml
+      { 'program-point' => @ppref.data,
+        'type' => @type,
+        'expression' => @expr
+      }.merge(attributes)
+    end
+
+    # string representation of the value fact
+    def to_s
+      "#<ModelFact #{attributes.map {|k,v| "#{k}=#{v}"}.join(",")}, #{type} at #{ppref}: #{type}>"
+    end
+
+    # deep clone: clone flow fact, lhs and attributes
+    def deep_clone
+      ModelFact.new(ppref.dup, type.dup, expr.dup, attributes.dup)
+    end
+
+    def to_fact(pml, model)
+      case @type
+      when "guard"
+
+				# We aim for the following kind of flowfact
+        # - scope:
+        #     function: snd_ac97_pcm_open
+        #     loop: for.body80
+        #   lhs:
+        #   - factor: 1
+        #     program-point:
+        #       function: snd_ac97_pcm_open
+        #       block: for.body80
+        #   op: less-equal
+        #   rhs: '0'
+        #   level: bitcode
+        #   origin: model.bc
+
+        # We do not deal with markers and declare our guard at function level
+        # Ugly as hell, but use reflection to check for the :function attr
+        # accessor
+        assert("guards match on function scope, no function found #{ppref} in #{self}") \
+              { ppref.respond_to?(:function)}
+        assert("guards set a blockfreq, no block found for #{ppref} in #{self}") \
+              {    ppref.kind_of?(ContextRef) \
+                && ppref.respond_to?("programpoint") \
+                && ppref.programpoint.kind_of?(Block)
+              }
+        assert("guard operate on bitcode level") { level == 'bitcode'}
+        fun = ppref.function
+
+        # XXX: use model-eval-foo here
+        if expr == "false" then
+          #FlowFact.block_frequency(scoperef, blockref, freq, attrs)
+          fact = FlowFact.block_frequency(fun, ppref.programpoint, [SEInt.new(0)], attributes)
+          fact.origin = 'model.bc'
+          fact
+        end
+      else
+        assert("Cannot translate type #{@type} to a fact") {false}
+      end
+    end
+  end
+
   # Flow Fact utility class
   # Kind of flow facts of interest
   # validity: * analysis-context ... flow fact is valid for the analyzed program
