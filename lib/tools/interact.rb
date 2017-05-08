@@ -212,6 +212,7 @@ class DebugCommand < Command
       while Readline::HISTORY.length != hist
         Readline::HISTORY.pop
       end
+      Readline.completion_proc = REPLContext.instance.completor
     when 1
       REPLContext.instance.debug = @tokens[0].coerce(args[0])
     else
@@ -398,12 +399,14 @@ class REPLContext
   attr_accessor :options
   attr_accessor :pml
   attr_accessor :timing
+  attr_accessor :completor
 
   def initialize
-    @debug   = false
-    @options = OpenStruct.new
-    @pml     = nil
-    @timing  = {}
+    @debug     = false
+    @options   = OpenStruct.new
+    @pml       = nil
+    @timing    = {}
+    @completor = nil
   end
 
   @@instance = REPLContext.new
@@ -605,9 +608,12 @@ EOF
   end
 
   # Setup completion
-  Readline.completion_proc = proc do |s|
+  #   We need it in REPLContext as debug.pry sets its on completor, so we have
+  #   to restore it
+  REPLContext.instance.completor = proc do |s|
     Dispatcher.instance.complete(Readline.line_buffer.slice(0,Readline.point))
   end
+  Readline.completion_proc = REPLContext.instance.completor
 
   # The main loop
   while buf = Readline.readline("> ", true)
