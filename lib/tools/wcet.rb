@@ -12,6 +12,7 @@ require 'tools/transform'
 require 'tools/wca'
 require 'tools/ff2pml'
 require 'tools/sweet'
+require 'core/peaches'
 require 'tmpdir'
 
 # High-Level Wrapper for aiT
@@ -83,8 +84,9 @@ class WcetTool
     sweet_analysis if options.enable_sweet
     transform_down(["llvm.bc"],"llvm")
     transform_down(["user.bc"],"user")
+    transform_down(["model.bc"],"model")
 
-    flow_srcs = ["llvm", "user"]
+    flow_srcs = ["llvm", "user", "model"]
     wcet_analysis(flow_srcs) if options.compare_trace_facts
 
     flow_srcs.push("trace") if options.use_trace_facts
@@ -427,7 +429,7 @@ class WcetTool
     opts.ait_report_prefix = File.join(outdir, "#{basename}.ait") unless (!overwrite && opts.ait_report_prefix)
   end
 
-  def WcetTool.run(pml,options)
+  def WcetTool.run(pml,options, model=nil)
     needs_options(:input)
 
     # Get analysis configurations from PML
@@ -443,7 +445,14 @@ class WcetTool
       options.analysis_entry = "main"
     end
 
-    WcetTool.new(pml,options).run_in_outdir
+    if (!pml.modelfacts.empty?)
+      pml.with_temporary_sections([:flowfacts, :valuefacts]) do
+        (model ||= Model.new).evaluate(pml, pml.modelfacts)
+        WcetTool.new(pml,options).run_in_outdir
+      end
+    else
+      WcetTool.new(pml,options).run_in_outdir
+    end
   end
 
   def WcetTool.add_options(opts)
