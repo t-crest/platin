@@ -446,6 +446,11 @@ class WcetTool
     end
 
     if (!pml.modelfacts.empty?)
+      # Hacky: Extracttool modifys bitcode_functions, so the
+      # with_temporary_sections below would tigger an invalid caching in the
+      # second run. Therefore run the ExtractSymbolsTool ahead of time.
+      ExtractSymbolsTool.run(pml,options)
+
       pml.with_temporary_sections([:flowfacts, :valuefacts]) do
         (model ||= Model.new).evaluate(pml, pml.modelfacts)
         WcetTool.new(pml,options).run_in_outdir
