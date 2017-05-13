@@ -1,4 +1,3 @@
-
 #
 # platin toolkit
 #
@@ -287,6 +286,8 @@ module PML
 
     def to_fact(pml, model)
       case @type
+        # "Never go into the Dark Wood, my friend.", said Ratty Rupert. "There
+        # are bad things in there"     -- Mr Bunnsy has an adventure
       when "guard"
 
 				# We aim for the following kind of flowfact
@@ -323,6 +324,45 @@ module PML
           fact.origin = 'model.bc'
           fact
         end
+
+        # "The important thing about adventures, thought Mr Bunnsy, was that
+        # they shouldn't be so long as to make you miss mealtimes"
+        #                                   -- Mr Bunnsy has an adventure
+      when "lbound"
+        # modelfacts:
+        #   - program-point:
+        #       function:        c_entry
+        #       block:           while.body
+        #     origin:          platina.bc
+        #     level:           bitcode
+        #     type:            lbound
+        #     expression:      '10'
+
+        assert("lbound operates on bitcode level") { level == 'bitcode'}
+        assert("lbounds match on function scope, no function found #{ppref} in #{self}") \
+              { ppref.respond_to?(:function)}
+        assert("lbounds set a blockfreq, no block found for #{ppref} in #{self}") \
+              {    ppref.kind_of?(ContextRef) \
+                && ppref.respond_to?("programpoint") \
+                && ppref.programpoint.kind_of?(Block)
+              }
+
+        # To use Flowfact.loop_bound, we need a scope at the level of our
+        # programpoint easiest way to achieve this is to use ProgramPoint.from_pml...
+        # Therefore, we fake the appropriate input here:
+        fs = pml.functions_for_level(level)
+        data = {};
+        data['function'] = ppref.function.name
+        data['loop']     = ppref.programpoint.block.name
+        scope = ContextRef.from_pml(fs, data);
+        assert("lbounds operate on loops, no loop found for #{ppref} in #{self}") \
+              { scope != nil && scope.programpoint.kind_of?(Loop) }
+        # XXX: use model-eval-foo here
+        bound = Integer(expr)
+
+        fact = FlowFact.loop_bound(scope, SEInt.new(bound), attributes)
+        fact.origin = 'model.bc'
+        fact
       else
         assert("Cannot translate type #{@type} to a fact") {false}
       end
