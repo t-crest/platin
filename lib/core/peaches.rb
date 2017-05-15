@@ -76,6 +76,12 @@ class Model
 
     assert ("Trying to repair a pml without undo information") {facts != nil}
 
+    # We have to apply the undo steps in the inverse order of the "mutate"
+    # operations, if two mutations target the same pieces of information, or we
+    # risk corrupting the original data (We still do that anyways, if a
+    # mutation has an implementation flaw)
+    facts = facts.reverse
+
     # Valuefacts and Flowfacts are handled by "with_temporary_sections"
     facts.select{|f| f.kind_of?(PMLMutation)}.each do |mt|
       mt.repair(pml)
