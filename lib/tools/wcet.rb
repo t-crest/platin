@@ -454,6 +454,7 @@ class WcetTool
       pml.with_temporary_sections([:flowfacts, :valuefacts]) do
         (model ||= Model.new).evaluate(pml, pml.modelfacts)
         WcetTool.new(pml,options).run_in_outdir
+        model.repair(pml)
       end
     else
       WcetTool.new(pml,options).run_in_outdir

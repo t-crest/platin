@@ -8,6 +8,7 @@ require 'core/pmlbase'
 require 'core/context'
 require 'core/program'
 require 'core/symbolic_expr'
+require 'core/peaches'
 
 module PML
 
@@ -363,6 +364,38 @@ module PML
         fact = FlowFact.loop_bound(scope, SEInt.new(bound), attributes)
         fact.origin = 'model.bc'
         fact
+
+        # "And because of Olly the Snake's trick with the road sign, Mr Bunnsy
+        # did not know that he had lost his way. He wasn't going to Howard the
+        # Stoat's tea party. He was heading into the Dark Wood."
+        #                                   -- Mr Bunnsy has an adventure
+      when "callee"
+        assert("callee operates on machinecode level") { level == 'machinecode'}
+        assert("callee targets call instructions" + \
+               ", no unresolved call found for #{ppref} in #{self}") \
+              {    ppref.kind_of?(ContextRef) \
+                && ppref.respond_to?("programpoint") \
+                && ppref.programpoint.kind_of?(Instruction) \
+                && ppref.programpoint.calls? && ppref.programpoint.unresolved_call?
+              }
+
+        # XXX: use model-eval-foo here
+        listfields = /\[(.*)\]/.match(expr)
+        assert("Not a list: #{expr}") {listfields != nil}
+        entries = listfields[1].split(",")
+        # Remove whitespace
+        entries.map!{|entry| entry.strip}
+
+        # If we have a qualified identifier, perform patmos-clang-style
+        # namemangling (only for static identifiers)
+        entries.map!{|entry| entry.sub(/^([^:]+):(.+)$/) {
+          fname = $2; # because, well, fuck you, we are using global variables
+                      # for our regex matching. scoping is for loosers.
+          $1.gsub(/[^0-9A-Za-z]/, '_') + '_' + fname
+        }}
+
+        mutation = PMLMachineCalleeMutation.new(ppref.programpoint, entries)
+        mutation
       else
         assert("Cannot translate type #{@type} to a fact") {false}
       end

@@ -707,6 +707,10 @@ module PML
       data['callees'] || []
     end
 
+    def update_callees(callees)
+      data['callees'] = callees
+    end
+
     # called functions
     def called_functions
       return nil if unresolved_call?
