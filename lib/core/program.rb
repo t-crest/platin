@@ -73,10 +73,10 @@ module PML
     pml_name_index_list(:Block)
     # customized constructor
     def initialize(function, data)
-       @list = data.map { |b| Block.new(function, b) }
-       @list.each_with_index { |block,ix| block.layout_successor=@list[ix+1] }
-       set_yaml_repr(data)
-       build_index
+      @list = data.map { |b| Block.new(function, b) }
+      @list.each_with_index { |block,ix| block.layout_successor=@list[ix+1] }
+      set_yaml_repr(data)
+      build_index
     end
   end
 
