@@ -11,6 +11,7 @@ require 'core/context'
 require 'core/program'
 require 'core/programinfo'
 
+require 'pathname'
 require 'set'
 
 # preferably, we would have something like:
@@ -89,7 +90,14 @@ class PMLDoc
 
   # Name generation scheme
   def qualify_machinefunction_name(file, name)
-    return file + "." + name
+    # cleanup the path (removes leading './' and intrapath '..' patterns
+    file = Pathname.new(file).cleanpath.to_s
+    # Remove the trailing .pml if any
+    file.sub!(/\.pml$/, '')
+    # Mangle the slashes (necessary, as qname relies on the following format:
+    # fun/block/instr
+    file.gsub!(/\//, '_')
+    return file + ":" + name
   end
 
   def retag_machinefunctions(data)
