@@ -156,6 +156,7 @@ class WCA
     if @options.visualize_ilp
       assert ("Visualizing ILPs requires the outdir parameter") { @options.outdir != nil}
       vis = ILPVisualisation.new(builder.ilp, [:bitcode, :machinecode, :relationgraph, :gcfg])
+      vfreqs = builder.ilp.debug_bound_frequencies(vfreqs)
       svg = vis.visualize("ILP: #{@options.analysis_entry}", :unbounded => vunbounded, :freqmap => vfreqs)
       File.write("#{@options.outdir}/ilp.svg", svg)
       json = JSON.generate(vis.getconstraints)

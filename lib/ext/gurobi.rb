@@ -8,6 +8,9 @@ include PML
 
 # Simple interface to gurobi_cl
 class GurobiILP < ILP
+  INFEASIBLE = :GB_INFEASIBLE
+  UNBOUNDED  = :GB_UNBOUNDED
+
   # Tolarable floating point error in objective
   def initialize(options = nil)
     super(options)
@@ -31,13 +34,18 @@ class GurobiILP < ILP
     # solve
     debug(options, :ilp) { self.dump(DebugIO.new) }
     start = Time.now
-    err = solve_lp(lp_name, sol_name, ilp_name)
+    err, errmsg = solve_lp(lp_name, sol_name, ilp_name)
     @solvertime += (Time.now - start)
 
-    # Throw exception on error (after setting solvertime)
-    if err
-      gurobi_error(err)
+
+    unbounded = nil
+    if (err == INFEASIBLE)
+      diagnose_infeasible(errmsg, freqmap) if @do_diagnose
+    elsif (err == UNBOUNDED)
+      unbounded, freqmap = diagnose_unbounded(errmsg, freqmap) if @do_diagnose
     end
+    # Throw exception on error (after setting solvertime)
+    raise ILPSolverException.new(gurobi_error_msg(errmsg), nil, freqmap, unbounded) unless err == nil
 
     # read solution
     sol = File.open(sol_name, "r")
@@ -54,7 +62,8 @@ class GurobiILP < ILP
       gurobi_error("Read #{freqmap.length} variables, expected #{@variables.length}")
     end
 
-    [obj.round, freqmap ]
+
+    [obj.round, freqmap, unbounded]
   end
 
   private
@@ -140,24 +149,17 @@ class GurobiILP < ILP
     lines = out.readlines
     # Detect error messages
     return "Gurobi terminated unexpectedly (#{$?.exitstatus})" if $?.exitstatus > 0
-    if (File.file?(ilp))
-      file = File.open(ilp, "r")
-      content = file.read
-      puts content
-    end
-    if (File.file?(sol))
-      file = File.open(lp, "r")
-      content = file.read
-      puts content
-    end
     lines.each do |line|
-      return line if line =~ /Model is infeasible/
-      return line if line =~ /Model is unbounded/
-      return nil if line =~ /Optimal solution found/
+      return [INFEASIBLE, line] if line =~ /Model is infeasible/
+      return [UNBOUNDED, line] if line =~ /Model is unbounded/
+      return [nil, line] if line =~ /Optimal solution found/
     end
-    nil # No error
+    [nil, nil] # No error
+  end
+  def gurobi_error_msg(msg)
+    "Gurobi Error: #{msg}"
   end
   def gurobi_error(msg)
-    raise Exception.new("Gurobi Error: #{msg}")
+    raise Exception.new(gurobi_error_msg(msg))
   end
 end

@@ -161,6 +161,7 @@ class ILP
     @vartype = {}
     @eliminated = Hash.new(false)
     @constraints = Set.new
+    @do_diagnose = ! options.disable_ipet_diagnosis
     reset_cost
   end
   # number of non-eliminated variables
@@ -248,6 +249,20 @@ class ILP
     c
   end
 
+  # Generate a nice string-representation of a frequencymap for
+  # diganose_unbounded
+  def debug_bound_frequencies(freq)
+    freq.each do |v,k|
+      freq[v] = if k < BIGM
+        k.to_i
+      elsif k == BIGM
+        "\u221e"
+      else
+        "c\u221e"
+      end
+    end
+  end
+
   # conceptually private; friend VariableElimination needs access
   def create_indexed_constraint(terms_indexed, op, const_rhs, name, tags)
     terms_indexed.default=0
@@ -263,6 +278,84 @@ class ILP
     @constraints.add(constr) if constr
     constr
   end
+
+  SLACK=10000000
+  BIGM= 10000000
+  def diagnose_unbounded(problem, freqmap)
+    debug(options, :ilp) { "#{problem} PROBLEM - starting diagnosis" }
+    @do_diagnose = false
+    variables.each do |v|
+      add_constraint([[v,1]],"less-equal",BIGM,"__debug_upper_bound_v#{index(v)}",:debug)
+    end
+    @eps = 1.0
+    cycles,freq = self.solve_max
+    unbounded = freq.map { |v,k|
+      (k >= BIGM - 1.0) ? v : nil
+    }.compact
+    unbounded_functions, unbounded_loops = Set.new, Set.new
+    unbounded.each { |v|
+      next unless v.kind_of?(IPETEdge) && v.source.kind_of?(Block)
+      if v.source == v.source.function.blocks.first
+        unbounded_functions.add(v.source.function)
+      end
+    }
+    unbounded.each { |v|
+      next unless v.kind_of?(IPETEdge) && v.source.kind_of?(Block)
+      if ! unbounded_functions.include?(v.source.function) && v.source.loopheader?
+        unbounded_loops.add(v.source)
+      end
+    }
+    if unbounded_functions.empty? && unbounded_loops.empty?
+      warn("ILP: Unbounded variables: #{unbounded.join(", ")}")
+    else
+      warn("ILP: Unbounded functions: #{unbounded_functions.to_a.join(", ")}") unless unbounded_functions.empty?
+      warn("ILP: Unbounded loops: #{unbounded_loops.to_a.join(", ")}") unless unbounded_loops.empty?
+      unbounded_loops.each { |l|
+        warn("Unbounded hint [#{l}]: #{l.src_hint}") unless l.src_hint.empty?
+      }
+    end
+    @do_diagnose = true
+    [unbounded, freq]
+  end
+
+  def diagnose_infeasible(problem, freqmap)
+    $stderr.puts "#{lp_solve_error_msg(problem)} PROBLEM - starting diagnosis"
+    @do_diagnose = false
+    old_constraints, slackvars = @constraints, []
+    reset_constraints
+    variables.each do |v|
+      add_constraint([[v,1]],"less-equal",BIGM,"__debug_upper_bound_v#{index(v)}",:debug)
+    end
+    old_constraints.each { |constr|
+      n = constr.name
+      next if n =~ /__positive_/
+      # only relax flow facts, assuming structural constraints are correct
+      if constr.name =~ /^ff/
+        v_lhs = add_variable("__slack_#{n}",:slack)
+        add_cost("__slack_#{n}", -SLACK)
+        constr.set(v_lhs, -1)
+        if constr.op == "equal"
+          v_rhs = add_variable("__slack_#{n}_rhs",:slack)
+          add_cost("__slack_#{n}_rhs", -SLACK)
+          constr.set(v_rhs, 1)
+        end
+      end
+      add_indexed_constraint(constr.lhs,constr.op,constr.rhs,"__slack_#{n}",Set.new([:slack]))
+    }
+    @eps = 1.0
+    # @constraints.each do |c|
+    #   puts "Slacked constraint #{n}: #{c}"
+    # end
+    cycles,freq = self.solve_max
+    freq.each do |v,k|
+      if v.to_s =~ /__slack/ && k != 0
+        $stderr.puts "SLACK: #{v.to_s.ljust(40)} #{k.to_s.rjust(8)}"
+      end
+    end
+    $stderr.puts "Finished diagnosis with objective #{cycles}"
+    @do_diagnose = true
+  end
+
 end
 
 end # module PML
