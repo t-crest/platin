@@ -11,6 +11,8 @@ require 'analysis/vcfg'
 require 'ext/lpsolve'
 require 'ext/gurobi'
 
+require 'json'
+
 module PML
 
 class WCA
@@ -137,11 +139,23 @@ class WCA
 
     # Solve ILP
     begin
-      cycles, freqs = builder.ilp.solve_max
+      cycles, freqs, unbounded = builder.ilp.solve_max
+      vcycles, vfreqs, vunbounded = cycles, freqs, unbounded
+    rescue ILPSolverException => ex
+      warn("WCA: ILP failed: #{ex}") unless @options.disable_ipet_diagnosis
+      vcycles, vfreqs, vunbounded = ex.cycles, ex.freqs, ex.unbounded
+      cycles,freqs = -1, {}
     rescue Exception => ex
       warn("WCA: ILP failed: #{ex}") unless @options.disable_ipet_diagnosis
       cycles,freqs = -1, {}
+      vcycles, vfreqs, vunbounded = cycles, freqs, nil
     end
+
+    vis = ILPVisualisation.new(builder.ilp, [:bitcode, :machinecode, :relationgraph, :gcfg])
+    svg = vis.graph("ILP: #{@options.analysis_entry}", :unbounded => vunbounded, :freqmap => vfreqs)
+    File.write('./ilp.svg', svg)
+    json = JSON.generate(vis.getconstraints)
+    File.write('./constraints.json', json)
 
     # report result
     profile = Profile.new([])

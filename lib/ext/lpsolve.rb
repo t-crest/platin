@@ -49,17 +49,18 @@ class LpSolveILP < ILP
     lp.print_solution(-1) if options.lp_debug
     obj = lp.objective
     freqmap = extract_frequencies(lp.get_variables)
+    unbounded = nil
     if (r == LPSolve::INFEASIBLE)
       diagnose_infeasible(r, freqmap) if @do_diagnose
     elsif (r == LPSolve::UNBOUNDED)
-      diagnose_unbounded(r, freqmap) if @do_diagnose
+      unbounded, freqmap = diagnose_unbounded(r, freqmap) if @do_diagnose
     end
-    lp_solve_error(r) unless r == 0
+    raise ILPSolverException.new(lp_solve_error(r), obj.round, freqmap, unbounded) unless r == 0
     if (obj-obj.round.to_f).abs > @eps
       raise Exception.new("Untolerable floating point inaccuracy > #{EPS} in objective #{obj}")
     end
 
-    [obj.round, freqmap ]
+    [obj.round, freqmap, unbounded]
   end
 
   private
@@ -127,7 +128,7 @@ class LpSolveILP < ILP
       end
   end
   def lp_solve_error(r)
-    raise Exception.new("LPSolver Error: #{lp_solve_error_msg(r)} (E#{r})")
+    return "LPSolver Error: #{lp_solve_error_msg(r)} (E#{r})"
   end
 
   SLACK=10000000
@@ -166,6 +167,16 @@ class LpSolveILP < ILP
       }
     end
     @do_diagnose = true
+    freq.each do |v,k|
+      freq[v] = if k < BIGM
+        k.to_i
+      elsif k == BIGM
+        "\u221e"
+      else
+        "c\u221e"
+      end
+    end
+    [unbounded, freq]
   end
 
   def diagnose_infeasible(problem, freqmap)

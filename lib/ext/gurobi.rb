@@ -18,6 +18,7 @@ class GurobiILP < ILP
     lp_name = options.write_lp
     lp_name = File.join(options.outdir, "model.lp") unless lp_name
     sol_name = File.join(options.outdir, "model.sol")
+    ilp_name = File.join(options.outdir, "model.ilp")
     lp = File.open(lp_name, "w")
 
     # set objective and add constraints
@@ -30,7 +31,7 @@ class GurobiILP < ILP
     # solve
     debug(options, :ilp) { self.dump(DebugIO.new) }
     start = Time.now
-    err = solve_lp(lp_name, sol_name)
+    err = solve_lp(lp_name, sol_name, ilp_name)
     @solvertime += (Time.now - start)
 
     # Throw exception on error (after setting solvertime)
@@ -134,11 +135,21 @@ class GurobiILP < ILP
     end
   end
 
-  def solve_lp(lp, sol)
-    out = IO.popen("gurobi_cl ResultFile=#{sol} #{lp}")
+  def solve_lp(lp, sol, ilp)
+    out = IO.popen("gurobi_cl ResultFile=#{sol} ResultFile=#{ilp} #{lp}")
     lines = out.readlines
     # Detect error messages
     return "Gurobi terminated unexpectedly (#{$?.exitstatus})" if $?.exitstatus > 0
+    if (File.file?(ilp))
+      file = File.open(ilp, "r")
+      content = file.read
+      puts content
+    end
+    if (File.file?(sol))
+      file = File.open(lp, "r")
+      content = file.read
+      puts content
+    end
     lines.each do |line|
       return line if line =~ /Model is infeasible/
       return line if line =~ /Model is unbounded/

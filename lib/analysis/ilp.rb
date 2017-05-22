@@ -20,6 +20,16 @@ class InconsistentConstraintException < Exception
   end
 end
 
+class ILPSolverException < Exception
+  attr_accessor :cycles, :freqs, :unbounded
+
+  def initialize(msg, cycles, freqs, unbounded)
+    super(msg)
+    @cycles    = cycles
+    @freqs     = freqs
+    @unbounded = unbounded
+  end
+end
 
 # Indexed Constraints (normalized, with fast hashing)
 # Terms: Index => Integer != 0
@@ -252,6 +262,205 @@ class ILP
     constr = create_indexed_constraint(terms_indexed, op, constr_rhs, name, tags)
     @constraints.add(constr) if constr
     constr
+  end
+end
+
+class ILPVisualisation
+  INFEASIBLE_COLOUR = 'red'
+  INFEASIBLE_FILL   = '#e76f6f'
+
+  attr_reader :ilp
+
+  def initialize(ilp, levels)
+    @ilp = ilp
+    @levels = levels
+    @graph = nil
+    @mapping = {}
+    @subgraph = {}
+  end
+
+  def subgraph_by_level(level)
+    entry = @subgraph[level]
+    return entry if entry
+    sub = @graph.subgraph("cluster_#{level}")
+    @subgraph[level] = sub
+    sub[:label] = level
+    sub
+  end
+
+  def get_level(var)
+    if var.respond_to?(:level)
+      return var.level
+    elsif var.respond_to?(:function)
+      return var.function.level
+    else
+      STDERR.puts "Cannot infer level for #{var}"
+      return "unknown"
+    end
+  end
+
+  def to_label(var)
+    l = []
+    if var.respond_to?(:qname)
+      l << var.qname
+    end
+    if var.respond_to?(:mapsto)
+      l << var.mapsto
+    end
+    if var.respond_to?(:src_hint)
+      l << var.src_hint
+    end
+    str = l.join("\n");
+    return "unknown" if str.empty?
+    return str
+  end
+
+  def add_node(variable)
+    key = variable
+    node = @mapping[key]
+    return node if node
+
+    g = subgraph_by_level(get_level(variable))
+
+    nname = "n" + @mapping.size.to_s
+    node = g.add_nodes(nname, :id => nname, :label => to_label(variable), :tooltip => variable.to_s)
+    @mapping[key] = node
+
+    case variable
+    when Function
+      node[:shape] = "cds"
+    when Block
+      node[:shape] = "box"
+    when Instruction
+      node[:shape] = "ellipse"
+      block = add_node(variable.block)
+      @graph.add_edges(block, node, :style => 'dashed')
+    else
+      node[:shape] = "Mdiamond"
+    end
+
+    node
+  end
+
+  def add_edge(edge, cost = nil)
+    key = edge
+    node = @mapping[key]
+    return node if node
+
+    assert("Not an IPETEdge"){edge.is_a?(IPETEdge)}
+
+    src = add_node(edge.source)
+    dst = add_node(edge.target)
+
+    ename = "n" + @mapping.size.to_s
+    e = @graph.add_edges(src, dst, :id => ename, :tooltip => edge.to_s, :labeltooltip => edge.to_s)
+    @mapping[key] = e
+
+    if cost
+      e[:label] = cost.to_s
+    end
+
+    if edge.cfg_edge?
+      e[:style] = "solid"
+    elsif edge.call_edge?
+      e[:style] = "bold"
+    elsif edge.relation_graph_edge=
+      e[:style] = "dashed"
+    else
+      e[:style] = "dotted"
+    end
+
+    e
+  end
+
+  def mark_unbounded(vars)
+    vars.each do |v|
+      @mapping[v][:color]     = INFEASIBLE_COLOUR
+      @mapping[v][:style]     = "filled"
+      @mapping[v][:fillcolor] = INFEASIBLE_FILL
+    end
+  end
+
+  def annotate_freqs(freqmap)
+    freqmap.each do |v,f|
+      if v.is_a?(IPETEdge)
+        # Labelstrings are an own class... Therefore, we have to do strange type
+        # conversions here...
+        s = @mapping[v][:label]
+        s = s ? s.to_ruby.gsub(/(^"|"$)/, "") : ""
+        @mapping[v][:label] = "#{f} \u00d7 #{s}"
+      end
+    end
+  end
+
+  def collect_variables(term)
+    vars = Set.new
+    term.lhs.each do |vi,c|
+      v = @ilp.var_by_index(vi)
+      vars.add(v)
+    end
+    return vars
+  end
+
+  def getconstraints
+    constraints = []
+    c2v         = []
+    v2c         = {}
+
+    ilp.constraints.each do |c|
+      next if c.name =~ /^__debug_upper_bound/
+
+      index = constraints.length
+      constraints << { :formula => c.to_s, :name => c.name }
+      vals = []
+      # If this assertion breaks: merge left and right side
+      assert ("We only deal with constant rhs") {c.rhs.is_a?(Fixnum)}
+      collect_variables(c).each do |v|
+        next unless @mapping.has_key?(v)
+        node = add_node(v)
+        id = node[:id].to_ruby
+        vals << { :id => id, :name => v.to_s }
+        (v2c[id] ||= []) << index
+      end
+      c2v << vals
+    end
+
+    return {
+      :constraints => constraints,
+      :c2v         => c2v,
+      :v2c         => v2c,
+    }
+  end
+
+  def graph(title, opts = {})
+    begin
+      require 'graphviz'
+    rescue LoadError => e
+      STDERR.puts "Failed to load graphviz, disabling ILPVisualisation"
+      return nil
+    end
+
+    assert("Graph is already drawn") {@graph == nil}
+
+    @graph = GraphViz.digraph(:ILP)
+
+    ilp.variables.each do |v|
+      if v.is_a?(IPETEdge)
+        add_edge(v, ilp.get_cost(v))
+      else
+        add_node(v)
+      end
+    end
+
+    if opts[:unbounded]
+      mark_unbounded(opts[:unbounded])
+    end
+
+    if opts[:freqmap]
+      annotate_freqs(opts[:freqmap])
+    end
+
+    @graph.output(:svg => String)
   end
 end
 
