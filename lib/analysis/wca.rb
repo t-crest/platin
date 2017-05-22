@@ -11,6 +11,8 @@ require 'analysis/vcfg'
 require 'ext/lpsolve'
 require 'ext/gurobi'
 
+require 'tools/visualize'
+
 require 'json'
 
 module PML
@@ -151,11 +153,14 @@ class WCA
       vcycles, vfreqs, vunbounded = cycles, freqs, nil
     end
 
-    vis = ILPVisualisation.new(builder.ilp, [:bitcode, :machinecode, :relationgraph, :gcfg])
-    svg = vis.graph("ILP: #{@options.analysis_entry}", :unbounded => vunbounded, :freqmap => vfreqs)
-    File.write('./ilp.svg', svg)
-    json = JSON.generate(vis.getconstraints)
-    File.write('./constraints.json', json)
+    if @options.visualize_ilp
+      assert ("Visualizing ILPs requires the outdir parameter") { @options.outdir != nil}
+      vis = ILPVisualisation.new(builder.ilp, [:bitcode, :machinecode, :relationgraph, :gcfg])
+      svg = vis.visualize("ILP: #{@options.analysis_entry}", :unbounded => vunbounded, :freqmap => vfreqs)
+      File.write("#{@options.outdir}/ilp.svg", svg)
+      json = JSON.generate(vis.getconstraints)
+      File.write("#{@options.outdir}/constraints.json", json)
+    end
 
     # report result
     profile = Profile.new([])

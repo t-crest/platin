@@ -479,6 +479,7 @@ class WcetTool
     opts.on("--combine-wca", "run both aiT and WCA and combine cache analysis results") { |d| opts.options.combine_wca = true }
     opts.on("--compute-criticalities", "calculate block criticalities") { opts.options.compute_criticalities = true }
     opts.on("--enable-sweet", "run SWEET bitcode analyzer") { |d| opts.options.enable_sweet = true }
+    opts.on("--visualize-ilp", "display an graphical representation of the geneated ILP") { opts.options.visualize_ilp = true}
     use_sweet = Proc.new { |options| options.enable_sweet }
     opts.bitcode_file(use_sweet)
     opts.alf_file(Proc.new { false })
@@ -514,6 +515,10 @@ EOF
   if options.combine_wca and options.compute_criticalities
     # We could still do it using aiT, but it would be rather imprecise
     die("Computing criticalities is not possible in combined-WCA mode")
+  end
+
+  if options.visualize_ilp and options.outdir == nil
+    die("Visualizing ILPs requires the additional --outdir parameter")
   end
 
   updated_pml = WcetTool.run(PMLDoc.from_files(options.input, options), options)
