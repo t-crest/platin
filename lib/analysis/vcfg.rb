@@ -152,9 +152,11 @@ private
         get_callnode(cs.instruction).refine_calltargets(to_bounded_stack(cs.context), target_vcfgs)
       end
       # set infeasible blocks
-      scope,bref = ff.get_block_infeasible
-      if scope && scope.programpoint.kind_of?(Function) && scope.programpoint == @entry && scope.any_context?
-        get_vcfg(bref.function).get_blockstart(bref.block).set_infeasible(to_bounded_stack(bref.context))
+      infeasibleblocks = ff.get_block_infeasible
+      infeasibleblocks.each do |scope,bref|
+        if scope && scope.programpoint.kind_of?(Function) && scope.programpoint == @entry && scope.any_context?
+          get_vcfg(bref.function).get_blockstart(bref.block).set_infeasible(to_bounded_stack(bref.context))
+        end
       end
     end
   end

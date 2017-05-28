@@ -427,21 +427,23 @@ class AISExporter
   end
 
   # export global infeasibles
-  def export_infeasible(ff, scope, pp)
+  def export_infeasible(ff, infeasibleblocks)
 
-    # context-sensitive facts not yet supported
-    unless scope.context.empty? && pp.context.empty?
-      warn("aiT: no support for context-sensitive scopes / program points: #{ff}")
-      return false
-    end
+    infeasibleblocks.each do |scope,pp|
+      # context-sensitive facts not yet supported
+      unless scope.context.empty? && pp.context.empty?
+        warn("aiT: no support for context-sensitive scopes / program points: #{ff}")
+        return false
+      end
 
-    # no support for empty basic blocks (typically at -O0)
-    if pp.programpoint.block.instructions.empty?
-      warn("aiT: no support for program points referencing empty blocks: #{ff}")
-      return false
+      # no support for empty basic blocks (typically at -O0)
+      if pp.programpoint.block.instructions.empty?
+        warn("aiT: no support for program points referencing empty blocks: #{ff}")
+        return false
+      end
+      gen_fact("instruction #{pp.block.ais_ref} is never executed",
+               "globally infeasible block (source: #{ff.origin})",ff)
     end
-    gen_fact("instruction #{pp.block.ais_ref} is never executed",
-             "globally infeasible block (source: #{ff.origin})",ff)
   end
 
   def export_linear_constraint(ff)
@@ -548,9 +550,9 @@ class AISExporter
       return false if options.ais_disable_export.include?('call-targets')
       export_calltargets(ff,*scope_cs_targets)
 
-    elsif scope_pp = ff.get_block_infeasible
+    elsif infeasibleblocks = ff.get_block_infeasible && !infeasibleblocks.empty?
       return false if options.ais_disable_export.include?('infeasible-code')
-      export_infeasible(ff,*scope_pp)
+      export_infeasible(ff,infeasibleblocks)
 
     elsif ff.blocks_constraint? || ff.scope.programpoint.kind_of?(Function)
       return false if options.ais_disable_export.include?('flow-constraints')

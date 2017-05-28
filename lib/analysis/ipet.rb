@@ -47,9 +47,11 @@ class ControlFlowRefinement
       add_calltargets(ContextRef.new(cs.instruction, scope.context), targets.map { |t| t.function})
     end
     # set infeasible blocks
-    scope,bref = flowfact.get_block_infeasible
-    if scope
-      set_infeasible(ContextRef.new(bref.block, scope.context))
+    infeasibleblocks = flowfact.get_block_infeasible
+    infeasibleblocks.each do |scope,bref|
+      if scope
+        set_infeasible(ContextRef.new(bref.block, scope.context))
+      end
     end
   end
 

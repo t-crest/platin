@@ -25,7 +25,7 @@ module PML
       # context-independent loop bound
       c.is_loop_bound = ! ff.get_loop_bound.nil?
       # context-independent block infeasibility
-      c.is_infeasible = ! ff.get_block_infeasible.nil?
+      c.is_infeasible = ! ff.get_block_infeasible.empty?
       # context-independent calltarget restriction
       (_,cs,_) = ff.get_calltargets
       c.is_indirect_calltarget = cs && cs.programpoint.unresolved_call?
@@ -556,12 +556,28 @@ module PML
     end
 
     # if this constraints marks a block infeasible,
-    # return [scope,block]
+    # return [[scope,block]]
     def get_block_infeasible
-      s,b,rhs = get_block_frequency_bound
-      return nil unless s
-      return nil unless rhs.constant? && rhs.to_i == 0
-      return [scope,b]
+      # Terms for infeasible blocks have a specific structure:
+      #   \sum_{i = 0}^{n} c_i * block_i <= 0 mit c_i \in \mathbb{N}
+      # This is what we match for below
+
+      return [] unless rhs.constant? && rhs.to_i == 0
+      infeasible_blocks = []
+      lhs.list.each do |term|
+        factor,ppref,pp = term.factor,term.ppref,term.programpoint
+        return [] unless factor.to_i >= 0
+        return [] unless pp.kind_of?(Block)
+        # Note: this allows (factor = 0) without marking them infeasible. No
+        #       This is intentional, as those blocks are _not_ infeasible from
+        #       this formula
+        if factor.to_i > 0
+          infeasible_blocks << [scope, ppref]
+        end
+      end
+      require 'pp'
+      pp infeasible_blocks
+      return infeasible_blocks
     end
 
     # if this is a flowfact constraining the frequency of a single block,

@@ -288,7 +288,7 @@ class F4Exporter
   end
 
   # export global infeasibles
-  def export_infeasible(ff, scope, pp)
+  def export_infeasible(ff, infeasibleblocks)
     # We let the analysis worry about that ..
   end
 
@@ -333,9 +333,9 @@ class F4Exporter
       return false if options.ff_disable_export.include?('call-targets')
       export_calltargets(ff,*scope_cs_targets)
 
-    elsif scope_pp = ff.get_block_infeasible
+    elsif infeasibleblocks = ff.get_block_infeasible && !infeasibleblocks.empty?
       return false if options.ff_disable_export.include?('infeasible-code')
-      export_infeasible(ff,*scope_pp)
+      export_infeasible(ff,infeasibleblocks)
 
     elsif ff.blocks_constraint? || ff.scope.programpoint.kind_of?(Function)
       return false if options.ff_disable_export.include?('flow-constraints')
@@ -464,7 +464,7 @@ class FFXExporter
   end
 
   # export global infeasibles
-  def export_infeasible(ff, scope, pp)
+  def export_infeasible(ff, infeasibleblocks)
     # We let the analysis worry about that ..
   end
 
@@ -508,9 +508,9 @@ class FFXExporter
       return false if options.ff_disable_export.include?('call-targets')
       export_calltargets(ff,*scope_cs_targets)
 
-    elsif scope_pp = ff.get_block_infeasible
+    elsif infeasibleblocks = ff.get_block_infeasible && !infeasibleblocks.empty?
       return false if options.ff_disable_export.include?('infeasible-code')
-      export_infeasible(ff,*scope_pp)
+      export_infeasible(ff,infeasibleblocks)
 
     elsif ff.blocks_constraint? || ff.scope.programpoint.kind_of?(Function)
       return false if options.ff_disable_export.include?('flow-constraints')
