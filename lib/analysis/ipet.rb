@@ -519,6 +519,7 @@ class IPETBuilder
   end
 
   def add_calls_in_block(mbb)
+    return if @mc_model.infeasible?(mbb)
     mbb.callsites.each do |cs|
       current_call_edges = @mc_model.add_callsite(cs, @mc_model.calltargets(cs))
       current_call_edges.each do |ce|
