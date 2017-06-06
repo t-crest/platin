@@ -183,6 +183,21 @@ class PlatinaToken < ListToken
   end
 end
 
+class ListCommandToken < ListToken
+  OPS = ['interactive_annotations']
+
+  def get_list
+    return OPS
+  end
+
+  def coerce(tok)
+    if OPS.grep(tok).empty?
+      raise ArgumentError, "Unknown op: #{tok}"
+    end
+    return tok
+  end
+end
+
 # }}}
 
 # Command Implementations {{{
@@ -360,6 +375,45 @@ class AnnotateCommand < Command
 
     modelfact = ModelFact.from_pml(REPLContext.instance.pml, pml, 'interactive')
     REPLContext.instance.pml.modelfacts.add(modelfact)
+  end
+
+  def get_tokens
+    return @tokens
+  end
+end
+
+class ListCommand < Command
+  def initialize
+    @tokens = [ListCommandToken.new]
+  end
+
+  def help(long = false)
+    out = "List Properties of this analysis"
+    if long
+      out << <<-'EOF'
+  list interactive_annotations
+    List the annotations that were passed interactively
+      EOF
+    end
+    out
+  end
+
+  def run(args)
+    if args.length != 1
+      raise ArgumentError, "Usage: list (interactive_annotations)"
+    end
+
+    case args[0]
+    when 'interactive_annotations'
+      puts REPLContext.instance.pml.modelfacts.select {|a|
+        a.mode == 'interactive'
+      }.map { |a|
+        a.to_source
+      }.join("\n")
+    else
+      raise ArgumentError, "Usage: list (interactive_annotations)"
+    end
+
   end
 
   def get_tokens
@@ -703,6 +757,7 @@ EOF
   Dispatcher.instance.register('wcet',     WCETCommand.new)
   Dispatcher.instance.register('results',  ResultsCommand.new)
   Dispatcher.instance.register('annotate', AnnotateCommand.new)
+  Dispatcher.instance.register('list',     ListCommand.new)
   begin
     require 'pry-rescue'
     require 'pry-stack_explorer'

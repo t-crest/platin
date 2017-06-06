@@ -277,6 +277,13 @@ module PML
       }.merge(attributes)
     end
 
+    def to_source
+        @ppref.programpoint.block.src_hint \
+      + ": #pragma platina " \
+      + type + " " \
+      + '"' + expr + '"'
+    end
+
     # string representation of the value fact
     def to_s
       "#<ModelFact #{attributes.map {|k,v| "#{k}=#{v}"}.join(",")}, #{type} at #{ppref}: #{type}>"
