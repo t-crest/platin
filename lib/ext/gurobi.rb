@@ -39,6 +39,7 @@ class GurobiILP < ILP
 
 
     unbounded = nil
+    freqmap = nil
     if (err == INFEASIBLE)
       diagnose_infeasible(errmsg, freqmap) if @do_diagnose
     elsif (err == UNBOUNDED)

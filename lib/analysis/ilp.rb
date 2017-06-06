@@ -319,7 +319,7 @@ class ILP
   end
 
   def diagnose_infeasible(problem, freqmap)
-    $stderr.puts "#{lp_solve_error_msg(problem)} PROBLEM - starting diagnosis"
+    $stderr.puts "#{problem} PROBLEM - starting diagnosis"
     @do_diagnose = false
     old_constraints, slackvars = @constraints, []
     reset_constraints
