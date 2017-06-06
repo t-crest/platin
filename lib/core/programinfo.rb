@@ -249,23 +249,25 @@ module PML
   # Kind of flow facts of interest
   # guard:    * boolexpr         ... specifies code (blocks) not executed
   class ModelFact < PMLObject
-    attr_reader :attributes, :ppref, :type, :expr
+    attr_reader :attributes, :ppref, :type, :expr, :mode
     include ProgramInfoObject
 
-    def initialize(ppref, type, expr, attrs, data = nil)
+    def initialize(ppref, type, expr, attrs, mode, data = nil)
       assert("ModelFact#initialize: program point reference has wrong type (#{ppref.class})") { ppref.kind_of?(ContextRef) }
       @ppref, @type, @expr = ppref, type, expr
-      @attributes = attrs
+      @attributes  = attrs
+      @mode = mode
       set_yaml_repr(data)
     end
     def programpoint
       @ppref.programpoint
     end
-    def ModelFact.from_pml(pml, data)
+    def ModelFact.from_pml(pml, data, mode = 'platin')
       fs = pml.functions_for_level(data['level'])
       ModelFact.new(ContextRef.from_pml(fs,data['program-point']),
                     data['type'], data['expression'],
                     ProgramInfoObject.attributes_from_pml(pml, data),
+                    mode,
                     data)
     end
     def to_pml

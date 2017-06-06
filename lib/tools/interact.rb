@@ -131,6 +131,58 @@ class OptionMemberToken < ListToken
   end
 end
 
+class ProgramPointToken < ListToken
+  def qnameblocks(pmllist)
+    pmllist.map {|f| f.blocks.list}.compact.flatten.map{|b| b.qname}.flatten
+  end
+
+  def qnameinstructions(pmllist)
+    pmllist.map {|f| f.blocks.list}.compact.flatten.map{|b| b.instructions.list}.compact.flatten.map{|i| i.qname}
+  end
+
+  def get_list
+      qnameblocks(REPLContext.instance.pml.bitcode_functions) \
+    + qnameblocks(REPLContext.instance.pml.machine_functions) \
+    + qnameinstructions(REPLContext.instance.pml.machine_functions) \
+    # Skipped for performance reasons
+    # + qnameinstructions(REPLContext.instance.pml.bitcode_functions)
+  end
+
+  def squelch(exception_to_ignore = StandardError, default_value = nil)
+    yield
+  rescue Exception => e
+    raise unless e.is_a?(exception_to_ignore)
+      default_value
+  end
+
+  def coerce(qname)
+    pp = nil
+    squelch {pp   = Block.from_qname(REPLContext.instance.pml.bitcode_functions, qname)}
+    squelch {pp ||= Block.from_qname(REPLContext.instance.pml.machine_functions, qname)}
+    squelch {pp ||= Instruction.from_qname(REPLContext.instance.pml.bitcode_functions, qname)}
+    squelch {pp ||= Instruction.from_qname(REPLContext.instance.pml.machine_functions, qname)}
+    if pp.nil?
+      raise ArgumentError, "Unknown programpoint: #{qname}"
+    end
+    return pp
+  end
+end
+
+class PlatinaToken < ListToken
+  ANNOTATIONS = ['guard', 'lbound', 'callee']
+
+  def get_list
+    return ANNOTATIONS
+  end
+
+  def coerce(tok)
+    if ANNOTATIONS.grep(tok).empty?
+      raise ArgumentError, "Unknown annotation type: #{tok}"
+    end
+    return tok
+  end
+end
+
 # }}}
 
 # Command Implementations {{{
@@ -257,6 +309,57 @@ class WCETCommand < Command
     end
 
     pml.timing.clear!
+  end
+
+  def get_tokens
+    return @tokens
+  end
+end
+
+class AnnotateCommand < Command
+  def initialize
+    @tokens = [ProgramPointToken.new, PlatinaToken.new]
+  end
+
+  def help(long = false)
+    out = "Interactivly annotate modelfacts"
+    if long
+      out << <<-'EOF'
+  annotate <block> (guard|lbound|callee) "expr"
+    Please note that guard and lbound target bitcode blocks, while callee
+    annotations are only available on MC level
+      EOF
+    end
+    out
+  end
+
+  def run(args)
+    if args.length != 3
+      raise ArgumentError, "Usage: annotate <block> (guard|lbound|callee) \"expr\""
+    end
+
+    pp    = @tokens[0].coerce(args[0])
+    type  = @tokens[1].coerce(args[1])
+    expr  = args[2]
+
+    # Yeah, lets fake a pml-entry
+    pml = {}
+    pml['program-point'] = pp.to_pml_ref
+    pml['level'] = pp.function.level
+    pml['origin'] = case pml['level']
+    when 'bitcode'
+      'platina.bc'
+    when 'machinecode'
+      'platina'
+    else
+      raise ArgumentError, "ProgramPoint #{pp} has level #{pml['level']}, which is unsupported"
+    end
+
+    pml['type']        = type
+    pml['expression']  = expr
+
+    modelfact = ModelFact.from_pml(REPLContext.instance.pml, pml, 'interactive')
+    REPLContext.instance.pml.modelfacts.add(modelfact)
   end
 
   def get_tokens
@@ -597,8 +700,9 @@ EOF
   Dispatcher.instance.register('set', SetCommand.new)
   Dispatcher.instance.register('get', GetCommand.new)
 
-  Dispatcher.instance.register('wcet',    WCETCommand.new)
-  Dispatcher.instance.register('results', ResultsCommand.new)
+  Dispatcher.instance.register('wcet',     WCETCommand.new)
+  Dispatcher.instance.register('results',  ResultsCommand.new)
+  Dispatcher.instance.register('annotate', AnnotateCommand.new)
   begin
     require 'pry-rescue'
     require 'pry-stack_explorer'
