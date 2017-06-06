@@ -174,7 +174,7 @@ class HelpCommand < Command
       }
       puts help.join("\n")
     when 1
-      puts "  " + Dispatcher.instance[args[1]].help(true)
+      puts "  " + Dispatcher.instance[args[0]].help(true)
     else
       puts "  " + help(true)
     end
