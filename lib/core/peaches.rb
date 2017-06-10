@@ -382,7 +382,7 @@ class Parser
   extend Rsec::Helpers
 
   NUM        = prim :int64 {|num| ASTNumberLiteral.new (Integer(num))}
-  SPACE      = /[\ \t]*/
+  SPACE      = /[\ \t]*/.r
   # Magic here: negative lookahead to prohibit keyword/symbol ambiguity
   IDENTIFIER = (''.r ^ lazy{KEYWORD}) >> symbol(/[a-zA-Z]\w*/) {|id| ASTIdentifier.new(id)}.expect('identifier')
   IF         = word('if').expect 'keyword_if'
@@ -400,7 +400,18 @@ class Parser
 
   # Specialisation of seq_ that does not allow '\n'
   def seq__(*xs,&p)
-    seq_(*xs, skip: SPACE, &p)
+    seq_(*xs, skip: space, &p)
+  end
+
+  def space
+    (seq(SPACE, comment, SPACE) | SPACE)
+  end
+
+  def comment
+    comment = ( seq_('{-', /((?!-}).)+/ ,'-}') \
+              | SPACE.maybe >> /--((?!([\r\n]|$)).)+/.r & (/[\r\n]/.r | ''.r.eof) \
+              )
+    comment
   end
 
   def arith_expr
@@ -465,14 +476,15 @@ class Parser
                   ).fail "function declaration"
     definition  = expr
 
-    seq__(declaration, '=', definition) { |decl,_,expr|
+    seq__(declaration, '=', definition, comment.maybe) { |decl,_,expr|
       id, params = decl
       ASTDecl.new(id, params, expr)
     }
   end
 
   def program
-    program = ( seq_(decl, lazy{program}, skip: /[\r\n]*/) \
+    program = ( seq_(comment, lazy{program}, skip:/[\r\n]*/)[1] \
+              | seq_(decl, lazy{program}, skip: /[\r\n]*/) \
               | seq_(decl, /[\r\n]*/.r.maybe) {|d, _| [d]} \
               )
     program.eof { |p| ASTProgram.new(p.flatten) }
@@ -504,6 +516,29 @@ if __FILE__ == $PROGRAM_NAME
     y = 10 * x + 20
     f a b = if 2 /=4 || (10 / 2 == 5) then a + b else a * b
   ]
+  pp parser.program.eof.parse! %Q[
+    x = 4
+
+    y = 10 * x + 20
+    f a b = if 2 /=4 || (10 / 2 == 5) then a + b else a * b
+  ]
+
+  pp parser.program.eof.parse! %Q[
+    x = 4
+    y = 10 * x + 20 {-
+      ASDF
+    -}
+    f a b = if 2 /=4 || (10 / 2 == 5) then a + b else a * b
+  ]
+
+  pp parser.comment.parse! ("{- asdf -}")
+  pp parser.comment.parse! ("-- ASDF ASDF")
+  pp parser.comment.eof.parse! ("-- ASDF ASDF")
+  pp parser.space.parse! (" {- asdf -}")
+
+  pp parser.program.eof.parse! ("x = 1 + {- asdf -} 4")
+  pp parser.program.eof.parse! ("x = 1 +{- asdf -}4")
+  pp parser.program.eof.parse! ("x = 1 + 4 -- asdf")
 
   program = parser.program.parse!  %Q[
     x = 4
@@ -511,6 +546,14 @@ if __FILE__ == $PROGRAM_NAME
     z = if y > 10 && 1 /= 2 then x else y
   ]
 
+  pp program.evaluate.lookup("z")
+
+  program = parser.program.parse!  %Q[
+    -- Full size comment
+    x ={- "ASDF" -} 4
+    y = 10 * x + 20 -- ASDF 4 + 5
+    z = if y > 10 && 1 /= 2 then{-ASDF-} x else y
+  ]
   pp program.evaluate.lookup("z")
 
 end
