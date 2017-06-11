@@ -124,7 +124,7 @@ class ASTNode
 end # class ASTNode
 
 class ASTDecl < ASTNode
-  attr_reader :identifier, :params, :expr
+  attr_reader :ident, :params, :expr
 
   def initialize(ident, params, expr)
     @ident  = ident
