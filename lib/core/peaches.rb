@@ -438,37 +438,44 @@ class Parser
   include Rsec::Helpers
   extend Rsec::Helpers
 
-  NUM        = prim :int64 {|num| ASTNumberLiteral.new (Integer(num))}
+
   SPACE      = /[\ \t]*/.r
+  COMMENT    = ( seq_('{-', /((?!-}).)+/ ,'-}') \
+               | seq(SPACE.maybe, /--((?!([\r\n]|$)).)+/.r) & (/[\r\n]/.r | ''.r.eof) \
+               )
+  CSPACE = (seq(SPACE, COMMENT, SPACE) | SPACE)
+
+  # Specialisation of symbol that does not allow '\n'
+  def self.symbol_(pattern, &p)
+    symbol(pattern, CSPACE, &p)
+  end
+
+  NUM        = prim :int64 {|num| ASTNumberLiteral.new (Integer(num))}
   # Magic here: negative lookahead to prohibit keyword/symbol ambiguity
-  IDENTIFIER = (''.r ^ lazy{KEYWORD}) >> symbol(/[a-zA-Z]\w*/) {|id| ASTIdentifier.new(id)}.expect('identifier')
+  IDENTIFIER = seq((''.r ^ lazy{KEYWORD}), symbol_(/[a-zA-Z]\w*/)) {|_,id| ASTIdentifier.new(id)}.expect('identifier')
   IF         = word('if').expect 'keyword_if'
   THEN       = word('then').expect 'keyword_then'
   ELSE       = word('else').expect 'keyword_else'
-  CMP_OP     = symbol(/(\<=|\<|\>|\>=|==|\/=)/).fail 'compare operator'
-  LOGIC_OP   = symbol(/(&&|\|\|)/).fail 'logical operator'
-  MULT_OP    = symbol(/[*\/%]/).fail 'multiplication operator'
-  ADD_OP     = symbol(/[\+\-]/).fail 'addition operator'
-  COMMA      = /\s*,\s*/
-  BOOLEAN    = (symbol('True') {|_| ASTBoolLiteral.new(true)} | symbol('False') {|_| ASTBoolLiteral.new(false)}).fail 'boolean'
-  UNDEF      = symbol('undefined')
-  ERROR      = symbol('error')
+  CMP_OP     = symbol_(/(\<=|\<|\>|\>=|==|\/=)/).fail 'compare operator'
+  LOGIC_OP   = symbol_(/(&&|\|\|)/).fail 'logical operator'
+  MULT_OP    = symbol_(/[*\/%]/).fail 'multiplication operator'
+  ADD_OP     = symbol_(/[\+\-]/).fail 'addition operator'
+  BOOLEAN    = (symbol_('True') {|_| ASTBoolLiteral.new(true)} | symbol_('False') {|_| ASTBoolLiteral.new(false)}).fail 'boolean'
+  UNDEF      = symbol_('undefined')
+  ERROR      = symbol_('error')
   KEYWORD    = IF | THEN | ELSE | BOOLEAN | UNDEF | ERROR
 
-  # Specialisation of seq_ that does not allow '\n'
-  def seq__(*xs,&p)
-    seq_(*xs, skip: space, &p)
-  end
-
   def space
-    (seq(SPACE, comment, SPACE) | SPACE)
+    CSPACE
   end
 
   def comment
-    comment = ( seq_('{-', /((?!-}).)+/ ,'-}') \
-              | SPACE.maybe >> /--((?!([\r\n]|$)).)+/.r & (/[\r\n]/.r | ''.r.eof) \
-              )
-    comment
+    COMMENT
+  end
+
+  # Specialisation of seq_ that does not allow '\n'
+  def seq__(*xs,&p)
+    seq_(*xs, skip: CSPACE, &p)
   end
 
   def arith_expr
@@ -540,11 +547,11 @@ class Parser
   end
 
   def program
-    program = ( seq_(comment, lazy{program}, skip:/[\r\n]*/)[1] \
-              | seq_(decl, lazy{program}, skip: /[\r\n]*/) \
-              | seq_(decl, /[\r\n]*/.r.maybe) {|d, _| [d]} \
+    program = ( seq_(comment, lazy{program}, skip:/[\r\n]+/)[1] \
+              | seq_(decl, lazy{program}, skip: /[\r\n]+/) \
+              | seq_(decl, /[\r\n]+/.r.maybe) {|d, _| [d]} \
               )
-    program.eof { |p| ASTProgram.new(p.flatten) }
+    seq(/[\r\n]+/.r.maybe, program, /[\r\n]+/.r.maybe).eof { |_,p,_| ASTProgram.new(p.flatten) }
   end
 end # class Parser
 
