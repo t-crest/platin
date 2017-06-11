@@ -412,7 +412,7 @@ class ASTLogicalOp < ASTExpr
     lhs = assert_full_eval(@lhs, context, [:boolean])
     # Only evaluate rhs when required
     if (lhs.to_bool && @op == '&&') || (!lhs.to_bool && @op == '||')
-      return rhs.assert_full_eval(@rhs, context, [:boolean])
+      return assert_full_eval(@rhs, context, [:boolean])
     end
 
     lhs
@@ -440,7 +440,7 @@ class ASTCompareOp < ASTExpr
     '>'  => { :op => ">".to_sym,  :types => [:number]},
     '>=' => { :op => ">=".to_sym, :types => [:number]},
     '==' => { :op => "==".to_sym, :types => [:number, :boolean]},
-    '/=' => { :op => "/=".to_sym, :types => [:number, :boolean]},
+    '/=' => { :op => "!=".to_sym, :types => [:number, :boolean]},
   }
 
   def evaluate(context)
@@ -450,7 +450,7 @@ class ASTCompareOp < ASTExpr
     end
 
     lhs = assert_full_eval(@lhs, context, desc[:types])
-    rhs = assert_full_eval(@lhs, context, desc[:types])
+    rhs = assert_full_eval(@rhs, context, desc[:types])
 
     ASTBoolLiteral.new(lhs.value.send(desc[:op], rhs.value))
   end
@@ -794,6 +794,13 @@ y = f 5
   program = parser.program.parse!  %Q[
 f x = x + 4
 y = f 5
+]
+  pp program.evaluate.lookup("y")
+
+
+  program = parser.program.parse!  %Q[
+not x = if x == 0 then 1 else 0
+y = not 1
 ]
   pp program.evaluate.lookup("y")
 end
