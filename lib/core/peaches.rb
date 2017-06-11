@@ -117,6 +117,10 @@ class ASTNode
   def to_num
     raise PeachesTypeError.new "No known conversion from #{self.class.name} to number"
   end
+
+  def visit(visitor)
+    visitor.visit self
+  end
 end # class ASTNode
 
 class ASTDecl < ASTNode
@@ -144,6 +148,13 @@ class ASTDecl < ASTNode
   def to_s
     "#{@ident} #{@params.join(' ')} = #{@expr}"
   end
+
+  def visit(visitor)
+    visitor.visit self
+    @ident.visit visitor
+    @params.each {|p| p.visit(visitor)}
+    @expr.visit(visitor)
+  end
 end
 
 class ASTProgram
@@ -167,6 +178,14 @@ class ASTProgram
   def to_s
     @decls.join("\n")
   end
+
+  def visit(visitor)
+    visitor.visit self
+    @decls.each do |d|
+      d.visit visitor
+    end
+
+  end
 end
 
 class ASTLiteral < ASTNode
@@ -183,6 +202,10 @@ class ASTLiteral < ASTNode
 
   def to_s
     "#{@value}"
+  end
+
+  def visit(visitor)
+    visitor.visit self
   end
 end
 
@@ -223,6 +246,10 @@ class ASTIdentifier < ASTNode
 
   def to_s
     "#{@label}"
+  end
+
+  def visit(visitor)
+    visitor.visit self
   end
 end
 
@@ -278,6 +305,13 @@ class ASTIf < ASTExpr
   def to_s
     "if #{@cond} then #{if_expr} else #{else_expr}"
   end
+
+  def visit(visitor)
+    visitor.visit self
+    @cond.visit visitor
+    @if_expr.visit visitor
+    @else_expr.visit visitor
+  end
 end
 
 
@@ -310,6 +344,12 @@ class ASTArithmeticOp < ASTExpr
   def to_s
     "(#{@lhs} #{@op} #{@rhs})"
   end
+
+  def visit(visitor)
+    visitor.visit self
+    @lhs.visit visitor
+    @rhs.visit visitor
+  end
 end
 
 class ASTLogicalOp < ASTExpr
@@ -329,6 +369,12 @@ class ASTLogicalOp < ASTExpr
 
   def to_s
     "(#{@lhs} #{@op} #{@rhs})"
+  end
+
+  def visit(visitor)
+    visitor.visit self
+    @lhs.visit visitor
+    @rhs.visit visitor
   end
 end
 
@@ -360,6 +406,17 @@ class ASTCompareOp < ASTExpr
 
   def to_s
     "(#{@lhs} #{@op} #{@rhs})"
+  end
+
+  def visit(visitor)
+    visitor.visit self
+    @lhs.visit visitor
+    @rhs.visit visitor
+  end
+end
+
+class ASTVisitor
+  def visit(node)
   end
 end
 
