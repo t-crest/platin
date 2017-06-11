@@ -678,6 +678,9 @@ end # module Peaches
 
 if __FILE__ == $PROGRAM_NAME
   parser = Peaches::Parser.new
+
+  pp parser.arith_expr.eof.parse! ("f")
+
   pp parser.arith_expr.eof.parse! ("hugo4")
   pp parser.arith_expr.eof.parse! ("42 - 8 * 4*25 + 20 - 32")
   pp parser.arith_expr.eof.parse! ("2*42 - 8 * 4*25 + 20 - 32")
@@ -694,25 +697,19 @@ if __FILE__ == $PROGRAM_NAME
   pp parser.decl.eof.parse! ("x = if 4 /= 5 then 42 else 21")
   pp parser.decl.eof.parse! ("f x y = if 4 /= 5 then 42 else 21")
 
-  pp parser.program.eof.parse! %Q[
-    x = 4
-    y = 10 * x + 20
-    f a b = if 2 /=4 || (10 / 2 == 5) then a + b else a * b
-  ]
-  pp parser.program.eof.parse! %Q[
-    x = 4
+  pp parser.program.eof.parse! %Q[x = 4
+y = 10 * x + 20
+f a b = if 2 /=4 || (10 / 2 == 5) then a + b else a * b]
 
-    y = 10 * x + 20
-    f a b = if 2 /=4 || (10 / 2 == 5) then a + b else a * b
-  ]
+  pp parser.program.eof.parse! %Q[x = 4
+y = 10 * x + 20
+f a b = if 2 /=4 || (10 / 2 == 5) then a + b else a * b]
 
-  pp parser.program.eof.parse! %Q[
-    x = 4
-    y = 10 * x + 20 {-
-      ASDF
-    -}
-    f a b = if 2 /=4 || (10 / 2 == 5) then a + b else a * b
-  ]
+  pp parser.program.eof.parse! %Q[x = 4
+y = 10 * x + 20 {-
+  ASDF
+-}
+f a b = if 2 /=4 || (10 / 2 == 5) then a + b else a * b]
 
   pp parser.comment.parse! ("{- asdf -}")
   pp parser.comment.parse! ("-- ASDF ASDF")
@@ -723,20 +720,75 @@ if __FILE__ == $PROGRAM_NAME
   pp parser.program.eof.parse! ("x = 1 +{- asdf -}4")
   pp parser.program.eof.parse! ("x = 1 + 4 -- asdf")
 
-  program = parser.program.parse!  %Q[
-    x = 4
-    y = 10 * x + 20
-    z = if y > 10 && 1 /= 2 then x else y
-  ]
+  program = parser.program.parse!  %Q[x = 4
+y = 10 * x + 20
+z = if y > 10 && 1 /= 2 then x else y]
 
   pp program.evaluate.lookup("z")
 
-  program = parser.program.parse!  %Q[
-    -- Full size comment
-    x ={- "ASDF" -} 4
-    y = 10 * x + 20 -- ASDF 4 + 5
-    z = if y > 10 && 1 /= 2 then{-ASDF-} x else y
-  ]
+  program = parser.call.parse! ("f 4*5 42")
+  program = parser.call.parse! ("f")
+
+  program = parser.program.parse!  %Q[-- Full size comment
+x ={- "ASDF" -} 4
+y = 10 * x + 20 -- ASDF 4 + 5
+z = if y > 10 && 1 /= 2 then{-ASDF-} x else y]
   pp program.evaluate.lookup("z")
 
+  program = parser.program.parse!  %Q[-- Full size comment
+x ={- "ASDF" -} 4
+y = 10 * x + 20 -- ASDF 4 + 5
+z = if y > 10 && 1 /= 2 then x else f y]
+  pp program
+
+
+  program = parser.program.parse!  %Q[-- Full size comment
+x ={- "ASDF" -} 4
+
+
+y = 10 * x + 20 -- ASDF 4 + 5
+
+
+z = if y > 10 && 1 /= 2 then x else f y
+
+]
+  pp program
+
+  program = parser.program.parse!  %Q[-- Full size comment
+x ={- "ASDF" -} 4
+y = 10 * x + 20 -- ASDF 4 + 5
+f = f x]
+  rfv = Peaches::ReferenceCheckingVisitor.new
+  begin
+    print "Expecting exception: "
+    rfv.check_references(program)
+  rescue Peaches::PeachesBindingError => pbe
+    print "Caught exception: #{pbe}"
+  end
+
+  pp parser.program.parse! "z = if y > 10 && 1 /= 2 then x else (f (y) z)"
+
+  program = parser.program.parse!  %Q[x = 4
+y = 10 * x + 20
+z = if y > 10 && 1 /= 2 then x else f + 4
+a = 3
+]
+  pp program
+
+  input = %Q[z = f x
+a = 3]
+  puts input
+  pp parser.program.parse! input
+
+
+  program = parser.program.parse!  %Q[f x = x + 4
+y = f 5
+]
+  pp program.evaluate.lookup("y")
+
+  program = parser.program.parse!  %Q[
+f x = x + 4
+y = f 5
+]
+  pp program.evaluate.lookup("y")
 end
