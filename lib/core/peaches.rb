@@ -466,6 +466,40 @@ class ASTVisitor
   end
 end
 
+class ReferenceCheckingVisitor < ASTVisitor
+  def initialize
+    @context = Context.new
+    @current = nil
+  end
+
+  def check_references(astprogram)
+    astprogram.decls.each do |decl|
+      @current = decl # Better error reporting
+
+      @context.enter_scope
+      decl.params.each do |id|
+        context.insert(id.label, true)
+      end
+
+      decl.expr.visit self
+      @context.leave_scope
+
+      @context.insert(decl.ident.label, true)
+    end
+  end
+
+  def visit(node)
+    # TODO: if we ever support a let ... in style construct, enter context and declare locals here
+
+    begin
+      if node.is_a?(ASTIdentifier) || node.is_a?(ASTCall)
+          @context.lookup(node.label)
+      end
+    rescue PeachesBindingError
+      raise PeachesBindingError.new "Unbound variable #{node.label} on right side of decl #{@current}"
+    end
+  end
+end
 
 # IF
 # Declaration
