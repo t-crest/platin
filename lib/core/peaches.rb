@@ -1,5 +1,10 @@
 #!/usr/bin/env ruby
 
+# TODO: FIX -/+ associativity
+#       Proper ahead of time type inference
+#       ADTs
+#       Ability to lock scopes in context to prohibit modifications/global exports for expressions
+
 require 'rsec'
 require 'pp'
 require 'pry'
