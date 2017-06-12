@@ -595,6 +595,10 @@ class Parser
                        puts "cond_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                        ASTLogicalOp.new(lhs, op, rhs)
                      } \
+                  | seq__(lazy{ao_expr}, CMP_OP, lazy{cond_expr}) { |lhs, op, rhs|
+                      puts "cond_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
+                      ASTCompareOp.new(lhs, op, rhs)
+                    } \
                   | lazy{ao_expr} \
                   )
       ao_expr   = ( seq__(lazy{arith_expr}, CMP_OP, lazy{arith_expr}) { |lhs, op, rhs|
@@ -602,6 +606,7 @@ class Parser
                        ASTCompareOp.new(lhs, op, rhs)
                      } \
                   | seq__('(', cond_expr, ')')[1] \
+                  | lazy{call} \
                   | BOOLEAN \
                   )
       _ = ao_expr # Silence warning
@@ -616,8 +621,8 @@ class Parser
                       puts "IF #{cond} then {#{e1}} else {#{e2}}" if DEBUG_PARSER
                       ASTIf.new(cond, e1, e2)
                     } \
-                  | lazy{cond_expr} \
                   | lazy{arith_expr} \
+                  | lazy{cond_expr} \
                   | UNDEF \
                   | ERROR \
                   )
@@ -693,6 +698,10 @@ end # module Peaches
 if __FILE__ == $PROGRAM_NAME
   parser = Peaches::Parser.new
 
+  pp parser.expr.eof.parse! "a * b"
+  pp parser.program.eof.parse! "f a b = a * b"
+  pp parser.program.eof.parse! "f a b = if 2 /= 4 then a * b else b"
+
   pp parser.arith_expr.eof.parse! ("f")
 
   pp parser.arith_expr.eof.parse! ("hugo4")
@@ -713,17 +722,18 @@ if __FILE__ == $PROGRAM_NAME
 
   pp parser.program.eof.parse! %Q[x = 4
 y = 10 * x + 20
-f a b = if 2 /=4 || (10 / 2 == 5) then a + b else a * b]
+f a b = if 2 /= 4 || (10 / 2 == 5) then a + b else a * b
+]
 
   pp parser.program.eof.parse! %Q[x = 4
 y = 10 * x + 20
-f a b = if 2 /=4 || (10 / 2 == 5) then a + b else a * b]
+f a b = if 2 /= 4 || (10 / 2 == 5) then a + b else a * b]
 
   pp parser.program.eof.parse! %Q[x = 4
 y = 10 * x + 20 {-
   ASDF
 -}
-f a b = if 2 /=4 || (10 / 2 == 5) then a + b else a * b]
+f a b = if 2 /= 4 || (10 / 2 == 5) then a + b else a * b]
 
   pp parser.comment.parse! ("{- asdf -}")
   pp parser.comment.parse! ("-- ASDF ASDF")
@@ -810,6 +820,13 @@ y = f 5
   program = parser.program.parse!  %Q[
 not x = if x == 0 then 1 else 0
 y = not 1
+]
+  pp program.evaluate.lookup("y")
+
+
+  program = parser.program.parse!  %Q[
+not x = if x == True then False else True
+y = not True
 ]
   pp program.evaluate.lookup("y")
 end
