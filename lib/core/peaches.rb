@@ -546,7 +546,8 @@ class Parser
   CMP_OP     = symbol_(/(\<=|\<|\>|\>=|==|\/=)/).fail 'compare operator'
   LOGIC_OP   = symbol_(/(&&|\|\|)/).fail 'logical operator'
   MULT_OP    = symbol_(/[*\/%]/).fail 'multiplication operator'
-  ADD_OP     = symbol_(/[\+\-]/).fail 'addition operator'
+  ADD_OP     = symbol_(/[\+]/).fail 'addition    operator'
+  SUB_OP     = symbol_(/[\-]/).fail 'subtraction operator'
   BOOLEAN    = (symbol_('True') {|_| ASTBoolLiteral.new(true)} | symbol_('False') {|_| ASTBoolLiteral.new(false)}).fail 'boolean'
   UNDEF      = symbol_('undefined')
   ERROR      = symbol_('error')
@@ -567,7 +568,13 @@ class Parser
 
   def arith_expr
     if @ARITH_EXPR.nil?
-      arith_expr = ( seq__(lazy{term}, ADD_OP, lazy{arith_expr}) { |lhs, op, rhs|
+      arith_expr = ( seq__(lazy{sub_term}, ADD_OP, lazy{arith_expr}) { |lhs, op, rhs|
+                        puts "arith_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
+                        ASTArithmeticOp.new(lhs, op, rhs)
+                      } \
+                   | lazy{sub_term} \
+                   )
+      sub_term   = ( seq__(lazy{term}, SUB_OP, lazy{sub_term}) { |lhs, op, rhs|
                         puts "arith_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
                       } \
@@ -583,7 +590,8 @@ class Parser
                    | lazy{call} \
                    | NUM \
                    )
-      _ = factor # Silence warning
+      _ = factor   # Silence warning
+      _ = sub_term # Silence warning
       @ARITH_EXPR = arith_expr.fail "arithmetic expression"
     end
     @ARITH_EXPR
@@ -828,5 +836,9 @@ y = not 1
 not x = if x == True then False else True
 y = not True
 ]
+  pp program.evaluate.lookup("y")
+
+  program = parser.program.parse!  "y = 4 - 3 + 3 - 3*4 + 8"
+  pp program
   pp program.evaluate.lookup("y")
 end
