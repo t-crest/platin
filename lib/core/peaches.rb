@@ -523,6 +523,8 @@ class Parser
   include Rsec::Helpers
   extend Rsec::Helpers
 
+  DEBUG_PARSER = false
+
 
   SPACE      = /[\ \t]*/.r
   COMMENT    = ( seq_('{-', /((?!-}).)+/ ,'-}') \
@@ -566,11 +568,13 @@ class Parser
   def arith_expr
     if @ARITH_EXPR.nil?
       arith_expr = ( seq__(lazy{term}, ADD_OP, lazy{arith_expr}) { |lhs, op, rhs|
+                        puts "arith_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
                       } \
                    | lazy{term} \
                    )
       term       = ( seq__(lazy{factor}, MULT_OP, lazy{term}) { |lhs, op, rhs|
+                        puts "term: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
                       }\
                    | lazy{factor} \
@@ -588,11 +592,13 @@ class Parser
   def cond_expr
     if @COND_EXPR.nil?
       cond_expr = ( seq__(lazy{ao_expr}, LOGIC_OP, lazy{cond_expr}) { |lhs, op, rhs|
+                       puts "cond_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                        ASTLogicalOp.new(lhs, op, rhs)
                      } \
                   | lazy{ao_expr} \
                   )
       ao_expr   = ( seq__(lazy{arith_expr}, CMP_OP, lazy{arith_expr}) { |lhs, op, rhs|
+                       puts "ao_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                        ASTCompareOp.new(lhs, op, rhs)
                      } \
                   | seq__('(', cond_expr, ')')[1] \
@@ -607,6 +613,7 @@ class Parser
   def expr
     if @EXPR.nil?
       expr      = ( seq__(IF, lazy{cond_expr}, THEN, lazy{expr}, ELSE, lazy{expr}) { |_,cond,_,e1,_,e2|
+                      puts "IF #{cond} then {#{e1}} else {#{e2}}" if DEBUG_PARSER
                       ASTIf.new(cond, e1, e2)
                     } \
                   | lazy{cond_expr} \
@@ -635,6 +642,7 @@ class Parser
                   )
       @CALL = seq(''.r, callsite).cached { |_,xs|
         id, args = *xs
+        puts "CALL: #{id}(#{listify(args).join(',')})" if DEBUG_PARSER
         ASTCall.new(id.label, listify(args))
       }
     end
@@ -653,6 +661,7 @@ class Parser
 
       @DECL = seq__(declaration, '=', definition, comment.maybe) { |decl,_,expr|
         id, params = decl
+        puts "decl: #{id} = (#{decl})" if DEBUG_PARSER
         ASTDecl.new(id, listify(params), expr)
       }
     end
