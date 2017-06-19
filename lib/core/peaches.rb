@@ -709,7 +709,7 @@ class Parser
   end
 end # class Parser
 
-def build_context(program)
+def self.build_context(program)
   parser = Peaches::Parser.new
   ast = parser.program.eof.parse! program
   rfv = Peaches::ReferenceCheckingVisitor.new
@@ -719,7 +719,7 @@ def build_context(program)
   context
 end
 
-def evaluate_expression(context, expr, type)
+def self.evaluate_expression(context, expr, type)
   case type
   when :boolean
     types      = [:boolean]
