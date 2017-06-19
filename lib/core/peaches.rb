@@ -6,7 +6,6 @@
 
 require 'rsec'
 require 'pp'
-require 'pry'
 
 # Define AST-Nodes
 
@@ -312,7 +311,7 @@ class ASTCall < ASTNode
 end
 
 class ASTExpr < ASTNode
-  def ASTExpr.assert_full_eval(node, context, types)
+  def self.assert_full_eval(node, context, types)
     val = node.evaluate(context)
     if !val.is_a?(ASTValueLiteral)
       raise "Expression #{node} is not of a terminal value type: #{val}"
@@ -352,7 +351,7 @@ class ASTIf < ASTExpr
   end
 
   def evaluate(context)
-    cond = AstExpr.assert_full_eval(@cond, context, [:boolean])
+    cond = ASTExpr.assert_full_eval(@cond, context, [:boolean])
     if cond.to_bool
       return @if_expr.evaluate(context)
     else
@@ -457,7 +456,7 @@ class ASTCompareOp < ASTExpr
     end
 
     lhs = ASTExpr.assert_full_eval(@lhs, context, desc[:types])
-    rhs = ASTEXpr.assert_full_eval(@rhs, context, desc[:types])
+    rhs = ASTExpr.assert_full_eval(@rhs, context, desc[:types])
 
     ASTBoolLiteral.new(lhs.value.send(desc[:op], rhs.value))
   end
@@ -544,7 +543,9 @@ class Parser
     symbol(pattern, CSPACE, &p)
   end
 
-  NUM        = prim :int64 {|num| ASTNumberLiteral.new (Integer(num))}
+  NUM        = prim :int64 do
+    |num| ASTNumberLiteral.new (Integer(num))
+  end
   # Magic here: negative lookahead to prohibit keyword/symbol ambiguity
   IDENTIFIER = seq((''.r ^ lazy{KEYWORD}), symbol_(/[a-zA-Z]\w*/)) {|_,id| ASTIdentifier.new(id)}.expect('identifier')
   IF         = word('if').expect 'keyword_if'
