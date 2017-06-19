@@ -309,7 +309,7 @@ class ASTCall < ASTNode
 end
 
 class ASTExpr < ASTNode
-  def assert_full_eval(node, context, types)
+  def ASTExpr.assert_full_eval(node, context, types)
     val = node.evaluate(context)
     if !val.is_a?(ASTValueLiteral)
       raise "Expression #{node} is not of a terminal value type: #{val}"
@@ -349,7 +349,7 @@ class ASTIf < ASTExpr
   end
 
   def evaluate(context)
-    cond = assert_full_eval(@cond, context, [:boolean])
+    cond = AstExpr.assert_full_eval(@cond, context, [:boolean])
     if cond.to_bool
       return @if_expr.evaluate(context)
     else
@@ -389,8 +389,8 @@ class ASTArithmeticOp < ASTExpr
       raise PeachesInternalError.new "Unknown arithmetic operator: #{@op}"
     end
 
-    lhs = assert_full_eval(@lhs, context, desc[:types])
-    rhs = assert_full_eval(@rhs, context, desc[:types])
+    lhs = ASTExpr.assert_full_eval(@lhs, context, desc[:types])
+    rhs = ASTExpr.assert_full_eval(@rhs, context, desc[:types])
 
     ASTNumberLiteral.new(lhs.value.public_send(desc[:op], rhs.value))
   end
@@ -413,10 +413,10 @@ class ASTLogicalOp < ASTExpr
   end
 
   def evaluate(context)
-    lhs = assert_full_eval(@lhs, context, [:boolean])
+    lhs = ASTExpr.assert_full_eval(@lhs, context, [:boolean])
     # Only evaluate rhs when required
     if (lhs.to_bool && @op == '&&') || (!lhs.to_bool && @op == '||')
-      return assert_full_eval(@rhs, context, [:boolean])
+      return ASTExpr.assert_full_eval(@rhs, context, [:boolean])
     end
 
     lhs
@@ -453,8 +453,8 @@ class ASTCompareOp < ASTExpr
       raise PeachesInternalError.new "Unknown compare operator: #{@op}"
     end
 
-    lhs = assert_full_eval(@lhs, context, desc[:types])
-    rhs = assert_full_eval(@rhs, context, desc[:types])
+    lhs = ASTExpr.assert_full_eval(@lhs, context, desc[:types])
+    rhs = ASTEXpr.assert_full_eval(@rhs, context, desc[:types])
 
     ASTBoolLiteral.new(lhs.value.send(desc[:op], rhs.value))
   end
