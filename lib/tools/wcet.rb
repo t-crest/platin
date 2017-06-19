@@ -12,7 +12,7 @@ require 'tools/transform'
 require 'tools/wca'
 require 'tools/ff2pml'
 require 'tools/sweet'
-require 'core/peaches'
+require 'core/model'
 require 'tmpdir'
 
 # High-Level Wrapper for aiT

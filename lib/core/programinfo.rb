@@ -8,7 +8,7 @@ require 'core/pmlbase'
 require 'core/context'
 require 'core/program'
 require 'core/symbolic_expr'
-require 'core/peaches'
+require 'core/model'
 
 module PML
 
