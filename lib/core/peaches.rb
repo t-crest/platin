@@ -224,6 +224,9 @@ class ASTLiteral < ASTNode
 end
 
 class ASTValueLiteral < ASTLiteral
+  def unbox
+    value
+  end
 end
 
 class ASTBoolLiteral < ASTValueLiteral
@@ -704,6 +707,32 @@ class Parser
     seq(/[\r\n]+/.r.maybe, program, /[\r\n]+/.r.maybe).eof { |_,p,_| ASTProgram.new(p.flatten) }
   end
 end # class Parser
+
+def build_context(program)
+  parser = Peaches::Parser.new
+  ast = parser.program.eof.parse! program
+  rfv = Peaches::ReferenceCheckingVisitor.new
+  # Errors if recursion is found. Ensures termination
+  rfv.check_references(ast)
+  context = ast.evaluate
+  context
+end
+
+def evaluate_expression(context, expr, type)
+  case type
+  when :boolean
+    types      = [:boolean]
+    exprparser = :expr
+  when :number
+    types      = [:number]
+    exprparser = :expr
+  else
+    raise Peaches::PeachesTypeError.new("Unknown expression type: #{type}")
+  end
+  parser = Peaches::Parser.new
+  ast    = parser.send(exprparser).eof.parse!(expr)
+  ASTExpr.assert_full_eval(ast, context, types).unbox
+end
 
 end # module Peaches
 

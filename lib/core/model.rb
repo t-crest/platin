@@ -2,6 +2,7 @@
 # given model.
 
 require 'core/programinfo'
+require 'core/peaches'
 
 module PML
 
@@ -46,8 +47,17 @@ class PMLMachineCalleeMutation < PMLMutation
 end
 
 class Model
-  def initialize()
+  attr_reader :context
+
+  def initialize(context = Peaches::Context.new)
+    @context = context
     @stack = []
+  end
+
+  def Model.from_file(filename)
+    prog    = File.read(filename)
+    context = Peaches::build_context(prog)
+    self.new(context)
   end
 
   def evaluate(pml, modelfacts)

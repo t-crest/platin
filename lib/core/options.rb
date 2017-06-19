@@ -141,6 +141,13 @@ module PML
       }
       add_check { |options| options.analysis_entry = "main" unless options.analysis_entry or not set_default }
     end
+
+    def model_file
+      self.on("--modelfile FILE", "Peaches program file describing the current model") { |modelfile|
+        options.modelfile = modelfile
+      }
+    end
+
     def stack_cache_analysis
       self.on("--use-sca-graph", "use SCA graph for stack-cache analysis") {
           options.use_sca_graph = true

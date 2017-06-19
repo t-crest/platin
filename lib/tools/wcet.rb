@@ -452,7 +452,14 @@ class WcetTool
       ExtractSymbolsTool.run(pml,options)
 
       pml.with_temporary_sections([:flowfacts, :valuefacts]) do
-        (model ||= Model.new).evaluate(pml, pml.modelfacts)
+        if model.nil?
+          if options.model_file
+            model = Model.from_file(options.model_file)
+          else
+            model = Model.new
+          end
+        end
+        model.evaluate(pml, pml.modelfacts)
         WcetTool.new(pml,options).run_in_outdir
         model.repair(pml)
       end
@@ -469,6 +476,7 @@ class WcetTool
     opts.flow_fact_selection
     opts.accept_corrected_rgs
     opts.calculates_wcet
+    opts.model_file
     opts.on("--batch", "run in batch processing mode, reading analysis targets and configuration from PML file") { opts.options.batch = true }
     opts.on("--outdir DIR", "directory for generated files") { |d| opts.options.outdir = d }
     opts.on("--enable-trace-analysis", "run trace analysis") { |d| opts.options.trace_analysis = true }

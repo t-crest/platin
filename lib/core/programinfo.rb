@@ -327,8 +327,9 @@ module PML
         assert("guard operate on bitcode level") { level == 'bitcode'}
         fun = ppref.function
 
-        # XXX: use model-eval-foo here
-        if expr == "false" then
+        # When the guardexpression is false, than this path is infeasible
+        guardexpr = Peaches::evaluate_expression(model.context, expr, :boolean)
+        if ! guardexpr then
           #FlowFact.block_frequency(scoperef, blockref, freq, attrs)
           fact = FlowFact.block_frequency(fun, ppref.programpoint, [SEInt.new(0)], attributes)
           fact.origin = 'model.bc'
@@ -368,7 +369,10 @@ module PML
         assert("lbounds operate on loops, no loop found for #{ppref} in #{self}") \
               { scope != nil && scope.programpoint.kind_of?(Loop) }
         # XXX: use model-eval-foo here
-        bound = Integer(expr)
+        bound = Peaches::evaluate_expression(model.context, expr, :number)
+        assert("lbounds operate on positive integers, but (#{expr}) evaluates to #{bound}") {
+          bound >= 0
+        }
 
         fact = FlowFact.loop_bound(scope, SEInt.new(bound), attributes)
         fact.origin = 'model.bc'
@@ -476,6 +480,7 @@ module PML
         end
       }
       ff = FlowFact.new(scope, lhs, data['op'], rhs, attrs, data)
+      ff
     end
 
     def to_pml
