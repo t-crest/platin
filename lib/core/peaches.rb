@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 
-# TODO: FIX -/+ associativity
-#       Proper ahead of time type inference
+# TODO: Proper ahead of time type inference
 #       ADTs
 #       Ability to lock scopes in context to prohibit modifications/global exports for expressions
 
@@ -25,6 +24,11 @@ require 'pry'
 # typing. This will be fixed in the future, once the featureset has been
 # finalized. The plan is to use type inference (most likely HM), but this is not
 # yet implemented
+#
+# Concerning the name:
+#   Like Dhall, peaches is a scribe, from the book "The Amacing Maurice and his educated rodents"
+#   Unlike Dhall, she is rather good natured, and believes into what you tell her about your program,
+#   happy endings, and the universal truths of "Mr Bunnsy has an adventure"
 
 module Peaches
 
