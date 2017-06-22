@@ -3,8 +3,10 @@ include PML
 
 require 'readline'
 require 'shellwords'
+require 'json'
 
 require 'tools/wcet'
+require 'tools/visualisationserver'
 
 # On the code design
 #
@@ -183,6 +185,21 @@ class PlatinaToken < ListToken
   end
 end
 
+class VisualizeInfoToken < ListToken
+  VISUALISATIONS = ['ilp']
+
+  def get_list
+    return VISUALISATIONS
+  end
+
+  def coerce(tok)
+    if VISUALISATIONS.grep(tok).empty?
+      raise ArgumentError, "Unknown annotation type: #{tok}"
+    end
+    return tok.to_sym
+  end
+end
+
 class ListCommandToken < ListToken
   OPS = ['interactive_annotations']
 
@@ -324,6 +341,93 @@ class WCETCommand < Command
     end
 
     pml.timing.clear!
+  end
+
+  def get_tokens
+    return @tokens
+  end
+end
+
+class VisualizeCommand < Command
+  def initialize
+    @tokens = [VisualizeInfoToken.new , MachineFunctionToken.new]
+  end
+
+  def help(long = false)
+    out = "Visualize some aspects (ILP, ...) starting from an given entrypoint"
+    if long
+      out << <<-'EOF'
+  visualize <symbol>
+      EOF
+    end
+    out
+  end
+
+  def run(args)
+    if args.length != 2
+      raise ArgumentError, "Usage: visualize (ilp) <symbolname>"
+    end
+
+    puts "Visualizing #{args[0]} #{args[1]}"
+    opts, pml = REPLContext.instance.options, REPLContext.instance.pml
+    # Pass the symbol of interest
+    opts.analysis_entry = args[1]
+
+    case @tokens[0].coerce(args[0])
+    when :ilp
+      # Save the visualisation-flag
+      visualize_ilp_bak = opts.visualize_ilp
+      debug_type_bak = opts.debug_type
+      # Hacky: Because return-info of timing infos travels via pml and we do not
+      #        really want our visualisation in there, we pass in a hash by
+      #        reference and take output that way... Lovely.
+      visualisation = Hash.new
+      opts.visualize_ilp = visualisation
+      opts.debug_type    = [:ilp]
+
+      WcetTool.run(pml, opts)
+      pml.timing.clear!
+
+      ilpdata = {
+        'ilp.svg' => {
+          'content_type' => 'image/svg+xml',
+          'data' => visualisation[:ilp][:svg],
+        },
+        'constraints.json' => {
+          'content_type' => 'application/json',
+          'data' => JSON.generate(visualisation[:ilp][:constraints]),
+        },
+        'srchints.json' => {
+          'content_type' => 'application/json',
+          'data' => JSON.generate(visualisation[:ilp][:srchints]),
+        },
+      }
+
+      assetdir = File.realpath(File.join(__dir__, '..', '..', 'assets'))
+      assert ("Not a directory #{assetdir}") { File.directory? (assetdir) }
+
+      server = VisualisationServer::Server.new( \
+                          :ilp, \
+                          { \
+                              :entrypoint => opts.analysis_entry \
+                            , :srcroot => opts.source_path  \
+                            , :assets  => assetdir \
+                            , :data    => ilpdata  \
+                          }, \
+                          :BindAddress => opts.server_bind_addr, \
+                          :Port => opts.server_port \
+      )
+
+      # Restore the old value
+      opts.visualize_ilp = visualize_ilp_bak
+      opts.debug_type    = debug_type_bak
+    else
+      assert("Unexpected visualisation type: :#{args[0]}") {false}
+    end
+
+    puts "Starting server, use <Ctrl-C> to return to REPL"
+    puts "Listening at http://#{opts.server_bind_addr}:#{opts.server_port}/"
+    server.start
   end
 
   def get_tokens
@@ -531,7 +635,7 @@ class SetCommand < Command
     while segments.length > 0
       key = segments.shift.to_sym
       if !element.to_h.has_key?(key)
-        raise ArgumentError, "No such key: #{key}"
+        raise ArgumentError.new("No such key: #{key}")
       end
       if segments.length == 0
         case op
@@ -540,7 +644,7 @@ class SetCommand < Command
         when '<<'
           element[key].concat(data)
         else
-          raise ArgumentError, "Unknown Operation: #{op}"
+          raise ArgumentError.new("Unknown Operation: #{op}")
         end
         return data
       end
@@ -711,6 +815,13 @@ end
 class InteractTool
   def InteractTool.add_options(opts)
     WcetTool.add_options(opts)
+    options = opts.options
+    options.source_path = "."
+    opts.on('--source-path DIR', "directory for source code lookup") { |d| options.source_path = d }
+    options.server_bind_addr = "127.0.0.1"
+    opts.on('--server-bind-addr IP', "adress to bind to") { |ip| options.server_bind_addr = ip }
+    options.server_port      = "2142"
+    opts.on('--server-port PORT', Integer, "Port number to bind to") { |p| options.server_port = p }
   end
 end
 
@@ -754,7 +865,8 @@ EOF
   Dispatcher.instance.register('set', SetCommand.new)
   Dispatcher.instance.register('get', GetCommand.new)
 
-  Dispatcher.instance.register('wcet',     WCETCommand.new)
+  Dispatcher.instance.register('wcet',      WCETCommand.new)
+  Dispatcher.instance.register('visualize', VisualizeCommand.new)
   Dispatcher.instance.register('results',  ResultsCommand.new)
   Dispatcher.instance.register('annotate', AnnotateCommand.new)
   Dispatcher.instance.register('list',     ListCommand.new)
