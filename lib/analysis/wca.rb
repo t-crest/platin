@@ -154,13 +154,26 @@ class WCA
     end
 
     if @options.visualize_ilp
-      assert ("Visualizing ILPs requires the outdir parameter") { @options.outdir != nil}
       vis = ILPVisualisation.new(builder.ilp, [:bitcode, :machinecode, :relationgraph, :gcfg])
       vfreqs = builder.ilp.debug_bound_frequencies(vfreqs)
       svg = vis.visualize("ILP: #{@options.analysis_entry}", :unbounded => vunbounded, :freqmap => vfreqs)
-      File.write("#{@options.outdir}/ilp.svg", svg)
-      json = JSON.generate(vis.getconstraints)
-      File.write("#{@options.outdir}/constraints.json", json)
+      constraints = vis.get_constraints
+      srchints    = vis.get_srchints
+
+      # Hacky, but a passable wörk-around for returning this metadata for
+      # visualisation interact.rb...
+      if @options.visualize_ilp.is_a?(Hash)
+        @options.visualize_ilp[:ilp] = {
+          :svg         => svg,
+          :constraints => constraints,
+          :srchints    => srchints,
+        }
+      else
+        assert ("Visualizing ILPs requires the outdir parameter") { @options.outdir != nil}
+        File.write("#{@options.outdir}/ilp.svg", svg)
+        File.write("#{@options.outdir}/constraints.json", JSON.generate(constraints))
+        File.write("#{@options.outdir}/srchints.json", JSON.generate(srchints))
+      end
     end
 
     # report result
