@@ -313,6 +313,7 @@ class ILPVisualisation < Visualizer
     @graph = nil
     @mapping = {}
     @subgraph = {}
+    @srchints = {}
   end
 
   def subgraph_by_level(level)
@@ -333,6 +334,41 @@ class ILPVisualisation < Visualizer
       STDERR.puts "Cannot infer level for #{var}"
       return "unknown"
     end
+  end
+
+  def get_srchint(variable)
+    if variable.respond_to?(:src_hint)
+      src_hint = variable.src_hint
+      return nil if src_hint.nil?
+
+      file, _, line = src_hint.rpartition(':')
+      assert("Failed to parse src_hint #{src_hint}, expecting file:line") { file && line}
+      hint = {
+        :file => file,
+        :line => line,
+      }
+
+      if variable.respond_to?(:function)
+        hint[:function] = variable.function.to_s
+      end
+
+      return hint
+    end
+    nil
+  end
+
+  def add_srchint(id, var)
+    # sourcehints
+    unless @srchints.has_key?(id)
+      hint = get_srchint(var)
+      @srchints[id] = hint unless hint.nil?
+    end
+
+    hint
+  end
+
+  def get_srchints
+    @srchints
   end
 
   def to_label(var)
@@ -361,6 +397,8 @@ class ILPVisualisation < Visualizer
     nname = "n" + @mapping.size.to_s
     node = g.add_nodes(nname, :id => nname, :label => to_label(variable), :tooltip => variable.to_s)
     @mapping[key] = node
+
+    add_srchint(nname, variable)
 
     case variable
     when Function
@@ -438,9 +476,11 @@ class ILPVisualisation < Visualizer
     return vars
   end
 
-  def getconstraints
+  def get_constraints
     constraints = []
+    # Mapping of constraints to ILP-Vars (== IPETEdges)
     c2v         = []
+    # Inverse mapping
     v2c         = {}
 
     ilp.constraints.each do |c|
