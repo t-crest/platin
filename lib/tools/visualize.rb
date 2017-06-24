@@ -313,7 +313,26 @@ class ILPVisualisation < Visualizer
     @graph = nil
     @mapping = {}
     @subgraph = {}
+    @functiongraphs = {}
     @srchints = {}
+  end
+
+  def get_subgraph(variable)
+    level = get_level(variable)
+    graph = subgraph_by_level(level)
+
+    if variable.respond_to?(:function) && variable.function
+      fun = variable.function
+      if @functiongraphs.has_key?(fun)
+        graph = @functiongraphs[fun]
+      else
+        sub = graph.subgraph("cluster_function_#{@functiongraphs.size}")
+        @functiongraphs[fun] = sub
+        sub[:label] = fun.inspect
+        graph = sub
+      end
+    end
+    graph
   end
 
   def subgraph_by_level(level)
@@ -374,17 +393,20 @@ class ILPVisualisation < Visualizer
   def to_label(var)
     l = []
     if var.respond_to?(:qname)
-      l << var.qname
+      l << "<U>#{var.qname}</U>"
     end
     if var.respond_to?(:mapsto)
-      l << var.mapsto
+      l << "<B>#{var.mapsto}</B>"
     end
     if var.respond_to?(:src_hint)
       l << var.src_hint
     end
-    str = l.join("\n");
+    if var.respond_to?(:loopheader?) && var.loopheader?
+      l << '<I>loopheader</I>'
+    end
+    str = l.join("<BR/>");
     return "unknown" if str.empty?
-    return str
+    return '<' + str + '>'
   end
 
   def add_node(variable)
@@ -392,7 +414,7 @@ class ILPVisualisation < Visualizer
     node = @mapping[key]
     return node if node
 
-    g = subgraph_by_level(get_level(variable))
+    g = get_subgraph(variable)
 
     nname = "n" + @mapping.size.to_s
     node = g.add_nodes(nname, :id => nname, :label => to_label(variable), :tooltip => variable.to_s)
@@ -403,6 +425,8 @@ class ILPVisualisation < Visualizer
     case variable
     when Function
       node[:shape] = "cds"
+      entry = add_node(variable.entry_block)
+      @graph.add_edges(node, entry, :style => 'bold')
     when Block
       node[:shape] = "box"
     when Instruction

@@ -357,7 +357,7 @@ class VisualizeCommand < Command
     out = "Visualize some aspects (ILP, ...) starting from an given entrypoint"
     if long
       out << <<-'EOF'
-  visualize <symbol>
+  visualize (ilp) <symbol>
       EOF
     end
     out
