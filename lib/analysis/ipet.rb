@@ -12,8 +12,14 @@ module PML
 # This exception is raised if indirect calls could not be resolved
 # during analysis
 class UnresolvedIndirectCall < Exception
+  attr_reader :src_hint, :callsite
   def initialize(callsite)
-    super("Unresolved Indirect Call: #{callsite.inspect}")
+    info = callsite.inspect.to_s
+    if callsite.respond_to?(:block)
+      info << " in block " << callsite.block.qname << " at " << callsite.block.src_hint
+      @src_hint = callsite.block.src_hint
+    end
+    super("Unresolved Indirect Call: #{info}")
     @callsite = callsite
   end
 end
