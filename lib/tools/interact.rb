@@ -924,6 +924,7 @@ class Dispatcher
         end
       rescue Exception => e
         STDERR.puts("Exeption: #{e}")
+        STDERR.puts e.backtrace
       end
     end
   end
