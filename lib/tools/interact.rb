@@ -4,6 +4,7 @@ include PML
 require 'readline'
 require 'shellwords'
 require 'json'
+require 'tempfile'
 
 require 'tools/wcet'
 require 'tools/visualisationserver'
@@ -182,6 +183,21 @@ class PlatinaToken < ListToken
       raise ArgumentError, "Unknown annotation type: #{tok}"
     end
     return tok
+  end
+end
+
+class EditCommandToken < ListToken
+  EDITTARGET = ['modelfacts']
+
+  def get_list
+    return EDITTARGET
+  end
+
+  def coerce(tok)
+    if EDITTARGET.grep(tok).empty?
+      raise ArgumentError, "Unknown annotation type: #{tok}"
+    end
+    return tok.to_sym
   end
 end
 
@@ -494,6 +510,128 @@ class ModelFactCommand < Command
   def get_model_tokens
     return @modeltokens
   end
+end
+
+class EditCommand < ModelFactCommand
+  def initialize
+    super
+    @tokens = [EditCommandToken.new]
+  end
+
+  def help(long = false)
+    out = "Edit the current set of modelfacts"
+    if long
+      out << <<-'EOF'
+  edit (modelfacts)
+    modelfacts: Open $EDITOR on the current set of modelfacts
+      EOF
+    end
+    out
+  end
+
+  def get_edit_command
+    editor = []
+    if ENV['EDITOR']
+      editor << ENV['EDITOR']
+    else
+      # use default
+      editor << 'vim'
+    end
+
+    if editor.last.end_with?('vim')
+      editor << '-c'
+      editor << "set ft=platina"
+    end
+
+    editor
+  end
+
+  def ask_retry(failed)
+    # Parsing failed: Ask if user wants to retry
+    tokens = ['yes', 'abort']
+    Readline.completion_proc = proc {|s| tokens.grep(/^#{Regexp.escape(s)}/) }
+    doretry = nil
+
+    loop do
+      STDERR.puts "Parsing failed for line #{failed[0]}: #{failed[1]}"
+      input = Readline.readline("Retry? [yes/abort] ").squeeze(" ").strip
+      doretry = true  if input == "yes"
+      doretry = false if input == "abort"
+      break unless doretry.nil?
+    end
+
+    Readline.completion_proc = REPLContext.instance.completor
+    doretry
+  end
+
+  def run(args)
+    if args.length != 1
+      raise ArgumentError, "Usage: edit (modelfacts)"
+    end
+
+    opts, pml = REPLContext.instance.options, REPLContext.instance.pml
+
+    case @tokens[0].coerce(args[0])
+    when :modelfacts
+      file = Tempfile.new(['modelfacts', '.platina'])
+      lines = pml.modelfacts.map do |a|
+        a.ppref.programpoint.qname + " " + a.type + " \"" + a.expr + "\""
+      end
+      file.write(lines.join("\n"))
+      file.flush
+
+      facts  = nil
+      failed = nil
+      loop do
+        editor = get_edit_command + [file.path]
+        system *editor
+
+        file.rewind
+        input = file.read.lines
+
+        failed = nil
+        facts = ModelFactList.new([])
+
+        # Try to build modelfacts from input
+        input.each_with_index do |line, i|
+          components = line.shellsplit
+          if components.length != 3
+            failed = [i, line]
+            break
+          end
+          begin
+            mf = build_modelfact(components[0], components[1], components[2])
+            facts.add(mf)
+          rescue ArgumentError => ae
+            puts ae
+            failed = [i, line]
+            break
+          end
+        end
+
+        # All was well
+        break if failed.nil?
+
+        # Check whether the user wants to fix their error
+        break if !ask_retry(failed)
+      end
+
+      file.close
+      file.unlink
+
+      unless failed
+        REPLContext.instance.pml.modelfacts = facts
+      end
+    else
+      raise ArgumentError, "Usage: edit (modelfacts)"
+    end
+
+  end
+
+  def get_tokens
+    return @tokens
+  end
+
 end
 
 class AnnotateCommand < ModelFactCommand
@@ -907,6 +1045,7 @@ EOF
   Dispatcher.instance.register('results',  ResultsCommand.new)
   Dispatcher.instance.register('annotate', AnnotateCommand.new)
   Dispatcher.instance.register('list',     ListCommand.new)
+  Dispatcher.instance.register('edit',     EditCommand.new)
   begin
     require 'pry-rescue'
     require 'pry-stack_explorer'

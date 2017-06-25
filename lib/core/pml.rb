@@ -26,10 +26,10 @@ module PML
 class PMLDoc
   attr_reader :data, :triple, :arch, :analysis_configurations
   attr_reader :bitcode_functions,:machine_functions,:relation_graphs,:global_cfgs
-  attr_reader :flowfacts,:valuefacts,:modelfacts,:timing
+  attr_reader :flowfacts,:valuefacts,:timing
   attr_reader :tool_configurations
   attr_reader :sca_graph
-  attr_accessor :text_symbols
+  attr_accessor :text_symbols,:modelfacts
 
   # constructor expects a YAML document or a list of YAML documents
   def initialize(stream, options = OpenStruct.new)
