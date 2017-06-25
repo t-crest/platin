@@ -461,6 +461,16 @@ class AnnotateCommand < Command
     type  = @tokens[1].coerce(args[1])
     expr  = args[2]
 
+class ModelFactCommand < Command
+  def initialize
+    @modeltokens = [ProgramPointToken.new, PlatinaToken.new]
+  end
+
+  def build_modelfact(pparg, typearg, exprarg)
+    pp    = @modeltokens[0].coerce(pparg)
+    type  = @modeltokens[1].coerce(typearg)
+    expr  = exprarg
+
     # Yeah, lets fake a pml-entry
     pml = {}
     pml['program-point'] = pp.to_pml_ref
@@ -477,12 +487,39 @@ class AnnotateCommand < Command
     pml['type']        = type
     pml['expression']  = expr
 
-    modelfact = ModelFact.from_pml(REPLContext.instance.pml, pml, 'interactive')
+    modelfact = ModelFact.from_pml(REPLContext.instance.pml, pml)
+    modelfact
+  end
+
+  def get_model_tokens
+    return @modeltokens
+  end
+end
+
+class AnnotateCommand < ModelFactCommand
+  def help(long = false)
+    out = "Interactivly annotate modelfacts"
+    if long
+      out << <<-'EOF'
+  annotate <block> (guard|lbound|callee) "expr"
+    Please note that guard and lbound target bitcode blocks, while callee
+    annotations are only available on MC level
+      EOF
+    end
+    out
+  end
+
+  def run(args)
+    if args.length != 3
+      raise ArgumentError, "Usage: annotate <block> (guard|lbound|callee) \"expr\""
+    end
+
+    modelfact = build_modelfact(args[0], args[1], args[2])
     REPLContext.instance.pml.modelfacts.add(modelfact)
   end
 
   def get_tokens
-    return @tokens
+    get_model_tokens
   end
 end
 
