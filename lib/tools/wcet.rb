@@ -453,8 +453,8 @@ class WcetTool
 
       pml.with_temporary_sections([:flowfacts, :valuefacts]) do
         if model.nil?
-          if options.model_file
-            model = Model.from_file(options.model_file)
+          if options.modelfile
+            model = Model.from_file(options.modelfile)
           else
             model = Model.new
           end
