@@ -187,7 +187,7 @@ class PlatinaToken < ListToken
 end
 
 class EditCommandToken < ListToken
-  EDITTARGET = ['modelfacts']
+  EDITTARGET = ['modelfacts', 'model']
 
   def get_list
     return EDITTARGET
@@ -522,14 +522,14 @@ class EditCommand < ModelFactCommand
     out = "Edit the current set of modelfacts"
     if long
       out << <<-'EOF'
-  edit (modelfacts)
+  edit (modelfacts|model)
     modelfacts: Open $EDITOR on the current set of modelfacts
       EOF
     end
     out
   end
 
-  def get_edit_command
+  def get_edit_command(ft = nil)
     editor = []
     if ENV['EDITOR']
       editor << ENV['EDITOR']
@@ -538,9 +538,11 @@ class EditCommand < ModelFactCommand
       editor << 'vim'
     end
 
-    if editor.last.end_with?('vim')
-      editor << '-c'
-      editor << "set ft=platina"
+    unless ft.nil?
+      if editor.last.end_with?('vim')
+        editor << '-c'
+        editor << "set ft=platina"
+      end
     end
 
     editor
@@ -586,7 +588,7 @@ class EditCommand < ModelFactCommand
       facts  = nil
       failed = nil
       loop do
-        editor = get_edit_command + [file.path]
+        editor = get_edit_command('platina') + [file.path]
         system *editor
 
         # Check if cache matches
@@ -629,6 +631,14 @@ class EditCommand < ModelFactCommand
 
       unless failed
         REPLContext.instance.pml.modelfacts = facts
+      end
+    when :model
+      if opts.modelfile && File.readable_real?(opts.modelfile)
+        editor = get_edit_command('platinmodel') + [opts.modelfile]
+        system *editor
+      else
+        STDERR.puts "Cannot find or read file '#{opts.modelfile}'. " +
+                    "Please update 'opts.modelfile' accordingly"
       end
     else
       raise ArgumentError, "Usage: edit (modelfacts)"
