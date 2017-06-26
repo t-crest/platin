@@ -949,6 +949,40 @@ class Dispatcher
     return @commands[cmd]
   end
 
+  def show_unresolved(unresolvedindirectcallexception)
+    srcpath = REPLContext.instance.options.source_path
+    return if srcpath.nil?
+
+    src = unresolvedindirectcallexception.src_hint
+    file, _, line = src.rpartition(':')
+
+    filepath = File.join(srcpath, file)
+
+    begin
+      code = File.read(filepath).lines
+      zeroline = Integer(line) - 1
+      context = 10
+      from = [0, zeroline - context].max
+      to   = [code.length - 1, zeroline + context].min
+      maxlength = to.to_s.length
+
+      out =  "Sourcecode around #{file}:#{line}\n"
+
+      code.slice(from, to - from).each_with_index do |line, idx|
+        if idx == context
+          out << "=> "
+        else
+          out << "   "
+        end
+        out << ("%#{maxlength}d: " % (idx + from + 1))
+        out << line
+      end
+      puts out
+    rescue Exception => e
+      # Silently ignore all errors
+    end
+  end
+
   def dispatch(input)
     args = []
 
@@ -977,6 +1011,9 @@ class Dispatcher
       Pry.rescue do
         begin
           cmd.run(args)
+        rescue UnresolvedIndirectCall => uic
+          STDERR.puts(uic)
+          show_unresolved(uic)
         rescue ArgumentError => arg
           STDERR.puts(arg)
           return
@@ -986,6 +1023,9 @@ class Dispatcher
       begin
         begin
           cmd.run(args)
+        rescue UnresolvedIndirectCall => uic
+          STDERR.puts(uic)
+          show_unresolved(uic)
         rescue ArgumentError => arg
           STDERR.puts(arg)
           return
