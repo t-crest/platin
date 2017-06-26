@@ -459,9 +459,14 @@ class WcetTool
             model = Model.new
           end
         end
-        model.evaluate(pml, pml.modelfacts)
-        WcetTool.new(pml,options).run_in_outdir
-        model.repair(pml)
+        begin
+          model.evaluate(pml, pml.modelfacts)
+          WcetTool.new(pml,options).run_in_outdir
+        ensure
+          # ALWAYS undo mutations, even in case of errors (such as unresolved
+          # calls)
+          model.repair(pml)
+        end
       end
     else
       WcetTool.new(pml,options).run_in_outdir
