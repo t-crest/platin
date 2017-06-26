@@ -554,7 +554,7 @@ class Parser
   CMP_OP     = symbol_(/(\<=|\<|\>|\>=|==|\/=)/).fail 'compare operator'
   LOGIC_OP   = symbol_(/(&&|\|\|)/).fail 'logical operator'
   MULT_OP    = symbol_(/[*\/%]/).fail 'multiplication operator'
-  ADD_OP     = symbol_(/[\+]/).fail 'addition    operator'
+  ADD_OP     = symbol_(/[\+]/).fail 'addition operator'
   SUB_OP     = symbol_(/[\-]/).fail 'subtraction operator'
   BOOLEAN    = (symbol_('True') {|_| ASTBoolLiteral.new(true)} | symbol_('False') {|_| ASTBoolLiteral.new(false)}).fail 'boolean'
   UNDEF      = symbol_('undefined')
@@ -622,7 +622,7 @@ class Parser
                        ASTCompareOp.new(lhs, op, rhs)
                      } \
                   | seq__('(', cond_expr, ')')[1] \
-                  | lazy{call} \
+                  | lazy{arith_expr} \
                   | BOOLEAN \
                   )
       _ = ao_expr # Silence warning
@@ -637,7 +637,6 @@ class Parser
                       puts "IF #{cond} then {#{e1}} else {#{e2}}" if DEBUG_PARSER
                       ASTIf.new(cond, e1, e2)
                     } \
-                  | lazy{arith_expr} \
                   | lazy{cond_expr} \
                   | UNDEF \
                   | ERROR \
@@ -739,6 +738,8 @@ end # module Peaches
 
 if __FILE__ == $PROGRAM_NAME
   parser = Peaches::Parser.new
+
+  pp parser.expr.eof.parse! "ASDF > 0 || True"
 
   pp parser.expr.eof.parse! "a * b"
   pp parser.program.eof.parse! "f a b = a * b"
