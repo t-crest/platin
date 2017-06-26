@@ -580,12 +580,20 @@ class EditCommand < ModelFactCommand
       file.write(lines.join("\n"))
       file.flush
 
+      # Construction might be slow -> cache if hash matches ("read only access")
+      pristineSHA256 = Digest::SHA256.file file.path
+
       facts  = nil
       failed = nil
       loop do
         editor = get_edit_command + [file.path]
         system *editor
 
+        # Check if cache matches
+        newSHA256 = Digest::SHA256.file file.path
+        return if pristineSHA256 == newSHA256
+
+        # File has changed => reparse
         file.rewind
         input = file.read.lines
 
