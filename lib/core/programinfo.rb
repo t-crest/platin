@@ -243,6 +243,14 @@ module PML
     def dump_stats(pml, io=$stderr)
       assert("Unimplemented") {false}
     end
+
+    def to_set
+      set = Set.new
+      self.each do |mf|
+        set.add(mf)
+      end
+      set
+    end
   end
 
   # Model Fact utility class
@@ -292,6 +300,20 @@ module PML
     # deep clone: clone flow fact, lhs and attributes
     def deep_clone
       ModelFact.new(ppref.dup, type.dup, expr.dup, attributes.dup)
+    end
+
+    def ==(other)
+      return false if other.nil?
+      return false unless other.kind_of?(ModelFact)
+      @ppref == other.ppref && @type == other.type && @expr == other.expr
+    end
+    def eql?(other); self == other ; end
+    def hash
+      return @hash if @hash
+      @hash = @ppref.hash ^ @expr.hash ^ @type.hash
+    end
+    def <=>(other)
+      hash <=> other.hash
     end
 
     def to_fact(pml, model)

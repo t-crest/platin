@@ -216,8 +216,8 @@ class VisualizeInfoToken < ListToken
   end
 end
 
-class ListCommandToken < ListToken
-  OPS = ['interactive_annotations']
+class DiffCommandToken < ListToken
+  OPS = ['annotations']
 
   def get_list
     return OPS
@@ -227,7 +227,7 @@ class ListCommandToken < ListToken
     if OPS.grep(tok).empty?
       raise ArgumentError, "Unknown op: #{tok}"
     end
-    return tok
+    return tok.to_sym
   end
 end
 
@@ -679,38 +679,86 @@ class AnnotateCommand < ModelFactCommand
   end
 end
 
-class ListCommand < Command
+class DiffCommand < Command
   def initialize
-    @tokens = [ListCommandToken.new]
+    @tokens = [DiffCommandToken.new]
   end
 
   def help(long = false)
     out = "List Properties of this analysis"
     if long
       out << <<-'EOF'
-  list interactive_annotations
+  diff annotations
     List the annotations that were passed interactively
       EOF
     end
     out
   end
 
-  def run(args)
-    if args.length != 1
-      raise ArgumentError, "Usage: list (interactive_annotations)"
+
+  class DiffEntry
+    attr_reader :op, :diff
+    def initialize(op, diff)
+      @op, @diff = op, diff
     end
 
-    case args[0]
-    when 'interactive_annotations'
-      puts REPLContext.instance.pml.modelfacts.select {|a|
-        a.mode == 'interactive'
-      }.map { |a|
-        a.to_source
+    def emit(colorize = false)
+      out = ""
+      if colorize
+        case op
+        when :+
+          out << "\e[32m" # green
+        when :-
+          out << "\e[31m" # red
+        end
+      end
+
+      parts = diff.split(' ', 2)
+
+      out << "#{parts[0]} #{op} #{parts[1]}"
+
+      if colorize
+        out << "\e[0m"
+      end
+
+      out
+    end
+
+    def <=>(other)
+      res = self.diff <=> other.diff
+      return res if res != 0
+      return res if self.op == other.op
+      return -1 if self.op == :-
+      return 1
+    end
+  end
+
+
+  def run(args)
+    if args.length != 1
+      raise ArgumentError, "Usage: diff (annotations)"
+    end
+
+    case @tokens[0].coerce(args[0])
+    when :annotations
+      old = REPLContext.instance.initial_modelfacts
+      cur = REPLContext.instance.pml.modelfacts.to_set
+
+      add = cur - old
+      del = old - cur
+
+      add.map! {|mf| DiffEntry.new(:+, mf.to_source)}
+      del.map! {|mf| DiffEntry.new(:-, mf.to_source)}
+
+      diffs = add.to_a + del.to_a
+      diffs.sort!
+
+      puts diffs.map {|d|
+        d.emit(true)
       }.join("\n")
     else
       raise ArgumentError, "Usage: list (interactive_annotations)"
     end
-
   end
 
   def get_tokens
@@ -854,13 +902,15 @@ class REPLContext
   attr_accessor :pml
   attr_accessor :timing
   attr_accessor :completor
+  attr_accessor :initial_modelfacts
 
   def initialize
-    @debug     = false
-    @options   = OpenStruct.new
-    @pml       = nil
-    @timing    = {}
-    @completor = nil
+    @debug              = false
+    @options            = OpenStruct.new
+    @pml                = nil
+    @timing             = {}
+    @completor          = nil
+    @initial_modelfacts = nil
   end
 
   @@instance = REPLContext.new
@@ -1049,8 +1099,10 @@ EOF
   # --- /SNIP
 
   # Setup the execution context
-  REPLContext.instance.pml     = PMLDoc.from_files(options.input, options)
-  REPLContext.instance.options = options
+  REPLContext.instance.pml                = PMLDoc.from_files(options.input, options)
+  REPLContext.instance.options            = options
+  # For diff command
+  REPLContext.instance.initial_modelfacts = REPLContext.instance.pml.modelfacts.to_set
 
 
   # Register repl commands
@@ -1063,7 +1115,7 @@ EOF
   Dispatcher.instance.register('visualize', VisualizeCommand.new)
   Dispatcher.instance.register('results',  ResultsCommand.new)
   Dispatcher.instance.register('annotate', AnnotateCommand.new)
-  Dispatcher.instance.register('list',     ListCommand.new)
+  Dispatcher.instance.register('diff',     DiffCommand.new)
   Dispatcher.instance.register('edit',     EditCommand.new)
   begin
     require 'pry-rescue'
