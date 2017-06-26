@@ -286,7 +286,7 @@ module PML
 
     # string representation of the value fact
     def to_s
-      "#<ModelFact #{attributes.map {|k,v| "#{k}=#{v}"}.join(",")}, #{type} at #{ppref}: #{type}>"
+      "#<ModelFact #{attributes.map {|k,v| "#{k}=#{v}"}.join(",")}, #{type} at #{ppref}: #{expr}>"
     end
 
     # deep clone: clone flow fact, lhs and attributes
