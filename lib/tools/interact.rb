@@ -451,32 +451,6 @@ class VisualizeCommand < Command
   end
 end
 
-class AnnotateCommand < Command
-  def initialize
-    @tokens = [ProgramPointToken.new, PlatinaToken.new]
-  end
-
-  def help(long = false)
-    out = "Interactivly annotate modelfacts"
-    if long
-      out << <<-'EOF'
-  annotate <block> (guard|lbound|callee) "expr"
-    Please note that guard and lbound target bitcode blocks, while callee
-    annotations are only available on MC level
-      EOF
-    end
-    out
-  end
-
-  def run(args)
-    if args.length != 3
-      raise ArgumentError, "Usage: annotate <block> (guard|lbound|callee) \"expr\""
-    end
-
-    pp    = @tokens[0].coerce(args[0])
-    type  = @tokens[1].coerce(args[1])
-    expr  = args[2]
-
 class ModelFactCommand < Command
   def initialize
     @modeltokens = [ProgramPointToken.new, PlatinaToken.new]
