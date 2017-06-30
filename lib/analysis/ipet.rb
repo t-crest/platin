@@ -722,8 +722,6 @@ class IPETBuilder
     end
   end
 
-private
-
   # build the control-flow refinement (which provides additional
   # flow information used to prune the callgraph/CFG)
   def build_refinement(entry, ffs)
@@ -737,6 +735,8 @@ private
       @refinement[level] = cfr
     }
   end
+
+private
 
   # add variables for bitcode basic blocks and relation graph
   # (only if relation graph is available)

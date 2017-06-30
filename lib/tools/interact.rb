@@ -202,7 +202,7 @@ class EditCommandToken < ListToken
 end
 
 class VisualizeInfoToken < ListToken
-  VISUALISATIONS = ['ilp']
+  VISUALISATIONS = ['ilp', 'callgraph']
 
   def get_list
     return VISUALISATIONS
@@ -437,6 +437,66 @@ class VisualizeCommand < Command
       # Restore the old value
       opts.visualize_ilp = visualize_ilp_bak
       opts.debug_type    = debug_type_bak
+    when :callgraph
+      entry_label = args[1]
+
+      # We want to efficiently build an callgraph (without invoking scopegraphs)
+      # Based on analysis/wca.rb
+      machine_entry = pml.machine_functions.by_label(entry_label)
+      if machine_entry.nil?
+        raise ArgumentError, "No machine function to label #{machine_entry}"
+      end
+      bitcode_entry = pml.bitcode_functions.by_name(entry_label)
+      entry = { 'machinecode' => machine_entry,
+                'bitcode' => bitcode_entry,
+              }
+
+      graph = nil
+
+      pml.with_temporary_sections([:flowfacts, :valuefacts]) do
+        if opts.modelfile
+          model = Model.from_file(opts.modelfile)
+        else
+          model = Model.new
+        end
+        begin
+          model.evaluate(pml, pml.modelfacts)
+          builder = IPETBuilder.new(pml, opts, nil)
+
+          # flow facts
+          flowfacts = pml.flowfacts.filter(pml,
+                                           opts.flow_fact_selection,
+                                           opts.flow_fact_srcs,
+                                           ["machinecode"],
+                                           true)
+
+          # Based on analysis/ipet.rb
+          builder.build_refinement(entry, flowfacts)
+          mf_functions = builder.get_functions_reachable_from_function(entry['machinecode'])
+          mc_model = builder.mc_model
+          pcgv = PlainCallGraphVisualizer.new(entry_label, mf_functions, mc_model)
+          graph = pcgv.visualize_callgraph
+        ensure
+          # ALWAYS undo mutations, even in case of errors (such as unresolved
+          # calls)
+          model.repair(pml)
+        end
+      end
+
+      data = {
+        'callgraph.svg' => {
+          'content_type' => 'image/svg+xml',
+          'data' => graph.output(:svg => String),
+        },
+      }
+      server = VisualisationServer::Server.new( \
+                          :callgraph, \
+                          { \
+                            :data    => data  \
+                          }, \
+                          :BindAddress => opts.server_bind_addr, \
+                          :Port => opts.server_port \
+      )
     else
       assert("Unexpected visualisation type: :#{args[0]}") {false}
     end

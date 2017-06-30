@@ -326,6 +326,22 @@ class Server
     end
   end
 
+  class RedirectServlet < WEBrick::HTTPServlet::AbstractServlet
+    def initialize(server, url)
+      super server
+      @url = url
+    end
+
+    def do_GET(req, resp)
+      effpath = req.path_info.gsub(/^\/+/, '')
+
+      raise WEBrick::HTTPStatus::NotFound unless effpath.empty?
+
+      resp.set_redirect(WEBrick::HTTPStatus::TemporaryRedirect, @url);
+  end
+  end
+
+
   def initialize(mode, opts, **webrick_opts)
     @server = WEBrick::HTTPServer.new webrick_opts
 
@@ -346,6 +362,12 @@ class Server
       }
       @server.mount '/api/data', HashServlet, opts[:data]
       @server.mount '/', ILPServlet, opts[:entrypoint], '/api/data/ilp.svg', '/api/data/constraints.json', '/api/data/srchints.json', '/sourceview'
+    when :callgraph
+      assert("HashServlet expects an Hash") { \
+        opts.is_a?(Hash) && opts.has_key?(:data) && opts[:data].is_a?(Hash) \
+      }
+      @server.mount '/api/data', HashServlet, opts[:data]
+      @server.mount '/', RedirectServlet, '/api/data/callgraph.svg'
     else
       raise ArgumentError.new "No such server mode: #{mode}"
     end

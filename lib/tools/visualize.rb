@@ -56,6 +56,35 @@ class CallGraphVisualizer < Visualizer
   end
 end
 
+class PlainCallGraphVisualizer < Visualizer
+  def initialize(entry, functions, mcmodel)
+    @entry, @functions, @mc_model = entry, functions, mcmodel
+  end
+  def visualize_callgraph()
+    g  = digraph("Callgraph for #{@entry}")
+    nodes, nids = {}, {}
+    @functions.each_with_index { |n,i| nids[n] = i }
+    @functions.each { |node|
+      nid = nids[node]
+      src_hint = node.blocks.first.src_hint
+      src_hint = src_hint ? '<BR/>' + src_hint : ''
+      label = '<' + node.to_s + '<BR/><B>' +  node.label.to_s + '</B>' + src_hint + '>'
+      nodes[node] = g.add_nodes(nid.to_s, :label => label)
+    }
+    @functions.each { |mf|
+      mf.callsites.each { |cs|
+        next if @mc_model.infeasible?(cs.block)
+        @mc_model.calltargets(cs).each { |callee|
+          if nodes[mf] && nodes[callee]
+            g.add_edges(nodes[mf],nodes[callee])
+          end
+        }
+      }
+    }
+    g
+  end
+end
+
 class ScopeGraphVisualizer < Visualizer
   def initialize(pml, options) ; @pml, @options = pml, options ; end
   def visualize_scopegraph(function)
