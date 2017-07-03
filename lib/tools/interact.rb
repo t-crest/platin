@@ -546,7 +546,30 @@ class ModelFactCommand < Command
   end
 end
 
+module FindEditor
+  def get_edit_command(ft = nil)
+    editor = []
+    if ENV['EDITOR']
+      editor << ENV['EDITOR']
+    else
+      # use default
+      editor << 'vim'
+    end
+
+    unless ft.nil?
+      if editor.last.end_with?('vim')
+        editor << '-c'
+        editor << "set ft=#{ft}"
+      end
+    end
+
+    editor
+  end
+end
+
 class EditCommand < ModelFactCommand
+  include FindEditor
+
   def initialize
     super
     @tokens = [EditCommandToken.new]
@@ -561,25 +584,6 @@ class EditCommand < ModelFactCommand
       EOF
     end
     out
-  end
-
-  def get_edit_command(ft = nil)
-    editor = []
-    if ENV['EDITOR']
-      editor << ENV['EDITOR']
-    else
-      # use default
-      editor << 'vim'
-    end
-
-    unless ft.nil?
-      if editor.last.end_with?('vim')
-        editor << '-c'
-        editor << "set ft=platina"
-      end
-    end
-
-    editor
   end
 
   def ask_retry(failed)
@@ -767,6 +771,23 @@ class DiffCommand < Command
     end
   end
 
+  def diff_annotations(colorize = false)
+    old = REPLContext.instance.initial_modelfacts
+    cur = REPLContext.instance.pml.modelfacts.to_set
+
+    add = cur - old
+    del = old - cur
+
+    add.map! {|mf| DiffEntry.new(:+, mf.to_source)}
+    del.map! {|mf| DiffEntry.new(:-, mf.to_source)}
+
+    diffs = add.to_a + del.to_a
+    diffs.sort!
+
+    return diffs.map {|d|
+      d.emit(colorize)
+    }.join("\n")
+  end
 
   def run(args)
     if args.length != 1
@@ -775,28 +796,49 @@ class DiffCommand < Command
 
     case @tokens[0].coerce(args[0])
     when :annotations
-      old = REPLContext.instance.initial_modelfacts
-      cur = REPLContext.instance.pml.modelfacts.to_set
-
-      add = cur - old
-      del = old - cur
-
-      add.map! {|mf| DiffEntry.new(:+, mf.to_source)}
-      del.map! {|mf| DiffEntry.new(:-, mf.to_source)}
-
-      diffs = add.to_a + del.to_a
-      diffs.sort!
-
-      puts diffs.map {|d|
-        d.emit(true)
-      }.join("\n")
+      puts diff_annotations(true)
     else
-      raise ArgumentError, "Usage: list (interactive_annotations)"
+      raise ArgumentError, "Usage: diff (annotations)"
     end
   end
 
   def get_tokens
     return @tokens
+  end
+end
+
+class ApplyCommand < DiffCommand
+  include FindEditor
+
+  def help(long = false)
+    out = "Apply propterties interactively"
+    if long
+      out << <<-'EOF'
+  apply annotations
+    List the annotations that were passed interactively and open
+    coresponding sourcefiles
+      EOF
+    end
+    out
+  end
+
+  def run(args)
+    if args.length != 1
+      raise ArgumentError, "Usage: apply (annotations)"
+    end
+
+    opts = REPLContext.instance.options
+
+    case @tokens[0].coerce(args[0])
+    when :annotations
+      file = Tempfile.new('annotations-quickfix')
+      file.write(diff_annotations(false))
+      file.flush
+      editor = ['vim', '-c', "cd \"#{opts.source_path}\"", '-c', 'copen', '-q', file.path]
+      system *editor
+    else
+      raise ArgumentError, "Usage: apply (annotations)"
+    end
   end
 end
 
@@ -1191,6 +1233,7 @@ EOF
   Dispatcher.instance.register('annotate', AnnotateCommand.new)
   Dispatcher.instance.register('diff',     DiffCommand.new)
   Dispatcher.instance.register('edit',     EditCommand.new)
+  Dispatcher.instance.register('apply',    ApplyCommand.new)
   begin
     require 'pry-rescue'
     require 'pry-stack_explorer'
