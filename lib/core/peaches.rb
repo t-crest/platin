@@ -229,6 +229,10 @@ class ASTValueLiteral < ASTLiteral
 end
 
 class ASTBoolLiteral < ASTValueLiteral
+  def to_s
+    @value.to_s.capitalize
+  end
+
   def to_bool
     value
   end
