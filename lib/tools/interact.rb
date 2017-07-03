@@ -836,6 +836,8 @@ class ApplyCommand < DiffCommand
       file.flush
       editor = ['vim', '-c', "cd \"#{opts.source_path}\"", '-c', 'copen', '-q', file.path]
       system *editor
+      file.close
+      file.unlink
     else
       raise ArgumentError, "Usage: apply (annotations)"
     end
