@@ -168,10 +168,12 @@ function showConstraints(cons) {
 
 function scrollIntoView(element) {
 	var scrollparent = document.getElementById('ilpcanvas').parentNode;
-	var svgbb = element.getBBox();
+	var svgClientRect = element.getBoundingClientRect();
 
-	scrollparent.scrollTop  = svg.scrollHeight + svgbb.y - svgbb.height/2 - scrollparent.clientHeight/2;
-	scrollparent.scrollLeft = svg.scrollWidth  - svgbb.x - svgbb.width/2 - scrollparent.clientWidth/2;
+  var y = svgClientRect.top  + (svgClientRect.height / 2) - (scrollparent.clientHeight / 2);
+	scrollparent.scrollTop  = Math.max(0, y);
+  var x = svgClientRect.left + (svgClientRect.width / 2) - (scrollparent.clientWidth / 2);
+	scrollparent.scrollLeft = Math.max(0, x);
 }
 
 function showConstraintsForNode(nodename) {
