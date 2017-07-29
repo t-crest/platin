@@ -1108,6 +1108,9 @@ class Dispatcher
           STDERR.puts(arg)
           return
         end
+      rescue Peaches::PeachesError => e
+        STDERR.puts("Evaluating a peaches exception resulted in an error:")
+        STDERR.puts("  #{e.class.name}: #{e}")
       rescue Exception => e
         STDERR.puts("Exeption: #{e}")
         STDERR.puts e.backtrace
