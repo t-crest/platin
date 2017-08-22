@@ -383,6 +383,7 @@ end # module ARMv7m
 module PML
 
 # Register architecture
-Architecture.register("armv7m", ARMv7m::Architecture)
+Architecture.register("armv7m",   ARMv7m::Architecture)
+Architecture.register("thumbv7m", ARMv7m::Architecture)
 
 end # module PML
