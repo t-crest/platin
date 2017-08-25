@@ -64,7 +64,7 @@ class ExtractSymbols
           addr = block_addr
         elsif ! @instruction_addresses[function.label]
           if @instruction_addresses.empty?
-            die("There is no symbol for basic block #{block.label} in the binary")
+            die("There is no symbol for basic block #{block.label} (function: #{function.label}) in the binary")
           else
             die("There is no symbol for #{block.label}, and no instruction addresses for function #{function.label} are available")
           end
