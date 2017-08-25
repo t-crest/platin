@@ -175,7 +175,7 @@ class ExtractSymbols
   RE_INS_LABEL = %r{ ^ \s+
     ( #{RE_HEX}+ ): \t       # addr
     ( (?: #{RE_HEX}{2}\s)+) \s+ # opcode
-    \t \s+
+    \s+
     ( (?: \( [^)]+ \) )? )     # condition codes
     \s*
     ( \S+ )          # instruction
