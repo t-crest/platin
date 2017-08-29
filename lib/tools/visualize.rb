@@ -491,7 +491,7 @@ class ILPVisualisation < Visualizer
       e[:style] = "solid"
     elsif edge.call_edge?
       e[:style] = "bold"
-    elsif edge.relation_graph_edge=
+    elsif edge.relation_graph_edge?
       e[:style] = "dashed"
     else
       e[:style] = "dotted"

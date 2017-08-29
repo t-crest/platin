@@ -756,7 +756,7 @@ class DiffCommand < Command
       out << "#{parts[0]} #{op} #{parts[1]}"
 
       if colorize
-        out << "\e[0m"
+        out << "\e[0m" # reset color
       end
 
       out
