@@ -892,59 +892,73 @@ end # module Peaches
 if __FILE__ == $PROGRAM_NAME
   parser = Peaches::Parser.new
 
-  pp parser.expr.eof.parse! "ASDF > 0 || True"
+  assert_literal = lambda { |program, var, value|
+    decl = program.evaluate.lookup(var)
+    unless decl.is_a?(Peaches::ASTDecl) &&
+           decl.expr.is_a?(Peaches::ASTLiteral) &&
+           decl.expr.unbox == value
+      raise <<-EOF
+        ############## TEST FAILURE ##############
+        #{program}
+        ##########################################
+        #{expr} /= #{value}
+        ##########################################
+      EOF
+    end
+  }
 
-  pp parser.expr.eof.parse! "a * b"
-  pp parser.program.eof.parse! "f a b = a * b"
-  pp parser.program.eof.parse! "f a b = if 2 /= 4 then a * b else b"
+  puts "Running Tests..."
+  parser.expr.eof.parse! "ASDF > 0 || True"
 
-  pp parser.arith_expr.eof.parse! ("f")
+  parser.expr.eof.parse! "a * b"
+  parser.program.eof.parse! "f a b = a * b"
+  parser.program.eof.parse! "f a b = if 2 /= 4 then a * b else b"
 
-  pp parser.arith_expr.eof.parse! ("hugo4")
-  pp parser.arith_expr.eof.parse! ("42 - 8 * 4*25 + 20 - 32")
-  pp parser.arith_expr.eof.parse! ("2*42 - 8 * 4*25 + 20 - 32")
-  pp parser.arith_expr.eof.parse! ("4 + 25 * 8")
+  parser.arith_expr.eof.parse! ("f")
 
-  pp parser.cond_expr.eof.parse! ("(32 - 1) /= 42")
-  pp parser.cond_expr.eof.parse! ("(4 /= 5)")
-  pp parser.cond_expr.eof.parse! ("(4 /= 5) && ((32 - 1) /= 42)")
-  pp parser.cond_expr.eof.parse! ("4 /= 5 && 32 - 1 /= 42")
+  parser.arith_expr.eof.parse! ("hugo4")
+  parser.arith_expr.eof.parse! ("42 - 8 * 4*25 + 20 - 32")
+  parser.arith_expr.eof.parse! ("2*42 - 8 * 4*25 + 20 - 32")
+  parser.arith_expr.eof.parse! ("4 + 25 * 8")
 
-  puts "IFS"
-  pp parser.expr.eof.parse! ("if 4 /= 5 then 42 else 21")
+  parser.cond_expr.eof.parse! ("(32 - 1) /= 42")
+  parser.cond_expr.eof.parse! ("(4 /= 5)")
+  parser.cond_expr.eof.parse! ("(4 /= 5) && ((32 - 1) /= 42)")
+  parser.cond_expr.eof.parse! ("4 /= 5 && 32 - 1 /= 42")
 
-  pp parser.decl.eof.parse! ("x = if 4 /= 5 then 42 else 21")
-  pp parser.decl.eof.parse! ("f x y = if 4 /= 5 then 42 else 21")
+  parser.expr.eof.parse! ("if 4 /= 5 then 42 else 21")
 
-  pp parser.program.eof.parse! %Q[x = 4
+  parser.decl.eof.parse! ("x = if 4 /= 5 then 42 else 21")
+  parser.decl.eof.parse! ("f x y = if 4 /= 5 then 42 else 21")
+
+  parser.program.eof.parse! %Q[x = 4
 y = 10 * x + 20
 f a b = if 2 /= 4 || (10 / 2 == 5) then a + b else a * b
 ]
 
-  pp parser.program.eof.parse! %Q[x = 4
+  parser.program.eof.parse! %Q[x = 4
 y = 10 * x + 20
 f a b = if 2 /= 4 || (10 / 2 == 5) then a + b else a * b]
 
-  pp parser.program.eof.parse! %Q[x = 4
+  parser.program.eof.parse! %Q[x = 4
 y = 10 * x + 20 {-
   ASDF
 -}
 f a b = if 2 /= 4 || (10 / 2 == 5) then a + b else a * b]
 
-  pp parser.comment.parse! ("{- asdf -}")
-  pp parser.comment.parse! ("-- ASDF ASDF")
-  pp parser.comment.eof.parse! ("-- ASDF ASDF")
-  pp parser.space.parse! (" {- asdf -}")
+  parser.comment.parse! ("{- asdf -}")
+  parser.comment.parse! ("-- ASDF ASDF")
+  parser.comment.eof.parse! ("-- ASDF ASDF")
+  parser.space.parse! (" {- asdf -}")
 
-  pp parser.program.eof.parse! ("x = 1 + {- asdf -} 4")
-  pp parser.program.eof.parse! ("x = 1 +{- asdf -}4")
-  pp parser.program.eof.parse! ("x = 1 + 4 -- asdf")
+  parser.program.eof.parse! ("x = 1 + {- asdf -} 4")
+  parser.program.eof.parse! ("x = 1 +{- asdf -}4")
+  parser.program.eof.parse! ("x = 1 + 4 -- asdf")
 
   program = parser.program.parse!  %Q[x = 4
 y = 10 * x + 20
 z = if y > 10 && 1 /= 2 then x else y]
-
-  pp program.evaluate.lookup("z")
+  assert_literal.call(program, "z", 4)
 
   program = parser.call.parse! ("f 4*5 42")
   program = parser.call.parse! ("f")
@@ -953,16 +967,16 @@ z = if y > 10 && 1 /= 2 then x else y]
 x ={- "ASDF" -} 4
 y = 10 * x + 20 -- ASDF 4 + 5
 z = if y > 10 && 1 /= 2 then{-ASDF-} x else y]
-  pp program.evaluate.lookup("z")
+  assert_literal.call(program, "z", 4)
 
   program = parser.program.parse!  %Q[-- Full size comment
 x ={- "ASDF" -} 4
 y = 10 * x + 20 -- ASDF 4 + 5
 z = if y > 10 && 1 /= 2 then x else f y]
-  pp program
+  assert_literal.call(program, "z", 4)
 
 
-  program = parser.program.parse!  %Q[-- Full size comment
+  parser.program.parse!  %Q[-- Full size comment
 x ={- "ASDF" -} 4
 
 
@@ -972,7 +986,6 @@ y = 10 * x + 20 -- ASDF 4 + 5
 z = if y > 10 && 1 /= 2 then x else f y
 
 ]
-  pp program
 
   program = parser.program.parse!  %Q[-- Full size comment
 x ={- "ASDF" -} 4
@@ -980,53 +993,54 @@ y = 10 * x + 20 -- ASDF 4 + 5
 f = f x]
   rfv = Peaches::ReferenceCheckingVisitor.new
   begin
-    print "Expecting exception: "
     rfv.check_references(program)
+    raise "#{program}\nFailed to trigger an exception"
   rescue Peaches::PeachesBindingError => pbe
-    print "Caught exception: #{pbe}"
   end
 
-  pp parser.program.parse! "z = if y > 10 && 1 /= 2 then x else (f (y) z)"
+  parser.program.parse! "z = if y > 10 && 1 /= 2 then x else (f (y) z)"
 
-  program = parser.program.parse!  %Q[x = 4
+  parser.program.parse!  %Q[x = 4
 y = 10 * x + 20
 z = if y > 10 && 1 /= 2 then x else f + 4
 a = 3
 ]
-  pp program
 
-  input = %Q[z = f x
+  parser.program.parse! %Q[z = f x
 a = 3]
-  puts input
-  pp parser.program.parse! input
-
 
   program = parser.program.parse!  %Q[f x = x + 4
 y = f 5
 ]
-  pp program.evaluate.lookup("y")
+  assert_literal.call(program, "y", 9)
 
   program = parser.program.parse!  %Q[
 f x = x + 4
 y = f 5
 ]
-  pp program.evaluate.lookup("y")
-
+  assert_literal.call(program, "y", 9)
 
   program = parser.program.parse!  %Q[
 not x = if x == 0 then 1 else 0
 y = not 1
 ]
-  pp program.evaluate.lookup("y")
+  assert_literal.call(program, "y", 0)
 
+  program = parser.program.parse!  %Q[
+f g a b = g (a) b
+max x y = if x < y then y else x
+y = f (max) 4 5
+]
+  assert_literal.call(program, "y", 5)
 
   program = parser.program.parse!  %Q[
 not x = if x == True then False else True
 y = not True
 ]
-  pp program.evaluate.lookup("y")
+  assert_literal.call(program, "y", false)
 
   program = parser.program.parse!  "y = 4 - 3 + 3 - 3*4 + 8"
-  pp program
-  pp program.evaluate.lookup("y")
+  assert_literal.call(program, "y", 0)
+
+  puts "All tests were successful"
 end
