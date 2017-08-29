@@ -49,6 +49,9 @@ end
 class PeachesInternalError < PeachesError
 end
 
+class PeachesRecursionError < PeachesError
+end
+
 class Context
   # The difference between a Context and a Map is that a Context lets you have
   # multiple ordered occurrences of the same key and you can query for the nth
@@ -59,11 +62,18 @@ class Context
       @level = level
       @val   = val
     end
+
+    def inspect
+      "#{@val}@#{@level}"
+    end
   end
 
+  DEBUG = false
+
   def initialize()
-    @level    = 0
-    @bindings = {}
+    @level     = 0
+    @bindings  = {}
+    @callstack = []
   end
 
   def enter_scope()
@@ -85,6 +95,8 @@ class Context
       raise PeachesBindingError.new "Variable #{label} already bound at same scope #{level}"
     end
     list << entry
+
+    puts self.to_s() +  "\n" if DEBUG
   end
 
   def lookup(label, index = :last)
@@ -102,6 +114,33 @@ class Context
       raise PeachesBindingError.new "No binding for variable #{label} on level #{level}"
     end
     entry.val
+  end
+
+  def to_s()
+    s = "Context(level = #{@level})\n"
+    @bindings.each do |key, val|
+      s += "  #{key} = #{val}\n"
+    end
+    s
+  end
+
+  def push_call(call, decl)
+    @active_decls ||= {}
+
+    if @active_decls[decl]
+      throw PeachesRecursionError.new "Recursion detected: #{decl} already contained in callstack"
+    end
+
+    @callstack.push([call, decl])
+    @active_decls[decl] = true;
+    enter_scope
+  end
+
+  def pop_call()
+    leave_scope
+    raise "pop_call: Callstack is empty" if @callstack.empty?
+    _, decl = @callstack.pop()
+    @active_decls.delete(decl);
   end
 end
 
@@ -130,6 +169,7 @@ class ASTNode
   end
 
   def visit(visitor)
+    visitor.visit_pre self
     visitor.visit self
   end
 end # class ASTNode
@@ -163,10 +203,27 @@ class ASTDecl < ASTNode
   end
 
   def visit(visitor)
+    visitor.visit_pre self
+    @ident = @ident.visit(visitor)
+    @params.each_with_index do |p,i|
+      @params[i] = p.visit(visitor)
+    end
+    @expr = @expr.visit(visitor)
     visitor.visit self
-    @ident.visit visitor
-    @params.each {|p| p.visit(visitor)}
-    @expr.visit(visitor)
+  end
+
+  def curry(scopeupdates)
+    if scopeupdates.length > @params.length
+      raise "Too few parameters: cannot curry #{amount} of #{@params.length} parameters"
+    end
+    p = @params.take(scopeupdates.length)
+
+    p.each do |param|
+      raise "No mapping for param #{param}" unless scopeupdates[param]
+    end
+
+    e = ASTScope.new(scopeupdates, @expr)
+    self.new(@ident, @params.drop(scopeupdates.length), e)
   end
 end
 
@@ -193,11 +250,11 @@ class ASTProgram
   end
 
   def visit(visitor)
-    visitor.visit self
-    @decls.each do |d|
-      d.visit visitor
+    visitor.visit_pre self
+    @decls.each_with_index do |d, i|
+      @decls[i] = d.visit(visitor)
     end
-
+    visitor.visit self
   end
 end
 
@@ -218,6 +275,7 @@ class ASTLiteral < ASTNode
   end
 
   def visit(visitor)
+    visitor.visit_pre self
     visitor.visit self
   end
 end
@@ -269,6 +327,39 @@ class ASTIdentifier < ASTNode
   end
 
   def visit(visitor)
+    visitor.visit_pre self
+    visitor.visit self
+  end
+end
+
+class ASTScope < ASTNode
+  attr_reader :bindings, :expr
+
+  def initialize(bindings, expr)
+    @bindings = bindings
+    @expr     = expr
+  end
+
+  def evaluate(context)
+    context.enter_scope
+
+    @bindings.each do |label,decl|
+      context.insert(label, decl)
+    end
+
+    context.leave_scope
+  end
+
+  def to_s
+    "let (#{@bindings.map {|b| b.to_s}.join(',')}) in (#{@expr})"
+  end
+
+  def visit(visitor)
+    visitor.visit_pre self
+    @bindings.each do |k, v|
+      @bindings[k] = v.visit(visitor)
+    end
+    @expr = @expr.visit(visitor)
     visitor.visit self
   end
 end
@@ -276,41 +367,88 @@ end
 class ASTCall < ASTNode
   attr_reader :label, :args
 
-  def initialize(label, args = [])
-    @label = label
-    @args = args
+  DEBUG = false
+
+  def initialize(label, args = [], decl = nil)
+    @label   = label
+    @args    = args
+    @decl    = decl
   end
 
   def evaluate(context)
-    decl = context.lookup(@label)
+    puts "#{self.class.name}#Call: Evaluating #{self}: Args: #{@args}" if DEBUG
 
-    if decl.params.length != @args.length
-      raise PeachesArgumentError.new "Argument number mismatch for #{self}"
+    @decl ||= context.lookup(@label)
+
+    # Error handling
+    if @decl.params.length < args.length
+      raise PeachesArgumentError.new "Argument number mismatch for #{self}:" +
+        "expected #{@decl.params.length}, got #{args.length}"
     end
 
-    context.enter_scope
-    @args.each_with_index do |argument,idx|
+    # Ok, we are all setup, now evaluate
+    scopeupdates = {}
+    args.each_with_index do |argument,idx|
       expr = argument.evaluate(context)
-      paramdecl = ASTDecl.new(decl.params[idx], [], expr)
-      context.insert(decl.params[idx].label, paramdecl)
+
+      if expr.respond_to?(:decl)
+        paramdecl = ASTDecl.new(@decl.params[idx], expr.decl.params, expr.decl.expr)
+      else
+        paramdecl = ASTDecl.new(@decl.params[idx], [], expr)
+      end
+      scopeupdates[@decl.params[idx].label] = paramdecl
     end
 
-    res = decl.expr.evaluate(context)
+    # Check if all necessary arguments were passed
+    if @decl.params.length > args.length
+      # Nope, we still need some curry
+      puts "Currying call #{self}: Too few arguments: expecting #{@decl.params}, found #{@args}" if DEBUG
+      if args.length > 0
+        # Adopt curry: Take args, return decl pointing to ASTScopeupdate -> Bodyexpr
+        #              This eliminates scopeupdates
+        # TODO
+        newdecl = @decl.curry(scopeupdates)
+        return ASTCall.new(@label, [], newdecl)
+      else
+        return self
+      end
+    end
 
-    context.leave_scope
+    puts "#{self.class.name}#Call: Finished argument-expansion #{self}: Args: #{@args}" if DEBUG
 
+    # Push ourself on the callstack. This errors if @decl is already contained in
+    # the callstack, breaking potential recursions
+    # Also opens a new scope
+    puts "#{self.class.name}#Pushcall: #{self} with decl #{@decl}" if DEBUG
+    context.push_call(self, @decl);
+    scopeupdates.each do |label, decl|
+      context.insert(label, decl)
+    end
+
+    puts "#{self.class.name}##{self}: \\#{scopeupdates} -> #{@decl.expr}" if DEBUG
+    res = @decl.expr.evaluate(context)
+
+    # Cleanup callstack and leave current scope
+    context.pop_call
+
+    puts "#{self.class.name}#Call: Evaluated #{self}: Args: #{@args} Result: #{res}" if DEBUG
     res
   end
 
   def to_s
-    "(#{@label} #{@args.map {|a| a.to_s}.join(' ')})"
+    "#{self.class.name}#(#{@label} #{@args.map {|a| a.to_s}.join(' ')})"
   end
 
   def visit(visitor)
-    visitor.visit self
-    @args.each do |expr|
-      expr.visit visitor
+    visitor.visit_pre self
+    @args.each_with_index do |expr, i|
+      @args[i] = expr.visit(visitor)
     end
+    visitor.visit self
+  end
+
+  def decl
+    @decl || context.lookup(@label)
   end
 end
 
@@ -368,10 +506,11 @@ class ASTIf < ASTExpr
   end
 
   def visit(visitor)
+    visitor.visit_pre self
+    @cond      = @cond.visit(visitor)
+    @if_expr   = @if_expr.visit(visitor)
+    @else_expr = @else_expr.visit(visitor)
     visitor.visit self
-    @cond.visit visitor
-    @if_expr.visit visitor
-    @else_expr.visit visitor
   end
 end
 
@@ -407,9 +546,10 @@ class ASTArithmeticOp < ASTExpr
   end
 
   def visit(visitor)
+    visitor.visit_pre self
+    @lhs = @lhs.visit(visitor)
+    @rhs = @rhs.visit(visitor)
     visitor.visit self
-    @lhs.visit visitor
-    @rhs.visit visitor
   end
 end
 
@@ -433,9 +573,10 @@ class ASTLogicalOp < ASTExpr
   end
 
   def visit(visitor)
+    visitor.visit_pre self
+    @lhs = @lhs.visit(visitor)
+    @rhs = @rhs.visit(visitor)
     visitor.visit self
-    @lhs.visit visitor
-    @rhs.visit visitor
   end
 end
 
@@ -470,14 +611,20 @@ class ASTCompareOp < ASTExpr
   end
 
   def visit(visitor)
+    visitor.visit_pre self
+    @lhs = @lhs.visit(visitor)
+    @rhs = @rhs.visit(visitor)
     visitor.visit self
-    @lhs.visit visitor
-    @rhs.visit visitor
   end
 end
 
 class ASTVisitor
   def visit(node)
+    node
+  end
+
+  def visit_pre(node)
+    node
   end
 end
 
@@ -503,7 +650,7 @@ class ReferenceCheckingVisitor < ASTVisitor
     end
   end
 
-  def visit(node)
+  def visit_pre(node)
     # TODO: if we ever support a let ... in style construct, enter context and declare locals here
 
     begin
@@ -513,6 +660,8 @@ class ReferenceCheckingVisitor < ASTVisitor
     rescue PeachesBindingError
       raise PeachesBindingError.new "Unbound variable #{node.label} on right side of decl #{@current}"
     end
+
+    node
   end
 end
 
