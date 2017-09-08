@@ -97,6 +97,7 @@ module PML
       set_yaml_repr(data)
     end
     def [](index)
+      index = Integer(index) if index.instance_of? String
       @list[index]
     end
   end
@@ -702,7 +703,7 @@ module PML
 
     # XXX: LLVM specific/arch specific
     def Block.get_label(fname,bname)
-      ".LBB#{fname}_#{bname}"
+      "LBB#{fname}_#{bname}"
     end
 
     # location hint (e.g. file:line)
