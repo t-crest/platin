@@ -349,7 +349,7 @@ module PML
         assert("guard operate on bitcode level") { level == 'bitcode'}
         fun = ppref.function
 
-        # When the guardexpression is false, than this path is infeasible
+        # When the guardexpression is false, then this path is infeasible
         guardexpr = Peaches::evaluate_expression(model.context, expr, :boolean)
         if ! guardexpr then
           #FlowFact.block_frequency(scoperef, blockref, freq, attrs)
