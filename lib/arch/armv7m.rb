@@ -301,7 +301,7 @@ PIPELINE_REFILL=3
     when 'PSEUDO_LOOPBOUND'
       0
     # page 31:
-    when 't2MUL', 't2MLA', 't2MLS', 't2SMULL', 't2UMULL', 't2SMLAL', 't2UMLAL'
+    when 't2MUL', 't2SMMUL', 't2MLA', 't2MLS', 't2SMULL', 't2UMULL', 't2SMMLA', 't2SMLAL', 't2UMLAL'
       1
     when 't2ADDrs', 't2ADDri', 't2ADDrr', 't2ADCrs', 't2ADCri', 't2ADCrr', 't2ADDri12'
       1
