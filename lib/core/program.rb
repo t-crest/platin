@@ -1231,7 +1231,7 @@ private
 
   # Class representing PML GCFG Node
   class GCFGNode < PMLObject
-    attr_reader :abb, :function, :cost, :frequency_variable, :microstructure, :loops
+    attr_reader :abb, :function, :cost, :frequency_variable, :microstructure, :loops, :devices
     attr_accessor :is_source, :is_sink
     def initialize(functions, abbs, data)
       set_yaml_repr(data)
@@ -1259,6 +1259,8 @@ private
       @predecessors = {:local => [], :global => []}
 
       @loops = data['loops'] || []
+
+      @devices = data['devices'] || []
     end
 
     def connect(nodes)
@@ -1335,6 +1337,9 @@ private
       # Find the Entry Edge into the system
       @entry_nodes = data['entry-nodes'].map {|idx| @nodes[idx] }
       @exit_nodes = data['exit-nodes'].map {|idx| @nodes[idx] }
+
+      @device_list = data['devices']
+
       # Mark them as source/sink
       @entry_nodes.each {|n| n.is_source = true }
       @exit_nodes.each { |n| n.is_sink = true}
@@ -1419,6 +1424,21 @@ private
     end
   end
 
+  # List of used devices
+  class DeviceList < PMLList
+    extend PMLListGen
+    pml_name_index_list(:device, [],[])
+
+    # customized constructor
+    def initialize(data, pml)
+      binding.pry
+      @list = data.map { |g|
+        GCFG.new(g, pml)
+      }
+      set_yaml_repr(data)
+      build_index
+    end
+  end
 
 
 end # module PML
