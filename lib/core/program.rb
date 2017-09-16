@@ -1324,7 +1324,7 @@ private
   # Global Control Flow Graph wrapper
   class GCFG < PMLObject
     include QNameObject
-    attr_reader :name, :level, :blocks, :nodes, :entry_nodes, :exit_nodes
+    attr_reader :name, :level, :blocks, :nodes, :entry_nodes, :exit_nodes, :device_list
 
     def initialize(data, pml)
       set_yaml_repr(data)
