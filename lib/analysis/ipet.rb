@@ -138,15 +138,16 @@ end
 # - call edges
 # - edges between relation graph nodes
 class IPETEdge
-  attr_reader :qname,:source,:target, :level
+  attr_reader :qname,:source,:target, :level, :power_state
   attr_writer :static_context
-  def initialize(edge_source, edge_target, level)
+  def initialize(edge_source, edge_target, level, power_state = nil)
     @source,@target,@level = edge_source, edge_target, level.to_sym
+    @power_state = nil
     arrow = {:bitcode => "~>", :machinecode => "->", :gcfg=>"+>"}[@level]
     fname, tname = [@source, @target].map {|n|
       n.kind_of?(Symbol) ? n.to_s : n.qname
     }
-    @qname = "#{fname}#{arrow}#{tname}"
+    @qname = "#{fname}#{arrow}#{tname}#{power_state}"
     # The context is a object that has a static_context attribute (e.g., an Atomic Basic Block)
     @static_context = nil
   end
