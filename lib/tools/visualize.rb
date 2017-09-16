@@ -561,16 +561,7 @@ class ILPVisualisation < Visualizer
     }
   end
 
-  def visualize(title, opts = {})
-    begin
-      require 'graphviz'
-    rescue LoadError => e
-      STDERR.puts "Failed to load graphviz, disabling ILPVisualisation"
-      return nil
-    end
-
-    assert("Graph is already drawn") {@graph == nil}
-
+  def generate_graph(opts)
     @graph = GraphViz.digraph(:ILP)
 
     ilp.variables.each do |v|
@@ -589,7 +580,30 @@ class ILPVisualisation < Visualizer
       annotate_freqs(opts[:freqmap])
     end
 
-    @graph.output(:svg => String)
+    @graph
+  end
+
+  def output(opts)
+    format = opts[:format]
+    format ||= :svg
+
+    assert("Graph has to be drawn first drawn") {!@graph.nil?}
+    @graph.output({format => String})
+  end
+
+  def visualize(title, opts = {})
+    begin
+      require 'graphviz'
+    rescue LoadError => e
+      STDERR.puts "Failed to load graphviz, disabling ILPVisualisation"
+      return nil
+    end
+
+    if @graph.nil?
+      generate_graph(opts)
+    end
+
+    output(opts)
   end
 end
 

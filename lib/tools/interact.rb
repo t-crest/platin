@@ -409,6 +409,10 @@ class VisualizeCommand < Command
           'content_type' => 'image/svg+xml',
           'data' => visualisation[:ilp][:svg],
         },
+        'ilp.dot' => {
+          'content_type' => 'text/vnd.graphviz',
+          'data' => visualisation[:ilp][:dot],
+        },
         'constraints.json' => {
           'content_type' => 'application/json',
           'data' => JSON.generate(visualisation[:ilp][:constraints]),
