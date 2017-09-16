@@ -7,6 +7,9 @@ require 'core/utils'
 require 'core/pml'
 require 'analysis/ilp'
 require 'set'
+
+require 'pry'
+
 module PML
 
 # This exception is raised if indirect calls could not be resolved
@@ -352,6 +355,8 @@ class IPETModel
   end
 
   def block_frequency(block, factor=1)
+    # if end of ABB => override exists => cut mbb successors
+    # this means that the outgoing frequency is zero (factor: +1/-1 => 0)
     if @block_frequency_override.has_key?(block)
       return @block_frequency_override[block].map {|e| [e, factor] }
     end
@@ -454,6 +459,7 @@ class GCFGIPETModel
                      end
       if not builder.options.ignore_instruction_timing
         mc_edge = IPETEdge.new(source_block, target_block, :machinecode)
+        # TODO WCEC: warn ("\e[31mpower multiplication missing\e[0m")
         cost += cost_block.call(mc_edge)
       end
     end
@@ -472,7 +478,9 @@ class GCFGIPETModel
   def add_loop_contraints(gcfg)
     @loops.each {|loop_idx, data|
       # p loop_idx, data['entries'], data['backedges']
+      # for each loop in the nodes, set a sufficiently large upper bound
       lhs = data['entries'].map {|e| [e, -10000 / data['entries'].length]}
+      # / this is unexplainable, but it works with gurobi/lp_solve
       rhs = data['backedges'].map {|e| [e, 1]}
       @ilp.add_constraint(rhs+lhs, "less-equal", 0,
                                   "gcfg_loop_#{loop_idx}", :structural)
@@ -550,13 +558,18 @@ class GCFGIPETModel
 
   def add_abb_contents(abb, cost_block)
     edges = Hash.new { |hsh, key| hsh[key]={:in=>[], :out=>[]} }
+    
+    # the following call creates new IPETEdges
     each_intra_abb_edge(abb) { |ipet_edge|
+      # TODO WCEC: foreach_power_state
       @ilp.add_variable(ipet_edge)
       # Edges to the ABB-Exit are not assigned a cost, since the cost is added on the ABB/State level:
       cost = 0
+      # nobody really knows why we needed the option ignore_instruction_timing
       if not builder.options.ignore_instruction_timing and ipet_edge.target != :exit
-	cost = cost_block.call(ipet_edge)
-	@ilp.add_cost(ipet_edge, cost)
+        # TODO warn ("\e[31mpower multiplication missing\e[0m")
+        cost = cost_block.call(ipet_edge)
+        @ilp.add_cost(ipet_edge, cost)
       end
       debug(builder.options, :ipet) {
         "Intra-ABB Edge: #{ipet_edge} = #{cost}"
@@ -566,6 +579,7 @@ class GCFGIPETModel
       edges[ipet_edge.target][:in].push(ipet_edge)
       # Set the static context
       ipet_edge.static_context = abb
+      # TODO: end foreach_power_state
     }
 
     # The first block is activated as often, as the ABB is left
@@ -739,7 +753,7 @@ class IPETBuilder
   end
   # Build Fragment
   def build_fragment(entries, exits, blocks, flow_facts, cost_function)
-    @cost_function = cost_function
+    @cost_function = cost_function # == edge_cost
     entries = entries.dup
     exits = exits.dup
     incoming = {}
@@ -891,8 +905,9 @@ class IPETBuilder
     @mc_model.each_edge(mf_function) do |ipet_edge|
       @ilp.add_variable(ipet_edge, :machinecode)
       if not @options.ignore_instruction_timing
-	cost = cost_block.call(ipet_edge)
-	@ilp.add_cost(ipet_edge, cost)
+        # TODO: warn ("\e[31mpower multiplication missing (#{__method__})\e[0m")
+        cost = cost_block.call(ipet_edge)
+        @ilp.add_cost(ipet_edge, cost)
       end
       ipet_edge.static_context = mf_function
     end
@@ -952,6 +967,8 @@ class IPETBuilder
 
   # Build basic IPET Structure, when a GCFG is present
   def build_gcfg(gcfg, flowfacts, opts={ :mbb_variables =>  false }, &cost_block)
+    # TODO WCEC: we ignore modelling of function calls for now! (duplication discriminating power states necessary)
+    
     assert("IPETBuilder#build called twice") { ! @entry }
     @call_edges = []
     @mf_function_callers = Hash.new {|hsh, key| hsh[key] = [] }
@@ -963,6 +980,16 @@ class IPETBuilder
     # For each function and each ABB we collect the nodes that activate it.
     abb_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
     function_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
+
+    gcfg.nodes.each do |node|
+      if node.devices != []
+        info("\e[32mGot device #{node.devices} in node #{node}\e[0m")
+      end
+    end
+    
+    gcfg.device_list.each_with_index do |d, idx|
+      info("\e[32mDevice [#{idx}] #{d}\e[0m")
+    end
 
     # 1. Pass over all states to create the super structure
     #    1.1 Add frequency variables
@@ -992,6 +1019,8 @@ class IPETBuilder
       }
 
       # 1.3 Collect activated artifacts
+      # TODO: WCEC abb_to_nodes { (ABB0,0) => [S0, S1], (ABB1, 1) => [S2]}
+      # tuple of abb and power state to stg-states
       abb_to_nodes[node.abb].push(node) if node.abb
       function_to_nodes[node.function].push(node) if node.function
     end
@@ -1027,11 +1056,15 @@ class IPETBuilder
       toplevel_abb_count += 1
 
       # Add blocks within the ABB
+      # TODO WCEC: give add_abb_contents the STG nodes
+      # TODO WCEC: implement duplication for each power state
       basic_blocks, abb_freq = @gcfg_model.add_abb_contents(abb, cost_block)
 
       # ABB Freq is the list of edges that have ABB.entry_node as source
       # If this node has an ABB attached, the block frequency of the
       region = abb.get_region(:dst)
+      # abb_freq: the number of edges (addition of states in list) how often the ABB is visited
+      # override: cut last mbb in abb (avoid flow to successors)
       @mc_model.block_frequency_override[region.entry_node] = abb_freq
       if region.entry_node != region.exit_node
         @mc_model.block_frequency_override[region.exit_node] = abb_freq
@@ -1040,12 +1073,16 @@ class IPETBuilder
 
       gcfg_mfs.add(abb.function)
 
+      # TODO WCEC: functions must be also supported in WCEC (function calls in OS)
       # 3.2 What functions are called from this ABB?
       region.nodes.each { |bb|
         gcfg_mbbs.add(bb)
         bb.callsites.each { |cs|
           next if @mc_model.infeasible?(cs.block)
           @mc_model.calltargets(cs).each { |f|
+
+            warn("\e[31mmachine functions not supported\e[0m") { false }
+
             assert("calltargets(cs) is nil") { ! f.nil? }
             full_mfs += get_functions_reachable_from_function(f)
           }
@@ -1053,6 +1090,8 @@ class IPETBuilder
       }
     }
     # 3.3 Collect functions called from GCFG nodes
+    warn ("\e[31mfunctions not supported\e[0m") { function_to_nodes.length == 0 }
+    
     function_to_nodes.each { |mf, nodes|
       microstructure = nodes.map { |x| x.microstructure }
       next if microstructure.all?
@@ -1067,6 +1106,7 @@ class IPETBuilder
     }
 
     # 3.4 Add functions
+    warn ("\e[31mfunction calls not supported\e[0m") { function_to_nodes.length == 0 }
     full_mfs.each do |mf|
       basic_blocks = add_function_with_blocks(mf, cost_block)
       debug(@options, :ipet_global) { "Added contents: #{mf} (#{basic_blocks} blocks)" }
@@ -1081,9 +1121,13 @@ class IPETBuilder
     abb_to_nodes.each {|abb, nodes|
       mc_entry_block = abb.get_region(:dst).entry_node
       lhs = @mc_model.block_frequency(mc_entry_block)
+      # the folowing creates SOSs:
       rhs = @gcfg_model.flow_into_abb(abb, nodes)
+      
       @ilp.add_variable(abb, :gcfg)
       @gcfg_model.assert_equal(lhs, rhs, "abb_influx_#{abb.qname}", :gcfg)
+      
+      # set abb frequency to 1
       @gcfg_model.assert_equal(lhs, [[abb, 1]], "abb_#{abb.qname}", :gcfg)
       if abb.frequency_variable
         @ilp.add_variable(abb.frequency_variable, :gcfg)
@@ -1093,6 +1137,7 @@ class IPETBuilder
       end
     }
     #    4.2 to function frequencies
+    # (happens in our case for IRQs: function entry is ABB entry)
     function_to_nodes.each {|mf, nodes|
       mc_entry_block = mf.entry_block
       lhs = @mc_model.block_frequency(mc_entry_block)
