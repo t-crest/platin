@@ -704,7 +704,7 @@ class Parser
   IF         = word('if').expect 'keyword_if'
   THEN       = word('then').expect 'keyword_then'
   ELSE       = word('else').expect 'keyword_else'
-  CMP_OP     = symbol_(/(\<=|\<|\>|\>=|==|\/=)/).fail 'compare operator'
+  CMP_OP     = symbol_(/(\<=|\<|\>=|\>|==|\/=)/).fail 'compare operator'
   LOGIC_OP   = symbol_(/(&&|\|\|)/).fail 'logical operator'
   MULT_OP    = symbol_(/[*\/%]/).fail 'multiplication operator'
   ADD_OP     = symbol_(/[\+]/).fail 'addition operator'
@@ -927,6 +927,7 @@ if __FILE__ == $PROGRAM_NAME
   parser.cond_expr.eof.parse! ("4 /= 5 && 32 - 1 /= 42")
 
   parser.expr.eof.parse! ("if 4 /= 5 then 42 else 21")
+  parser.expr.eof.parse! ("BUFSIZE >= 10")
 
   parser.decl.eof.parse! ("x = if 4 /= 5 then 42 else 21")
   parser.decl.eof.parse! ("f x y = if 4 /= 5 then 42 else 21")
