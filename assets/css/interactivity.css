@@ -1,0 +1,98 @@
+/* Positioning of svg and constraints
+ * +-------------------+
+ * |                  ^|
+ * |                  "|
+ * |        svg       "|
+ * |                  "|
+ * |                  "|
+ * |                  v|
+ * +-------------------+
+ * |   constraints     |
+ * +-------------------+
+ */
+html, body {
+  height: 100%;
+}
+
+.viewer {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1 1 auto;
+  position: relative;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+#constraints {
+  flex: 0 0 auto;
+  min-height: 1.5em;
+}
+
+/* Colour and styling */
+body {
+  margin: 0px;
+}
+#constraintlist {
+  list-style-type: lower-greek;
+}
+#constraintlist li {
+  padding-left: 0.5em;
+}
+
+/* allconstraints button */#
+.viewer {
+  position: relative;
+}
+#constraints {
+  position: relative;
+}
+#allconstraintsbtn {
+  position: absolute;
+  top:      3px;
+  right:    3px;
+}
+
+/* Styling the constraints window */
+
+/* Based on http://clrs.cc/
+ *
+ * Navy      #001f3f
+ * Blue      #0074D9
+ * Aqua      #7FDBFF
+ * TEAL      #39CCCC
+ * OLIVE     #3D9970
+ * GREEN     #2ECC40
+ * LIME      #01FF70
+ * YELLOW    #FFDC00
+ * ORANGE    #FF851B
+ * RED       #FF4136
+ * MAROON    #85144b
+ * FUCHSIA   #F012BE
+ * PURPLE    #B10DC9
+ * BLACK     #111111
+ * GRAY      #AAAAAA
+ * SILVER    #DDDDDD
+ * WHITE     #FFFFFF
+ */
+#constraints {
+  background-color: #001f3f; /* navy */
+  color:            #dddddd; /* silver */
+  font-family:      sans-serif;
+  border-top:       3px #aaaaaa /* gray */ solid;
+}
+
+#constraints li {
+  line-height: 150%;
+}
+
+.formulavariable {
+  border-radius: 8px;
+  border: 1px solid;
+  padding: 2px;
+  font-family: monospace;
+  color: black;
+}

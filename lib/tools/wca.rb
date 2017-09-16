@@ -53,6 +53,10 @@ class WcaTool
       opts.options.disable_ica = true
       opts.options.wca_count_instructions = true
     }
+    # ILP visualization
+    opts.on("--wca-visualize-ilp", "visualize the ILP (.svg and .dot)") { |v|
+      opts.options.visualize_ilp = v
+    }
     opts.add_check { |options|
       options.wca_cache_regions = true if options.wca_cache_regions.nil?
       # TODO change this default to 'scope' once the scope analysis works properly

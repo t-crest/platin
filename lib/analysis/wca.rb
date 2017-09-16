@@ -11,6 +11,8 @@ require 'analysis/vcfg'
 require 'ext/lpsolve'
 require 'ext/gurobi'
 
+require 'tools/visualize-ilp'
+
 module PML
 
 class WCA
@@ -174,6 +176,10 @@ class WCA
     rescue Exception => ex
       warn("WCA: ILP failed: #{ex}") unless @options.disable_ipet_diagnosis
       cycles,freqs = -1, {}
+    end
+    
+    if @options.visualize_ilp
+      run_visualization_server(builder.ilp, @options, freqs)
     end
 
     # report result
