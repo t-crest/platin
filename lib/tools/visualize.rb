@@ -434,7 +434,7 @@ class ILPVisualisation < Visualizer
       l << '<I>loopheader</I>'
     end
     str = l.join("<BR/>");
-    return "unknown" if str.empty?
+    return var.to_s if str.empty?
     return '<' + str + '>'
   end
 
