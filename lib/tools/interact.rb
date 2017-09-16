@@ -1226,6 +1226,8 @@ EOF
   # Setup the execution context
   REPLContext.instance.pml                = PMLDoc.from_files(options.input, options)
   REPLContext.instance.options            = options
+  # Cheating: otherwise we cannot set a nonexistant modelfile
+  REPLContext.instance.options.modelfile  ||= ""
   # For diff command
   REPLContext.instance.initial_modelfacts = REPLContext.instance.pml.modelfacts.to_set
 
