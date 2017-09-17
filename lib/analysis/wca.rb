@@ -66,20 +66,8 @@ class WCA
           end
         end
       if @options.wca_count_instructions
-        if @options.wcec
-          # binding.pry
-          if edge.power_state == nil
-            # binding.pry
-            warn ("\e[31mpower multiplication missing for #{edge}\e[0m")
-            edge.power_state = 1
-          end
-          # assert("invalid power state") {edge.power_state != nil}
-          path_wcet = ilist.length * edge.power_state
-          edge_wcet = 0
-        else
-          path_wcet = ilist.length
-          edge_wcet = 0
-        end
+        path_wcet = ilist.length
+        edge_wcet = 0
       else
         path_wcet = @pml.arch.path_wcet(ilist)
         edge_wcet = @pml.arch.edge_wcet(ilist,branch_index,edge)
@@ -166,30 +154,85 @@ class WCA
                                      true)
 
     # Build IPET using costs from @pml.arch
-    builder.build_gcfg(gcfg, flowfacts) do |edge|
-      edge_cost(edge)
+    local_builder = nil
+    if @options.wcec
+      # We calculate WCETs for each ABB and every function that is
+      # directly called
+      wcet = Hash.new
+      gcfg.nodes.each do |node|
+        next if node.abb and wcet.member?(node.abb)
+        next if node.function and wcet.member?(node.function)
+
+        local_ilp = GurobiILP.new(@options) if @options.use_gurobi
+        local_ilp = LpSolveILP.new(@options) unless local_ilp
+        local_builder = IPETBuilder.new(@pml, @options, local_ilp)
+
+        if node.abb
+          block = node.abb.to_pml.dup
+          block['index'] = 0
+          fragment = GCFG.new({'level'=>'bitcode',
+                               'name'=> node.abb.to_s,
+                               'entry-nodes'=>[0],
+                               'exit-nodes'=>[0],
+                               'nodes'=> [{'index'=>0,  'abb'=>0}],
+                               'blocks'=> [block]},
+                              @pml)
+        else
+          assert("Fuck off") {false}
+        end
+
+        local_builder.build_gcfg(fragment, flowfacts) do |edge|
+          edge_cost(edge)
+        end
+
+        cycles, freqs = local_ilp.solve_max
+        p [node.abb, cycles]
+
+        wcet[node.abb || node.function] = cycles
+      end
+
+      builder.build_wcec_analysis(gcfg, wcet, flowfacts)
+
+      # Solve ILP
+      begin
+        cycles, freqs = builder.ilp.solve_max
+      rescue Exception => ex
+        warn("WCA: ILP failed: #{ex}") unless @options.disable_ipet_diagnosis
+        cycles,freqs = -1, {}
+      end
+
+      report = TimingEntry.new(machine_entry, cycles, nil,
+                               'level' => 'machinecode',
+                               'origin' => @options.timing_output || 'platin')
+
+      return report
+    else
+      builder.build_gcfg(gcfg, flowfacts) do |edge|
+        edge_cost(edge)
+      end
+
+
+      # run cache analyses
+      # FIXME
+      ca = CacheAnalysis.new(builder.refinement['machinecode'], @pml, @options)
+      #ca.analyze(entry['machinecode'], builder)
+
+      # END: remove me soon
+
+      statistics("WCA",
+                 "flowfacts" => flowfacts.length,
+                 "ipet variables" => builder.ilp.num_variables,
+                 "ipet constraints" => builder.ilp.constraints.length) if @options.stats
+
+      # Solve ILP
+      begin
+        cycles, freqs = builder.ilp.solve_max
+      rescue Exception => ex
+        warn("WCA: ILP failed: #{ex}") unless @options.disable_ipet_diagnosis
+        cycles,freqs = -1, {}
+      end
     end
 
-    # run cache analyses
-    # FIXME
-    ca = CacheAnalysis.new(builder.refinement['machinecode'], @pml, @options)
-    #ca.analyze(entry['machinecode'], builder)
-
-    # END: remove me soon
-
-    statistics("WCA",
-               "flowfacts" => flowfacts.length,
-               "ipet variables" => builder.ilp.num_variables,
-               "ipet constraints" => builder.ilp.constraints.length) if @options.stats
-
-    # Solve ILP
-    begin
-      cycles, freqs = builder.ilp.solve_max
-    rescue Exception => ex
-      warn("WCA: ILP failed: #{ex}") unless @options.disable_ipet_diagnosis
-      cycles,freqs = -1, {}
-    end
-    
     if @options.visualize_ilp
       run_visualization_server(builder.ilp, @options, freqs)
     end

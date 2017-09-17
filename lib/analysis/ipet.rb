@@ -461,11 +461,6 @@ class GCFGIPETModel
                      end
       if not builder.options.ignore_instruction_timing
         mc_edge = IPETEdge.new(source_block, target_block, :machinecode)
-        # TODO WCEC: warn ("\e[31mpower multiplication missing\e[0m")
-        # binding.pry
-        # power = builder.abb_to_power_states[src.abb][0]
-        mc_edge.power_state = 0
-
         cost += cost_block.call(mc_edge)
       end
     end
@@ -570,24 +565,6 @@ class GCFGIPETModel
 
       # the following call yields new IPETEdges
       each_intra_abb_edge(abb) do |ipet_edge|
-
-        if ipet_edge.power_state != nil
-          warn("Cost already assigned for #{ipet_edge}")
-          assert("Needs to be a :machinecode edge") {ipet_edge.level == :machinecode}
-        else
-          devices = abb_to_power_states[abb]
-          # find the maximum power level
-          max_power = 0
-          devices.each_with_index do | d, idx|
-            dev = gcfg.device_list[idx]
-            pwr = dev["energy_stay_on"].to_i
-            # larger power?
-            max_power = pwr if pwr > max_power
-          end
-          # assign the power level to the IPETEdge
-          ipet_edge.power_state = max_power
-        end
-
         # create a new variable in the overall ILP
         @ilp.add_variable(ipet_edge)
 
@@ -595,7 +572,6 @@ class GCFGIPETModel
         cost = 0
         # FIXME nobody really knows why we needed the option ignore_instruction_timing
         if not builder.options.ignore_instruction_timing and ipet_edge.target != :exit
-          # TODO warn ("\e[31mpower multiplication missing\e[0m")
           cost = cost_block.call(ipet_edge)
           @ilp.add_cost(ipet_edge, cost)
         end
@@ -628,7 +604,7 @@ class GCFGIPETModel
     [edges.keys.length, edges[abb.get_region(:dst).entry_node][:out]]
   end
 
-  def flow_into_abb(abb, nodes, factor = 1)
+  def flow_into_abb(abb, nodes, prefix="", factor = 1)
     incoming, irq_activations = [], []
 
     def find_resume_edges(current_node, stop_abb, result_set, visited)
@@ -680,9 +656,9 @@ class GCFGIPETModel
       [IPETEdge.new(pred, node, :gcfg), 1]
     }
 
-    var = "#{abb.to_s}_in_state".to_sym
+    var = "#{prefix}#{abb.to_s}_in_state".to_sym
     @ilp.add_variable(var)
-    assert_equal(incoming, [[var,1]], "abb_#{abb.qname}_in_state", :gcfg)
+    assert_equal(incoming, [[var,1]], "abb_#{prefix}#{abb.qname}_in_state", :gcfg)
 
     if irq_activations.length > 0
       assert("There should always be a resume, if we detected an activation") {
@@ -692,27 +668,27 @@ class GCFGIPETModel
         "Add IRQ Resume edges: #{abb.name} => irqs: #{irq_activations}, possible resumes: #{irq_resumes} "
       }
 
-      sos_name = "#{abb.to_s}"
+      sos_name = "#{prefix}#{abb.to_s}"
       neg = (sos_name + "_additional_resumes").to_sym
       pos = (sos_name + "_additional_interrupts").to_sym
       ilp.add_sos1(sos_name, [pos, neg])
 
       # pos - neg = (resumes - irqs) = 0;
-      irq_activations_var = "#{abb.to_s}_irq_activations".to_sym
+      irq_activations_var = "#{prefix}#{abb.to_s}_irq_activations".to_sym
       @ilp.add_variable(irq_activations_var)
-      assert_equal(irq_activations, [[irq_activations_var,1]], "abb_#{abb.qname}_in_state", :gcfg)
+      assert_equal(irq_activations, [[irq_activations_var,1]], "abb_#{prefix}#{abb.qname}_in_state", :gcfg)
 
-      irq_resumes_var = "#{abb.to_s}_irq_resumes".to_sym
+      irq_resumes_var = "#{prefix}#{abb.to_s}_irq_resumes".to_sym
       @ilp.add_variable(irq_resumes_var)
-      assert_equal(irq_resumes, [[irq_resumes_var,1]], "abb_#{abb.qname}_in_state", :gcfg)
+      assert_equal(irq_resumes, [[irq_resumes_var,1]], "abb_#{prefix}#{abb.qname}_in_state", :gcfg)
 
       assert_equal([[pos, 1], [neg, -1]],
                    [[irq_activations_var, 1], [irq_resumes_var, -1]],
-                   "resume_#{abb.qname}", :structural)
+                   "resume_#{prefix}#{abb.qname}", :structural)
       # Sometimes LP Solve is an unhappy beast
       if @ilp.kind_of?(LpSolveILP)
         ilp.add_constraint([[irq_resumes_var, 1], [pos, -1]], "less-equal", 0,
-                           "resume_ilp_happy_#{abb.qname}", :structural)
+                           "resume_ilp_happy_#{prefix}#{abb.qname}", :structural)
       end
       # 2. We substract all interrupt activations, BUT add all
       # interrupt activations, that have no corresponding resume, i.e.
@@ -939,7 +915,6 @@ class IPETBuilder
     @mc_model.each_edge(mf_function) do |ipet_edge|
       @ilp.add_variable(ipet_edge, :machinecode)
       if not @options.ignore_instruction_timing
-        # TODO: warn ("\e[31mpower multiplication missing (#{__method__})\e[0m")
         cost = cost_block.call(ipet_edge)
         @ilp.add_cost(ipet_edge, cost)
       end
@@ -1003,7 +978,7 @@ class IPETBuilder
   # (all states are present in this structure, nothing is grouped by next ABB)
   def build_gcfg(gcfg, flowfacts, opts={ :mbb_variables =>  false }, &cost_block)
     # TODO WCEC: we ignore modelling of function calls for now! (duplication discriminating power states necessary)
-   
+
     assert("IPETBuilder#build called twice") { ! @entry }
     @call_edges = []
     @mf_function_callers = Hash.new {|hsh, key| hsh[key] = [] }
@@ -1020,26 +995,26 @@ class IPETBuilder
 
     # we add a special baseline device state (nothing activated)
     # push baseline at end
-    baseline_index = gcfg.device_list.length
-    gcfg.device_list.push(
-      {"energy_stay_off" => 0,
-       "energy_stay_on"  => 0,
-       "energy_turn_off" => 0,
-       "energy_turn_on"  => 0,
-       "index"           => baseline_index,
-       "name"=>"Baseline"
-      }
-    )
+    #baseline_index = gcfg.device_list.length
+    #gcfg.device_list.push(
+    #  {"energy_stay_off" => 0,
+    #   "energy_stay_on"  => 0,
+    #   "energy_turn_off" => 0,
+    #   "energy_turn_on"  => 0,
+    #   "index"           => baseline_index,
+    #   "name"=>"Baseline"
+    #  }
+    #)
 
-    gcfg.nodes.each do |node|
-      if node.devices != []
-        info("\e[32mGot device #{node.devices} in node #{node}\e[0m")
-      end
-    end
-    
-    gcfg.device_list.each_with_index do |d, idx|
-      info("\e[32mDevice [#{idx}] #{d}\e[0m")
-    end
+    #gcfg.nodes.each do |node|
+    #  if node.devices != []
+    #    info("\e[32mGot device #{node.devices} in node #{node}\e[0m")
+    #  end
+    #end
+
+    #gcfg.device_list.each_with_index do |d, idx|
+    #  info("\e[32mDevice [#{idx}] #{d}\e[0m")
+    #end
 
     # 0. setup mapping abb_to_power_states
     gcfg.nodes.each do |node|
@@ -1145,9 +1120,6 @@ class IPETBuilder
         bb.callsites.each { |cs|
           next if @mc_model.infeasible?(cs.block)
           @mc_model.calltargets(cs).each { |f|
-
-            warn("\e[31mmachine functions not supported\e[0m") { false }
-
             assert("calltargets(cs) is nil") { ! f.nil? }
             full_mfs += get_functions_reachable_from_function(f)
           }
@@ -1155,8 +1127,6 @@ class IPETBuilder
       }
     }
     # 3.3 Collect functions called from GCFG nodes
-    warn ("\e[31mfunctions not supported\e[0m") { function_to_nodes.length == 0 }
-    
     function_to_nodes.each { |mf, nodes|
       microstructure = nodes.map { |x| x.microstructure }
       next if microstructure.all?
@@ -1171,7 +1141,6 @@ class IPETBuilder
     }
 
     # 3.4 Add functions
-    warn ("\e[31mfunction calls not supported\e[0m") { function_to_nodes.length == 0 }
     full_mfs.each do |mf|
       basic_blocks = add_function_with_blocks(mf, cost_block)
       debug(@options, :ipet_global) { "Added contents: #{mf} (#{basic_blocks} blocks)" }
@@ -1188,10 +1157,10 @@ class IPETBuilder
       lhs = @mc_model.block_frequency(mc_entry_block)
       # the folowing creates SOSs:
       rhs = @gcfg_model.flow_into_abb(abb, nodes)
-      
+
       @ilp.add_variable(abb, :gcfg)
       @gcfg_model.assert_equal(lhs, rhs, "abb_influx_#{abb.qname}", :gcfg)
-      
+
       # set abb frequency to 1
       @gcfg_model.assert_equal(lhs, [[abb, 1]], "abb_#{abb.qname}", :gcfg)
       if abb.frequency_variable
@@ -1228,6 +1197,146 @@ class IPETBuilder
     add_global_call_constraints()
 
     #    5.4 Global timimg variable
+    @gcfg_model.add_total_time_variable
+
+
+    flowfacts.each { |ff|
+      debug(@options, :ipet) { "adding flowfact #{ff}" }
+      add_flowfact(ff)
+    }
+
+    statistics("WCA",
+               "gcfg nodes" => gcfg.nodes.length,
+               "gcfg transitions" => gcfg.nodes.inject(0) {|acc, n| acc + n.successors.length},
+               "abbs toplevel" => toplevel_abb_count,
+               "abbs microstructure" => abb_to_nodes.length - toplevel_abb_count
+               ) if @options.stats
+
+
+    die("Bitcode contraints are not implemented yet") if @bc_model
+  end
+
+
+  # Build basic IPET Structure, for an GCFG an the WCET analysis
+  def build_wcec_analysis(gcfg, wcet, flowfacts)
+    assert("IPETBuilder#build called twice") { ! @entry }
+
+    # For each function and each ABB we collect the nodes that activate it.
+    abb_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
+    function_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
+
+    baseline_index = gcfg.device_list.length
+    gcfg.device_list.push(
+      {"energy_stay_off" => 1,
+       "energy_stay_on"  => 1,
+       "energy_turn_off" => 0,
+       "energy_turn_on"  => 0,
+       "index"           => baseline_index,
+       "name"=>"Baseline"
+      }
+    )
+    # 0. setup mapping abb_to_power_states
+    gcfg.nodes.each do |node|
+      node.devices.push(baseline_index)
+      abb_to_power_states[node.abb].push(node.devices)
+    end
+
+    # 1. Pass over all states to create the super structure
+    #    1.1 Add frequency variables
+    #    1.2 Add edge variables for the Node->Node structure
+    #    1.3 Collect activated artifacts
+    gcfg.nodes.each do |node|
+      # 1.1 the frequency_variable is necessary for flowfacts
+      # (to have a fully qualified name)
+      if node.frequency_variable
+        @ilp.add_variable(node.frequency_variable, :gcfg)
+      end
+
+      # 1.2 Every Super-structure edge has a variable
+      @gcfg_model.each_edge(node) { |ipet_edge, level|
+        @ilp.add_variable(ipet_edge, :gcfg)
+      }
+
+      # 1.3 Collect activated artifacts
+      abb_to_nodes[node.abb].push(node) if node.abb
+      function_to_nodes[node.function].push(node) if node.function
+    end
+
+    # 2. Connect the super structure connections
+    gcfg.nodes.each do |node|
+      @gcfg_model.add_node_constraint(node)
+    end
+
+    ## After all node constraints
+    # 2.1 Add entry and basic loop constraints
+    @gcfg_model.add_entry_constraint(gcfg)
+    @gcfg_model.add_loop_contraints(gcfg)
+
+    ##############################################
+    # All structures/objects/functions are in place
+    # 4. Connect the node frequencies to the underlying object
+    #    4.1 to ABB frequencies
+    #    4.2 to function frequencies
+
+    # Get the maximum power consumption per cycle for a given device list
+    def power_consumption(gcfg, device_list)
+      ret = 0
+      label = []
+      gcfg.device_list.each do |device|
+        if device_list.member?(device['index'])
+          ret += device['energy_stay_on']
+          label.push(device['name'])
+        else
+          ret += device['energy_stay_off']
+        end
+      end
+      [ret, label.sort.join(",")]
+    end
+
+
+    abb_to_nodes.each {|abb, nodes|
+      abb_lhs = []
+
+      abb_to_power_states[abb].each do |power_state|
+        per_cycle, label = power_consumption(gcfg, power_state)
+        power_state_nodes = nodes.select { |n| n.devices == power_state }
+        abb_in_power_state = [abb, label]
+        @ilp.add_variable(abb_in_power_state)
+        lhs = [[abb_in_power_state, 1]]
+        rhs = @gcfg_model.flow_into_abb(abb, power_state_nodes, label)
+        @gcfg_model.assert_equal(lhs, rhs, "abb_influx_#{abb.qname}", :gcfg)
+
+        # Mulitply cost
+        abb_energy = wcet[abb] * per_cycle
+
+        @ilp.add_cost(abb_in_power_state, abb_energy)
+        debug(@options, :ipet_global) { "Added #{abb_in_power_state} with cost #{abb_energy}" }
+        abb_lhs.push([abb_in_power_state, 1])
+      end
+
+      # We capture the execution counts for each ABB
+      @ilp.add_variable(abb, :gcfg)
+
+      # set abb frequency to 1
+      @gcfg_model.assert_equal(abb_lhs, [[abb, 1]], "abb_#{abb.qname}", :gcfg)
+      if abb.frequency_variable
+        @ilp.add_variable(abb.frequency_variable, :gcfg)
+        @gcfg_model.assert_equal([[abb.frequency_variable, 1]],
+                                 [[abb, 1]],
+                                 "abb_copy_to_var_#{abb.qname}", :gcfg)
+      end
+    }
+    #    4.2 to function frequencies
+    # (happens in our case for IRQs: function entry is ABB entry)
+    function_to_nodes.each {|mf, nodes|
+      mc_entry_block = mf.entry_block
+      lhs = @mc_model.block_frequency(mc_entry_block)
+      rhs = @gcfg_model.flow_into_abb(mf, nodes)
+      @gcfg_model.assert_equal(lhs, rhs, "abb_influx_#{mf.qname}", :gcfg)
+    }
+
+
+    # 5.4 Global timimg variable
     @gcfg_model.add_total_time_variable
 
 
