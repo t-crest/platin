@@ -401,7 +401,11 @@ class WcetTool
         end
       }
     end
-    info "#{"Trace analysis: #{trace_cycles} cycles; " if trace_cycles}best WCET bound: #{wcet_cycles} cycles"
+    if options.wcec
+      info "best WCEC bound: #{wcet_cycles} mJ"
+    else
+      info "#{"Trace analysis: #{trace_cycles} cycles; " if trace_cycles}best WCET bound: #{wcet_cycles} cycles"
+    end
     results
   end
 
