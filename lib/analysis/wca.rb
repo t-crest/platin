@@ -66,8 +66,20 @@ class WCA
           end
         end
       if @options.wca_count_instructions
-        path_wcet = ilist.length
-        edge_wcet = 0
+        if @options.wcec
+          # binding.pry
+          if edge.power_state == nil
+            # binding.pry
+            warn ("\e[31mpower multiplication missing for #{edge}\e[0m")
+            edge.power_state = 1
+          end
+          # assert("invalid power state") {edge.power_state != nil}
+          path_wcet = ilist.length * edge.power_state
+          edge_wcet = 0
+        else
+          path_wcet = ilist.length
+          edge_wcet = 0
+        end
       else
         path_wcet = @pml.arch.path_wcet(ilist)
         edge_wcet = @pml.arch.edge_wcet(ilist,branch_index,edge)

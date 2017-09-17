@@ -141,8 +141,10 @@ end
 # - call edges
 # - edges between relation graph nodes
 class IPETEdge
-  attr_reader :qname,:source,:target, :level, :power_state
+  attr_reader :qname,:source,:target,:level
   attr_writer :static_context
+  attr_accessor :power_state
+
   def initialize(edge_source, edge_target, level, power_state = nil)
     @source,@target,@level = edge_source, edge_target, level.to_sym
     @power_state = nil
@@ -150,7 +152,7 @@ class IPETEdge
     fname, tname = [@source, @target].map {|n|
       n.kind_of?(Symbol) ? n.to_s : n.qname
     }
-    @qname = "#{fname}#{arrow}#{tname}#{power_state}"
+    @qname = "#{fname}#{arrow}#{tname}||#{power_state}"
     # The context is a object that has a static_context attribute (e.g., an Atomic Basic Block)
     @static_context = nil
   end
@@ -460,6 +462,10 @@ class GCFGIPETModel
       if not builder.options.ignore_instruction_timing
         mc_edge = IPETEdge.new(source_block, target_block, :machinecode)
         # TODO WCEC: warn ("\e[31mpower multiplication missing\e[0m")
+        # binding.pry
+        # power = builder.abb_to_power_states[src.abb][0]
+        mc_edge.power_state = 0
+
         cost += cost_block.call(mc_edge)
       end
     end
@@ -556,31 +562,57 @@ class GCFGIPETModel
     end
   end
 
-  def add_abb_contents(abb, cost_block)
+  def add_abb_contents(gcfg, abb_to_power_states, abb, cost_block)
     edges = Hash.new { |hsh, key| hsh[key]={:in=>[], :out=>[]} }
-    
-    # the following call creates new IPETEdges
-    each_intra_abb_edge(abb) { |ipet_edge|
-      # TODO WCEC: foreach_power_state
-      @ilp.add_variable(ipet_edge)
-      # Edges to the ABB-Exit are not assigned a cost, since the cost is added on the ABB/State level:
-      cost = 0
-      # nobody really knows why we needed the option ignore_instruction_timing
-      if not builder.options.ignore_instruction_timing and ipet_edge.target != :exit
-        # TODO warn ("\e[31mpower multiplication missing\e[0m")
-        cost = cost_block.call(ipet_edge)
-        @ilp.add_cost(ipet_edge, cost)
-      end
-      debug(builder.options, :ipet) {
-        "Intra-ABB Edge: #{ipet_edge} = #{cost}"
-      }
+
+    # TODO WCEC: foreach power state
+    # gcfg.device_list.each do |power_state|
+
+      # the following call yields new IPETEdges
+      each_intra_abb_edge(abb) do |ipet_edge|
+
+        if ipet_edge.power_state != nil
+          warn("Cost already assigned for #{ipet_edge}")
+          assert("Needs to be a :machinecode edge") {ipet_edge.level == :machinecode}
+        else
+          devices = abb_to_power_states[abb]
+          # find the maximum power level
+          max_power = 0
+          devices.each_with_index do | d, idx|
+            dev = gcfg.device_list[idx]
+            pwr = dev["energy_stay_on"].to_i
+            # larger power?
+            max_power = pwr if pwr > max_power
+          end
+          # assign the power level to the IPETEdge
+          ipet_edge.power_state = max_power
+        end
+
+        # create a new variable in the overall ILP
+        @ilp.add_variable(ipet_edge)
+
+        # Edges to the ABB-Exit are not assigned a cost, since the cost is added on the ABB/State level:
+        cost = 0
+        # FIXME nobody really knows why we needed the option ignore_instruction_timing
+        if not builder.options.ignore_instruction_timing and ipet_edge.target != :exit
+          # TODO warn ("\e[31mpower multiplication missing\e[0m")
+          cost = cost_block.call(ipet_edge)
+          @ilp.add_cost(ipet_edge, cost)
+        end
+
+        debug(builder.options, :ipet) {"Intra-ABB Edge: #{ipet_edge} = #{cost}"}
+
       # Collect edges
-      edges[ipet_edge.source][:out].push(ipet_edge)
-      edges[ipet_edge.target][:in].push(ipet_edge)
-      # Set the static context
-      ipet_edge.static_context = abb
-      # TODO: end foreach_power_state
-    }
+        edges[ipet_edge.source][:out].push(ipet_edge)
+        edges[ipet_edge.target][:in].push(ipet_edge)
+
+        # Set the static context
+        ipet_edge.static_context = abb
+
+      end # each_intra_abb_edge
+
+    # end # foreach power state
+
 
     # The first block is activated as often, as the ABB is left
     edges.each {|bb, e|
@@ -590,8 +622,8 @@ class GCFGIPETModel
       next if incoming.length == 0 or outgoing.length == 0
       ilp.add_constraint(incoming+outgoing, "equal", 0,
                        "abb_flux_#{bb.qname}", :structural)
-
     }
+
     # Return number of edges, and the list of outgoing edges for the ABB entry
     [edges.keys.length, edges[abb.get_region(:dst).entry_node][:out]]
   end
@@ -711,7 +743,7 @@ class GCFGIPETModel
 end # end of class GCFGIPETModel
 
 class IPETBuilder
-  attr_reader :ilp, :mc_model, :bc_model, :refinement, :call_edges, :options
+  attr_reader :ilp, :mc_model, :bc_model, :refinement, :call_edges, :options, :abb_to_power_states
 
   def initialize(pml, options, ilp = nil)
     @ilp = ilp
@@ -726,6 +758,8 @@ class IPETBuilder
 
     @ffcount = 0
     @pml, @options = pml, options
+
+    @abb_to_power_states = Hash.new { |hsh, key| hsh[key] = []}
   end
 
   def pml_level(rg_level)
@@ -964,11 +998,12 @@ class IPETBuilder
     end
   end
 
-
   # Build basic IPET Structure, when a GCFG is present
+  # TODO: all references to gcfg need to be renamed to stg
+  # (all states are present in this structure, nothing is grouped by next ABB)
   def build_gcfg(gcfg, flowfacts, opts={ :mbb_variables =>  false }, &cost_block)
     # TODO WCEC: we ignore modelling of function calls for now! (duplication discriminating power states necessary)
-    
+   
     assert("IPETBuilder#build called twice") { ! @entry }
     @call_edges = []
     @mf_function_callers = Hash.new {|hsh, key| hsh[key] = [] }
@@ -980,6 +1015,21 @@ class IPETBuilder
     # For each function and each ABB we collect the nodes that activate it.
     abb_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
     function_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
+    # WCEC: which peripherals are on in which state in the STG
+    # @abb_to_power_states = Hash.new { |hsh, key| hsh[key] = []}
+
+    # we add a special baseline device state (nothing activated)
+    # push baseline at end
+    baseline_index = gcfg.device_list.length
+    gcfg.device_list.push(
+      {"energy_stay_off" => 0,
+       "energy_stay_on"  => 0,
+       "energy_turn_off" => 0,
+       "energy_turn_on"  => 0,
+       "index"           => baseline_index,
+       "name"=>"Baseline"
+      }
+    )
 
     gcfg.nodes.each do |node|
       if node.devices != []
@@ -991,12 +1041,21 @@ class IPETBuilder
       info("\e[32mDevice [#{idx}] #{d}\e[0m")
     end
 
+    # 0. setup mapping abb_to_power_states
+    gcfg.nodes.each do |node|
+      @gcfg_model.each_edge(node) do |ipet_edge, level|
+        abb_to_power_states[node.abb].push(node.devices)
+      end
+    end
+
     # 1. Pass over all states to create the super structure
     #    1.1 Add frequency variables
     #    1.2 Add edge variables for the Node->Node structure
     #    1.3 Collect activated artifacts
     gcfg.nodes.each do |node|
       # 1.1
+      # the frequency_variable is necessary for flowfacts
+      # (to have a fully qualified name)
       if node.frequency_variable
         @ilp.add_variable(node.frequency_variable, :gcfg)
       end
@@ -1023,6 +1082,9 @@ class IPETBuilder
       # tuple of abb and power state to stg-states
       abb_to_nodes[node.abb].push(node) if node.abb
       function_to_nodes[node.function].push(node) if node.function
+
+      # TODO: maybe we need to remove duplicate devices ([0], [1], [0]) here!
+      # abb_to_power_states[node.abb].push(node.devices)
     end
 
     # 2. Connect the super structure connections
@@ -1058,7 +1120,10 @@ class IPETBuilder
       # Add blocks within the ABB
       # TODO WCEC: give add_abb_contents the STG nodes
       # TODO WCEC: implement duplication for each power state
-      basic_blocks, abb_freq = @gcfg_model.add_abb_contents(abb, cost_block)
+      basic_blocks, abb_freq = @gcfg_model.add_abb_contents(gcfg,
+                                                            abb_to_power_states,
+                                                            abb,
+                                                            cost_block)
 
       # ABB Freq is the list of edges that have ABB.entry_node as source
       # If this node has an ABB attached, the block frequency of the
