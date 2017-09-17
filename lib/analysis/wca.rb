@@ -186,7 +186,7 @@ class WCA
         end
 
         cycles, freqs = local_ilp.solve_max
-        p [node.abb, cycles]
+        info("WCET of #{node.abb} is #{cycles}")
 
         wcet[node.abb || node.function] = cycles
       end
@@ -199,6 +199,11 @@ class WCA
       rescue Exception => ex
         warn("WCA: ILP failed: #{ex}") unless @options.disable_ipet_diagnosis
         cycles,freqs = -1, {}
+      end
+      freqs.each do |variable, value|
+        if builder.ilp.costs[variable] > 0 || /global/ =~ variable.to_s
+          print "#{variable} = #{value * builder.ilp.costs[variable]} uW (n=#{value})\n"
+        end
       end
 
       report = TimingEntry.new(machine_entry, cycles, nil,

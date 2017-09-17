@@ -700,12 +700,12 @@ class GCFGIPETModel
     incoming
   end
 
-  def add_total_time_variable
+  def add_total_time_variable(costs=nil)
     # The gcfg_wcet_constraint assigns the global worst case response
     # time to the @wcet_variable, this variable will hold the maximal
     # cost for this ILP.
     lhs = [[@wcet_variable, -1]]
-    rhs = @ilp.costs.map {|e, f| [e, f] }
+    rhs = (costs || @ilp.costs).map {|e, f| [e, f] }
     @ilp.add_constraint(lhs+rhs, "equal", 0, "global_wcet_equality", :gcfg)
     if @ilp.kind_of?(LpSolveILP)
       @ilp.add_constraint([[@wcet_variable, 1]], "less-equal", 1 << 32, "global_wcet_happy_lp_solve", :gcfg)
@@ -1293,7 +1293,6 @@ class IPETBuilder
       [ret, label.sort.join(",")]
     end
 
-
     abb_to_nodes.each {|abb, nodes|
       abb_lhs = []
 
@@ -1336,8 +1335,8 @@ class IPETBuilder
     }
 
 
-    # 5.4 Global timimg variable
-    @gcfg_model.add_total_time_variable
+    # 5.4 Global timimg variable from WCET (NOT ENERGY COSTS)
+    @gcfg_model.add_total_time_variable(wcet)
 
 
     flowfacts.each { |ff|
