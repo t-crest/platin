@@ -3,9 +3,8 @@
 #
 # ILP module
 #
-require 'core/utils'
-require 'core/pml'
 require 'set'
+
 module PML
 
 class UnknownVariableException < Exception

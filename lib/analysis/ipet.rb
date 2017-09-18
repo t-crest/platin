@@ -562,35 +562,28 @@ class GCFGIPETModel
   def add_abb_contents(gcfg, abb_to_power_states, abb, cost_block)
     edges = Hash.new { |hsh, key| hsh[key]={:in=>[], :out=>[]} }
 
-    # TODO WCEC: foreach power state
-    # gcfg.device_list.each do |power_state|
+    # the following call yields new IPETEdges
+    each_intra_abb_edge(abb) do |ipet_edge|
+      # create a new variable in the overall ILP
+      @ilp.add_variable(ipet_edge)
+      # Edges to the ABB-Exit are not assigned a cost, since the cost is added on the ABB/State level:
+      cost = 0
+      # FIXME nobody really knows why we needed the option ignore_instruction_timing
+      if not builder.options.ignore_instruction_timing and ipet_edge.target != :exit
+        cost = cost_block.call(ipet_edge)
+        @ilp.add_cost(ipet_edge, cost)
+      end
 
-      # the following call yields new IPETEdges
-      each_intra_abb_edge(abb) do |ipet_edge|
-        # create a new variable in the overall ILP
-        @ilp.add_variable(ipet_edge)
-
-        # Edges to the ABB-Exit are not assigned a cost, since the cost is added on the ABB/State level:
-        cost = 0
-        # FIXME nobody really knows why we needed the option ignore_instruction_timing
-        if not builder.options.ignore_instruction_timing and ipet_edge.target != :exit
-          cost = cost_block.call(ipet_edge)
-          @ilp.add_cost(ipet_edge, cost)
-        end
-
-        debug(builder.options, :ipet) {"Intra-ABB Edge: #{ipet_edge} = #{cost}"}
+      debug(builder.options, :ipet) {"Intra-ABB Edge: #{ipet_edge} = #{cost}"}
 
       # Collect edges
-        edges[ipet_edge.source][:out].push(ipet_edge)
-        edges[ipet_edge.target][:in].push(ipet_edge)
+      edges[ipet_edge.source][:out].push(ipet_edge)
+      edges[ipet_edge.target][:in].push(ipet_edge)
 
-        # Set the static context
-        ipet_edge.static_context = abb
+      # Set the static context
+      ipet_edge.static_context = abb
 
-      end # each_intra_abb_edge
-
-    # end # foreach power state
-
+    end # each_intra_abb_edge
 
     # The first block is activated as often, as the ABB is left
     edges.each {|bb, e|
@@ -1238,6 +1231,22 @@ class IPETBuilder
     # 2. Connect the super structure connections
     gcfg.nodes.each do |node|
       node_freq = @gcfg_model.add_node_constraint(node)
+
+      # Add Turn-On and Turn-off costs to the State->State edges
+      node_freq.each do |edge, _|
+        next if edge.source.kind_of?(Symbol) or edge.target.kind_of?(Symbol)
+        gcfg.device_list.each do |device|
+          before = edge.source.devices.member?(device['index'])
+          after = edge.target.devices.member?(device['index'])
+          if before and not after
+            @ilp.add_cost(edge, device['energy_turn_off'])
+          end
+          if not before and after
+            @ilp.add_cost(edge, device['energy_turn_on'])
+          end
+        end
+
+      end
       @ilp.add_variable(node)
       @gcfg_model.assert_equal(node_freq, [[node, 1]], "node_freq_#{node.to_s}", :gcfg)
     end
