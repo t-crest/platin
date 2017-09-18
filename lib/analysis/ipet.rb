@@ -658,9 +658,9 @@ class GCFGIPETModel
       [IPETEdge.new(pred, node, :gcfg), 1]
     }
 
-    var = "#{prefix}#{abb.to_s}_in_state".to_sym
+    var = "#{abb.to_s}_in_state".to_sym
     @ilp.add_variable(var)
-    assert_equal(incoming, [[var,1]], "abb_#{prefix}#{abb.qname}_in_state", :gcfg)
+    assert_equal(incoming, [[var,1]], "abb_#{abb.qname}_in_state", :gcfg)
 
     if irq_activations.length > 0
       assert("There should always be a resume, if we detected an activation") {
@@ -670,27 +670,27 @@ class GCFGIPETModel
         "Add IRQ Resume edges: #{abb.name} => irqs: #{irq_activations}, possible resumes: #{irq_resumes} "
       }
 
-      sos_name = "#{prefix}#{abb.to_s}"
+      sos_name = "#{abb.to_s}"
       neg = (sos_name + "_additional_resumes").to_sym
       pos = (sos_name + "_additional_interrupts").to_sym
       ilp.add_sos1(sos_name, [pos, neg])
 
       # pos - neg = (resumes - irqs) = 0;
-      irq_activations_var = "#{prefix}#{abb.to_s}_irq_activations".to_sym
+      irq_activations_var = "#{abb.to_s}_irq_activations".to_sym
       @ilp.add_variable(irq_activations_var)
-      assert_equal(irq_activations, [[irq_activations_var,1]], "abb_#{prefix}#{abb.qname}_in_state", :gcfg)
+      assert_equal(irq_activations, [[irq_activations_var,1]], "abb_#{abb.qname}_in_state", :gcfg)
 
-      irq_resumes_var = "#{prefix}#{abb.to_s}_irq_resumes".to_sym
+      irq_resumes_var = "#{abb.to_s}_irq_resumes".to_sym
       @ilp.add_variable(irq_resumes_var)
-      assert_equal(irq_resumes, [[irq_resumes_var,1]], "abb_#{prefix}#{abb.qname}_in_state", :gcfg)
+      assert_equal(irq_resumes, [[irq_resumes_var,1]], "abb_#{abb.qname}_in_state", :gcfg)
 
       assert_equal([[pos, 1], [neg, -1]],
                    [[irq_activations_var, 1], [irq_resumes_var, -1]],
-                   "resume_#{prefix}#{abb.qname}", :structural)
+                   "resume_#{abb.qname}", :structural)
       # Sometimes LP Solve is an unhappy beast
       if @ilp.kind_of?(LpSolveILP)
-        ilp.add_constraint([[irq_resumes_var, 1], [pos, -1]], "less-equal", 0,
-                           "resume_ilp_happy_#{prefix}#{abb.qname}", :structural)
+        ilp.add_constraint([[irq_resumes_var, -1], [pos, 1]], "less-equal", 0,
+                           "resume_ilp_happy_#{abb.qname}", :structural)
       end
       # 2. We substract all interrupt activations, BUT add all
       # interrupt activations, that have no corresponding resume, i.e.
@@ -1315,9 +1315,6 @@ class IPETBuilder
       # We capture the execution counts for each ABB
       @ilp.add_variable(abb, :gcfg)
       rhs = @gcfg_model.flow_into_abb(abb, nodes)
-      p ["ABB", abb]
-      p rhs
-      p ""
       @gcfg_model.assert_equal([[abb, 1]], rhs, "abb_influx_#{abb.qname}", :gcfg)
 
       # The ABB frquency is distributed over many powerstates
@@ -1332,7 +1329,8 @@ class IPETBuilder
 
         # If an ABB is an microstructural ABB, we do not add a cost
         if wcet.member?(abb)
-          abb_energy = wcet[abb] * per_cycle
+          time, _ = wcet[abb]
+          abb_energy = time * per_cycle
 
           @ilp.add_cost(abb_in_power_state, abb_energy)
           debug(@options, :ipet_global) { "Added #{abb_in_power_state} with cost #{abb_energy}" }
@@ -1344,8 +1342,18 @@ class IPETBuilder
       nodes.each do |node|
         next unless wcet.member?(node)
         # FIXME Power consumption for IRQ
-        @ilp.add_cost(node, wcet[node])
-        @ilp.add_constraint([[node, 1]], "equal", 1, "asdasd", :structural)
+        time, power_states = wcet[node]
+        # For an IRQ we use the maximal power consumption of all blocks in the interruption
+        per_cycle, label = [0, ""]
+        power_states.each do |power_state|
+          a, b = power_consumption(gcfg, power_state)
+          if a > per_cycle
+            per_cycle, label = [a, b]
+          end
+        end
+        debug(@options, :ipet_global) { "IRQ state #{node} use per_cycle=#{per_cycle} #{label}" }
+
+        @ilp.add_cost(node, time* per_cycle)
       end
 
 
@@ -1365,7 +1373,9 @@ class IPETBuilder
 
 
     # 5.4 Global timimg variable from WCET (NOT ENERGY COSTS)
-    @gcfg_model.add_total_time_variable(wcet)
+    wcet_times = Hash.new
+    wcet.each { |var, data| wcet_times[var] = data[0] }
+    @gcfg_model.add_total_time_variable(wcet_times)
 
 
     flowfacts.each { |ff|

@@ -180,6 +180,7 @@ class WCA
           # fragment. Lateron, the microstructural ABBs are accounted
           # with a cost of 0
           wcet_for_obj = nil
+          power_states = Set.new
           if node.isr_entry?
             wcet_for_obj = node
             assert("ISR entry node should be a function") {node.abb.function}
@@ -198,6 +199,7 @@ class WCA
             # Copy and reindex all blocks
             abb_to_idx = {}
             irq_nodes.each_with_index do |n|
+              power_states.add(n.devices)
               next unless n.abb
               next if abb_to_idx[n.abb]
               idx = abb_to_idx.length
@@ -261,14 +263,12 @@ class WCA
 
         cycles, freqs = local_ilp.solve_max
         info("WCET of #{wcet_for_obj} is #{cycles}")
-        wcet[wcet_for_obj] = cycles
+        wcet[wcet_for_obj] = [cycles, power_states.to_a]
       end
 
       info ("Start WCEC Analysis")
       # make the actual WCEC analysis by using parameter wcet {abb => wcet}
       builder.build_wcec_analysis(gcfg, wcet, flowfacts)
-
-      builder.ilp.dump()
 
       # Solve ILP
       begin
@@ -278,9 +278,8 @@ class WCA
         cycles,freqs = -1, {}
       end
       freqs.each do |variable, value|
-        p [variable, value]
         if builder.ilp.costs[variable] > 0 || /global/ =~ variable.to_s
-          #print "  #{variable} = #{value * builder.ilp.costs[variable]} uW (n=#{value})\n"
+          print "  #{variable} = #{value * builder.ilp.costs[variable]} uW (n=#{value})\n"
         end
       end
 
