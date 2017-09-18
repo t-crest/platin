@@ -167,10 +167,13 @@ class ILP
     io.puts("max " + costs.map { |v,c| "#{c} #{v}" }.join(" + "))
     @indexmap.each do |v,ix|
       next if @eliminated[ix]
-      io.puts " #{ix}: int #{v}"
+      io.puts " #{ix}: int #{v} #{costs[v]}"
+    end
+    @sos1.each do |v,ix|
+      io.puts " SOS: [#{ix}] #{v} "
     end
     @constraints.each_with_index do |c,ix|
-      io.puts " #{ix}: constraint #{c.name}: #{c}"
+      io.puts " #{ix}: constraint [#{c.name}]: #{c}"
     end
   end
   # index of a variable

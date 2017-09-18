@@ -537,6 +537,8 @@ class GCFGIPETModel
         @loops[loop_id]['backedges'] += backedges
       end
     }
+
+    outgoing
   end
 
   def each_intra_abb_edge(abb)
@@ -1264,7 +1266,9 @@ class IPETBuilder
 
     # 2. Connect the super structure connections
     gcfg.nodes.each do |node|
-      @gcfg_model.add_node_constraint(node)
+      node_freq = @gcfg_model.add_node_constraint(node)
+      @ilp.add_variable(node)
+      @gcfg_model.assert_equal(node_freq, [[node, 1]], "node_freq_#{node.to_s}", :gcfg)
     end
 
     ## After all node constraints
@@ -1293,7 +1297,18 @@ class IPETBuilder
       [ret, label.sort.join(",")]
     end
 
+    # Add the power consumptions
     abb_to_nodes.each {|abb, nodes|
+      # First we determine, how often this ABB is executed overall. Without respect to energy states
+      # We capture the execution counts for each ABB
+      @ilp.add_variable(abb, :gcfg)
+      rhs = @gcfg_model.flow_into_abb(abb, nodes)
+      p ["ABB", abb]
+      p rhs
+      p ""
+      @gcfg_model.assert_equal([[abb, 1]], rhs, "abb_influx_#{abb.qname}", :gcfg)
+
+      # The ABB frquency is distributed over many powerstates
       abb_lhs = []
 
       abb_to_power_states[abb].each do |power_state|
@@ -1301,20 +1316,26 @@ class IPETBuilder
         power_state_nodes = nodes.select { |n| n.devices == power_state }
         abb_in_power_state = [abb, label]
         @ilp.add_variable(abb_in_power_state)
-        lhs = [[abb_in_power_state, 1]]
-        rhs = @gcfg_model.flow_into_abb(abb, power_state_nodes, label)
-        @gcfg_model.assert_equal(lhs, rhs, "abb_influx_#{abb.qname}", :gcfg)
-
-        # Mulitply cost
-        abb_energy = wcet[abb] * per_cycle
-
-        @ilp.add_cost(abb_in_power_state, abb_energy)
-        debug(@options, :ipet_global) { "Added #{abb_in_power_state} with cost #{abb_energy}" }
         abb_lhs.push([abb_in_power_state, 1])
+
+        # If an ABB is an microstructural ABB, we do not add a cost
+        if wcet.member?(abb)
+          abb_energy = wcet[abb] * per_cycle
+
+          @ilp.add_cost(abb_in_power_state, abb_energy)
+          debug(@options, :ipet_global) { "Added #{abb_in_power_state} with cost #{abb_energy}" }
+        else
+          debug(@options, :ipet_global) { "Added #{abb_in_power_state} without cost" }
+        end
       end
 
-      # We capture the execution counts for each ABB
-      @ilp.add_variable(abb, :gcfg)
+      nodes.each do |node|
+        next unless wcet.member?(node)
+        # FIXME Power consumption for IRQ
+        @ilp.add_cost(node, wcet[node])
+        @ilp.add_constraint([[node, 1]], "equal", 1, "asdasd", :structural)
+      end
+
 
       # set abb frequency to 1
       @gcfg_model.assert_equal(abb_lhs, [[abb, 1]], "abb_#{abb.qname}", :gcfg)
@@ -1327,12 +1348,7 @@ class IPETBuilder
     }
     #    4.2 to function frequencies
     # (happens in our case for IRQs: function entry is ABB entry)
-    function_to_nodes.each {|mf, nodes|
-      mc_entry_block = mf.entry_block
-      lhs = @mc_model.block_frequency(mc_entry_block)
-      rhs = @gcfg_model.flow_into_abb(mf, nodes)
-      @gcfg_model.assert_equal(lhs, rhs, "abb_influx_#{mf.qname}", :gcfg)
-    }
+    assert("Should not happen") {function_to_nodes.length == 0}
 
 
     # 5.4 Global timimg variable from WCET (NOT ENERGY COSTS)

@@ -11,7 +11,7 @@ require 'analysis/vcfg'
 require 'ext/lpsolve'
 require 'ext/gurobi'
 
-require 'tools/visualize-ilp'
+#require 'tools/visualize-ilp'
 
 module PML
 
@@ -167,16 +167,90 @@ class WCA
         local_ilp = LpSolveILP.new(@options) unless local_ilp
         local_builder = IPETBuilder.new(@pml, @options, local_ilp)
 
-        if node.abb
-          block = node.abb.to_pml.dup
-          block['index'] = 0
+        if node.microstructure
+          next
+        elsif node.abb
+          blocks = []
+          nodes = []
+          entry_nodes = []
+          exit_nodes = []
+
+          # If this block is an ISR entry, we capture this block, and
+          # all following microstructural ABBs and put them into this
+          # fragment. Lateron, the microstructural ABBs are accounted
+          # with a cost of 0
+          wcet_for_obj = nil
+          if node.isr_entry?
+            wcet_for_obj = node
+            assert("ISR entry node should be a function") {node.abb.function}
+
+            irq_nodes = Set.new
+            worklist = [node]
+            while worklist.length > 0
+              elem = worklist.shift
+              irq_nodes.add(elem)
+              elem.successors.each do |next_node|
+                next unless next_node.microstructure
+                next if irq_nodes.member?(next_node)
+                worklist.push(next_node)
+              end
+            end
+            # Copy and reindex all blocks
+            abb_to_idx = {}
+            irq_nodes.each_with_index do |n|
+              next unless n.abb
+              next if abb_to_idx[n.abb]
+              idx = abb_to_idx.length
+              abb_to_idx[n.abb] = idx
+              data = n.abb.data.dup
+              data['index'] = idx
+              blocks.push(data)
+            end
+            # Copy and reindex all nodes
+            node_to_idx ={}
+            irq_nodes.each_with_index do |n, idx|
+              node_to_idx[n] = idx
+              data = n.data.dup
+              data['index'] = idx
+              if n.abb
+                data['abb'] = abb_to_idx[n.abb]
+              end
+              nodes.push(data)
+            end
+
+            nodes.each do |copied_node|
+              copied_node['local-successors'] = copied_node['local-successors'].map do |old_idx|
+                ret = node_to_idx[gcfg.nodes[old_idx]]
+                assert("broken") {ret}
+                ret
+              end
+              copied_node['global-successors'] = []
+              if copied_node['isr_entry']
+                entry_nodes.push(copied_node['index'])
+              end
+              if /iret/ =~ (copied_node['abb-name'] ||"")
+                exit_nodes.push(copied_node['index'])
+              end
+            end
+          else
+            # For non IRQ nodes: use only the node itself, and its
+            # associated function
+            blocks.push(node.abb.to_pml.dup)
+            blocks[0]['index'] = 0
+            nodes.push({'index'=>0, 'abb'=>0})
+            entry_nodes = [0]
+            exit_nodes = [0]
+            wcet_for_obj = node.abb
+          end
+
           fragment = GCFG.new({'level'=>'bitcode',
                                'name'=> node.abb.to_s,
-                               'entry-nodes'=>[0],
-                               'exit-nodes'=>[0],
-                               'nodes'=> [{'index'=>0,  'abb'=>0}],
-                               'blocks'=> [block]},
+                               'entry-nodes'=>entry_nodes,
+                               'exit-nodes'=>exit_nodes,
+                               'nodes'=> nodes,
+                               'blocks'=> blocks},
                               @pml)
+
         else
           assert("Fuck off") {false}
         end
@@ -186,12 +260,15 @@ class WCA
         end
 
         cycles, freqs = local_ilp.solve_max
-        info("WCET of #{node.abb} is #{cycles}")
-
-        wcet[node.abb || node.function] = cycles
+        info("WCET of #{wcet_for_obj} is #{cycles}")
+        wcet[wcet_for_obj] = cycles
       end
 
+      info ("Start WCEC Analysis")
+
       builder.build_wcec_analysis(gcfg, wcet, flowfacts)
+
+      builder.ilp.dump()
 
       # Solve ILP
       begin
@@ -201,8 +278,9 @@ class WCA
         cycles,freqs = -1, {}
       end
       freqs.each do |variable, value|
+        p [variable, value]
         if builder.ilp.costs[variable] > 0 || /global/ =~ variable.to_s
-          print "#{variable} = #{value * builder.ilp.costs[variable]} uW (n=#{value})\n"
+          #print "  #{variable} = #{value * builder.ilp.costs[variable]} uW (n=#{value})\n"
         end
       end
 
