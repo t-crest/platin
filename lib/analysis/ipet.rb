@@ -658,9 +658,9 @@ class GCFGIPETModel
       [IPETEdge.new(pred, node, :gcfg), 1]
     }
 
-    var = "#{abb.to_s}_in_state".to_sym
+    var = "#{prefix}#{abb.to_s}_in_state".to_sym
     @ilp.add_variable(var)
-    assert_equal(incoming, [[var,1]], "abb_#{abb.qname}_in_state", :gcfg)
+    assert_equal(incoming, [[var,1]], "abb_#{prefix}#{abb.qname}_in_state", :gcfg)
 
     if irq_activations.length > 0
       assert("There should always be a resume, if we detected an activation") {
@@ -670,27 +670,27 @@ class GCFGIPETModel
         "Add IRQ Resume edges: #{abb.name} => irqs: #{irq_activations}, possible resumes: #{irq_resumes} "
       }
 
-      sos_name = "#{abb.to_s}"
+      sos_name = "#{prefix}#{abb.to_s}"
       neg = (sos_name + "_additional_resumes").to_sym
       pos = (sos_name + "_additional_interrupts").to_sym
       ilp.add_sos1(sos_name, [pos, neg])
 
       # pos - neg = (resumes - irqs) = 0;
-      irq_activations_var = "#{abb.to_s}_irq_activations".to_sym
+      irq_activations_var = "#{prefix}#{abb.to_s}_irq_activations".to_sym
       @ilp.add_variable(irq_activations_var)
-      assert_equal(irq_activations, [[irq_activations_var,1]], "abb_#{abb.qname}_in_state", :gcfg)
+      assert_equal(irq_activations, [[irq_activations_var,1]], "abb_#{prefix}#{abb.qname}_in_state", :gcfg)
 
-      irq_resumes_var = "#{abb.to_s}_irq_resumes".to_sym
+      irq_resumes_var = "#{prefix}#{abb.to_s}_irq_resumes".to_sym
       @ilp.add_variable(irq_resumes_var)
-      assert_equal(irq_resumes, [[irq_resumes_var,1]], "abb_#{abb.qname}_in_state", :gcfg)
+      assert_equal(irq_resumes, [[irq_resumes_var,1]], "abb_#{prefix}#{abb.qname}_in_state", :gcfg)
 
       assert_equal([[pos, 1], [neg, -1]],
                    [[irq_activations_var, 1], [irq_resumes_var, -1]],
-                   "resume_#{abb.qname}", :structural)
+                   "resume_#{prefix}#{abb.qname}", :structural)
       # Sometimes LP Solve is an unhappy beast
       if @ilp.kind_of?(LpSolveILP)
         ilp.add_constraint([[irq_resumes_var, -1], [pos, 1]], "less-equal", 0,
-                           "resume_ilp_happy_#{abb.qname}", :structural)
+                           "resume_ilp_happy_#{prefix}#{abb.qname}", :structural)
       end
       # 2. We substract all interrupt activations, BUT add all
       # interrupt activations, that have no corresponding resume, i.e.
@@ -1314,8 +1314,8 @@ class IPETBuilder
       # First we determine, how often this ABB is executed overall. Without respect to energy states
       # We capture the execution counts for each ABB
       @ilp.add_variable(abb, :gcfg)
-      rhs = @gcfg_model.flow_into_abb(abb, nodes)
-      @gcfg_model.assert_equal([[abb, 1]], rhs, "abb_influx_#{abb.qname}", :gcfg)
+      # rhs = @gcfg_model.flow_into_abb(abb, nodes)
+      # @gcfg_model.assert_equal([[abb, 1]], rhs, "abb_influx_#{abb.qname}", :gcfg)
 
       # The ABB frquency is distributed over many powerstates
       abb_lhs = []
@@ -1323,8 +1323,15 @@ class IPETBuilder
       abb_to_power_states[abb].each do |power_state|
         per_cycle, label = power_consumption(gcfg, power_state)
         power_state_nodes = nodes.select { |n| n.devices == power_state }
+
         abb_in_power_state = [abb, label]
         @ilp.add_variable(abb_in_power_state)
+
+        rhs = @gcfg_model.flow_into_abb(abb, power_state_nodes, label)
+        @gcfg_model.assert_equal([[abb_in_power_state, 1]], rhs,
+                                 "abb_influx_#{label}_#{abb.qname}", :gcfg)
+
+
         abb_lhs.push([abb_in_power_state, 1])
 
         # If an ABB is an microstructural ABB, we do not add a cost
