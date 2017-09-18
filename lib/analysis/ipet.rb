@@ -738,7 +738,7 @@ class IPETBuilder
     @ffcount = 0
     @pml, @options = pml, options
 
-    @abb_to_power_states = Hash.new { |hsh, key| hsh[key] = []}
+    @abb_to_power_states = Hash.new { |hsh, key| hsh[key] = Set.new}
   end
 
   def pml_level(rg_level)
@@ -993,38 +993,6 @@ class IPETBuilder
     # For each function and each ABB we collect the nodes that activate it.
     abb_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
     function_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
-    # WCEC: which peripherals are on in which state in the STG
-    # @abb_to_power_states = Hash.new { |hsh, key| hsh[key] = []}
-
-    # we add a special baseline device state (nothing activated)
-    # push baseline at end
-    #baseline_index = gcfg.device_list.length
-    #gcfg.device_list.push(
-    #  {"energy_stay_off" => 0,
-    #   "energy_stay_on"  => 0,
-    #   "energy_turn_off" => 0,
-    #   "energy_turn_on"  => 0,
-    #   "index"           => baseline_index,
-    #   "name"=>"Baseline"
-    #  }
-    #)
-
-    #gcfg.nodes.each do |node|
-    #  if node.devices != []
-    #    info("\e[32mGot device #{node.devices} in node #{node}\e[0m")
-    #  end
-    #end
-
-    #gcfg.device_list.each_with_index do |d, idx|
-    #  info("\e[32mDevice [#{idx}] #{d}\e[0m")
-    #end
-
-    # 0. setup mapping abb_to_power_states
-    gcfg.nodes.each do |node|
-      @gcfg_model.each_edge(node) do |ipet_edge, level|
-        abb_to_power_states[node.abb].push(node.devices)
-      end
-    end
 
     # 1. Pass over all states to create the super structure
     #    1.1 Add frequency variables
@@ -1243,7 +1211,7 @@ class IPETBuilder
     # 0. setup mapping abb_to_power_states
     gcfg.nodes.each do |node|
       node.devices.push(baseline_index)
-      abb_to_power_states[node.abb].push(node.devices)
+      abb_to_power_states[node.abb].add(node.devices)
     end
 
     # 1. Pass over all states to create the super structure
