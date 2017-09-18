@@ -707,6 +707,7 @@ class GCFGIPETModel
     # time to the @wcet_variable, this variable will hold the maximal
     # cost for this ILP.
     lhs = [[@wcet_variable, -1]]
+    # either use the costs (array of WCETs from WCEC analysis) or the ilp.costs
     rhs = (costs || @ilp.costs).map {|e, f| [e, f] }
     @ilp.add_constraint(lhs+rhs, "equal", 0, "global_wcet_equality", :gcfg)
     if @ilp.kind_of?(LpSolveILP)
@@ -1115,7 +1116,6 @@ class IPETBuilder
 
       gcfg_mfs.add(abb.function)
 
-      # TODO WCEC: functions must be also supported in WCEC (function calls in OS)
       # 3.2 What functions are called from this ABB?
       region.nodes.each { |bb|
         gcfg_mbbs.add(bb)
@@ -1219,7 +1219,10 @@ class IPETBuilder
   end
 
 
-  # Build basic IPET Structure, for an GCFG an the WCET analysis
+  # IPET Structure for WCEC
+  # @param the complete STG (no state fragments)
+  # @param {abb => wcet}
+  # @param flowfacts
   def build_wcec_analysis(gcfg, wcet, flowfacts)
     assert("IPETBuilder#build called twice") { ! @entry }
 
@@ -1275,6 +1278,15 @@ class IPETBuilder
     # 2.1 Add entry and basic loop constraints
     @gcfg_model.add_entry_constraint(gcfg)
     @gcfg_model.add_loop_contraints(gcfg)
+
+    toplevel_abb_count = 0 # statistics
+    abb_to_nodes.each { |abb, nodes|
+      # 3.1 All ABBs from nodes that are _not_ marked as microstructure
+      microstructure = nodes.map { |x| x.microstructure }
+      next if microstructure.all?
+      assert("Microstructure state of #{abb} is inconsistent") { not microstructure.any? }
+      toplevel_abb_count += 1
+    }
 
     ##############################################
     # All structures/objects/functions are in place
@@ -1337,7 +1349,8 @@ class IPETBuilder
       end
 
 
-      # set abb frequency to 1
+      # set abb factor to 1 (ride-hand side constraint)
+      # left hand side is all incoming flow to abb on all possible power states
       @gcfg_model.assert_equal(abb_lhs, [[abb, 1]], "abb_#{abb.qname}", :gcfg)
       if abb.frequency_variable
         @ilp.add_variable(abb.frequency_variable, :gcfg)

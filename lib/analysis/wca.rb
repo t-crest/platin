@@ -265,7 +265,7 @@ class WCA
       end
 
       info ("Start WCEC Analysis")
-
+      # make the actual WCEC analysis by using parameter wcet {abb => wcet}
       builder.build_wcec_analysis(gcfg, wcet, flowfacts)
 
       builder.ilp.dump()
