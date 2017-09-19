@@ -296,8 +296,7 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
         if builder.ilp.costs[variable] > 0 || /global/ =~ variable.to_s
           costs = value * builder.ilp.costs[variable]
           info("WCEC: #{variable} => #{costs} uA*cy (freq=#{value})")
-          statistics("WCEC",
-                     variable => costs)
+          statistics("WCEC", variable => costs)
         end
       end
 
@@ -309,7 +308,7 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
       # 1e3 => uJ => mJ
       mJ = cycles * TIME_PER_CYCLE * 3.3 / 1e3
       # info "best WCEC bound: #{three_decimals(mJ)} mJ (@3.3V)"
-      info "best WCEC bound: #{mJ} mJ (@3.3V)"
+      info "best WCEC bound: #{mJ.round(3)} mJ (@3.3V)"
 
       # baseline (all always on):
       power_all_on = 0
@@ -319,25 +318,12 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
         #end
       end
       baseline_energy = 0
-      #max_costs = 0
-      visited = Set.new
-      gcfg.nodes.each do |n|
-        # binding.pry
-        if wcet.member?(n) # is a node
-          max_costs = freqs[n] * wcet[n][0] * power_all_on
-          info("WCEC node: #{n} => #{max_costs} (#{builder.ilp.costs[n] * freqs[n]})")
-        else # an abb, possibly referenced in multiple states
-          next if visited.member?(n.abb)
-          assert ("should not happen") {wcet.member?(n.abb)}
-          # costs are either attached to node or abb (depending on glue layer)
-          max_costs = freqs[n.abb] * wcet[n.abb][0] * power_all_on
-          visited.add(n.abb)
-          info("WCEC node: #{n} => #{max_costs} (cost=#{builder.ilp.costs[n.abb]}, #{freqs[n.abb]})")
-        end
-        max_costs_mJ = max_costs * TIME_PER_CYCLE * 3.3 / 1e3 #
-        baseline_energy += max_costs_mJ
-      end
-      info "baseline: #{baseline_energy} mJ"
+
+      response_time = freqs[builder.gcfg_model.wcet_variable]
+      max_costs_mJ = response_time * power_all_on * TIME_PER_CYCLE * 3.3 / 1e3 #
+      baseline_energy += max_costs_mJ
+
+      info "baseline WCEC: #{baseline_energy.round(3)} mJ (response time: #{response_time} cy)"
 
       return report
     else # @options.wcec == false

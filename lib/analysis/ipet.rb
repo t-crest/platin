@@ -417,7 +417,7 @@ end # end of class IPETModel
 
 
 class GCFGIPETModel
-  attr_reader :builder, :ilp, :level
+  attr_reader :builder, :ilp, :level, :wcet_variable
   def initialize(builder, ilp, mc_model, level = :gcfg)
     @builder, @ilp, @level = builder, ilp, level
     @mc_model = mc_model
@@ -715,7 +715,7 @@ class GCFGIPETModel
 end # end of class GCFGIPETModel
 
 class IPETBuilder
-  attr_reader :ilp, :mc_model, :bc_model, :refinement, :call_edges, :options, :abb_to_power_states
+  attr_reader :ilp, :mc_model, :bc_model, :gcfg_model, :refinement, :call_edges, :options, :abb_to_power_states
 
   def initialize(pml, options, ilp = nil)
     @ilp = ilp
