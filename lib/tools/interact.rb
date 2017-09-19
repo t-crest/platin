@@ -847,8 +847,10 @@ class ApplyCommand < DiffCommand
       file = Tempfile.new('annotations-quickfix')
       file.write(diff_annotations(false))
       file.flush
-      editor = ['vim', '-c', "cd \"#{opts.source_path}\"", '-c', 'copen', '-q', file.path]
-      system *editor
+      Dir.chdir(opts.source_path) {
+        editor = ['vim', '-c', 'copen', '-q', file.path]
+        system *editor
+      }
       file.close
       file.unlink
     else
