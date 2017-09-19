@@ -113,6 +113,11 @@ class WCA
     cycles
   end
 
+  def two_decimals(float_n)
+     float_n.round(3).to_s[0..3].to_f
+  end
+
+TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
 
   def analyze(entry_label)
 
@@ -152,6 +157,9 @@ class WCA
                                      @options.flow_fact_srcs,
                                      ff_levels,
                                      true)
+
+    # units
+    info ("Assuming time per cycle: #{TIME_PER_CYCLE} second")
 
     # Build IPET using costs from @pml.arch
     local_builder = nil
@@ -234,7 +242,7 @@ class WCA
                 exit_nodes.push(copied_node['index'])
               end
             end
-          else
+          else # node.isr_entry? == false
             # For non IRQ nodes: use only the node itself, and its
             # associated function
             blocks.push(node.abb.to_pml.dup)
@@ -254,6 +262,7 @@ class WCA
                               @pml)
 
         else
+          # this should never happen
           assert("Fuck off") {false}
         end
 
@@ -262,11 +271,12 @@ class WCA
         end
 
         cycles, freqs = local_ilp.solve_max
-        info("WCET of #{wcet_for_obj} is #{cycles}")
+        info("WCET(#{wcet_for_obj}): #{cycles} cy (#{two_decimals(cycles * TIME_PER_CYCLE*1e6)} us)")
         wcet[wcet_for_obj] = [cycles, power_states.to_a]
       end
 
       info ("Start WCEC Analysis")
+
       # make the actual WCEC analysis by using parameter wcet {abb => wcet}
       builder.build_wcec_analysis(gcfg, wcet, flowfacts)
 
@@ -277,18 +287,32 @@ class WCA
         warn("WCA: ILP failed: #{ex}") unless @options.disable_ipet_diagnosis
         cycles,freqs = -1, {}
       end
+
+      # stats
       freqs.each do |variable, value|
         if builder.ilp.costs[variable] > 0 || /global/ =~ variable.to_s
-          print "  #{variable} = #{value * builder.ilp.costs[variable]} uW (n=#{value})\n"
+          info("WCEC: #{variable} = #{value * builder.ilp.costs[variable]} uA*cy (freq=#{value})")
+          statistics("WCEC",
+                     variable => value * builder.ilp.costs[variable])
         end
       end
+
 
       report = TimingEntry.new(machine_entry, cycles, nil,
                                'level' => 'machinecode',
                                'origin' => @options.timing_output || 'platin')
+      info "best WCEC bound: #{cycles} uA*cy"
+      # 1e3 => uJ => mJ
+      mJ = cycles * TIME_PER_CYCLE * 3.3 / 1e3
+      info "best WCEC bound: #{two_decimals(mJ)} mJ"
 
+      # baseline (all always on):
+
+
+
+      info "baseline: #{two_decimals(mJ)} mJ"
       return report
-    else
+    else # @options.wcec == false
       builder.build_gcfg(gcfg, flowfacts) do |edge|
         edge_cost(edge)
       end

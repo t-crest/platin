@@ -402,7 +402,7 @@ class WcetTool
       }
     end
     if options.wcec
-      info "best WCEC bound: #{wcet_cycles} mJ"
+      # reported above
     else
       info "#{"Trace analysis: #{trace_cycles} cycles; " if trace_cycles}best WCET bound: #{wcet_cycles} cycles"
     end

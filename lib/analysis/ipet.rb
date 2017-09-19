@@ -1191,10 +1191,11 @@ class IPETBuilder
     abb_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
     function_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
 
+    # the multiplication with 3.3V is done later on
     baseline_index = gcfg.device_list.length
     gcfg.device_list.push(
-      {"energy_stay_off" => 1,
-       "energy_stay_on"  => 1,
+      {"energy_stay_off" => 8000, # 8mA * 3V = 24000uW
+       "energy_stay_on"  => 8000,
        "energy_turn_off" => 0,
        "energy_turn_on"  => 0,
        "index"           => baseline_index,
@@ -1256,14 +1257,14 @@ class IPETBuilder
     @gcfg_model.add_entry_constraint(gcfg)
     @gcfg_model.add_loop_contraints(gcfg)
 
-    toplevel_abb_count = 0 # statistics
-    abb_to_nodes.each { |abb, nodes|
-      # 3.1 All ABBs from nodes that are _not_ marked as microstructure
-      microstructure = nodes.map { |x| x.microstructure }
-      next if microstructure.all?
-      assert("Microstructure state of #{abb} is inconsistent") { not microstructure.any? }
-      toplevel_abb_count += 1
-    }
+#    toplevel_abb_count = 0 # statistics
+#    abb_to_nodes.each { |abb, nodes|
+#      # 3.1 All ABBs from nodes that are _not_ marked as microstructure
+#      microstructure = nodes.map { |x| x.microstructure }
+#      next if microstructure.all?
+#      assert("Microstructure state of #{abb} is inconsistent") { not microstructure.any? }
+#      toplevel_abb_count += 1
+#    }
 
     ##############################################
     # All structures/objects/functions are in place
@@ -1367,12 +1368,12 @@ class IPETBuilder
       add_flowfact(ff)
     }
 
-    statistics("WCA",
-               "gcfg nodes" => gcfg.nodes.length,
-               "gcfg transitions" => gcfg.nodes.inject(0) {|acc, n| acc + n.successors.length},
-               "abbs toplevel" => toplevel_abb_count,
-               "abbs microstructure" => abb_to_nodes.length - toplevel_abb_count
-               ) if @options.stats
+#    statistics("WCA",
+#               "gcfg nodes" => gcfg.nodes.length,
+#               "gcfg transitions" => gcfg.nodes.inject(0) {|acc, n| acc + n.successors.length},
+#               "abbs toplevel" => toplevel_abb_count,
+#               "abbs microstructure" => abb_to_nodes.length - toplevel_abb_count
+#               ) if @options.stats
 
 
     die("Bitcode contraints are not implemented yet") if @bc_model
