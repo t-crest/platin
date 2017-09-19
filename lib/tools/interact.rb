@@ -257,6 +257,7 @@ class HelpCommand < Command
     out = "Display help"
     if long
       out << <<-'EOF'
+
   help [command]
 
   Displays an general help message or specific help for  a command
@@ -294,6 +295,7 @@ class DebugCommand < Command
     out = "Enable/Disable debugging"
     if long
       out << <<-'EOF'
+
   debug [<on|off>]
 
   If on or off is omitted, drops the user into a pry shell
@@ -334,6 +336,7 @@ class WCETCommand < Command
     out = "Run a wcet analysis for an entrypoint"
     if long
       out << <<-'EOF'
+
   wcet <symbol>
       EOF
     end
@@ -370,9 +373,10 @@ class VisualizeCommand < Command
   end
 
   def help(long = false)
-    out = "Visualize some aspects (ILP, ...) starting from an given entrypoint"
+    out = "Visualize some aspects (ILP, ...) starting from a given entrypoint"
     if long
       out << <<-'EOF'
+
   visualize (ilp) <symbol>
       EOF
     end
@@ -583,6 +587,7 @@ class EditCommand < ModelFactCommand
     out = "Edit the current set of modelfacts"
     if long
       out << <<-'EOF'
+
   edit (modelfacts|model)
     modelfacts: Open $EDITOR on the current set of modelfacts
       EOF
@@ -699,6 +704,7 @@ class AnnotateCommand < ModelFactCommand
     out = "Interactivly annotate modelfacts"
     if long
       out << <<-'EOF'
+
   annotate <block> (guard|lbound|callee) "expr"
     Please note that guard and lbound target bitcode blocks, while callee
     annotations are only available on MC level
@@ -727,9 +733,10 @@ class DiffCommand < Command
   end
 
   def help(long = false)
-    out = "List Properties of this analysis"
+    out = "List changed modelfacts of this analysis"
     if long
       out << <<-'EOF'
+
   diff annotations
     List the annotations that were passed interactively
       EOF
@@ -815,9 +822,10 @@ class ApplyCommand < DiffCommand
   include FindEditor
 
   def help(long = false)
-    out = "Apply propterties interactively"
+    out = "Apply changes to the sourcecode interactively"
     if long
       out << <<-'EOF'
+
   apply annotations
     List the annotations that were passed interactively and open
     coresponding sourcefiles
@@ -853,6 +861,7 @@ class ResultsCommand < Command
     out = "Show past analysis results"
     if long
       out << <<-'EOF'
+
   results
       EOF
     end
@@ -888,6 +897,7 @@ class GetCommand < Command
     out = "Inspect a config option"
     if long
       out << <<-'EOF'
+
   get path.in.options
       EOF
     end
@@ -927,6 +937,7 @@ class SetCommand < Command
     out = "Set a config option"
     if long
       out << <<-'EOF'
+
   set <typeinfo> path.in.options (=|<<) value
 
   As we have actually some degree of typing, we cast based on the typinfo provided.
