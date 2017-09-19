@@ -194,6 +194,7 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
           power_states = Set.new
           if node.isr_entry?
             wcet_for_obj = node
+            assert("ISR entry node cannot be microstructural") {!node.microstructure}
             assert("ISR entry node should be a function") {node.abb.function}
 
             irq_nodes = Set.new
@@ -207,7 +208,8 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
                 worklist.push(next_node)
               end
             end
-            # Copy and reindex all blocks
+            ## Prepare an SSTG fragment from irq_entry --> iret
+            # Blocks/ABB: Copy and reindex
             abb_to_idx = {}
             irq_nodes.each_with_index do |n|
               power_states.add(n.devices)
@@ -219,7 +221,7 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
               data['index'] = idx
               blocks.push(data)
             end
-            # Copy and reindex all nodes
+            # Nodes: copy and reindex
             node_to_idx ={}
             irq_nodes.each_with_index do |n, idx|
               node_to_idx[n] = idx
@@ -231,6 +233,7 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
               nodes.push(data)
             end
 
+            # Fixup node ID references and find entry and exit nodes
             nodes.each do |copied_node|
               copied_node['local-successors'] = copied_node['local-successors'].map do |old_idx|
                 ret = node_to_idx[gcfg.nodes[old_idx]]

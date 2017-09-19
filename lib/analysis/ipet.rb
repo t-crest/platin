@@ -1182,7 +1182,10 @@ class IPETBuilder
 
   # IPET Structure for WCEC
   # @param the complete STG (no state fragments)
-  # @param {abb => wcet}
+  # @param {abb => wcet} AND {node => wcet} in ONE hash
+  #        abb => wcet: WCET for non-interrupt blocks
+  #        node=> wcet: WCET of ISR activation collapsed into the irq_entry node
+  #                     All nodes that are within the ISR activation are microstructural
   # @param flowfacts
   def build_wcec_analysis(gcfg, wcet, flowfacts)
     assert("IPETBuilder#build called twice") { ! @entry }
@@ -1249,6 +1252,7 @@ class IPETBuilder
 
       end
       @ilp.add_variable(node)
+      # node_freq is a factored cost list of IPETEdges ([[edge1, 1], [edge2, 1]]
       @gcfg_model.assert_equal(node_freq, [[node, 1]], "node_freq_#{node.to_s}", :gcfg)
     end
 
@@ -1257,14 +1261,15 @@ class IPETBuilder
     @gcfg_model.add_entry_constraint(gcfg)
     @gcfg_model.add_loop_contraints(gcfg)
 
-#    toplevel_abb_count = 0 # statistics
-#    abb_to_nodes.each { |abb, nodes|
-#      # 3.1 All ABBs from nodes that are _not_ marked as microstructure
-#      microstructure = nodes.map { |x| x.microstructure }
-#      next if microstructure.all?
-#      assert("Microstructure state of #{abb} is inconsistent") { not microstructure.any? }
-#      toplevel_abb_count += 1
-#    }
+    # 2.2 Sanitiy Chack
+    toplevel_abb_count = 0 # statistics
+    abb_to_nodes.each { |abb, nodes|
+      # 2.3 All ABBs from nodes that are _not_ marked as microstructure
+      microstructure = nodes.map { |x| x.microstructure }
+      next if microstructure.all?
+      assert("Microstructure state of #{abb} is inconsistent") { not microstructure.any? }
+      toplevel_abb_count += 1
+    }
 
     ##############################################
     # All structures/objects/functions are in place
@@ -1289,11 +1294,7 @@ class IPETBuilder
 
     # Add the power consumptions
     abb_to_nodes.each {|abb, nodes|
-      # First we determine, how often this ABB is executed overall. Without respect to energy states
-      # We capture the execution counts for each ABB
       @ilp.add_variable(abb, :gcfg)
-      # rhs = @gcfg_model.flow_into_abb(abb, nodes)
-      # @gcfg_model.assert_equal([[abb, 1]], rhs, "abb_influx_#{abb.qname}", :gcfg)
 
       # The ABB frquency is distributed over many powerstates
       abb_lhs = []
@@ -1324,9 +1325,11 @@ class IPETBuilder
         end
       end
 
+      # All SSTG nodes
       nodes.each do |node|
         next unless wcet.member?(node)
-        # FIXME Power consumption for IRQ
+        assert ("Only IRQ Entry nodes can have a WCET") { node.isr_entry? }
+        # FIXME Power consumption for IRQ. We execute the ISR with the highest power configuration
         time, power_states = wcet[node]
         # For an IRQ we use the maximal power consumption of all blocks in the interruption
         per_cycle, label = [0, ""]
@@ -1338,7 +1341,7 @@ class IPETBuilder
         end
         debug(@options, :ipet_global) { "IRQ state #{node} use per_cycle=#{per_cycle} #{label}" }
 
-        @ilp.add_cost(node, time* per_cycle)
+        @ilp.add_cost(node, time * per_cycle)
       end
 
 
@@ -1352,7 +1355,7 @@ class IPETBuilder
                                  "abb_copy_to_var_#{abb.qname}", :gcfg)
       end
     }
-    #    4.2 to function frequencies
+    # 4.2 to function frequencies
     # (happens in our case for IRQs: function entry is ABB entry)
     assert("Should not happen") {function_to_nodes.length == 0}
 
