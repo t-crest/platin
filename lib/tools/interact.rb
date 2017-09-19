@@ -643,7 +643,8 @@ class EditCommand < ModelFactCommand
         return if pristineSHA256 == newSHA256
 
         # File has changed => reparse
-        file.rewind
+        file.close(false)
+        file.open
         input = file.read.lines
 
         failed = nil
