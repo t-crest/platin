@@ -1273,11 +1273,11 @@ class IPETBuilder
     #    4.2 to function frequencies
 
     # Get the maximum power consumption per cycle for a given device list
-    def power_consumption(gcfg, device_list)
+    def power_consumption(gcfg, power_state)
       ret = 0
       label = []
       gcfg.device_list.each do |device|
-        if device_list.member?(device['index'])
+        if power_state.member?(device['index'])
           ret += device['energy_stay_on']
           label.push(device['name'])
         else

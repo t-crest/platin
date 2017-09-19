@@ -116,6 +116,9 @@ class WCA
   def two_decimals(float_n)
      float_n.round(3).to_s[0..3].to_f
   end
+  def three_decimals(float_n)
+     float_n.round(4).to_s[0..4].to_f
+  end
 
 TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
 
@@ -291,9 +294,10 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
       # stats
       freqs.each do |variable, value|
         if builder.ilp.costs[variable] > 0 || /global/ =~ variable.to_s
-          info("WCEC: #{variable} = #{value * builder.ilp.costs[variable]} uA*cy (freq=#{value})")
+          costs = value * builder.ilp.costs[variable]
+          info("WCEC: #{variable} => #{costs} uA*cy (freq=#{value})")
           statistics("WCEC",
-                     variable => value * builder.ilp.costs[variable])
+                     variable => costs)
         end
       end
 
@@ -304,13 +308,37 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
       info "best WCEC bound: #{cycles} uA*cy"
       # 1e3 => uJ => mJ
       mJ = cycles * TIME_PER_CYCLE * 3.3 / 1e3
-      info "best WCEC bound: #{two_decimals(mJ)} mJ"
+      # info "best WCEC bound: #{three_decimals(mJ)} mJ (@3.3V)"
+      info "best WCEC bound: #{mJ} mJ (@3.3V)"
 
       # baseline (all always on):
+      power_all_on = 0
+      gcfg.device_list.each do |d|
+        #if gcfg.device_list.member?(d['index'])
+        power_all_on += d['energy_stay_on']
+        #end
+      end
+      baseline_energy = 0
+      #max_costs = 0
+      visited = Set.new
+      gcfg.nodes.each do |n|
+        # binding.pry
+        if wcet.member?(n) # is a node
+          max_costs = freqs[n] * wcet[n][0] * power_all_on
+          info("WCEC node: #{n} => #{max_costs} (#{builder.ilp.costs[n] * freqs[n]})")
+        else # an abb, possibly referenced in multiple states
+          next if visited.member?(n.abb)
+          assert ("should not happen") {wcet.member?(n.abb)}
+          # costs are either attached to node or abb (depending on glue layer)
+          max_costs = freqs[n.abb] * wcet[n.abb][0] * power_all_on
+          visited.add(n.abb)
+          info("WCEC node: #{n} => #{max_costs} (cost=#{builder.ilp.costs[n.abb]}, #{freqs[n.abb]})")
+        end
+        max_costs_mJ = max_costs * TIME_PER_CYCLE * 3.3 / 1e3 #
+        baseline_energy += max_costs_mJ
+      end
+      info "baseline: #{baseline_energy} mJ"
 
-
-
-      info "baseline: #{two_decimals(mJ)} mJ"
       return report
     else # @options.wcec == false
       builder.build_gcfg(gcfg, flowfacts) do |edge|
