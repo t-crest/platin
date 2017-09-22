@@ -1241,5 +1241,6 @@ EOF
   # The main loop
   while (buf = Readline.readline("> ", true))
     Dispatcher.instance.dispatch(buf)
+    STDOUT.flush
   end
 end
