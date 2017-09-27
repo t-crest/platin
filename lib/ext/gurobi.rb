@@ -144,7 +144,8 @@ class GurobiILP < ILP
   end
 
   def solve_lp(lp, sol)
-    out = IO.popen("gurobi_cl ResultFile=#{sol} #{lp}")
+    # MIPFocus=1: focus on finding feasible solutions
+    out = IO.popen("gurobi_cl MIPFocus=1 ResultFile=#{sol} #{lp}")
     lines = []
     backlock_idx = 0
     while line = out.gets do
