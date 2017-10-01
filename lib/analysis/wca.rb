@@ -287,18 +287,22 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
       builder.build_wcec_analysis(gcfg, wcet, flowfacts)
 
       # Solve ILP
+      t_ilp1 = Time.now
       begin
         cycles, freqs = builder.ilp.solve_max
       rescue Exception => ex
         warn("WCA: ILP failed: #{ex}") unless @options.disable_ipet_diagnosis
         cycles,freqs = -1, {}
       end
+      t_ilp2 = Time.now
+      statistics("WCEC",
+                 "ilp run time only wcec" => ((t_ilp2-t_ilp1)*1000).to_i)
 
       # stats
       freqs.each do |variable, value|
         if builder.ilp.costs[variable] > 0 || /global/ =~ variable.to_s
           costs = value * builder.ilp.costs[variable]
-          info("WCEC: #{variable} => #{costs} uA*cy (freq=#{value})")
+          info("WCEC: #{variable} => #{costs} mA*cy (freq=#{value})")
           statistics("WCEC", variable => costs)
         end
       end
@@ -307,11 +311,10 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
       report = TimingEntry.new(machine_entry, cycles, nil,
                                'level' => 'machinecode',
                                'origin' => @options.timing_output || 'platin')
-      info "best WCEC bound: #{cycles} uA*cy"
+      # info "best WCEC bound: #{cycles} mA*cy"
       # 1e3 => uJ => mJ
-      mJ = cycles * TIME_PER_CYCLE * 3.3 / 1e3
-      # info "best WCEC bound: #{three_decimals(mJ)} mJ (@3.3V)"
-      info "best WCEC bound: #{mJ.round(3)} mJ (@3.3V)"
+      # mJ = cycles * TIME_PER_CYCLE * 3.3
+      # info "best WCEC bound: #{mJ.round(3)} mJ (@3.3V)"
 
       # baseline (all always on):
       power_all_on = 0
@@ -323,10 +326,20 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
       baseline_energy = 0
 
       response_time = freqs[builder.gcfg_model.wcet_variable]
-      max_costs_mJ = response_time * power_all_on * TIME_PER_CYCLE * 3.3 / 1e3 #
-      baseline_energy += max_costs_mJ
+      # max_costs_mJ = response_time * power_all_on * TIME_PER_CYCLE * 3.3
+      # baseline_energy += max_costs_mJ
+      # info "baseline WCEC: #{baseline_energy.round(3)} mJ (response time: #{response_time} cy)"
 
-      info "baseline WCEC: #{baseline_energy.round(3)} mJ (response time: #{response_time} cy)"
+      statistics("WCEC",
+                 "response_time" => response_time) if @options.stats
+      statistics("WCEC",
+                 "flowfacts" => flowfacts.length,
+                 "ipet variables" => builder.ilp.num_variables,
+                 "ipet constraints" => builder.ilp.constraints.length) if @options.stats
+
+      statistics("WCEC",
+                 "wcec" => cycles,
+                 "max_power" => power_all_on) if @options.stats
 
       return report
     else # @options.wcec == false

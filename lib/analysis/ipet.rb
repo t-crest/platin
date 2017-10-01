@@ -1168,12 +1168,14 @@ class IPETBuilder
       add_flowfact(ff)
     }
 
-    statistics("WCA",
-               "gcfg nodes" => gcfg.nodes.length,
-               "gcfg transitions" => gcfg.nodes.inject(0) {|acc, n| acc + n.successors.length},
-               "abbs toplevel" => toplevel_abb_count,
-               "abbs microstructure" => abb_to_nodes.length - toplevel_abb_count
-               ) if @options.stats
+    if not @options.wcec
+      statistics("WCA",
+                 "gcfg nodes" => gcfg.nodes.length,
+                 "gcfg transitions" => gcfg.nodes.inject(0) {|acc, n| acc + n.successors.length},
+                 "abbs toplevel" => toplevel_abb_count,
+                 "abbs microstructure" => abb_to_nodes.length - toplevel_abb_count
+                 ) if @options.stats
+     end
 
 
     die("Bitcode contraints are not implemented yet") if @bc_model
@@ -1194,11 +1196,11 @@ class IPETBuilder
     abb_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
     function_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
 
-    # the multiplication with 3.3V is done later on
+    # the multiplication with 3.3V needs to be done done later on
     baseline_index = gcfg.device_list.length
     gcfg.device_list.push(
-      {"energy_stay_off" => 8000, # 8mA * 3V = 24000uW
-       "energy_stay_on"  => 8000,
+      {"energy_stay_off" => 10, # 10mA
+       "energy_stay_on"  => 8,
        "energy_turn_off" => 0,
        "energy_turn_on"  => 0,
        "index"           => baseline_index,
