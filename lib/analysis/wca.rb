@@ -170,6 +170,7 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
       # We calculate WCETs for each ABB and every function that is
       # directly called
       wcet = Hash.new
+      t_wcrt_all1 = Time.now
       gcfg.nodes.each do |node|
         next if node.abb and wcet.member?(node.abb)
         next if node.function and wcet.member?(node.function)
@@ -280,6 +281,9 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
         info("WCET(#{wcet_for_obj}): #{cycles} cy (#{two_decimals(cycles * TIME_PER_CYCLE*1e6)} us)")
         wcet[wcet_for_obj] = [cycles, power_states.to_a]
       end
+      t_wcrt_all2 = Time.now
+      statistics("WCEC",
+                 "solve wcets" => ((t_wcrt_all2-t_wcrt_all1)*1000).to_i)
 
       info ("Start WCEC Analysis")
 
@@ -296,7 +300,7 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
       end
       t_ilp2 = Time.now
       statistics("WCEC",
-                 "ilp run time only wcec" => ((t_ilp2-t_ilp1)*1000).to_i)
+                 "solve wcec" => ((t_ilp2-t_ilp1)*1000).to_i)
 
       # stats
       freqs.each do |variable, value|
@@ -332,6 +336,7 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
 
       statistics("WCEC",
                  "response_time" => response_time) if @options.stats
+
       statistics("WCEC",
                  "flowfacts" => flowfacts.length,
                  "ipet variables" => builder.ilp.num_variables,

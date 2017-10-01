@@ -145,7 +145,10 @@ class GurobiILP < ILP
 
   def solve_lp(lp, sol)
     # MIPFocus=1: focus on finding feasible solutions
-    out = IO.popen("gurobi_cl MIPFocus=1 ResultFile=#{sol} #{lp}")
+    # MIPFocus=3: focus on improving the bound
+    # (unused: MIPGap=0.03  => stop at 3% gap between incubent and best bound)
+    # (unused: TimeLimit=600 => terminate after 600 seconds)
+    out = IO.popen("gurobi_cl MIPFocus=3 ResultFile=#{sol} #{lp}")
     lines = []
     backlock_idx = 0
     while line = out.gets do
