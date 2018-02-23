@@ -1,0 +1,26 @@
+GIT
+  remote: git@gitlab.cs.fau.de:SWAN/rb-lpsolve.git
+  revision: 2b357fc8d2746c6cf796097f13ad675227453f1d
+  specs:
+    lpsolve (5.5.10.j)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    kwalify (0.7.2)
+    rake (12.3.0)
+    rsec (0.4.2)
+    ruby-graphviz (1.2.3)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  kwalify
+  lpsolve!
+  rake
+  rsec
+  ruby-graphviz
+
+BUNDLED WITH
+   1.16.1
