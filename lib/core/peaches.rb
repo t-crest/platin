@@ -537,7 +537,7 @@ class ASTArithmeticOp < ASTExpr
     lhs = ASTExpr.assert_full_eval(@lhs, context, desc[:types])
     rhs = ASTExpr.assert_full_eval(@rhs, context, desc[:types])
 
-    ASTNumberLiteral.new(lhs.value.public_send(desc[:op], rhs.value))
+    ASTNumberLiteral.new(Integer(lhs.value.public_send(desc[:op], rhs.value)))
   end
 
 
