@@ -396,7 +396,7 @@ module PML
           bound >= 0
         }
 
-        fact = FlowFact.loop_bound(scope, SEInt.new(bound), attributes)
+        fact = FlowFact.loop_bound(scope, SEInt.new(bound + 1), attributes)
         fact.origin = 'model.bc'
         fact
 
