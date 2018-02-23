@@ -563,6 +563,7 @@ class ILPVisualisation < Visualizer
 
   def generate_graph(opts)
     @graph = GraphViz.digraph(:ILP)
+    @graph[:overlap] = 'compress'
 
     ilp.variables.each do |v|
       if v.is_a?(IPETEdge)
