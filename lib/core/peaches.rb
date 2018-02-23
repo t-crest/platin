@@ -857,7 +857,8 @@ class Parser
               | seq_(decl, lazy{program}, skip: /[\r\n]+/) \
               | seq_(decl, /[\r\n]+/.r.maybe) {|d, _| [d]} \
               )
-    seq(/[\r\n]+/.r.maybe, program, /[\r\n]+/.r.maybe).eof { |_,p,_| ASTProgram.new(p.flatten) }
+      seq(/[\r\n]+/.r.maybe, program, /[\r\n]+/.r.maybe).eof { |_,p,_| ASTProgram.new(p.flatten) } \
+        | /[\r\n]*/.r.maybe.eof { ASTProgram.new([])}
   end
 end # class Parser
 
