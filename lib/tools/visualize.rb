@@ -596,8 +596,6 @@ class ILPVisualisation < Visualizer
   end
 end
 
-
-
 # HTML Index Pages for convenient debugging
 # XXX: quick hack
 class HtmlIndexPages
@@ -769,7 +767,6 @@ class VisualizeTool
     # rubocop:enable Metrics/LineLength
   end
 end
-
 
 if __FILE__ == $PROGRAM_NAME
 SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME

@@ -38,7 +38,6 @@ class GurobiILP < ILP
     err, errmsg = solve_lp(lp_name, sol_name, ilp_name)
     @solvertime += (Time.now - start)
 
-
     unbounded = nil
     freqmap = nil
     if err == INFEASIBLE
@@ -61,7 +60,6 @@ class GurobiILP < ILP
     if freqmap.length != @variables.length
       gurobi_error("Read #{freqmap.length} variables, expected #{@variables.length}")
     end
-
 
     [obj.round, freqmap, unbounded]
   end

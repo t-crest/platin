@@ -500,7 +500,6 @@ class ASTIf < ASTExpr
   end
 end
 
-
 class ASTArithmeticOp < ASTExpr
   def initialize(lhs, op, rhs)
     @op, @lhs, @rhs = op, lhs, rhs
@@ -662,7 +661,6 @@ class Parser
   extend Rsec::Helpers
 
   DEBUG_PARSER = false
-
 
   SPACE      = /[\ \t]*/.r
   COMMENT    = (seq_('{-', /((?!-}).)+/ ,'-}') \
@@ -958,7 +956,6 @@ x ={- "ASDF" -} 4
 y = 10 * x + 20 -- ASDF 4 + 5
 z = if y > 10 && 1 /= 2 then x else f y]
   assert_literal.call(program, "z", 4)
-
 
   parser.program.parse! %Q[-- Full size comment
 x ={- "ASDF" -} 4

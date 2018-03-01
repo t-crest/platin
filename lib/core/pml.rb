@@ -61,7 +61,6 @@ class PMLDoc
                                                @bitcode_functions, @machine_functions)
     @global_cfgs       = GCFGList.new(@data['global-cfgs'] || [], @relation_graphs)
 
-
     # usually read-only sections, but might be modified by pml-config
     @data['analysis-configurations'] ||= []
     @analysis_configurations = AnalysisConfigList.from_pml(self, @data['analysis-configurations'])

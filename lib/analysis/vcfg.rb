@@ -27,7 +27,6 @@ class FlowInformation
   end
 end
 
-
 # Flat Control-Flow Model, consists of a set of virtual CFGs
 class ControlFlowModel
   attr_reader :ctx_manager, :vcfgs
@@ -325,7 +324,6 @@ private
   end
 end
 
-
 # VCFG Nodes
 #  For efficiency reasons, we do not use qnames here
 #  That is, CfgNodes are compared by pointer equality
@@ -572,7 +570,6 @@ class LoopStateNode < CfgNode
   end
 end
 
-
 # Locations are pairs of VCFG nodes and context
 class Location
   attr_reader :cfmodel, :node, :context
@@ -685,6 +682,5 @@ class ReachabilitySemantics
     end
   end
 end
-
 
 end # module PML

@@ -165,7 +165,6 @@ class IndexedConstraint
   end
 end
 
-
 # ILP base class (FIXME)
 class ILP
   attr_reader :variables, :constraints, :costs, :options, :vartype, :solvertime

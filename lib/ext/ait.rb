@@ -90,7 +90,6 @@ class AISUnsupportedProgramPoint < AISUnsupportedFeatureException
   end
 end
 
-
 #
 # Extend ValueRange with +#to_ais+
 #
@@ -151,7 +150,6 @@ class SEBinary
     end
   end
 end
-
 
 #
 # Extend program points with +#ais_ref+
@@ -307,7 +305,6 @@ class AISExporter
       @pml.arch.config.memory_areas.add(sc_phantom)
       warn("aiT SC workaround, reserving phantom no-latency area #{sc_phantom.address_range.to_ais}")
     end
-
 
     @pml.arch.config.memory_areas.each do |area|
       kw = if area.type == 'code' then 'code' else 'data' end
@@ -786,7 +783,6 @@ class APXExporter
     el
   end
 end
-
 
 class CacheStats
   attr_reader :hits, :misses

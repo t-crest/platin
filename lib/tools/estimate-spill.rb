@@ -19,7 +19,6 @@ rescue Exception => details
   die "Failed to load required ruby libraries"
 end
 
-
 class EstimateSpill
   def self.default_targets(pml)
     targets = Array.new

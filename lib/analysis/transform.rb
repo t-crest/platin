@@ -63,7 +63,6 @@ class ConstraintRef
   end
 end
 
-
 # set of constraint refs ordered by elim_vars size
 # efficient drop-in replacement for SortedSet
 #
@@ -592,7 +591,6 @@ class SymbolicBoundTransformation
       next unless s
       (ffs[s.programpoint.function] ||= []).push(ff)
     end
-
 
     # resolve CHRs
     # translate blocks and arguments

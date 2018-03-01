@@ -39,7 +39,6 @@ class Architecture
   end
 end
 
-
 # configuration of the execution platform (memory areas, timing, etc.)
 class MachineConfig < PMLObject
   ##
@@ -314,7 +313,6 @@ class MemoryConfig < PMLObject
     [read_latency, read_transfer_time, write_latency, write_transfer_time].all? { |t| t == 0 }
   end
 end # class MemoryConfig
-
 
 # list of cache configurations
 class CacheConfigList < PMLList

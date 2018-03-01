@@ -22,7 +22,6 @@ class OptionParser
   end
 end
 
-
 # Features not supported by the FFX export module
 class F4UnsupportedFeatureException < Exception
   def initialize(msg)
@@ -52,7 +51,6 @@ class FFXUnsupportedProgramPoint < FFXUnsupportedFeatureException
     @pp = pp
   end
 end
-
 
 #
 # Extend ValueRange with +#to_ffx+
@@ -138,7 +136,6 @@ class SEBinary
   end
 end
 
-
 #
 # Extend program points with +#ffx_ref+
 #
@@ -211,7 +208,6 @@ class Edge
     raise FFXUnsupportedProgramPoint, self
   end
 end
-
 
 # class to export PML information to FFX
 class F4Exporter
@@ -387,7 +383,6 @@ class F4Exporter
     # gen_fact("instruction #{ins.ffx_ref} features \"#{feature}\" = #{value}", "SC blocks (source: llvm sca)")
   end
 end
-
 
 class FFXExporter
 

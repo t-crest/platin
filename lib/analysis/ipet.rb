@@ -193,7 +193,6 @@ class IPETEdge
   def eql?(other); self == other; end
 end
 
-
 class IPETModel
   attr_reader :builder, :ilp, :level
   attr_accessor :sum_incoming_override, :sum_outgoing_override
@@ -609,7 +608,6 @@ class IPETBuilder
 
     die("Bitcode contraints are not implemented yet") if @bc_model
 
-
   end
 
   def build_gcfg_abb(abb, outgoing_abb_flux, _flowfacts, _opts, cost_block)
@@ -622,7 +620,6 @@ class IPETBuilder
       edges[bb] = { in: [], out: [] }
     end
     edges[:exit] = { in: [], out: [] }
-
 
     @mc_model.each_intra_abb_edge(abb) do |ipet_edge|
       @ilp.add_variable(ipet_edge)

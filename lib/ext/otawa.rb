@@ -34,7 +34,6 @@ class OtawaUnsupportedFeatureException < Exception
   end
 end
 
-
 # class to export PML machine information to OSX
 class OSXExporter
 
@@ -202,10 +201,8 @@ class OtawaImporter
 
     # TODO: Implement ..
 
-
   end
 end
-
 
 end # end module PML
 

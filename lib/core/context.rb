@@ -544,7 +544,6 @@ class ContextRef < PMLObject
   end
 end
 
-
 #
 # fairly generic context manager
 # loop contexts are disabled if looppeel == 0 and loopunroll == 1

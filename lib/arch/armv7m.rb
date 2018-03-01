@@ -118,7 +118,6 @@ class Architecture < PML::Architecture
     ExtractSymbols.run(cmd, extractor, pml, options)
   end
 
-
 # found out through reading register on hardware:
 FLASH_WAIT_CYCLES = 3
 #
@@ -161,7 +160,6 @@ FLASH_WAIT_CYCLES = 3
       die("Unknown library function: #{func}")
 #    end
   end
-
 
 NUM_REGISTERS = 10
 PIPELINE_REFILL = 3

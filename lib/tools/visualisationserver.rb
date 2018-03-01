@@ -202,7 +202,6 @@ class Server
     end
   end
 
-
   class SourceInfoServlet < SourceServlet
     def do_GET(req, resp)
       file  = req.query["file"]
@@ -336,7 +335,6 @@ class Server
       resp.set_redirect(WEBrick::HTTPStatus::TemporaryRedirect, @url);
   end
   end
-
 
   def initialize(mode, opts, **webrick_opts)
     @server = WEBrick::HTTPServer.new webrick_opts

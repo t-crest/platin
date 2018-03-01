@@ -149,7 +149,6 @@ module SWEET
     end
   end
 
-
   # Parse SWEETs flow fact format using the Rsec parser
   # combinator library
   class FlowFactParser
@@ -270,7 +269,6 @@ module SWEET
     end
   end
 end # module SWEET
-
 
 module PML
 

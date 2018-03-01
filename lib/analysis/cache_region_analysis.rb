@@ -850,8 +850,6 @@ class InstructionCacheAnalysis
   end
 end
 
-
-
 class DataCacheLine
   include QNameObject
 
@@ -1065,7 +1063,6 @@ class DataCacheAnalysis < DataCacheAnalysisBase
     cache_lines.length <= @cache.associativity
   end
 end
-
 
 class StackCacheAnalysis
   def initialize(cache, pml, options)

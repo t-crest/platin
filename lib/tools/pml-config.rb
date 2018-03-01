@@ -126,7 +126,6 @@ class PMLConfigTool
     end
     # rubocop:enable Metrics/LineLength
 
-
     # TODO: Add options to remove attributes
     # TODO Add options to modify tool-configurations and analysis-configurations.
 

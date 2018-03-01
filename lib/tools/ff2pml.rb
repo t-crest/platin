@@ -51,7 +51,6 @@ class SweetImportTool
 
 end
 
-
 if __FILE__ == $PROGRAM_NAME
 SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
 Translate SWEET flow facts (format FF) to PML flow facts

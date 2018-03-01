@@ -255,7 +255,6 @@ class ScopeGraph
     @topo = topological_sort(@entry_node)
   end
 
-
 private
 
   def build(entry_function)
@@ -714,7 +713,6 @@ class CallGraph < PMLObject
   end
 end
 
-
 class ScopeGraph
   # get callgraph (scopegraph restricted to FunctionNodes) for scopegraph
   def callgraph
@@ -743,6 +741,5 @@ class ScopeGraph
     cg
   end
 end
-
 
 end # module PML

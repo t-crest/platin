@@ -716,7 +716,6 @@ private
   end
 end
 
-
 # Records progress node trace
 class ProgressTraceRecorder
   attr_reader :trace, :internal_preds
@@ -781,6 +780,5 @@ class ProgressTraceRecorder
 
   def method_missing(event, *args); end
 end
-
 
 end # module pml

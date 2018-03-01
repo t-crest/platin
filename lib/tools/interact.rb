@@ -720,7 +720,6 @@ class DiffCommand < Command
     out
   end
 
-
   class DiffEntry
     attr_reader :op, :diff
     def initialize(op, diff)
@@ -1205,7 +1204,6 @@ EOF
   REPLContext.instance.options.modelfile ||= ""
   # For diff command
   REPLContext.instance.initial_modelfacts = REPLContext.instance.pml.modelfacts.to_set
-
 
   # Register repl commands
   Dispatcher.instance.register('help', HelpCommand.new)

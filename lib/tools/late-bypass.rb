@@ -83,7 +83,6 @@ class LateBypassTool
   end
 end
 
-
 if __FILE__ == $PROGRAM_NAME
 SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
 Rewrite load from unknown memory access addresses to bypass-cache loads.
