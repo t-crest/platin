@@ -65,7 +65,7 @@ class OneOneCheck
   #                                                        graphviz >= 1.2.2              graphviz < 1.2.2
   VALID_FORMATS = defined?(GraphViz::Constants::FORMATS) ? GraphViz::Constants::FORMATS : Constants::FORMATS
 
-  def OneOneCheck.default_targets(pml, entryfunc)
+  def self.default_targets(pml, entryfunc)
     entry = pml.machine_functions.by_label(entryfunc)
     pml.machine_functions.reachable_from(entry.name).first.reject do |f|
       f.label =~ /printf/
@@ -74,7 +74,7 @@ class OneOneCheck
     end
   end
 
-  def OneOneCheck.is_one_one(rg)
+  def self.is_one_one(rg)
     nodes = {}
 
     # XXX: update me
@@ -103,7 +103,7 @@ class OneOneCheck
     true
   end
 
-  def OneOneCheck.run(pml, options)
+  def self.run(pml, options)
     outdir  = options.outdir || "."
     entry   = options.entry || "main"
     targets = options.functions || OneOneCheck.default_targets(pml, entry)
@@ -134,7 +134,7 @@ class OneOneCheck
     statistics("ONEONECHECK","Generated rg graphs" => targets.length) if options.stats
   end
 
-  def OneOneCheck.add_options(opts)
+  def self.add_options(opts)
     opts.on("-f","--function FUNCTION,...","Name of the function(s) to check") { |f| opts.options.functions = f.split(/\s*,\s*/) }
     opts.on("-O","--outdir DIR","Output directory for image files") { |d| opts.options.outdir = d }
     opts.on("-e","--entry FUNC","PML entry function") { |f| opts.options.entry = f }

@@ -12,11 +12,11 @@ class BoundedStack
   # fly-weight, to get cheaper comparisons (profile hotspot)
   @@repository = {}
   attr_reader :stack
-  def BoundedStack.empty
+  def self.empty
     BoundedStack.create([])
   end
 
-  def BoundedStack.create(stack)
+  def self.create(stack)
     bs = @@repository[stack]
     bs = @@repository[stack] = BoundedStack.new(stack) if ! bs
     bs
@@ -181,7 +181,7 @@ end
 # callstring entry (either call edge or loop edge)
 #
 class ContextEntry < PMLObject
-  def ContextEntry.from_pml(functions,data)
+  def self.from_pml(functions,data)
     if data['loop']
       LoopContextEntry.from_pml(functions,data)
     else
@@ -201,7 +201,7 @@ class CallContextEntry < ContextEntry
     { 'callsite' => @callsite.qname }
   end
 
-  def CallContextEntry.from_pml(functions, data)
+  def self.from_pml(functions, data)
     ref = Instruction.from_qname(functions,data['callsite'])
     assert("CallContextEntry#from_pml: callsite is not an instruction") { ref.kind_of?(Instruction) }
     CallContextEntry.new(ref.instruction, data)
@@ -270,7 +270,7 @@ class LoopContextEntry < ContextEntry
     @data
   end
 
-  def LoopContextEntry.from_pml(functions, data)
+  def self.from_pml(functions, data)
     ref = Loop.from_qname(functions,data['loop'])
     assert("LoopContextEntry#from_pml: loop is not a loop reference") { ref.kind_of?(Loop) }
     step = data['step']
@@ -386,7 +386,7 @@ class Context < PMLObject
     @callstring.to_a.map { |cse| cse.data }
   end
 
-  def Context.from_pml(functions, data)
+  def self.from_pml(functions, data)
     cs = data.map { |ref| ContextEntry.from_pml(functions,ref) }
     Context.new(BoundedStack.create(cs.reverse), data)
   end
@@ -395,7 +395,7 @@ class Context < PMLObject
     return @callstring.to_a.map { |cs| "(#{cs.qname})" }.join("")
   end
 
-  def Context.empty
+  def self.empty
     Context.new(BoundedStack.empty)
   end
 
@@ -419,7 +419,7 @@ class Context < PMLObject
     Context.new(@callstring.map_top { |e| yield e })
   end
 
-  def Context.callstack_suffix(stack, length)
+  def self.callstack_suffix(stack, length)
     return Context.new(BoundedStack.empty) if length == 0
     start = (length >= stack.length) ? 0 : (-length)
     entries = stack[start..-1].map do |callsite|
@@ -428,7 +428,7 @@ class Context < PMLObject
     Context.new(BoundedStack.create(entries))
   end
 
-  def Context.from_list(list)
+  def self.from_list(list)
     assert("Context.from_list: not a list of context entries (#{list.first.class})") do
       list.all? { |e| e.kind_of?(ContextEntry) }
     end
@@ -492,7 +492,7 @@ class ContextRef < PMLObject
     pml
   end
 
-  def ContextRef.from_pml(functions, data)
+  def self.from_pml(functions, data)
     context = data['context'] ? Context.from_pml(functions,data['context']) : Context.empty
     pp = ProgramPoint.from_pml(functions, data)
     ContextRef.new(pp, context, data)
@@ -550,7 +550,7 @@ end
 # loop contexts are disabled if looppeel == 0 and loopunroll == 1
 class ContextManager
 
-  def ContextManager.create(history_length, looppeel = 0, loopunroll = 1)
+  def self.create(history_length, looppeel = 0, loopunroll = 1)
     return ContextManagerEmpty.new if history_length < 1
     return ContextManager.new(history_length, looppeel, loopunroll)
   end

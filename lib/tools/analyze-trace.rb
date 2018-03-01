@@ -128,7 +128,7 @@ class AnalyzeTraceTool
   # intraprocedural block frequencies
   DEFAULT_RECORDER_SPEC = "g:lic,f:b/0"
 
-  def AnalyzeTraceTool.add_config_options(opts)
+  def self.add_config_options(opts)
     Architecture.simulator_options(opts)
     opts.trace_entry
     opts.callstring_length
@@ -158,7 +158,7 @@ class AnalyzeTraceTool
     end
   end
 
-  def AnalyzeTraceTool.add_options(opts)
+  def self.add_options(opts)
     ExtractSymbolsTool.add_config_options(opts)
     AnalyzeTraceTool.add_config_options(opts)
     opts.binary_file(true)
@@ -167,7 +167,7 @@ class AnalyzeTraceTool
     opts.generates_flowfacts
   end
 
-  def AnalyzeTraceTool.run(pml,options)
+  def self.run(pml,options)
     needs_options(options, :analysis_entry, :trace_entry, :binary_file, :recorder_spec)
     entry = pml.machine_functions.by_label(options.analysis_entry, true)
     die("Analysis entry (ELF label #{options.analysis_entry}) not found") if ! entry

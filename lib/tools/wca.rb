@@ -10,7 +10,7 @@ include PML
 
 class WcaTool
 
-  def WcaTool.add_config_options(opts)
+  def self.add_config_options(opts)
     opts.on("--[no-]wca-cache-regions","use single-entry cache regions (=true)") do |b|
       opts.options.wca_cache_regions = b
     end
@@ -49,7 +49,7 @@ class WcaTool
     opts.target_callret_costs
   end
 
-  def WcaTool.add_options(opts)
+  def self.add_options(opts)
     WcaTool.add_config_options(opts)
     opts.analysis_entry
     opts.flow_fact_selection
@@ -58,7 +58,7 @@ class WcaTool
     opts.stack_cache_analysis
   end
 
-  def WcaTool.run(pml,options)
+  def self.run(pml,options)
     needs_options(options, :analysis_entry, :flow_fact_selection, :flow_fact_srcs, :timing_output)
     wca = WCA.new(pml, options)
     report = wca.analyze(options.analysis_entry)

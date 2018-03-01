@@ -15,7 +15,7 @@ class FFXExportTool
 
   FF_EXPORT_TYPES = %w{jumptables loop-bounds symbolic-loop-bounds flow-constraints infeasible-code call-targets mem-addresses stack-cache}
 
-  def FFXExportTool.add_config_options(opts)
+  def self.add_config_options(opts)
     # TODO: should we name the options --ffx-* to be consistent with the tool name and to distinguish from the SWEET ff format,
     #      or should we keep them as --ff to avoid confusion with F4 export ??
     opts.on("--ffx", "Export flow-facts using F4 instead of FFX") { |d| opts.options.export_ffx = true }
@@ -53,13 +53,13 @@ class FFXExportTool
     end
   end
 
-  def FFXExportTool.add_options(opts, mandatory=true)
+  def self.add_options(opts, mandatory=true)
     FFXExportTool.add_config_options(opts)
     opts.ff_file(mandatory)
     opts.flow_fact_selection
   end
 
-  def FFXExportTool.run(pml, options)
+  def self.run(pml, options)
     needs_options(options, :ff_file, :flow_fact_selection, :flow_fact_srcs)
     options.ff_disable_export = Set.new unless options.ff_disable_export
 
@@ -107,10 +107,10 @@ class FFXExportTool
 end
 
 class OSXExportTool
-  def OSXExportTool.add_config_options(opts)
+  def self.add_config_options(opts)
   end
 
-  def OSXExportTool.add_options(opts, mandatory=true)
+  def self.add_options(opts, mandatory=true)
     opts.analysis_entry
 
     opts.otawa_platform_file(mandatory)
@@ -120,7 +120,7 @@ class OSXExportTool
     end
   end
 
-  def OSXExportTool.run(pml, options)
+  def self.run(pml, options)
     needs_options(options, :otawa_platform_file)
 
     osx = OSXExporter.new(pml, options)

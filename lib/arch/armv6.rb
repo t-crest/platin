@@ -41,7 +41,7 @@ class ExtractSymbols
   OP_CONSTPOOL = 121
   OP_IMPLICIT_DEF = 8
   OPCODE_NAMES = {233 => /mov/}
-  def ExtractSymbols.run(cmd,extractor,pml,options)
+  def self.run(cmd,extractor,pml,options)
     r = IO.popen("#{cmd} -d --no-show-raw-insn '#{options.binary_file}'") do |io|
       current_label, current_ix, current_function = nil, 0, nil
       io.each_line do |line|
@@ -99,7 +99,7 @@ class Architecture < PML::Architecture
     @config ||= self.class.default_config
   end
 
-  def Architecture.default_config
+  def self.default_config
   # TODO: FIXME dummy values
     memories = PML::MemoryConfigList.new([PML::MemoryConfig.new('main',2 * 1024 * 1024,16,0,21,0,21)])
     caches = PML::CacheConfigList.new([Architecture.default_instr_cache('method-cache'),
@@ -116,7 +116,7 @@ class Architecture < PML::Architecture
   # FIXME: dummy stub
   end
 
-  def Architecture.default_instr_cache(type)
+  def self.default_instr_cache(type)
   # TODO: FIXME dummy values
     if type == 'method-cache'
       PML::CacheConfig.new('method-cache','method-cache','fifo',16,8,4096)
@@ -125,7 +125,7 @@ class Architecture < PML::Architecture
     end
   end
 
-  def Architecture.simulator_options(opts)
+  def self.simulator_options(opts)
   # FIXME: dummy stub
   end
 

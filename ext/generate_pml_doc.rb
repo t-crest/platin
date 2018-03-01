@@ -40,7 +40,7 @@ end
 # ('_') in the ruby code.
 class PMLGenerator
   attr_reader :options
-  def PMLGenerator.default_preamble(schema_file)
+  def self.default_preamble(schema_file)
     <<-EOF.indent_doc(MODULE_INDENT)
       #
       # This file is part of platin

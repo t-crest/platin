@@ -149,7 +149,7 @@ class PMLTool
     puts "" unless set.empty?
   end
 
-  def PMLTool.run(pml,options)
+  def self.run(pml,options)
     tool = PMLTool.new(pml, options)
     tool.validate if options.validate
     tool.print_markers if options.print_markers
@@ -179,11 +179,11 @@ class PMLTool
     pml
   end
 
-  def PMLTool.add_config_options(opts)
+  def self.add_config_options(opts)
     opts.on("--schema FILE", "PML schema") { |f| opts.options.pml_schema_file = f }
   end
 
-  def PMLTool.add_options(opts)
+  def self.add_options(opts)
     PMLTool.add_config_options(opts)
     opts.writes_pml # output option => merge
     opts.on("--validate", "validate PML file") { opts.options.validate = true }

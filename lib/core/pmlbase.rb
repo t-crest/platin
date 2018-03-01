@@ -43,11 +43,11 @@ module PML
   # at a specific representation level, stored in (attr_reader) 'attributes'
   #
   module ProgramInfoObject
-    def ProgramInfoObject.attribute_list
+    def self.attribute_list
       %w{origin level}
     end
 
-    def ProgramInfoObject.attributes_from_pml(_,data)
+    def self.attributes_from_pml(_,data)
       if data.nil?
         {}
       else

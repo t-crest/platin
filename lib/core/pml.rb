@@ -479,7 +479,7 @@ class PMLDoc
       %w{memcpy memmove memset}
   end
 
-  def PMLDoc.from_files(filenames, options)
+  def self.from_files(filenames, options)
     streams = filenames.inject([]) do |list,f|
       begin
         fstream = File.open(f) do |fh|
@@ -495,7 +495,7 @@ class PMLDoc
     PMLDoc.new(streams, options)
   end
 
-  def PMLDoc.merge_stream(stream)
+  def self.merge_stream(stream)
     merged_doc = {}
     stream.each do |fstream|
       (fname, content) = fstream

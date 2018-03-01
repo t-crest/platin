@@ -10,7 +10,7 @@ include PML
 $available_tools = ["clang", "pasim", "ait"]
 
 class ToolConfigTool
-  def ToolConfigTool.add_options(opts)
+  def self.add_options(opts)
     opts.on("-t","--tool TOOL", "tool to configure (=clang)") { |t| opts.options.tool = t }
     opts.on("-m","--mode MODE", "configuration mode (tool specific)") { |m| opts.options.mode = m }
     opts.on("--sca BOUNDS:SOLVER", "stack cache analysis options (required to enable analysis in clang") do |s|
@@ -22,7 +22,7 @@ class ToolConfigTool
     end
   end
 
-  def ToolConfigTool.run(pml, options)
+  def self.run(pml, options)
     needs_options(options, :tool)
 
     case options.tool
@@ -58,7 +58,7 @@ class ToolConfigTool
   # However, it is not possible (as far as i know), to probably deal with spaces (or
   # mor generally, the IFS character) this way.
   # We thus escape using single quotes, but only if necessary
-  def ToolConfigTool.escape(str)
+  def self.escape(str)
     if str =~ /[\t ]/
       "'" + str.gsub(/[\\']/) { |c| "\\#{c}" } + "'"
     else

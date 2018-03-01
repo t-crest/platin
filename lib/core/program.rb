@@ -104,7 +104,7 @@ module PML
 
     def address=(addr); data['address'] = addr; end
 
-    def ProgramPoint.from_pml(mod, data)
+    def self.from_pml(mod, data)
       # markers are special global program points
       return Marker.new(data['marker']) if data['marker']
 
@@ -174,7 +174,7 @@ module PML
       { 'function' => loopheader.function.name, 'loop' => loopheader.name }
     end
 
-    def Loop.from_qname(functions,qn)
+    def self.from_qname(functions,qn)
       fn,bn = qn.split('/',2).map { |n| YAML::load(n) }
       functions.by_name(fn).blocks.by_name(bn).loop
     end
@@ -636,7 +636,7 @@ module PML
     end
 
     # XXX: LLVM specific/arch specific
-    def Block.get_label(fname,bname)
+    def self.get_label(fname,bname)
       "LBB#{fname}_#{bname}"
     end
 
@@ -657,7 +657,7 @@ module PML
       @loop = Loop.new(self)
     end
 
-    def Block.from_qname(functions,qn)
+    def self.from_qname(functions,qn)
       fn,bn = qn.split('/',2).map { |n| YAML::load(n) }
       functions.by_name(fn).blocks.by_name(bn)
     end
@@ -708,7 +708,7 @@ module PML
       { 'function' => function.name, 'block' => block.name, 'instruction' => name }
     end
 
-    def Instruction.from_qname(functions,qn)
+    def self.from_qname(functions,qn)
       fn,bn,iname = qn.split('/',3).map { |n| YAML::load(n) }
       functions.by_name(fn).blocks.by_name(bn.to_s).instructions[iname]
     end

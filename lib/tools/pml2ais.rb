@@ -11,7 +11,7 @@ class AisExportTool
 
   AIS_EXPORT_TYPES = %w{header jumptables loop-bounds symbolic-loop-bounds flow-constraints infeasible-code call-targets mem-addresses stack-cache}
 
-  def AisExportTool.add_config_options(opts)
+  def self.add_config_options(opts)
     opts.on("--ais-header-file FILE", "the contents of this file is copied verbatim to the final AIS file") do |file|
       opts.options.ais_header_file = file
     end
@@ -48,20 +48,20 @@ class AisExportTool
   end
 
   # return the list of exports (filter the ones given in the 'except' argument)
-  def AisExportTool.get_exports_list(except = [])
+  def self.get_exports_list(except = [])
     unknown = (Set[*except] - Set[*AIS_EXPORT_TYPES])
     assert("unknown export(s): #{unknown.map { |e| e }.join(',')}") { unknown.empty? }
     return Set[*AIS_EXPORT_TYPES] - Set[*except]
   end
 
-  def AisExportTool.add_options(opts)
+  def self.add_options(opts)
     AisExportTool.add_config_options(opts)
     opts.ais_file(true)
     opts.flow_fact_selection
     opts.ait_sca_type
   end
 
-  def AisExportTool.run(pml, options)
+  def self.run(pml, options)
     needs_options(options, :ais_file, :flow_fact_selection, :flow_fact_srcs)
     options.ais_disable_export = Set.new unless options.ais_disable_export
 
@@ -104,13 +104,13 @@ class AisExportTool
 end
 
 class ApxExportTool
-  def ApxExportTool.add_config_options(opts)
+  def self.add_config_options(opts)
     opts.ait_icache_mode
     opts.ait_dcache_mode
     opts.ait_sca_type
   end
 
-  def ApxExportTool.add_options(opts, mandatory=true)
+  def self.add_options(opts, mandatory=true)
     opts.analysis_entry
 
     opts.apx_file(mandatory)
@@ -126,7 +126,7 @@ class ApxExportTool
     end
   end
 
-  def ApxExportTool.run(pml, options)
+  def self.run(pml, options)
     needs_options(options, :binary_file, :ais_file, :ait_report_prefix, :analysis_entry)
 
     File.open(options.apx_file, "w") do |fh|

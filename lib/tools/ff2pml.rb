@@ -10,16 +10,16 @@ include PML
 require 'ext/sweet'
 
 class SweetImportTool
-  def SweetImportTool.add_config_options(opts)
+  def self.add_config_options(opts)
   end
 
-  def SweetImportTool.add_options(opts,exclude=[])
+  def self.add_options(opts,exclude=[])
     SweetImportTool.add_config_options(opts)
     opts.generates_flowfacts
     opts.sweet_flowfact_file unless exclude.include?(:sweet_flowfact_file)
   end
 
-  def SweetImportTool.run(pml, options)
+  def self.run(pml, options)
     parser = SWEET::FlowFactParser.new.parser
     flow_fact_origin = options.flow_fact_output || 'sweet'
     converter = SweetFlowFactImport.new(pml.bitcode_functions, 'level' => 'bitcode',

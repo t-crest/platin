@@ -102,7 +102,7 @@ class ValueRange
     end
   end
 
-  def ValueRange.range_to_ais(range)
+  def self.range_to_ais(range)
     sprintf("0x%08x .. 0x%08x",range.min,range.max)
   end
 end

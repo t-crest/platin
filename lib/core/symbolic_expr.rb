@@ -31,7 +31,7 @@ end
 class SymbolicExpression
 
   # Parse symbolic expression (LLVM 3.4's Scalar Evolution Expression format)
-  def SymbolicExpression.parse(str)
+  def self.parse(str)
     SymbolicExpressionParser.parse(str)
   end
 
@@ -164,7 +164,7 @@ class SEBinary < SymbolicExpression
     @op, @a, @b = op, a, b
   end
 
-  def SEBinary.create(op, a, b)
+  def self.create(op, a, b)
     a = SEInt.new(a) if a.kind_of?(Integer)
     b = SEInt.new(b) if b.kind_of?(Integer)
     expr = SEBinary.new(op, a, b)
@@ -181,7 +181,7 @@ class SEBinary < SymbolicExpression
     end
   end
 
-  def SEBinary.unit(op)
+  def self.unit(op)
     case op
     when '+'; then 0
     when '*'; then 1
@@ -190,11 +190,11 @@ class SEBinary < SymbolicExpression
     end
   end
 
-  def SEBinary.lunit(op)
+  def self.lunit(op)
     SEBinary.unit(op)
   end
 
-  def SEBinary.runit(op)
+  def self.runit(op)
     case op
     when '/s'; then 1
     when '/u'; then 1
@@ -202,17 +202,17 @@ class SEBinary < SymbolicExpression
     end
   end
 
-  def SEBinary.zero(op)
+  def self.zero(op)
     if op == '*' then 0 else nil end
   end
 
   # true for operators that are associative and commutative
   #
-  def SEBinary.commutative?(op)
+  def self.commutative?(op)
     op == '+' || op == '*'
   end
 
-  def SEBinary.fold(op, *args)
+  def self.fold(op, *args)
     args = args.map do |arg|
       if arg.kind_of?(Integer) then SEInt.new(arg) else arg end
     end
@@ -226,7 +226,7 @@ class SEBinary < SymbolicExpression
 
   # optimized creation for commutative operators
   #
-  def SEBinary.collect_fold(op, *args)
+  def self.collect_fold(op, *args)
     assert("SEBinary#collect_fold: #{op} is not commutative") { SEBinary.commutative?(op) }
     todo, done = args, []
     while ! todo.empty?
@@ -432,7 +432,7 @@ class SymbolicExpressionParser
     @parser = get_parser
   end
 
-  def SymbolicExpressionParser.parse(expr_spec)
+  def self.parse(expr_spec)
     return SEInt.new(expr_spec) if expr_spec.kind_of?(Integer)
     p = SymbolicExpressionParser.new.parser
     begin

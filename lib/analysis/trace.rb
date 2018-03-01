@@ -334,7 +334,7 @@ class RecorderSpecification
     @entity_types, @entity_context, @calllimit = entity_types, entity_context, calllimit
   end
 
-  def RecorderSpecification.help(out=$stderr)
+  def self.help(out=$stderr)
     out.puts("== Trace Recorder Specification ==")
     out.puts("")
     out.puts("spec              := <spec-item>,...")
@@ -355,7 +355,7 @@ class RecorderSpecification
     out.puts("                     of length 2), virtually inlining directly called functions")
   end
 
-  def RecorderSpecification.parse(str, default_callstring_length)
+  def self.parse(str, default_callstring_length)
     recorders = []
     str.split(/\s*,\s*/).each do |recspec|
       if recspec =~ SPEC_RE

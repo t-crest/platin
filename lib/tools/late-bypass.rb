@@ -9,7 +9,7 @@ include PML
 
 class LateBypassTool
 
-  def LateBypassTool.add_config_options(opts)
+  def self.add_config_options(opts)
     opts.on("-t", "--threshold [THRESHOLD]", Integer,
             "classify as unknown if a range is wider than 2^THRESHOLD") do |num|
       opts.options.range_threshold = (1 << num) unless num.nil?
@@ -20,18 +20,18 @@ class LateBypassTool
     end
   end
 
-  def LateBypassTool.add_options(opts)
+  def self.add_options(opts)
     LateBypassTool.add_config_options(opts)
   end
 
-  def LateBypassTool.has_large_range(vf, threshold)
+  def self.has_large_range(vf, threshold)
     return vf.values.map do |v|
       r = v.range
       (r.max - r.min) >= threshold if r # else, evaluates to nil
     end.any?
   end
 
-  def LateBypassTool.run(pml, options)
+  def self.run(pml, options)
     needs_options(options, :binary_file)
     # default range threshold = 2^24
     options.range_threshold = (1 << 24) if options.range_threshold.nil?

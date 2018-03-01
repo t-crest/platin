@@ -78,7 +78,7 @@ module SWEET
       end
     end
 
-    def Vector.negate(vec)
+    def self.negate(vec)
       vneg = {}
       vec.each do |k,v|
         vneg[k] = -v
@@ -86,7 +86,7 @@ module SWEET
       vneg
     end
 
-    def Vector.subtract!(v1,v2)
+    def self.subtract!(v1,v2)
       v2.each do |v,coeff|
         v1[v] -= coeff
       end

@@ -138,7 +138,7 @@ class ExtractSymbols
 end
 
 class ExtractSymbolsTool
-  def ExtractSymbolsTool.add_config_options(opts)
+  def self.add_config_options(opts)
     opts.on("--objdump-command FILE", "path to 'llvm-objdump'") { |f| opts.options.objdump = f }
     opts.on("--text-sections SECTION,..", "list of code sections (=.text)") { |s| opts.options.text_sections = s.split(/\s*,\s*/) }
     opts.add_check do |options|
@@ -147,11 +147,11 @@ class ExtractSymbolsTool
     end
   end
 
-  def ExtractSymbolsTool.add_options(opts)
+  def self.add_options(opts)
     ExtractSymbolsTool.add_config_options(opts)
   end
 
-  def ExtractSymbolsTool.run(pml, options)
+  def self.run(pml, options)
     needs_options(options, :objdump, :text_sections, :binary_file)
     ExtractSymbols.new(pml,options).analyze.update_pml
   end

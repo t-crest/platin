@@ -71,7 +71,7 @@ class ValueRange
     raise Exception.new("#{self.class}#to_ffx: no translation available")
   end
 
-  def ValueRange.range_to_ffx(range)
+  def self.range_to_ffx(range)
     sprintf("0x%08x .. 0x%08x",range.min,range.max)
   end
 end

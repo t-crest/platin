@@ -1157,7 +1157,7 @@ class Dispatcher
 end
 
 class InteractTool
-  def InteractTool.add_options(opts)
+  def self.add_options(opts)
     WcetTool.add_options(opts)
     options = opts.options
     options.source_path = "."

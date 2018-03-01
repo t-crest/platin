@@ -21,7 +21,7 @@ class AnalysisConfig < PMLObject
     set_yaml_repr(data)
   end
 
-  def AnalysisConfig.from_pml(pml, data)
+  def self.from_pml(pml, data)
     AnalysisConfig.new(data['name'],data['program-entry'],data['analysis-entry'],
                        ToolConfigList.from_pml(pml, data['tool-configurations'] || []),data)
   end
@@ -44,7 +44,7 @@ class ToolConfig < PMLObject
     set_yaml_repr(data)
   end
 
-  def ToolConfig.from_pml(_pml, data)
+  def self.from_pml(_pml, data)
     ToolConfig.new(data['name'],data['configuration'],data['options'], data)
   end
 

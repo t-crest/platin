@@ -8,7 +8,7 @@ require 'ext/ait'
 include PML
 
 class PMLConfigTool
-  def PMLConfigTool.parse_size(size)
+  def self.parse_size(size)
     if /^([0-9.]+) *([kmg]?)b?$/ =~ size.downcase
       size = $1.to_f
       case $2
@@ -24,7 +24,7 @@ class PMLConfigTool
     size.to_i
   end
 
-  def PMLConfigTool.parse_policy(policy)
+  def self.parse_policy(policy)
     case policy
     when "ideal", "dm", "no"
       { policy: policy, assoc: nil }
@@ -35,7 +35,7 @@ class PMLConfigTool
     end
   end
 
-  def PMLConfigTool.add_options(opts)
+  def self.add_options(opts)
     opts.on("--target TRIPLE", "Target architecture triple (required if no PML input is given)") do |a|
       opts.options.triple = a
     end
@@ -126,7 +126,7 @@ class PMLConfigTool
     end
   end
 
-  def PMLConfigTool.update_memories(arch, options)
+  def self.update_memories(arch, options)
     # TODO: set name of memory to configure, enable configuration of multiple memories?
 
     # Get or create the main memory
@@ -159,7 +159,7 @@ class PMLConfigTool
     main.max_burst_size = options.memory_burst_size if options.memory_burst_size
   end
 
-  def PMLConfigTool.set_attributes(list, attrs)
+  def self.set_attributes(list, attrs)
     attrs.each do |name,key,value|
       entry = list.by_name(name)
       # Cache/area must exist by now for us to attach attributes
@@ -176,12 +176,12 @@ class PMLConfigTool
     end if attrs
   end
 
-  def PMLConfigTool.update_attributes(arch, options)
+  def self.update_attributes(arch, options)
     set_attributes(arch.config.caches,       options.set_cache_attrs)
     set_attributes(arch.config.memory_areas, options.set_area_attrs )
   end
 
-  def PMLConfigTool.run(pml, options)
+  def self.run(pml, options)
     arch = pml.arch
 
     # TODO: call pml.arch to make sure all required memories, caches and areas exist

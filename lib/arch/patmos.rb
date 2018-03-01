@@ -88,7 +88,7 @@ class SimulatorTrace
 end
 
 class ExtractSymbols
-  def ExtractSymbols.run(extractor,pml,options)
+  def self.run(extractor,pml,options)
     r = IO.popen("#{options.objdump} -d '#{options.binary_file}'") do |io|
       current_label, current_ix, current_function = nil, 0, nil
       last_addr, last_size = nil, nil
@@ -125,7 +125,7 @@ class ExtractSymbols
     die "The objdump command '#{options.objdump}' exited with status #{$CHILD_STATUS.exitstatus}" unless $CHILD_STATUS.success?
   end
   private
-  def ExtractSymbols.build_instruction(addr, _cond, size, instr, args)
+  def self.build_instruction(addr, _cond, size, instr, args)
     ret = {'address' => addr, 'size' => size, 'source' => 'objdump', 'opcode' => instr}
     reg_args = args.scan('$r').length
     case instr
@@ -189,14 +189,14 @@ class Architecture < PML::Architecture
     @config ||= self.class.default_config
   end
 
-  def Architecture.simulator_options(opts)
+  def self.simulator_options(opts)
     opts.on("--pasim-command FILE", "path to pasim (=pasim)") { |f| opts.options.pasim = f }
     opts.add_check do |options|
       options.pasim = "pasim" unless options.pasim || options.trace_file
     end
   end
 
-  def Architecture.default_instr_cache(type)
+  def self.default_instr_cache(type)
     if type == 'method-cache'
       PML::CacheConfig.new('method-cache','method-cache','fifo',16,8,4096)
     else
@@ -204,7 +204,7 @@ class Architecture < PML::Architecture
     end
   end
 
-  def Architecture.default_config
+  def self.default_config
     memories = PML::MemoryConfigList.new([PML::MemoryConfig.new('main',2 * 1024 * 1024,16,0,21,0,21)])
     caches = PML::CacheConfigList.new([Architecture.default_instr_cache('method-cache'),
                                        PML::CacheConfig.new('stack-cache','stack-cache','block',nil,4,2048),

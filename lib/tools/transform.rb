@@ -71,7 +71,7 @@ class RelationGraphValidation
 end
 
 class RelationGraphValidationTool
-  def RelationGraphValidationTool.add_options(opts, mandatory = true)
+  def self.add_options(opts, mandatory = true)
     Architecture.simulator_options(opts)
     opts.analysis_entry
     opts.trace_entry
@@ -79,12 +79,12 @@ class RelationGraphValidationTool
     opts.sweet_trace_file(mandatory)
   end
 
-  def RelationGraphValidationTool.check_options(options)
+  def self.check_options(options)
     die_usage("Binary file is needed for validation. Try --help") unless options.binary_file
     die_usage("SWEET trace file is needed for validation. Try --help") unless options.sweet_trace_file
   end
 
-  def RelationGraphValidationTool.run(pml, options)
+  def self.run(pml, options)
     tm1 = MachineTraceMonitor.new(pml, options)
     entry = pml.machine_functions.by_label(options.analysis_entry)
     pt1 = ProgressTraceRecorder.new(pml, entry, true, options)
@@ -103,7 +103,7 @@ end
 class TransformTool
   TRANSFORM_ACTIONS = %w{up down copy}
 
-  def TransformTool.add_options(opts)
+  def self.add_options(opts)
     opts.analysis_entry
     opts.flow_fact_selection
     opts.generates_flowfacts
@@ -125,7 +125,7 @@ class TransformTool
   end
 
   # pml ... PML for the prgoam
-  def TransformTool.run(pml,options)
+  def self.run(pml,options)
     needs_options(options,:flow_fact_selection,:flow_fact_srcs,:transform_action,:analysis_entry, :flow_fact_output)
 
     RelationGraphValidationTool.run(pml,options) if options.validate

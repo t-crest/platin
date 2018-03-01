@@ -8,11 +8,11 @@ require 'ext/sweet'
 include PML
 
 class AlfTool
-  def AlfTool.add_config_options(opts)
+  def self.add_config_options(opts)
     opts.alfllc_command
   end
 
-  def AlfTool.add_options(opts)
+  def self.add_options(opts)
     AlfTool.add_config_options(opts)
     opts.bitcode_file
     opts.alf_file
@@ -23,7 +23,7 @@ class AlfTool
   #  ignore_volatiles ... ignore LLVM's volatile qualitifier
   #  mem_areas        ... memory areas which can be accessed using hardcoded addresses
   #  ignored_definitions ... ignore the given set of definitions
-  def AlfTool.run(options, alf_opts = {})
+  def self.run(options, alf_opts = {})
     needs_options(options, :alf_llc, :alf_file, :bitcode_file)
     raise MissingToolException.new("alf-llc not found") unless which(options.alf_llc)
     cmd = [ options.alf_llc, "-march=alf", "-o", options.alf_file ]
@@ -41,7 +41,7 @@ class AlfTool
     die "#{options.alf_llc} failed with exit status #{$CHILD_STATUS}" unless safe_system(*cmd)
   end
 
-  def AlfTool.default_ignored_definitions
+  def self.default_ignored_definitions
     %w{__adddf3 __addsf3 __divdf3 __divsf3 __eqdf2} +
       %w{__eqsf2 __extendsfdf2 __fixdfdi __fixdfsi __fixsfdi} +
       %w{__fixsfsi __fixunsdfdi __fixunsdfsi __fixunssfdi __fixunssfsi} +
@@ -59,12 +59,12 @@ end
 
 # tool to invoke sweet to generate IR-level flow facts
 class SweetAnalyzeTool
-  def SweetAnalyzeTool.add_config_options(opts)
+  def self.add_config_options(opts)
     opts.alfllc_command
     opts.sweet_command
   end
 
-  def SweetAnalyzeTool.add_options(opts)
+  def self.add_options(opts)
     SweetAnalyzeTool.add_config_options(opts)
     opts.analysis_entry
     opts.bitcode_file
@@ -81,7 +81,7 @@ class SweetAnalyzeTool
     end
   end
 
-  def SweetAnalyzeTool.run(_pml, options)
+  def self.run(_pml, options)
     needs_options(options, :sweet, :alf_file, :analysis_entry, :sweet_flowfact_file)
     alfopts = {:standalone => true, :memory_areas => [(0..0xffff)], :ignored_definitions => AlfTool.default_ignored_definitions }
     alfopts[:ignore_volatiles] = true if options.sweet_ignore_volatiles

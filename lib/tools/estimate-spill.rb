@@ -21,7 +21,7 @@ end
 
 
 class EstimateSpill
-  def EstimateSpill.default_targets(pml)
+  def self.default_targets(pml)
     targets = Array.new
     pml.data['relation-graphs'].each do |func|
       targets << func["src"]["function"]
@@ -30,7 +30,7 @@ class EstimateSpill
     targets
   end
 
-  def EstimateSpill.estimate(pml, target)
+  def self.estimate(pml, target)
     rg = pml.data['relation-graphs'].find { |f| f['src']['function'] == target or f['dst']['function'] == target }
     raise Exception.new("Relation Graph not found") unless rg
 
@@ -81,7 +81,7 @@ class EstimateSpill
     { "spills" => spills, "instr_src" => instr_src, "instr_dst" => instr_dst, "mem_src" => mem_src, "mem_dst" => mem_dst, "spd" => spills_per_depth }
   end
 
-  def EstimateSpill.run(pml, options)
+  def self.run(pml, options)
     outdir  = options.outdir || "."
     targets = options.functions || EstimateSpill.default_targets(pml)
 
@@ -91,7 +91,7 @@ class EstimateSpill
     statistics("ESTIMATE-SPILL","Generated rg graphs" => targets.length) if options.stats
   end
 
-  def EstimateSpill.add_options(opts)
+  def self.add_options(opts)
     opts.on("-f","--function FUNCTION,...","Name of the function(s) to check") { |f| opts.options.functions = f.split(/\s*,\s*/) }
   end
 end

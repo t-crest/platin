@@ -65,7 +65,7 @@ class InspectTool
     print_loops(@pml.machine_functions, "machinecode", ffmap, unbounded, io)
   end
 
-  def InspectTool.run(pml,options)
+  def self.run(pml,options)
     tool = InspectTool.new(pml, options)
 
     tool.transform_down(["llvm.bc"],"llvm")
@@ -74,7 +74,7 @@ class InspectTool
     tool.show_loops(options.show_unbounded_loops)
   end
 
-  def InspectTool.add_options(opts)
+  def self.add_options(opts)
     TransformTool.add_options(opts)
     # opts.on("--find-loop-bounds", "find all loops and print their loop bounds") { opts.options.show_loop_bounds = true }
     opts.on("--find-unbounded-loops", "find all loops that have no loop bounds") { opts.options.show_unbounded_loops = true }

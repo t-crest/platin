@@ -204,7 +204,7 @@ module PML
       { 'factor' => @factor, 'program-point' => @ppref.data }
     end
 
-    def Term.from_pml(mod,data)
+    def self.from_pml(mod,data)
       Term.new(ContextRef.from_pml(mod,data['program-point']), data['factor'])
     end
   end
@@ -276,7 +276,7 @@ module PML
       @ppref.programpoint
     end
 
-    def ModelFact.from_pml(pml, data, mode = 'platin')
+    def self.from_pml(pml, data, mode = 'platin')
       fs = pml.functions_for_level(data['level'])
       ModelFact.new(ContextRef.from_pml(fs,data['program-point']),
                     data['type'], data['expression'],
@@ -494,7 +494,7 @@ module PML
       FlowFactClassifier.new(pml).classification_group(self)
     end
 
-    def FlowFact.from_pml(pml, data)
+    def self.from_pml(pml, data)
       mod = pml.functions_for_level(data['level'])
       scope = ContextRef.from_pml(mod,data['scope'])
       lhs = TermList.new(data['lhs'].map { |t| Term.from_pml(mod,t) })
@@ -523,13 +523,13 @@ module PML
     end
 
     # Flow fact builders
-    def FlowFact.block_frequency(scoperef, blockref, freq, attrs)
+    def self.block_frequency(scoperef, blockref, freq, attrs)
       terms = [ Term.new(blockref, 1) ]
       flowfact = FlowFact.new(scoperef, TermList.new(terms),'less-equal',freq.max, attrs.dup)
       flowfact
     end
 
-    def FlowFact.calltargets(scoperef, csref, receivers, attrs)
+    def self.calltargets(scoperef, csref, receivers, attrs)
       terms = [ Term.new(csref,1) ]
       receivers.each do |fref|
         terms.push(Term.new(fref,-1))
@@ -538,14 +538,14 @@ module PML
       flowfact
     end
 
-    def FlowFact.loop_bound(scope, bound, attrs)
+    def self.loop_bound(scope, bound, attrs)
       blockref = ContextRef.new(scope.programpoint.loopheader, Context.empty)
       flowfact = FlowFact.new(scope, TermList.new([Term.new(blockref,1)]), 'less-equal',
                               bound, attrs.dup)
       flowfact
     end
 
-    def FlowFact.inner_loop_bound(scoperef, blockref, bound, attrs)
+    def self.inner_loop_bound(scoperef, blockref, bound, attrs)
       flowfact = FlowFact.new(scoperef, TermList.new([Term.new(blockref,1)]), 'less-equal',
                               bound, attrs.dup)
       flowfact
@@ -690,7 +690,7 @@ module PML
       Range.new(min,max)
     end
 
-    def ValueRange.from_pml(_,data)
+    def self.from_pml(_,data)
       ValueRange.new(data['min'],data['max'],data['symbol'],data)
     end
 
@@ -719,7 +719,7 @@ module PML
       @ppref.programpoint
     end
 
-    def ValueFact.from_pml(pml, data)
+    def self.from_pml(pml, data)
       fs = pml.functions_for_level(data['level'])
       ValueFact.new(ContextRef.from_pml(fs,data['program-point']),
                     data['variable'], data['width'],
@@ -760,7 +760,7 @@ module PML
       set_yaml_repr(data)
     end
 
-    def ProfileEntry.from_pml(fs, data)
+    def self.from_pml(fs, data)
       ProfileEntry.new(ContextRef.from_pml(fs,data['reference']), data['cycles'],
                        data['wcet-frequency'], data['wcet-contribution'], data['criticality'], data)
     end
@@ -801,7 +801,7 @@ module PML
       @data['profile'] = @profile.data if @data
     end
 
-    def TimingEntry.from_pml(pml, data)
+    def self.from_pml(pml, data)
       fs = pml.functions_for_level(data['level'])
       profile = data['profile'] ? Profile.from_pml(fs, data['profile']) : nil
       TimingEntry.new(ContextRef.from_pml(fs,data['scope']), data['cycles'],

@@ -18,7 +18,7 @@ require 'tmpdir'
 # High-Level Wrapper for aiT
 # XXX: Internal tool; move into different directory; these tools are not visible on the command line)
 class AitTool
-  def AitTool.run(pml,opts)
+  def self.run(pml,opts)
     AisExportTool.run(pml,opts)
     ApxExportTool.run(pml,opts)
     AitAnalyzeTool.run(pml, opts)
@@ -34,7 +34,7 @@ class AitTool
     end
   end
 
-  def AitTool.add_config_options(opts)
+  def self.add_config_options(opts)
     AisExportTool.add_config_options(opts)
     ApxExportTool.add_config_options(opts)
     AitAnalyzeTool.add_config_options( opts)
@@ -429,7 +429,7 @@ class WcetTool
     opts.ait_report_prefix = File.join(outdir, "#{basename}.ait") unless !overwrite && opts.ait_report_prefix
   end
 
-  def WcetTool.run(pml,options, model=nil)
+  def self.run(pml,options, model=nil)
     needs_options(:input)
 
     # Get analysis configurations from PML
@@ -471,7 +471,7 @@ class WcetTool
     end
   end
 
-  def WcetTool.add_options(opts)
+  def self.add_options(opts)
     opts.writes_pml
     opts.writes_report
     opts.analysis_entry(false)

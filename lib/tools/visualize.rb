@@ -657,7 +657,7 @@ class VisualizeTool
   #                                                        graphviz >= 1.2.2              graphviz < 1.2.2
   VALID_FORMATS = defined?(GraphViz::Constants::FORMATS) ? GraphViz::Constants::FORMATS : Constants::FORMATS
 
-  def VisualizeTool.default_targets(pml)
+  def self.default_targets(pml)
     entry = pml.machine_functions.by_label("main")
     pml.machine_functions.reachable_from(entry.name).first.reject do |f|
       f.label =~ /printf/
@@ -666,7 +666,7 @@ class VisualizeTool
     end
   end
 
-  def VisualizeTool.run(pml, options)
+  def self.run(pml, options)
     targets = options.functions || VisualizeTool.default_targets(pml)
     outdir = options.outdir || "."
     options.graphviz_format ||= "png"
@@ -744,7 +744,7 @@ class VisualizeTool
     statistics("VISUALIZE","Generated bc+mc+rg graphs" => targets.length) if options.stats
   end
 
-  def VisualizeTool.add_options(opts)
+  def self.add_options(opts)
     opts.on("--[no-]html","Generate HTML index pages") { |b| opts.options.html = b }
     opts.on("-f","--function FUNCTION,...","Name of the function(s) to visualize") { |f| opts.options.functions = f.split(/\s*,\s*/) }
     opts.on("--show-calls", "Visualize call sites") { opts.options.show_calls = true }

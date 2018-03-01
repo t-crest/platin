@@ -54,7 +54,7 @@ class Model
     @stack = []
   end
 
-  def Model.from_file(filename)
+  def self.from_file(filename)
     prog    = File.read(filename)
     context = Peaches::build_context(prog)
     self.new(context)

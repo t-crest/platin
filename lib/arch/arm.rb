@@ -41,7 +41,7 @@ class ExtractSymbols
   OP_CONSTPOOL = 121
   OP_IMPLICIT_DEF = 8
   OPCODE_NAMES = {233 => /mov/}
-  def ExtractSymbols.run(cmd,extractor,pml,options)
+  def self.run(cmd,extractor,pml,options)
     r = IO.popen("#{cmd} -d --no-show-raw-insn '#{options.binary_file}'") do |io|
       current_label, current_ix, current_function = nil, 0, nil
       io.each_line do |line|
@@ -98,7 +98,7 @@ class Architecture < PML::Architecture
     @triple, @config = triple, config
   end
 
-  def Architecture.simulator_options(opts)
+  def self.simulator_options(opts)
   end
 
   def config_for_clang(options)
