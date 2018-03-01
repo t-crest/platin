@@ -886,7 +886,7 @@ class GetCommand < Command
 
     while segments.length > 0
       key = segments.shift.to_sym
-      unless element.to_h.has_key?(key)
+      unless element.to_h.key?(key)
         pp element[key]
         raise ArgumentError, "No such key: #{key}"
       end
@@ -934,7 +934,7 @@ class SetCommand < Command
 
     while segments.length > 0
       key = segments.shift.to_sym
-      raise ArgumentError, "No such key: #{key}" unless element.to_h.has_key?(key)
+      raise ArgumentError, "No such key: #{key}" unless element.to_h.key?(key)
       if segments.length == 0
         case op
         when '='
@@ -1055,7 +1055,7 @@ class Dispatcher
     if    args.length == 0
       return
     # Check if an command exists
-    elsif !@commands.has_key?(args[0])
+    elsif !@commands.key?(args[0])
       STDERR.puts("No subcommand #{args[0]} registered")
       return
     end
@@ -1140,7 +1140,7 @@ class Dispatcher
       tokenindex -= 1;
 
       # Do we know the command?
-      return nil unless @commands.has_key?(cmd)
+      return nil unless @commands.key?(cmd)
 
       # Do we know the token?
       tokens = @commands[cmd].get_tokens

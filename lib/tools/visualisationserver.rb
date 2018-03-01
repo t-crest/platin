@@ -304,7 +304,7 @@ class Server
     def do_GET(req, resp)
       effpath = req.path_info.gsub(/^\/+/, '')
 
-      raise WEBrick::HTTPStatus::NotFound unless @data.has_key?(effpath)
+      raise WEBrick::HTTPStatus::NotFound unless @data.key?(effpath)
 
       data = @data[effpath]
       if data.is_a?(Hash)
@@ -342,7 +342,7 @@ class Server
 
     # Sourceinfo servlets
     if [:ilp].include?(mode)
-      assert("No source-root given") { opts.has_key?(:srcroot) }
+      assert("No source-root given") { opts.key?(:srcroot) }
       assert("#{opts[:srcroot]}: No such directory") { File.directory?(opts[:srcroot]) }
       @server.mount '/api/srcinfo', SourceInfoServlet, opts[:srcroot]
       @server.mount '/sourceview', SourceViewServlet, opts[:srcroot]
@@ -351,14 +351,14 @@ class Server
     case mode
     when :ilp
       assert("HashServlet expects an Hash") do \
-        opts.is_a?(Hash) && opts.has_key?(:data) && opts[:data].is_a?(Hash) \
+        opts.is_a?(Hash) && opts.key?(:data) && opts[:data].is_a?(Hash) \
       end
       @server.mount '/api/data', HashServlet, opts[:data]
       @server.mount '/', ILPServlet, opts[:entrypoint], '/api/data/ilp.svg',
                     '/api/data/constraints.json', '/api/data/srchints.json', '/sourceview'
     when :callgraph
       assert("HashServlet expects an Hash") do \
-        opts.is_a?(Hash) && opts.has_key?(:data) && opts[:data].is_a?(Hash) \
+        opts.is_a?(Hash) && opts.key?(:data) && opts[:data].is_a?(Hash) \
       end
       @server.mount '/api/data', HashServlet, opts[:data]
       @server.mount '/', RedirectServlet, '/api/data/callgraph.svg'

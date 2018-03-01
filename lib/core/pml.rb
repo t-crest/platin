@@ -102,11 +102,11 @@ class PMLDoc
     # individual pmlfile. Therefore we qualify them via filename.
     (data['machine-functions'] || []).each do |m|
       assert("machine-functions have to be on machinecode level") { m['level'] == "machinecode" }
-      m['name'] = qualify_machinefunction_name(m['pmlsrcfile'], m['name']) if m.has_key?('pmlsrcfile')
+      m['name'] = qualify_machinefunction_name(m['pmlsrcfile'], m['name']) if m.key?('pmlsrcfile')
     end
 
     (data['relation-graphs'] || []).each do |m|
-      if m.has_key?('pmlsrcfile')
+      if m.key?('pmlsrcfile')
         mcode = nil
         if m['src']['level'] == 'machinecode'
           mcode = m['src']
@@ -120,7 +120,7 @@ class PMLDoc
     end
 
     (data['valuefacts'] || []).each do |v|
-      if v['level'] == "machinecode" && v.has_key?('pmlsrcfile')
+      if v['level'] == "machinecode" && v.key?('pmlsrcfile')
         pp = v['program-point']
         assert("valuefacts require a program point") { pp != nil }
         pp['function'] = qualify_machinefunction_name(v['pmlsrcfile'], pp['function'])
@@ -128,7 +128,7 @@ class PMLDoc
     end
 
     (data['modelfacts'] || []).each do |v|
-      if v['level'] == "machinecode" && v.has_key?('pmlsrcfile')
+      if v['level'] == "machinecode" && v.key?('pmlsrcfile')
         pp = v['program-point']
         assert("modelfacts require a program point") { pp != nil }
         pp['function'] = qualify_machinefunction_name(v['pmlsrcfile'], pp['function'])
@@ -202,7 +202,7 @@ class PMLDoc
     (data['bitcode-functions'] || []).reject! do |fun|
       symname = fun['name']
       assert ("Insufficient data for bitcode-function: #{symname}") do
-        fun.has_key?('name') && resolved.has_key?(symname) && fun.has_key?('pmlsrcfile')
+        fun.key?('name') && resolved.key?(symname) && fun.key?('pmlsrcfile')
       end
       resolved[symname] != fun['pmlsrcfile']
     end
@@ -212,7 +212,7 @@ class PMLDoc
     (data['machine-functions'] || []).reject! do |fun|
       mapped = fun['mapsto']
       assert ("Insufficient data for machine-function: #{fun['name']} -> mapped") do
-           fun.has_key?('mapsto') && resolved.has_key?(mapped) && fun.has_key?('pmlsrcfile')
+           fun.key?('mapsto') && resolved.key?(mapped) && fun.key?('pmlsrcfile')
       end
       if resolved[mapped] != fun['pmlsrcfile']
         # prune
@@ -229,12 +229,12 @@ class PMLDoc
       ["src", "dst"].each do |locdesc|
         loc = graph[locdesc]
         assert ("Insufficient data for relation-graph(#{locdesc}): #{graph['src']} <-> #{graph['dst']}") do
-          graph.has_key?(locdesc) && loc.has_key?('level') &&
-          loc.has_key?('function') && graph.has_key?('pmlsrcfile')
+          graph.key?(locdesc) && loc.key?('level') &&
+          loc.key?('function') && graph.key?('pmlsrcfile')
         end
         case loc['level']
         when 'bitcode'
-          assert ("Unresolved function #{loc['function']}") { resolved.has_key?(loc['function']) }
+          assert ("Unresolved function #{loc['function']}") { resolved.key?(loc['function']) }
           prune ||= resolved[loc['function']] != graph['pmlsrcfile']
         when 'machinecode'
           prune ||= pruned_machinefunctions.include?(loc['function'])
@@ -248,7 +248,7 @@ class PMLDoc
     # Step 4: flowfacts
     (data['flowfacts'] || []).reject! do |ff|
       assert ("Incomplete flowfact: #{ff}") do
-        ff.has_key?('scope') && ff['scope'].has_key?('function') && ff.has_key?('level')
+        ff.key?('scope') && ff['scope'].key?('function') && ff.key?('level')
       end
 
       prune = false
@@ -256,7 +256,7 @@ class PMLDoc
 
       case ff['level']
       when 'bitcode'
-        assert ("No such function: #{fun}") { resolved.has_key?(fun) && ff.has_key?('pmlsrcfile') }
+        assert ("No such function: #{fun}") { resolved.key?(fun) && ff.key?('pmlsrcfile') }
         prune ||= resolved[fun] != ff['pmlsrcfile']
       when 'machinecode'
         prune ||= pruned_machinefunctions.include?(fun)
@@ -270,7 +270,7 @@ class PMLDoc
     # Step 5: valuefacts
     (data['valuefacts'] || []).reject! do |vf|
       assert ("Incomplete valuefacts: #{vf}") do
-        vf.has_key?('program-point') && vf['program-point'].has_key?('function') && vf.has_key?('level')
+        vf.key?('program-point') && vf['program-point'].key?('function') && vf.key?('level')
       end
 
       prune = false
@@ -278,7 +278,7 @@ class PMLDoc
 
       case vf['level']
       when 'bitcode'
-        assert ("No such function: #{fun}") { resolved.has_key?(fun) && vf.has_key?('pmlsrcfile') }
+        assert ("No such function: #{fun}") { resolved.key?(fun) && vf.key?('pmlsrcfile') }
         prune ||= resolved[fun] != vf['pmlsrcfile']
       when 'machinecode'
         prune ||= pruned_machinefunctions.include?(fun)
@@ -291,7 +291,7 @@ class PMLDoc
 
     (data['modelfacts'] || []).reject! do |mf|
       assert ("Incomplete modelfacts: #{mf}") do
-        mf.has_key?('program-point') && mf['program-point'].has_key?('function') && mf.has_key?('level')
+        mf.key?('program-point') && mf['program-point'].key?('function') && mf.key?('level')
       end
 
       prune = false
@@ -299,7 +299,7 @@ class PMLDoc
 
       case mf['level']
       when 'bitcode'
-        assert ("No such function: #{fun}") { resolved.has_key?(fun) && mf.has_key?('pmlsrcfile') }
+        assert ("No such function: #{fun}") { resolved.key?(fun) && mf.key?('pmlsrcfile') }
         prune ||= resolved[fun] != mf['pmlsrcfile']
       when 'machinecode'
         prune ||= pruned_machinefunctions.include?(fun)
@@ -321,7 +321,7 @@ class PMLDoc
     # Collect LinkerInfos for all functions
     symbols = {}
     data['bitcode-functions'].each do |mf|
-      assert("#{mf}: Can only link when linkage info is provided") { mf.has_key?('linkage') }
+      assert("#{mf}: Can only link when linkage info is provided") { mf.key?('linkage') }
       (symbols[mf['name']] ||= []) << LinkerInfo.new(mf['name'], mf['pmlsrcfile'], mf['linkage'])
     end
 

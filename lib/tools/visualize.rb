@@ -357,7 +357,7 @@ class ILPVisualisation < Visualizer
 
     if variable.respond_to?(:function) && variable.function
       fun = variable.function
-      if @functiongraphs.has_key?(fun)
+      if @functiongraphs.key?(fun)
         graph = @functiongraphs[fun]
       else
         sub = graph.subgraph("cluster_function_#{@functiongraphs.size}")
@@ -410,7 +410,7 @@ class ILPVisualisation < Visualizer
 
   def add_srchint(id, var)
     # sourcehints
-    unless @srchints.has_key?(id)
+    unless @srchints.key?(id)
       hint = get_srchint(var)
       @srchints[id] = hint unless hint.nil?
     end
@@ -538,7 +538,7 @@ class ILPVisualisation < Visualizer
       # If this assertion breaks: merge left and right side
       assert ("We only deal with constant rhs") { c.rhs.is_a?(Fixnum) }
       collect_variables(c).each do |v|
-        next unless @mapping.has_key?(v)
+        next unless @mapping.key?(v)
         node = add_node(v)
         id = node[:id].to_ruby
         vals << { id: id, name: v.to_s }
