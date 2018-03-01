@@ -120,17 +120,17 @@ class DataFlowAnalysis
   # TODO: order matters here for performance. Use different worklist order based on DFA direction
   class Worklist
     def initialize
-      #@worklist = []
+      # @worklist = []
       @worklist = SortedSet.new
     end
     def push(successors)
-      #@worklist.concat(successors)
+      # @worklist.concat(successors)
       @worklist.merge(successors)
     end
     def pop
       # Sort nodes in the worklist based on their topological order
-      #@worklist.sort!{ |n1,n2| n1.order > n2.order }
-      #@worklist.pop
+      # @worklist.sort!{ |n1,n2| n1.order > n2.order }
+      # @worklist.pop
       node = @worklist.first
       @worklist.delete(node)
       node
@@ -179,7 +179,7 @@ class DataFlowAnalysis
       }
     end
 
-    #dump(worklist,step_count)
+    # dump(worklist,step_count)
 
     @exit_nodes
   end

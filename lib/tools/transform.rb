@@ -165,7 +165,7 @@ class TransformTool
     else
       die("Bad transformation action --transform-action=#{options.transform_action}")
     end
-    #PerfTools::CpuProfiler.stop
+    # PerfTools::CpuProfiler.stop
     pml
   end
 

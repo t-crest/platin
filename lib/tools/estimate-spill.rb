@@ -59,13 +59,13 @@ class EstimateSpill
 
       ls_src = 0
       block_src.instructions.each { |instr|
-          #puts "#{instr.opcode}" if (instr.memmode == "store" or instr.memmode == "load")
+          # puts "#{instr.opcode}" if (instr.memmode == "store" or instr.memmode == "load")
           ls_src = ls_src + 1 if (instr.memmode == "store" or instr.memmode == "load")
       }
 
       ls_dst = 0
       block_dst.instructions.each { |instr|
-          #puts "#{instr.opcode}" if (instr.memmode == "store" or instr.memmode == "load")
+          # puts "#{instr.opcode}" if (instr.memmode == "store" or instr.memmode == "load")
           ls_dst = ls_dst + 1 if (instr.memmode == "store" or instr.memmode == "load")
       }
 

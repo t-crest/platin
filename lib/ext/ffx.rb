@@ -357,7 +357,7 @@ class F4Exporter
     rangelist = vf.values.map { |v| v.to_f4 }.join(", ")
 
     # TODO: not yet supported
-    #gen_fact("instruction #{vf.programpoint.ffx_ref}" + " accesses #{rangelist}",
+    # gen_fact("instruction #{vf.programpoint.ffx_ref}" + " accesses #{rangelist}",
     #         "Memory address (source: #{vf.origin})", vf)
   end
 
@@ -373,7 +373,7 @@ class F4Exporter
     end
 
     # TODO: not yet supported
-    #gen_fact("instruction #{ins.ffx_ref} features \"#{feature}\" = #{value}", "SC blocks (source: llvm sca)")
+    # gen_fact("instruction #{ins.ffx_ref} features \"#{feature}\" = #{value}", "SC blocks (source: llvm sca)")
   end
 end
 
@@ -407,7 +407,7 @@ class FFXExporter
           targets = successors.uniq.map { |succ|
             succ.f4_ref
           }.join(", ")
-          #gen_fact("multibranch #{ins.f4_ref(:branch_index => branches)} to #{targets}","jumptable (source: llvm)",ins)
+          # gen_fact("multibranch #{ins.f4_ref(:branch_index => branches)} to #{targets}","jumptable (source: llvm)",ins)
         end
       end
     end
@@ -424,7 +424,7 @@ class FFXExporter
     end
 
     called = targets.map { |f| f.f4_ref }.join(", ")
-    #gen_fact("multicall #{callsite.f4_ref} to #{called}",
+    # gen_fact("multicall #{callsite.f4_ref} to #{called}",
     #         "global indirect call targets (source: #{ff.origin})",ff)
   end
 
@@ -532,7 +532,7 @@ class FFXExporter
     rangelist = vf.values.map { |v| v.to_f }.join(", ")
 
     # TODO: not yet supported
-    #gen_fact("instruction #{vf.programpoint.ffx_ref}" + " accesses #{rangelist}",
+    # gen_fact("instruction #{vf.programpoint.ffx_ref}" + " accesses #{rangelist}",
     #         "Memory address (source: #{vf.origin})", vf)
   end
 
@@ -548,7 +548,7 @@ class FFXExporter
     end
 
     # TODO: not yet supported
-    #gen_fact("instruction #{ins.ffx_ref} features \"#{feature}\" = #{value}", "SC blocks (source: llvm sca)")
+    # gen_fact("instruction #{ins.ffx_ref} features \"#{feature}\" = #{value}", "SC blocks (source: llvm sca)")
   end
 
 

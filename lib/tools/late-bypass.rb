@@ -43,7 +43,7 @@ class LateBypassTool
         vf.origin == "aiT" &&
         vf.programpoint.kind_of?(PML::Instruction) &&
         # skip store instructions for now
-        #['mem-address-read', 'mem-address-write'].include?(vf.variable) &&
+        # ['mem-address-read', 'mem-address-write'].include?(vf.variable) &&
         ['mem-address-read'].include?(vf.variable) &&
         vf.programpoint.memtype == "cache" &&
         has_large_range(vf, options.range_threshold)

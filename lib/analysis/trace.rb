@@ -135,7 +135,7 @@ class MachineTraceMonitor < TraceMonitor
           # call
           if pending_call
             handle_call(*pending_call) if pending_call
-            #puts "Call: #{pending_call.first} -> #{b.function}"
+            # puts "Call: #{pending_call.first} -> #{b.function}"
             pending_call = nil
           else
             assert("Empty call history at function entry, but not main function (#{b.function},#{@program_entry})") {

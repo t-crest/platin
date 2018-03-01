@@ -134,7 +134,7 @@ clang_config.sub!(/-mpatmos-method-cache-size=\S+/,'') if options.override[:mc_c
 clang_config.sub!(/-mpatmos-max-subfunction-size=\S+/,'') if options.override[:mc_max_sf_size]
 
 run("patmos-clang #{clang_config} -mpreemit-bitcode=#{linked_bitcode} #{clang_argstr} #{clang_argstr_initial}")
-#run("patmos-clang #{clang_config} -nodefaultlibs -nostartfiles -o #{options.outfile} #{linked_bitcode}")
+# run("patmos-clang #{clang_config} -nodefaultlibs -nostartfiles -o #{options.outfile} #{linked_bitcode}")
 
 if options.guided_optimization
   FileUtils.cp(options.outfile, options.outfile + ".preopt")
@@ -143,7 +143,7 @@ if options.guided_optimization
   run("platin wcet #{platin_inputs} -i #{llvmoutput} -b #{options.outfile} -o #{llvminput} #{platin_derived_options} --report")
 
   # recompile, serialize pml, elf, bc
-  #run("patmos-clang #{clang_config} -nodefaultlibs -nostartfiles -mimport-pml=#{llvminput} -o #{options.outfile} #{linked_bitcode}")
+  # run("patmos-clang #{clang_config} -nodefaultlibs -nostartfiles -mimport-pml=#{llvminput} -o #{options.outfile} #{linked_bitcode}")
   run("patmos-clang #{clang_config} -mpreemit-bitcode=#{linked_bitcode} -mimport-pml=#{llvminput} #{clang_argstr} -mpatmos-enable-bypass-from-pml")
 end
 

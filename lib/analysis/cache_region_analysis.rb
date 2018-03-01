@@ -993,7 +993,7 @@ class DataCacheAnalysis < DataCacheAnalysisBase
 
     # We put bypass loads and stores to a separate set
     # TODO we could also run two separate analyses for cached and uncached accesses..
-    #@cache.size / (@cache.associativity * @cache.line_size) + 1
+    # @cache.size / (@cache.associativity * @cache.line_size) + 1
   end
 
   def set_of(cache_line)
@@ -1003,7 +1003,7 @@ class DataCacheAnalysis < DataCacheAnalysisBase
     #      all set-ids, and the cache analysis must put the cache line
     #      into all those sets (same for ranges).
     0
-    #(cache_line.address >> @offset_bits) & (sets - 1)
+    # (cache_line.address >> @offset_bits) & (sets - 1)
   end
 
   def size_in_bytes(cache_lines)
@@ -1084,7 +1084,7 @@ class StackCacheAnalysis
       begin
         delay = @pml.arch.config.main_memory.read_delay(0, fill_blocks*@cache.block_size)
         debug(@options, :cache, :costs) { "Cost for stack cache fill: #{fill_blocks}*#{@cache.block_size}=#{delay}" }
-        #ipet_builder.mc_model.add_block_cost(instruction.block, delay)
+        # ipet_builder.mc_model.add_block_cost(instruction.block, delay)
         ipet_builder.mc_model.add_instruction(instruction)
         ipet_builder.ilp.add_cost(instruction, delay)
       rescue PML::UnknownVariableException
@@ -1097,7 +1097,7 @@ class StackCacheAnalysis
       begin
         delay = @pml.arch.config.main_memory.write_delay(0, spill_blocks*@cache.block_size)
         debug(@options, :cache, :costs) { "Cost for stack cache spill: #{spill_blocks}*#{@cache.block_size}=#{delay}" }
-        #ipet_builder.mc_model.add_block_cost(instruction.block, delay)
+        # ipet_builder.mc_model.add_block_cost(instruction.block, delay)
         ipet_builder.mc_model.add_instruction(instruction)
         ipet_builder.ilp.add_cost(instruction, delay)
       rescue PML::UnknownVariableException
@@ -1160,7 +1160,7 @@ class StackCacheAnalysisGraphBased < StackCacheAnalysis
     assert("missing sca graph data") { @pml.sca_graph }
     @pml.sca_graph.nodes.each { |node|
       @nodes[node.id] = node
-      #@mc_model.ipet.add_variable(node.id, :sca)
+      # @mc_model.ipet.add_variable(node.id, :sca)
     }
     @pml.sca_graph.edges.each { |edge|
       srcn = @nodes[edge.src]
@@ -1183,7 +1183,7 @@ class StackCacheAnalysisGraphBased < StackCacheAnalysis
       debug(@options, :cache, :costs) { "Cost for stack cache spill: #{e.target.size}*#{@cache.block_size}=#{delay}" }
       ilp.add_cost(e, delay)
     }
-    #puts ipet_builder.ilp.variables.select{ |v| v.kind_of? IPETEdge and v.call_edge? }
+    # puts ipet_builder.ilp.variables.select{ |v| v.kind_of? IPETEdge and v.call_edge? }
     ipet_builder.call_edges.each { |ce|
       k = [ce.source,ce.target]
       puts "k: #{k}"

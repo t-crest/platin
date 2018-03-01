@@ -65,8 +65,8 @@ class Templates
   def view_ilp(entrypoint, svgurl, constraintsurl, srchintsurl, srcviewurl)
     context = binding
     context.local_variable_set(:title,    "#{entrypoint}: ILP")
-    #context.local_variable_set(:jsscripts, [ '/static/js/interactivity.js' \
-                                           #, '/static/js/thirdparty/seedrandom.min.js'])
+    # context.local_variable_set(:jsscripts, [ '/static/js/interactivity.js' \
+                                           # , '/static/js/thirdparty/seedrandom.min.js'])
     context.local_variable_set(:jsscripts, [ '/static/js/interactivity.js' \
                                            , '/static/js/thirdparty/seedrandom.min.js' \
                                            , '/static/js/thirdparty/prism.js' \
@@ -74,7 +74,7 @@ class Templates
                                            , '/static/js/thirdparty/jquery.qtip.min.js' \
                                            , '/static/js/sourceviewtooltip.js' \
                                            ])
-    #context.local_variable_set(:cssfiles,  ['/static/css/interactivity.css'])
+    # context.local_variable_set(:cssfiles,  ['/static/css/interactivity.css'])
     context.local_variable_set(:cssfiles,  [ '/static/css/thirdparty/jquery.qtip.min.css' \
                                            , '/static/css/thirdparty/prism.css' \
                                            , '/static/css/interactivity.css' \

@@ -405,11 +405,11 @@ class AISExporter
 
     # As we export loop header bounds, we should say the loop header is 'at the end'
     # of the loop (confirmed by absint (Gernot))
-    #loopname = dquote(loopblock.label)
+    # loopname = dquote(loopblock.label)
 
     func_name = loopblock.function.name
     func      = pml.machine_functions.by_label(func_name)
-    #warn("#{loopblock.name} is in #{func}")
+    # warn("#{loopblock.name} is in #{func}")
 
     addr = nil
     func.blocks.each { |b|
@@ -420,7 +420,7 @@ class AISExporter
 
     warn("#{loopblock.name} is in #{func} at 0x#{"%x" % addr}")
 
-    #[loopblock.function])
+    # [loopblock.function])
     loopname = loopblock.instructions[0].address
     gen_fact("loop 0x#{"%x" % addr} max #{bound} end",
              "global loop header bound (source: #{origins.to_a.join(", ")})")
@@ -578,7 +578,7 @@ class AISExporter
   end
 
   # export stack cache instruction annotation
-  #def export_stack_cache_annotation(type, ins, value)
+  # def export_stack_cache_annotation(type, ins, value)
   #  assert("cannot annotate stack cache instruction w/o instruction addresses") { ins.address }
   #  if(type == :fill)
   #    feature = "stack_cache_fill_count"
@@ -592,7 +592,7 @@ class AISExporter
   #  assert("expected spill/fill value to be a multiple of word") { value % 4 == 0 }
   #  words = value / 4
   #  gen_fact("instruction #{ins.ais_ref} features \"#{feature}\" = #{words}", "SC words (source: llvm sca)")
-  #end
+  # end
 
   def add_stack_cache_inst(type, ins, value)
     assert("cannot annotate stack cache instruction w/o instruction addresses") { ins.address }
@@ -1228,7 +1228,7 @@ class AitImport
     stats = {}
     wcet_elem.each_element("wcet_results/wcet_cache_infos/wcet_cache_info") { |e|
       # TODO: check: can there be cache results for anything else than the analysis entry?
-      #routine = @routines[e.attributes['routine']]
+      # routine = @routines[e.attributes['routine']]
       type = e.attributes['type']
       stats[type] = CacheStats.new(e.attributes['hits'].to_i, e.attributes['misses'].to_i)
     }

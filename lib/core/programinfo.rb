@@ -116,14 +116,14 @@ module PML
       classifier = FlowFactClassifier.new(pml)
       @list.select { |ff|
         # skip if level does not match
-        #if ! ff_levels.include?(ff.level)
+        # if ! ff_levels.include?(ff.level)
         #  false
         # skip if source is not included
         if ff_srcs != "all" && ! ff_srcs.include?(ff.origin)
           false
         elsif ! classifier.included?(ff, ff_selection)
           false
-        #elsif exclude_symbolic && ! ff.rhs.constant?
+        # elsif exclude_symbolic && ! ff.rhs.constant?
         #  false
 	# always filter unknown bounds since we cannot handle them in the analyses
 	elsif ff.rhs.kind_of?(SEUnknown)
@@ -352,7 +352,7 @@ module PML
         # When the guardexpression is false, then this path is infeasible
         guardexpr = Peaches::evaluate_expression(model.context, expr, :boolean)
         if ! guardexpr then
-          #FlowFact.block_frequency(scoperef, blockref, freq, attrs)
+          # FlowFact.block_frequency(scoperef, blockref, freq, attrs)
           fact = FlowFact.block_frequency(fun, ppref.programpoint, [SEInt.new(0)], attributes)
           fact.origin = 'model.bc'
           fact

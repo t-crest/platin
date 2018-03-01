@@ -92,7 +92,7 @@ class AisExportTool
               ais.add_stack_cache_inst(:reserve, ins, ins.sc_arg) if ins.opcode == "SRESi"
               ais.add_stack_cache_inst(:free, ins, ins.sc_arg) if ins.opcode == "SFREEi"
               ais.add_stack_cache_inst(:ensure, ins, ins.sc_arg) if ins.opcode == "SENSi"
-              #ais.export_stack_cache_update(:spill, ins, ins.sc_spill) if ins.sc_spill
+              # ais.export_stack_cache_update(:spill, ins, ins.sc_spill) if ins.sc_spill
             }
           }
         }

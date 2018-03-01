@@ -96,17 +96,17 @@ class ControlFlowModel
   def record_scope_entry(scope_node, scope_context_entry, scope_context_before)
     dict = (@scope_entries[scope_node] ||= {})
     (dict[scope_context_entry] ||= Set.new).add(scope_context_before)
-    #puts "Recording scope entry:"
-    #puts " scope node: #{scope_node}"
-    #puts " scope context entry: #{scope_context_entry}"
-    #puts " scope context before:#{scope_context_before}"
+    # puts "Recording scope entry:"
+    # puts " scope node: #{scope_node}"
+    # puts " scope context entry: #{scope_context_entry}"
+    # puts " scope context before:#{scope_context_before}"
   end
 
   def matching_scope_entries(scope_node, scope_context_entry)
-    #puts "Match scope entry:"
-    #puts " scope node: #{scope_node}"
-    #puts " scope context entry: #{scope_context_entry}"
-    #puts " matching scope contexts before: #{@scope_entries[scope_node][scope_context_entry].to_a.join(", ")}"
+    # puts "Match scope entry:"
+    # puts " scope node: #{scope_node}"
+    # puts " scope context entry: #{scope_context_entry}"
+    # puts " matching scope contexts before: #{@scope_entries[scope_node][scope_context_entry].to_a.join(", ")}"
     @scope_entries[scope_node][scope_context_entry]
   end
 
@@ -117,21 +117,21 @@ class ControlFlowModel
     dict = (@scope_exits[scope_node] ||= {})
     dict[scope_context_entry] ||= Set.new
     dict[scope_context_entry].add(exit_location)
-    #puts "Recording scope exit:"
-    #puts " scope node: #{scope_node}"
-    #puts " scope context entry: #{scope_context_entry}"
-    #puts " exit location: #{exit_location}"
+    # puts "Recording scope exit:"
+    # puts " scope node: #{scope_node}"
+    # puts " scope context entry: #{scope_context_entry}"
+    # puts " exit location: #{exit_location}"
   end
 
   def matching_scope_exits(scope_node, scope_context_entry)
-    #puts "Match scope exits:"
-    #puts " scope node: #{scope_node}"
+    # puts "Match scope exits:"
+    # puts " scope node: #{scope_node}"
     if ! @scope_exits[scope_node] || ! @scope_exits[scope_node][scope_context_entry]
-      #puts " No exits recorded"
+      # puts " No exits recorded"
       return []
     end
-    #puts " scope context entry: #{scope_context_entry}"
-    #puts " matching scope exit locations: #{@scope_exits[scope_node][scope_context_entry].to_a.join(", ")}"
+    # puts " scope context entry: #{scope_context_entry}"
+    # puts " matching scope exit locations: #{@scope_exits[scope_node][scope_context_entry].to_a.join(", ")}"
     @scope_exits[scope_node][scope_context_entry]
   end
 private

@@ -47,21 +47,21 @@ class WCA
     end
 
     # PLAYING: VCFGs
-    #bcffs,mcffs = ['bitcode','machinecode'].map { |level|
+    # bcffs,mcffs = ['bitcode','machinecode'].map { |level|
     #  @pml.flowfacts.filter(@pml,@options.flow_fact_selection,@options.flow_fact_srcs,level)
-    #}
-    #ctxm = ContextManager.new(@options.callstring_length,1,1,2)
-    #mc_model = ControlFlowModel.new(@pml.machine_functions, machine_entry, mcffs, ctxm, @pml.arch)
-    #mc_model.build_ipet(ilp) do |edge|
+    # }
+    # ctxm = ContextManager.new(@options.callstring_length,1,1,2)
+    # mc_model = ControlFlowModel.new(@pml.machine_functions, machine_entry, mcffs, ctxm, @pml.arch)
+    # mc_model.build_ipet(ilp) do |edge|
       # pseudo cost (1 cycle per instruction)
     #  if (edge.kind_of?(Block))
     #    edge.instructions.length
     #  else
     #    edge.source.instructions.length
     #  end
-    #end
+    # end
 
-    #cfbc = ControlFlowModel.new(@pml.bitcode_functions, bitcode_entry, bcffs,
+    # cfbc = ControlFlowModel.new(@pml.bitcode_functions, bitcode_entry, bcffs,
     #                            ContextManager.new(@options.callstring_length), GenericArchitecture.new)
 
     # BEGIN: remove me soon
@@ -129,8 +129,8 @@ class WCA
 
     # run cache analyses
     # FIXME: CacheAnalysis is currently broken for armv7
-    #ca = CacheAnalysis.new(builder.refinement['machinecode'], @pml, @options)
-    #ca.analyze(entry['machinecode'], builder)
+    # ca = CacheAnalysis.new(builder.refinement['machinecode'], @pml, @options)
+    # ca.analyze(entry['machinecode'], builder)
 
     # END: remove me soon
 
@@ -219,7 +219,7 @@ class WCA
       profile.add(ProfileEntry.new(ref, edgecost, edgefreqs[ref], totalcosts[ref]))
     }
     # FIXME: CacheAnalysis is currently broken for armv7
-    #ca.summarize(@options, freqs, Hash[freqs.map{ |v,freq| [v,freq * builder.ilp.get_cost(v)] }], report)
+    # ca.summarize(@options, freqs, Hash[freqs.map{ |v,freq| [v,freq * builder.ilp.get_cost(v)] }], report)
     if @options.verbose
       puts "Cycles: #{cycles}"
       puts "Edge Profile:"
