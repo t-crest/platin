@@ -172,7 +172,7 @@ PIPELINE_REFILL=3
       1
 
     # alu
-    when 'tAND', 'tEOR', 'tADC', 'tSBC',  'tROR', 'tTST',  'tRSB', 'tCMPr', 'tCMNz', 'tLSLrr', 'tLSRrr', 'tASRrr', 'tORR', 'tBIC', 'tMVN'
+    when 'tAND', 'tEOR', 'tADC', 'tSBC', 'tROR', 'tTST', 'tRSB', 'tCMPr', 'tCMNz', 'tLSLrr', 'tLSRrr', 'tASRrr', 'tORR', 'tBIC', 'tMVN'
       1
 
     # branchcond (requires pipeline refill)
@@ -312,7 +312,7 @@ PIPELINE_REFILL=3
     when 't2LSLri', 't2LSLri', 't2LSRri', 't2LSRri', 't2ASRri', 't2ASRri'
       1
     # subtract
-    when 't2SUBrr', 't2SUBri', 't2SUBrs',  't2SBCrr', 't2SBCri', 't2RSBrs', 't2RSBri', 't2SUBri12'
+    when 't2SUBrr', 't2SUBri', 't2SUBrs', 't2SBCrr', 't2SBCri', 't2RSBrs', 't2RSBri', 't2SUBri12'
       1
     # store instructions
     when 't2STRi12'

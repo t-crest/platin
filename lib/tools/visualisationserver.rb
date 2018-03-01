@@ -52,7 +52,7 @@ class Templates
 
   def view_source(file)
     context = binding
-    context.local_variable_set(:title,    "#{file}: Sourceview")
+    context.local_variable_set(:title, "#{file}: Sourceview")
     context.local_variable_set(:sourcecode, File.read(file))
     bodytemplate = %{<pre id="l" data-line=" " class="language-c line-numbers"><code><%= h(sourcecode) %></code></pre>}
     context.local_variable_set(:jsscripts, ['/static/js/thirdparty/prism.js'])
@@ -64,7 +64,7 @@ class Templates
 
   def view_ilp(entrypoint, svgurl, constraintsurl, srchintsurl, srcviewurl)
     context = binding
-    context.local_variable_set(:title,    "#{entrypoint}: ILP")
+    context.local_variable_set(:title, "#{entrypoint}: ILP")
     # context.local_variable_set(:jsscripts, [ '/static/js/interactivity.js' \
                                            # , '/static/js/thirdparty/seedrandom.min.js'])
     context.local_variable_set(:jsscripts, [ '/static/js/interactivity.js' \
@@ -111,7 +111,7 @@ class Templates
 
   def tooltip_test
     context = binding
-    context.local_variable_set(:title,    "tooltiptest")
+    context.local_variable_set(:title, "tooltiptest")
     context.local_variable_set(:jsscripts, [ '/static/js/thirdparty/prism.js' \
                                            , '/static/js/thirdparty/jquery-2.2.4.min.js' \
                                            , '/static/js/thirdparty/jquery.qtip.min.js' \

@@ -272,7 +272,7 @@ end
 #
 class OptionParser
     def alfllc_command
-      self.on("--alf-llc FILE", "path to alf-llc (=alf-llc)")  { |f| options.alf_llc = f }
+      self.on("--alf-llc FILE", "path to alf-llc (=alf-llc)") { |f| options.alf_llc = f }
       self.add_check { |options|
         options.alf_llc ||= "alf-llc"
       }
@@ -284,7 +284,7 @@ class OptionParser
       }
     end
     def bitcode_file(mandatory=Proc.new { |options| false })
-      self.on("--bitcode FILE", "linked bitcode file")                { |f| options.bitcode_file = f }
+      self.on("--bitcode FILE", "linked bitcode file") { |f| options.bitcode_file = f }
       self.add_check { |options|
         if mandatory.call(options)
           die_usage "Specifying a bitcode file (--bitcode) is mandatory" unless options.bitcode_file
@@ -292,7 +292,7 @@ class OptionParser
       }
     end
     def alf_file(mandatory=Proc.new { |options| false })
-      self.on("--alf FILE", "ALF program model file")          { |f| options.alf_file = f }
+      self.on("--alf FILE", "ALF program model file") { |f| options.alf_file = f }
       self.add_check { |options|
         if mandatory.call(options)
           die_usage "Specifying an ALF file is mandatory for SWEET analysis" unless options.alf_file

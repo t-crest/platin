@@ -478,7 +478,7 @@ private
   #
   def build_model(entry, flowfacts, opts = { :use_rg => false })
     # ILP for transformation
-    ilp  = ILP.new(@options)
+    ilp = ILP.new(@options)
 
     # IPET builder
     builder_opts = options.dup
@@ -506,7 +506,7 @@ private
       next unless constr.tags.any? { |tag| tags.include?(tag) }
 
       # Constraint is boring if it is a positivity constraint (a x <= 0, with a < 0)
-      if constr.lhs.all? { |_,coeff| coeff <= 0 }  && constr.op == "less-equal" && constr.rhs == 0
+      if constr.lhs.all? { |_,coeff| coeff <= 0 } && constr.op == "less-equal" && constr.rhs == 0
         next
       end
 
@@ -670,7 +670,7 @@ class SymbolicBoundTransformation
     }
     scope_ref_mapped =
       if loopblock
-        mapped_loopblock =  blockmap[loopblock]
+        mapped_loopblock = blockmap[loopblock]
         if ! mapped_loopblock.loopheader?
           debug(options, :transform) { "SymbolicBoundTransformation: not a loop header mapping: #{loopblock} -> #{mapped_loopblock}" }
           # Note: The frequency of the header of the loop nb is member of
@@ -751,7 +751,7 @@ class SymbolicBoundTransformation
                                               ContextRef.new(s.programpoint.loopheader, Context.empty),
                                               sum,
                                               ff.attributes)
-      debug(options, :transform) {  "Triangle loop bound: #{ff_triangle} #{ff_triangle.symbolic_bound? ? '(ignored)' : ''}" }
+      debug(options, :transform) { "Triangle loop bound: #{ff_triangle} #{ff_triangle.symbolic_bound? ? '(ignored)' : ''}" }
       # HACK: Symbolic triangle bounds are not yet supported
       ff_triangle = nil if ff_triangle.symbolic_bound?
     end

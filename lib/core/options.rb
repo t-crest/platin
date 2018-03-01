@@ -116,7 +116,7 @@ module PML
       }
       add_check { |options|
         options.flow_fact_selection = "all" unless options.flow_fact_selection
-        options.flow_fact_srcs  = "all" unless options.flow_fact_srcs
+        options.flow_fact_srcs = "all" unless options.flow_fact_srcs
       }
     end
     def accept_corrected_rgs

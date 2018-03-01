@@ -171,7 +171,7 @@ class AnalyzeTraceTool
 
   def AnalyzeTraceTool.run(pml,options)
     needs_options(options, :analysis_entry, :trace_entry, :binary_file, :recorder_spec)
-    entry  = pml.machine_functions.by_label(options.analysis_entry, true)
+    entry = pml.machine_functions.by_label(options.analysis_entry, true)
     if ! entry
       die("Analysis entry (ELF label #{options.analysis_entry}) not found")
     end

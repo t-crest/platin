@@ -95,7 +95,7 @@ class SEInt < SymbolicExpression
   def constant?; true; end
   def to_i; @num     ; end
   def to_s; @num.to_s; end
-  def eval(_,lenv=nil);     @num  ; end
+  def eval(_,lenv=nil);     @num ; end
   def resolve_loops(lenv) ; self ; end
   def referenced_loops ; Set.new; end
   def referenced_vars  ; Set.new; end

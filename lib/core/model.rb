@@ -39,7 +39,7 @@ class PMLMachineCalleeMutation < PMLMutation
   end
 
   def resolve(pml)
-    funs  = pml.functions_for_level(@level)
+    funs = pml.functions_for_level(@level)
     Instruction.from_qname(funs, @instruction)
   end
 

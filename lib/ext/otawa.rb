@@ -195,7 +195,7 @@ class OtawaImporter
   end
 
   def run
-    analysis_entry  = pml.machine_functions.by_label(options.analysis_entry, true)
+    analysis_entry = pml.machine_functions.by_label(options.analysis_entry, true)
 
     # TODO: Implement ..
 

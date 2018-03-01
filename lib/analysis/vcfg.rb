@@ -188,7 +188,7 @@ class VCFG
     # Link nodes in the VCFG
     @entry.add_successor(@blockstart[function.blocks.first])
     function.blocks.each do |succblock|
-      succnode  = @blockstart[succblock]
+      succnode = @blockstart[succblock]
       assert("No node matching block #{succblock}") { succnode }
       (block_predecessors[succblock]||[]).each do |prednode|
         predblock = prednode.block

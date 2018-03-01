@@ -26,7 +26,7 @@ class PersistenceDataFlowAnalysis
   end
 
   class ZeroTagSet < TagSet
-    def access(t); self;     end
+    def access(t); self; end
     def concat(set); self ; end
     def join(other); other ; end
     def to_s; "0"; end
@@ -70,7 +70,7 @@ class PersistenceDataFlowAnalysis
       end
     end
     def join(other)
-      return other.join(self) if  other == ZERO || other == TOP
+      return other.join(self) if other == ZERO || other == TOP
       create(@set + other.set)
     end
     def dup

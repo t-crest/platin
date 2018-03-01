@@ -1062,7 +1062,7 @@ class Dispatcher
       to   = [code.length - 1, zeroline + context].min
       maxlength = to.to_s.length
 
-      out =  "Sourcecode around #{file}:#{line}\n"
+      out = "Sourcecode around #{file}:#{line}\n"
 
       code.slice(from, to - from).each_with_index do |line, idx|
         if idx == context
@@ -1203,7 +1203,7 @@ class InteractTool
     opts.on('--source-path DIR', "directory for source code lookup") { |d| options.source_path = d }
     options.server_bind_addr = "127.0.0.1"
     opts.on('--server-bind-addr IP', "adress to bind to") { |ip| options.server_bind_addr = ip }
-    options.server_port      = "2142"
+    options.server_port = "2142"
     opts.on('--server-port PORT', Integer, "Port number to bind to") { |p| options.server_port = p }
   end
 end

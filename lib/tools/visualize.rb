@@ -37,7 +37,7 @@ end
 class CallGraphVisualizer < Visualizer
   def initialize(pml, options) ; @pml, @options = pml, options ; end
   def visualize_callgraph(function)
-    g  = digraph("Callgraph for #{function}")
+    g = digraph("Callgraph for #{function}")
     refinement = ControlFlowRefinement.new(function, 'machinecode')
     cg = ScopeGraph.new(function, refinement, @pml, @options).callgraph
     nodes, nids = {}, {}
@@ -61,14 +61,14 @@ class PlainCallGraphVisualizer < Visualizer
     @entry, @functions, @mc_model = entry, functions, mcmodel
   end
   def visualize_callgraph()
-    g  = digraph("Callgraph for #{@entry}")
+    g = digraph("Callgraph for #{@entry}")
     nodes, nids = {}, {}
     @functions.each_with_index { |n,i| nids[n] = i }
     @functions.each { |node|
       nid = nids[node]
       src_hint = node.blocks.first.src_hint
       src_hint = src_hint ? '<BR/>' + src_hint : ''
-      label = '<' + node.to_s + '<BR/><B>' +  node.label.to_s + '</B>' + src_hint + '>'
+      label = '<' + node.to_s + '<BR/><B>' + node.label.to_s + '</B>' + src_hint + '>'
       nodes[node] = g.add_nodes(nid.to_s, :label => label)
     }
     @functions.each { |mf|
@@ -88,7 +88,7 @@ end
 class ScopeGraphVisualizer < Visualizer
   def initialize(pml, options) ; @pml, @options = pml, options ; end
   def visualize_scopegraph(function)
-    g  = digraph("Scopegraph for #{function}")
+    g = digraph("Scopegraph for #{function}")
     refinement = ControlFlowRefinement.new(function, 'machinecode')
     sg = ScopeGraph.new(function, refinement, @pml, @options)
     nodes, nids = {}, {}

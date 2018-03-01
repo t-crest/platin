@@ -185,7 +185,7 @@ class IPETEdge
   def inspect
     to_s
   end
-  def hash;  @qname.hash ; end
+  def hash; @qname.hash ; end
   def ==(other); qname == other.qname ; end
   def eql?(other); self == other; end
 end
@@ -450,7 +450,7 @@ class IPETBuilder
 
   # Build basic IPET structure.
   # yields basic blocks, so the caller can compute their cost
-  def build(entry, flowfacts, opts = { :mbb_variables =>  false }, &cost_block)
+  def build(entry, flowfacts, opts = { :mbb_variables => false }, &cost_block)
     assert("IPETBuilder#build called twice") { ! @entry }
     @entry = entry
     @markers = {}
@@ -792,7 +792,7 @@ private
     }
     # Our LCTES 2013 paper describes 5 sets of constraints referenced below
     # map from src/dst edge to set of corresponding relation edges (constraint set (3) and (4))
-    rg_edges_of_edge   = { :src => {}, :dst => {} }
+    rg_edges_of_edge = { :src => {}, :dst => {} }
     # map from progress node to set of outgoing src/dst edges (constraint set (5))
     rg_progress_edges = { }
     each_relation_edge(rg) do |edge|

@@ -238,7 +238,7 @@ class WcetTool
     opts = opts.dup
     opts.flow_fact_selection ||= "all"
     srcs.each { |src|
-      opts.flow_fact_srcs    = [src]
+      opts.flow_fact_srcs = [src]
       opts.flow_fact_output = src + ".simplified"
       opts.transform_action = 'simplify'
       opts.transform_eliminate_edges = true
@@ -377,7 +377,7 @@ class WcetTool
 		    } )
     end
     if options.runcheck and not trace_cycles.nil?
-      die("wcet check: No timing for simulator trace") unless  trace_cycles > 0
+      die("wcet check: No timing for simulator trace") unless trace_cycles > 0
       die("wcet check: No WCET results") unless wcet_cycles and wcet_cycles > 0
       pml.timing.each { |te|
         next if te.origin == "trace"

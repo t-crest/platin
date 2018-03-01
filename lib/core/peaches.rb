@@ -96,7 +96,7 @@ class Context
     end
     list << entry
 
-    puts self.to_s() +  "\n" if DEBUG
+    puts self.to_s() + "\n" if DEBUG
   end
 
   def lookup(label, index = :last)
@@ -696,7 +696,7 @@ class Parser
     symbol(pattern, CSPACE, &p)
   end
 
-  NUM        = prim :int64 do
+  NUM = prim :int64 do
     |num| ASTNumberLiteral.new (Integer(num))
   end
   # Magic here: negative lookahead to prohibit keyword/symbol ambiguity
@@ -786,7 +786,7 @@ class Parser
 
   def expr
     if @EXPR.nil?
-      expr      = ( seq__(IF, lazy{cond_expr}, THEN, lazy{expr}, ELSE, lazy{expr}) { |_,cond,_,e1,_,e2|
+      expr = ( seq__(IF, lazy{cond_expr}, THEN, lazy{expr}, ELSE, lazy{expr}) { |_,cond,_,e1,_,e2|
                       puts "IF #{cond} then {#{e1}} else {#{e2}}" if DEBUG_PARSER
                       ASTIf.new(cond, e1, e2)
                     } \
@@ -957,7 +957,7 @@ f a b = if 2 /= 4 || (10 / 2 == 5) then a + b else a * b]
   parser.program.eof.parse! ("x = 1 +{- asdf -}4")
   parser.program.eof.parse! ("x = 1 + 4 -- asdf")
 
-  program = parser.program.parse!  %Q[x = 4
+  program = parser.program.parse! %Q[x = 4
 y = 10 * x + 20
 z = if y > 10 && 1 /= 2 then x else y]
   assert_literal.call(program, "z", 4)
@@ -965,20 +965,20 @@ z = if y > 10 && 1 /= 2 then x else y]
   program = parser.call.parse! ("f 4*5 42")
   program = parser.call.parse! ("f")
 
-  program = parser.program.parse!  %Q[-- Full size comment
+  program = parser.program.parse! %Q[-- Full size comment
 x ={- "ASDF" -} 4
 y = 10 * x + 20 -- ASDF 4 + 5
 z = if y > 10 && 1 /= 2 then{-ASDF-} x else y]
   assert_literal.call(program, "z", 4)
 
-  program = parser.program.parse!  %Q[-- Full size comment
+  program = parser.program.parse! %Q[-- Full size comment
 x ={- "ASDF" -} 4
 y = 10 * x + 20 -- ASDF 4 + 5
 z = if y > 10 && 1 /= 2 then x else f y]
   assert_literal.call(program, "z", 4)
 
 
-  parser.program.parse!  %Q[-- Full size comment
+  parser.program.parse! %Q[-- Full size comment
 x ={- "ASDF" -} 4
 
 
@@ -989,7 +989,7 @@ z = if y > 10 && 1 /= 2 then x else f y
 
 ]
 
-  program = parser.program.parse!  %Q[-- Full size comment
+  program = parser.program.parse! %Q[-- Full size comment
 x ={- "ASDF" -} 4
 y = 10 * x + 20 -- ASDF 4 + 5
 f = f x]
@@ -1002,7 +1002,7 @@ f = f x]
 
   parser.program.parse! "z = if y > 10 && 1 /= 2 then x else (f (y) z)"
 
-  parser.program.parse!  %Q[x = 4
+  parser.program.parse! %Q[x = 4
 y = 10 * x + 20
 z = if y > 10 && 1 /= 2 then x else f + 4
 a = 3
@@ -1011,37 +1011,37 @@ a = 3
   parser.program.parse! %Q[z = f x
 a = 3]
 
-  program = parser.program.parse!  %Q[f x = x + 4
+  program = parser.program.parse! %Q[f x = x + 4
 y = f 5
 ]
   assert_literal.call(program, "y", 9)
 
-  program = parser.program.parse!  %Q[
+  program = parser.program.parse! %Q[
 f x = x + 4
 y = f 5
 ]
   assert_literal.call(program, "y", 9)
 
-  program = parser.program.parse!  %Q[
+  program = parser.program.parse! %Q[
 not x = if x == 0 then 1 else 0
 y = not 1
 ]
   assert_literal.call(program, "y", 0)
 
-  program = parser.program.parse!  %Q[
+  program = parser.program.parse! %Q[
 f g a b = g (a) b
 max x y = if x < y then y else x
 y = f (max) 4 5
 ]
   assert_literal.call(program, "y", 5)
 
-  program = parser.program.parse!  %Q[
+  program = parser.program.parse! %Q[
 not x = if x == True then False else True
 y = not True
 ]
   assert_literal.call(program, "y", false)
 
-  program = parser.program.parse!  "y = 4 - 3 + 3 - 3*4 + 8"
+  program = parser.program.parse! "y = 4 - 3 + 3 - 3*4 + 8"
   assert_literal.call(program, "y", 0)
 
   puts "All tests were successful"

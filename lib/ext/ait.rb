@@ -276,7 +276,7 @@ class AISExporter
                  "policy=#{cache.policy.upcase}, may=chaos", "PML machine configuration")
       when 'method-cache' # new in aiT version >= 205838
         gen_fact("global method_cache_block_size=#{cache.block_size}","PML machine configuration")
-        mcache_policy, mcache_assoc =  cache.policy.upcase, cache.associativity
+        mcache_policy, mcache_assoc = cache.policy.upcase, cache.associativity
         max_mcache_assoc = MAX_METHODCACHE_ASSOCIATIVITY[mcache_policy.upcase]
         if mcache_assoc > max_mcache_assoc
           warn("aiT: method cache with policy #{mcache_policy} does not support associativity > #{max_mcache_assoc}"+
@@ -458,7 +458,7 @@ class AISExporter
     end
 
     # no support for context-sensitive linear constraints
-    unless  terms.all? { |t| t.context.empty? }
+    unless terms.all? { |t| t.context.empty? }
       warn("aiT: no support for context-sensitive scopes / program points: #{ff}")
       return false
     end
@@ -916,7 +916,7 @@ class AitImport
 
           values = []
           se.each_element("value_area") { |area|
-            min,max,rem,mod  = %w{min max rem mod}.map { |k|
+            min,max,rem,mod = %w{min max rem mod}.map { |k|
               Integer(area.attributes[k]) if area.attributes[k]
             }
             # XXX: this is an aiT bug (probably because ranges are represented in a signed way)
@@ -997,7 +997,7 @@ class AitImport
       # only read results for analysis entry
       rentry = e.get_elements("wcet_entry").first.attributes["routine"]
       entry = @routines[rentry]
-      next unless  entry.function == analysis_entry
+      next unless entry.function == analysis_entry
 
       # read results for each routine
       e.each_element("wcet_routine") { |re|
@@ -1236,7 +1236,7 @@ class AitImport
   end
 
   def run
-    analysis_entry  = pml.machine_functions.by_label(options.analysis_entry, true)
+    analysis_entry = pml.machine_functions.by_label(options.analysis_entry, true)
     timing_entry = read_result_file(options.ait_report_prefix + ".xml")
 
     ait_report_file = options.ait_report_prefix + ".#{options.analysis_entry}" + ".xml"

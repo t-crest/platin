@@ -263,7 +263,7 @@ module PML
     def initialize(ppref, type, expr, attrs, mode, data = nil)
       assert("ModelFact#initialize: program point reference has wrong type (#{ppref.class})") { ppref.kind_of?(ContextRef) }
       @ppref, @type, @expr = ppref, type, expr
-      @attributes  = attrs
+      @attributes = attrs
       @mode = mode
       set_yaml_repr(data)
     end

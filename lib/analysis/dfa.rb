@@ -141,7 +141,7 @@ class DataFlowAnalysis
   end
 
   # @param blocks Subset of blocks to analyze, or nil to analyze whole function.
-  def initialize(pml, options, function, entry_block, blocks =  nil, reverse = false)
+  def initialize(pml, options, function, entry_block, blocks = nil, reverse = false)
     @pml, @options, @function, @entry_block, @blocks, @reverse = pml, options, function, entry_block, blocks, reverse
     @blocks ||= @function.blocks
     build_graph

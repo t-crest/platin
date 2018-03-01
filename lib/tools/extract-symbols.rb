@@ -101,7 +101,7 @@ class ExtractSymbols
             }
             while size > 0
               instr = @instructions[function.label][addr]
-              assert("Could not disassemble address @ #{addr} #{instr}") { instr != nil  and !instr['invalid']}
+              assert("Could not disassemble address @ #{addr} #{instr}") { instr != nil and !instr['invalid']}
               instruction_data.push(instr)
               addr += instr['size']
               size -= instr['size']
@@ -136,8 +136,8 @@ end
 
 class ExtractSymbolsTool
   def ExtractSymbolsTool.add_config_options(opts)
-    opts.on("--objdump-command FILE", "path to 'llvm-objdump'")   { |f| opts.options.objdump = f }
-    opts.on("--text-sections SECTION,..", "list of code sections (=.text)")  { |s| opts.options.text_sections = s.split(/\s*,\s*/) }
+    opts.on("--objdump-command FILE", "path to 'llvm-objdump'") { |f| opts.options.objdump = f }
+    opts.on("--text-sections SECTION,..", "list of code sections (=.text)") { |s| opts.options.text_sections = s.split(/\s*,\s*/) }
     opts.add_check do |options|
       options.objdump = "patmos-llvm-objdump" unless options.objdump
       options.text_sections = [".text"] unless options.text_sections

@@ -1121,7 +1121,7 @@ private
     attr_reader :abb, :successors, :predecessors
     def initialize(abbs, data)
       set_yaml_repr(data)
-      @abb  = abbs[data['abb']]
+      @abb = abbs[data['abb']]
       @predecessors = []
     end
     def function
