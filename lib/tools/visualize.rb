@@ -149,7 +149,7 @@ class FlowGraphVisualizer < Visualizer
   def find_vedge_timing(profile, node, succ)
     start = Set.new(get_vblocks(node, :predecessors))
     targets = Set.new(get_vblocks(succ, :successors))
-    if (start == targets) && (![*succ].any? { |s| s.kind_of?(CfgNode) && s.block_start? })
+    if (start == targets) && ![*succ].any? { |s| s.kind_of?(CfgNode) && s.block_start? }
       [*node].map { |n| find_vnode_timing(profile, n) }.flatten
     elsif succ.kind_of?(ExitNode)
       start.map { |b| profile[b] || [] }.flatten.select do |t|
@@ -186,7 +186,7 @@ class FlowGraphVisualizer < Visualizer
         instr = block.instructions[node.first_index]
         addr = instr ? instr.address : block.address
         label += sprintf("0x%x: ",addr) if addr
-        label += (block.name).to_s
+        label += block.name.to_s
         label << "(#{block.mapsto})" if block.mapsto
         label << " [#{node.first_index}..#{node.last_index}]"
         if @options.show_instructions
@@ -203,7 +203,7 @@ class FlowGraphVisualizer < Visualizer
         # Mark subfunction headers
         options["fillcolor"] = "#ffffcc"
         options["style"] = "filled"
-      elsif (!node.block) || node.kind_of?(CallNode)
+      elsif !node.block || node.kind_of?(CallNode)
         options["style"] = "rounded"
       end
       if block_timing.any? { |o,profile| find_vnode_timing(profile, node).any? { |e| e.wcetfreq > 0 } }
@@ -279,7 +279,7 @@ class FlowGraphVisualizer < Visualizer
     nodes = {}
     function.blocks.each do |block|
       bid = block.name
-      label = (block.name).to_s
+      label = block.name.to_s
       label << " (#{block.mapsto})" if block.mapsto
 #      label << " L#{block.loops.map {|b| b.loopheader.name}.join(",")}" unless block.loops.empty?
       label << " |#{block.instructions.length}|"

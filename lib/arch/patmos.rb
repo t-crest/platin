@@ -79,7 +79,7 @@ class SimulatorTrace
   end
 
   def parse(line)
-    return nil unless line && (!line.chomp.empty?)
+    return nil unless line && !line.chomp.empty?
     pc, cyc, instr = line.split(' ',3)
     begin
       [Integer("0x#{pc}"), Integer(cyc), Integer(instr)]

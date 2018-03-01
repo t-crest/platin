@@ -590,7 +590,7 @@ class FunctionRecorder
   def ret(_rsite, _csite, cycles, stall_cycles)
     if @callstack.empty?
       # puts "#{self}: stopping at #{rsite}->#{csite}"
-      cycles -= stall_cycles if global? && (!@options.target_callret_costs)
+      cycles -= stall_cycles if global? && !@options.target_callret_costs
       results.stop(cycles)
       @scheduler.deactivate(self)
     else

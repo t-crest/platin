@@ -191,7 +191,7 @@ class DataFlowAnalysis
     @entry_node.outs = operator.entry
 
     # Ensure that all nodes are transformed at least once
-    worklist.push(@nodes.select { |n| n.reachable? && (!n.entry?) })
+    worklist.push(@nodes.select { |n| n.reachable? && !n.entry? })
 
     # Run worklist algorithm
     step_count = 0

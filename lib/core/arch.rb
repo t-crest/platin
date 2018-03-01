@@ -418,7 +418,7 @@ class CacheConfig < PMLObject
     set_yaml_repr(data)
     # Ensure that associativity is set correctly depending on the policy
     @associativity = 1 if @policy == 'dm'
-    @associativity = @size / @block_size if ((!@associativity) || (@policy == 'ideal')) && @block_size
+    @associativity = @size / @block_size if (!@associativity || (@policy == 'ideal')) && @block_size
     # Note: If data['attributes'] does not exist, @attributes is detached from data (and vice versa).
     #       We reattach it once we have some attributes.
     @attributes = data ? (data['attributes'] || []) : []

@@ -100,7 +100,7 @@ class PMLTool
     bbs.each do |marker,bbms|
       bbstr = bbms.map do |bb,freq|
                  if freq == 1
-                   (bb.qname).to_s
+                   bb.qname.to_s
                   else
                     "#{bb.qname} (#{freq})"
                   end
