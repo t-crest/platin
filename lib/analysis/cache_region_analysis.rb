@@ -21,6 +21,7 @@ class CacheAnalysis
     @scope_graph = ScopeGraph.new(entry_function, @refinement, @pml, @options) unless @scope_graph
     @scope_graph
   end
+
   def analyze(entry_function, ipet_builder)
     @scope_graph = nil # reset, entry_function might have changed
     if mc = @pml.arch.method_cache and not @options.disable_ica
@@ -104,28 +105,35 @@ class LoadInstruction
     @insref, @tag, @store, @bypass = insref, tag, store, bypass
     @qname = "#{@tag.qname}@#{insref.qname}"
   end
+
   def function
     @insref.function
   end
+
   def store?
     return @store
   end
+
   def bypass?
     return @bypass
   end
+
   # True if the accessed address is known precisely
   def known?
     return false unless tag and tag.respond_to?(:known?)
     tag.known?
   end
+
   # True if the address is not known at all (no range or symbol)
   def unknown?
     return false unless tag and tag.respond_to?(:unknown?)
     tag.unknown?
   end
+
   def to_s
     "#{tag}@#{insref}"
   end
+
   def inspect
     sprintf("#<LoadInstruction:0x%8x %s>",self.object_id, self.to_s)
   end
@@ -141,9 +149,11 @@ class MemoryEdge
     @edgeref, @load_instruction = edgeref, load_instruction
     @qname = "#{edgeref.qname}->#{load_instruction.qname}"
   end
+
   def function
     @load_instruction.insref.function
   end
+
   def to_s
     @qname = "#{@edgeref}->#{@load_instruction}"
   end
@@ -330,7 +340,6 @@ class CacheRegionAnalysis < CacheAnalysisBase
     end
   end
 
-
   #
   # get all tags accessed in one set
   #
@@ -364,7 +373,6 @@ class CacheRegionAnalysis < CacheAnalysisBase
     }
     local_tags
   end
-
 
   #
   # scope-based cache analysis
@@ -540,22 +548,27 @@ class ConflictAnalysis
       super(region_graph, cache_set, analysis)
       @region_tags = {}
     end
+
     def new_region(node)
       super(node)
       @region_tags[node] = Set[*get_node_tags(node)]
     end
+
     def join_regions(pred_region, new_node)
       super(pred_region, new_node)
       @region_tags[pred_region] += get_node_tags(new_node)
     end
+
     def tags_of_region(region)
       @region_tags[region] || Set.new
     end
+
     def expanded_conflict_free?(pred_region, node)
       pred_tags = @region_tags[pred_region]
       node_tags = get_node_tags(node)
       return analysis.cache_properties.conflict_free?(pred_tags + node_tags)
     end
+
     def get_node_tags(node)
       if node.kind_of?(RegionGraph::ActionNode)
         tag = node.action.tag
@@ -645,7 +658,6 @@ class ConflictAnalysis
       add_conflict_free_subscopes(node, set)
     end
   end
-
 
   def add_conflict_free_subscopes(node, set)
     # add scope constraint for all conflict-free successors
@@ -750,6 +762,7 @@ class CacheLine
     @address, @function = address, function
     @qname = "CacheLine: #{address}"
   end
+
   def to_s
     qname
   end
@@ -852,23 +865,29 @@ class DataCacheLine
       @qname = "CacheLine: #{address}"
     end
   end
+
   def bypass?
     memtype == 'memory'
   end
+
   def store?
     memmode == 'store'
   end
+
   # True if the accessed address is known precisely
   def known?
     address
   end
+
   # True if the address is not known at all (no range or symbol)
   def unknown?
     address.nil?
   end
+
   def uncached?
     bypass? or store?
   end
+
   def to_s
     qname
   end
@@ -1049,6 +1068,7 @@ class StackCacheAnalysis
   def initialize(cache, pml, options)
     @cache, @pml, @options = cache, pml, options
   end
+
   def analyze(scope_graph)
     @fill_blocks, @spill_blocks = Hash.new(0), Hash.new(0)
     scope_graph.bottom_up.each { |n|
@@ -1063,6 +1083,7 @@ class StackCacheAnalysis
       }
     }
   end
+
   def analyze_nonscope()
     @fill_blocks, @spill_blocks = Hash.new(0), Hash.new(0)
     @pml.machine_functions.each { |f|
@@ -1075,10 +1096,12 @@ class StackCacheAnalysis
       }
     }
   end
+
   def extend_ipet(ipet_builder)
     extend_ipet_fills(ipet_builder)
     extend_ipet_spills(ipet_builder)
   end
+
   def extend_ipet_fills(ipet_builder)
     @fill_blocks.each { |instruction,fill_blocks|
       begin
@@ -1092,6 +1115,7 @@ class StackCacheAnalysis
       end
     }
   end
+
   def extend_ipet_spills(ipet_builder)
     @spill_blocks.each { |instruction,spill_blocks|
       begin
@@ -1105,11 +1129,13 @@ class StackCacheAnalysis
       end
     }
   end
+
   def summarize(options, freqs, cost)
     fills = summarize_fills(options, freqs, cost)
     spills = summarize_spills(options, freqs, cost)
     fills.merge!(spills) { |k, v1, v2| v1 + v2 }
   end
+
   def summarize_fills(options, freqs, cost)
     cycles = 0
     misses = 0
@@ -1120,6 +1146,7 @@ class StackCacheAnalysis
     }
     { "cache-max-cycles" => cycles, "cache-max-misses" => misses }
   end
+
   def summarize_spills(options, freqs, cost)
     cycles = 0
     misses = 0
@@ -1140,9 +1167,11 @@ class IPETEdgeSCA < IPETEdge
     arrow  = "=>"
     @qname = "#{@source.qname}#{arrow}#{@target.qname}::#{cs}"
   end
+
   def to_s
     "#{@qname}->#{@target.function}"
   end
+
   def cfg_edge?
     return false
   end
@@ -1152,6 +1181,7 @@ class StackCacheAnalysisGraphBased < StackCacheAnalysis
   def initialize(cache, pml, options)
     @cache, @pml, @options = cache, pml, options
   end
+
   def extend_ipet_spills(ipet_builder)
     ilp = ipet_builder.ilp
     @nodes = {}
@@ -1193,6 +1223,7 @@ class StackCacheAnalysisGraphBased < StackCacheAnalysis
       ilp.add_constraint(lhs, "equal", 0, "sca_link", :sca)
     }
   end
+
   def summarize_spills(options, freqs, cost)
     cycles = 0
     misses = 0

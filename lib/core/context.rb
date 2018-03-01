@@ -15,6 +15,7 @@ class BoundedStack
   def BoundedStack.empty
     BoundedStack.create([])
   end
+
   def BoundedStack.create(stack)
     bs = @@repository[stack]
     if ! bs
@@ -22,16 +23,20 @@ class BoundedStack
     end
     bs
   end
+
   def initialize(elems)
     @stack = elems
     @cache = {}
   end
+
   def empty?
     @stack.empty?
   end
+
   def length
     @stack.length
   end
+
   def push(elem, maxlength)
     return if maxlength == 0
     return BoundedStack.create([elem]) if maxlength == 1
@@ -41,37 +46,45 @@ class BoundedStack
       BoundedStack.create(stack[1..-1] + [elem])
     end
   end
+
   def prefix(length)
     return BoundedStack.create([]) unless length > 0
     BoundedStack.create(stack.dup[0..(length - 1)])
   end
+
   def pop
     newstack = stack.dup
     newstack.pop
     BoundedStack.create(newstack)
   end
+
   def top
     @stack[-1]
   end
+
   def map_top
     newstack = stack.dup
     newelem = yield newstack.pop
     newstack.push(newelem)
     BoundedStack.create(newstack)
   end
+
   # return array of stack elements, top-most first
   def to_a
     @stack.reverse
   end
+
   def to_s
     return "[]" if @stack.empty?
     @stack.map { |n| n.to_s }.join(",")
   end
+
   # unique objects - can use pointer equality (== defined as equals?) per default
   def hash
     return @hash if @hash
     @hash = stack.hash
   end
+
   def <=>(other)
     hash <=> other.hash
   end
@@ -89,6 +102,7 @@ class ContextTree
   def initialize
     @root = ContextNode.new
   end
+
   # Add a value in the context, given as (reversed) context list
   # For example, the context list for the callstack suffix
   # f/1 -> g/2 should be [g/2, f/1].
@@ -100,6 +114,7 @@ class ContextTree
     end
     node.value = value
   end
+
   # find first node on path with defined value
   def path_find_first(path)
     node = @root
@@ -111,6 +126,7 @@ class ContextTree
     }
     nil
   end
+
   # find last node on path with defined value
   def path_find_last(path)
     node = @root
@@ -122,9 +138,11 @@ class ContextTree
     }
     value
   end
+
   def empty?
     @root.empty?
   end
+
   def dump(io=$stdout,level = 0)
     @root.dump(io,level)
   end
@@ -135,12 +153,15 @@ class ContextNode
   def initialize
     @value, @children = nil, {}
   end
+
   def empty?
     @value.nil? && @children.empty?
   end
+
   def get_child(ctx_item)
     @children[ctx_item]
   end
+
   def add_child(ctx_item)
     if c = get_child(ctx_item)
       c
@@ -148,6 +169,7 @@ class ContextNode
       @children[ctx_item] = ContextNode.new
     end
   end
+
   def dump(io=$stdout, level = 0)
     io.puts " " * (level * 2) + "NODE VALUE #{@value.to_s}" if @value
     @children.each { |key,node|
@@ -176,36 +198,46 @@ class CallContextEntry < ContextEntry
     @callsite = callsite
     set_yaml_repr(data)
   end
+
   def to_pml
     { 'callsite' => @callsite.qname }
   end
+
   def CallContextEntry.from_pml(functions, data)
     ref = Instruction.from_qname(functions,data['callsite'])
     assert("CallContextEntry#from_pml: callsite is not an instruction") { ref.kind_of?(Instruction) }
     CallContextEntry.new(ref.instruction, data)
   end
+
   def dup
     CallContextEntry.new(callsite)
   end
+
   def inspect
     "#<CallContextEntry #{object_id}: #{callsite}>"
   end
+
   def to_s
     @callsite.qname
   end
+
   def qname
     @callsite.qname
   end
+
   def ==(other)
     return false if other.nil?
     return false unless other.kind_of?(CallContextEntry)
     @callsite == other.callsite
   end
+
   def eql?(other); self == other ; end
+
   def hash
     return @hash if @hash
     @hash = callsite.hash
   end
+
   def <=>(other)
     hash <=> other.hash
   end
@@ -301,12 +333,15 @@ class LoopContextEntry < ContextEntry
   def dup
     LoopContextEntry.new(@loop,@step,@offset,@callsite)
   end
+
   def to_s
     qname
   end
+
   def inspect
     "#<LoopContextEntry #{object_id}: #{callsite}->#{loop} #{offset}+#{step} k>"
   end
+
   def qname
     return @qname if @qname
     lc = @offset.to_s
@@ -314,6 +349,7 @@ class LoopContextEntry < ContextEntry
     lc += "+#{@step}k" if @step > 1
     @qname = "#{loop.qname}[#{lc}]#{@callsite ? @callsite.qname : ''}"
   end
+
   def ==(other)
     return false if other.nil?
     return false unless other.kind_of?(LoopContextEntry)
@@ -324,11 +360,14 @@ class LoopContextEntry < ContextEntry
     end
     @loop == other.loop && @step == other.step && @offset == other.offset
   end
+
   def eql?(other); self == other ; end
+
   def hash
     return @hash if @hash
     @hash = loop.hash ^ offset.hash
   end
+
   def <=>(other)
     hash <=> other.hash
   end
@@ -344,34 +383,44 @@ class Context < PMLObject
     @callstring = callstring
     set_yaml_repr(data)
   end
+
   def to_pml
     @callstring.to_a.map { |cse| cse.data }
   end
+
   def Context.from_pml(functions, data)
     cs = data.map { |ref| ContextEntry.from_pml(functions,ref) }
     Context.new(BoundedStack.create(cs.reverse), data)
   end
+
   def qname
     return @callstring.to_a.map { |cs| "(#{cs.qname})" }.join("")
   end
+
   def Context.empty
     Context.new(BoundedStack.empty)
   end
+
   def empty?
     @callstring.empty?
   end
+
   def push(e, bound)
     Context.new(@callstring.push(e,bound))
   end
+
   def pop
     Context.new(@callstring.pop)
   end
+
   def top
     @callstring.top
   end
+
   def map_top
     Context.new(@callstring.map_top { |e| yield e })
   end
+
   def Context.callstack_suffix(stack, length)
     return Context.new(BoundedStack.empty) if length == 0
     start = (length >= stack.length) ? 0 : (-length)
@@ -380,37 +429,46 @@ class Context < PMLObject
     }
     Context.new(BoundedStack.create(entries))
   end
+
   def Context.from_list(list)
     assert("Context.from_list: not a list of context entries (#{list.first.class})") {
       list.all? { |e| e.kind_of?(ContextEntry) }
     }
     Context.new(BoundedStack.create(list.reverse))
   end
+
   def to_a
     @callstring.to_a
   end
+
   def scope_context
     # no dynamic context at the moment
     self
   end
+
   def with_scope_context(scope_context)
     # no non-scoped context at the moment
     scope_context
   end
+
   def to_s
     list = @callstring.to_a.map { |entry| entry }.join(",")
     "Context<#{list}>"
   end
+
   def ==(other)
     return false if other.nil?
     return false unless other.kind_of?(Context)
     @callstring == other.callstring
   end
+
   def eql?(other); self == other ; end
+
   def hash
     return @hash if @hash
     @hash = @callstring.hash
   end
+
   def <=>(other)
     hash <=> other.hash
   end
@@ -441,37 +499,48 @@ class ContextRef < PMLObject
     pp = ProgramPoint.from_pml(functions, data)
     ContextRef.new(pp, context, data)
   end
+
   def function
     programpoint.function
   end
+
   def block
     programpoint.block
   end
+
   def instruction
     programpoint.instruction
   end
+
   def loop
     programpoint.loop
   end
+
   def qname
     "#{programpoint.qname}#{context.qname}"
   end
+
   def inspect
     "ContextRef<programpoint=#{programpoint.inspect},context=#{context.inspect}>"
   end
+
   def to_s
     "#{programpoint}#{context.qname}"
   end
+
   def ==(other)
     return false if other.nil?
     return false unless other.kind_of?(ContextRef)
     @programpoint == other.programpoint && @context == other.context
   end
+
   def eql?(other); self == other ; end
+
   def hash
     return @hash if @hash
     @hash = @programpoint.hash * 31 + @context.hash
   end
+
   def <=>(other)
     hash <=> other.hash
   end
@@ -491,19 +560,24 @@ class ContextManager
   def initialize(history_length, looppeel = 0, loopunroll = 1)
     @history_length, @looppeel, @loopunroll = history_length, looppeel, loopunroll
   end
+
   def initial
     Context.empty
   end
+
   # do not record instruction history context for now
   def blockslice(ctx, _node)
     ctx
   end
+
   def store_loopcontext?
     @looppeel != 0 || @loopunroll != 1
   end
+
   def push_call(ctx, callsite)
     ctx.push(CallContextEntry.new(callsite), @history_length)
   end
+
   def pop_call(ctx)
     ctx_entry = ctx.top
     if ctx_entry
@@ -512,16 +586,19 @@ class ContextManager
     end
     [ ctx.pop, ctx_entry ]
   end
+
   def enter_loop(ctx, loop)
     return ctx unless store_loopcontext?
     ctx.push(LoopContextEntry.new(loop), @history_length)
   end
+
   def exit_loop(ctx)
     return ctx unless store_loopcontext?
     assert("exit_loop: not a loop context #{ctx.top}") { ctx.top.kind_of?(LoopContextEntry) }
     loopnode = ctx.top.loop
     [ ctx.pop, loopnode ]
   end
+
   def continue_loop(ctx)
     return ctx unless store_loopcontext?
     ctx.map_top { |lc|
@@ -529,6 +606,7 @@ class ContextManager
       lc.with_increment(@looppeel, @loopunroll)
     }
   end
+
   def reset_loop(ctx, loop)
     return ctx unless store_loopcontext?
     ctx.map_top { |lc|
@@ -543,13 +621,21 @@ end
 #
 class ContextManagerEmpty
   def initialize ; end
+
   def initial ; Context.empty ; end
+
   def blockslice(ctx, _node) ; ctx ; end
+
   def store_loopcontext? ; false ; end
+
   def push_call(ctx,_); ctx ; end
+
   def pop_call(ctx,_) ; ctx ; end
+
   def exit_loop(ctx) ; ctx; end
+
   def continue_loop(ctx); ctx; end
+
   def reset_loop(ctx); ctx; end
 end
 
@@ -564,16 +650,20 @@ if __FILE__ == $0
       @ctxm1 = ContextManager.new(2)
       @ctxm2 = ContextManager.new(2,1,2)
     end
+
     def sd_instructions(num)
       (0..num - 1).map { |ix| { 'index' => ix } }
     end
+
     def sd_function(name)
       b0 = { 'name' => 0, 'instructions' => sd_instructions(6) }
       { 'name' => name, 'blocks' => [b0] }
     end
+
     def sd_flist
       [sd_function('main'),sd_function('f'),sd_function('g'),sd_function('h')]
     end
+
     def test_call_return1
       c = @ctxm1.initial
       fs = FunctionList.new(sd_flist, :labelkey => 'name')
@@ -589,6 +679,7 @@ if __FILE__ == $0
       assert_equal(c1,site)
       assert_equal(@ctxm1.initial, c)
     end
+
     def test_call_return2
       c = @ctxm1.initial
       fs = FunctionList.new(sd_flist, :labelkey => 'name')
@@ -611,6 +702,7 @@ if __FILE__ == $0
       c, site = @ctxm1.pop_call(c)
       assert_equal(@ctxm1.initial, c)
     end
+
     def test_loop
       c = @ctxm2.initial
       fs = FunctionList.new(sd_flist, :labelkey => 'name')

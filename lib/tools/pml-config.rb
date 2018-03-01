@@ -23,6 +23,7 @@ class PMLConfigTool
     end
     size.to_i
   end
+
   def PMLConfigTool.parse_policy(policy)
     case policy
     when "ideal", "dm", "no"

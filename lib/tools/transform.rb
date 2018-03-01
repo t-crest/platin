@@ -15,6 +15,7 @@ class RelationGraphValidation
   def initialize(pml, options)
     @pml, @options = pml, options
   end
+
   def validate(pt1, pt2)
     tsrc, tdst = pt1.trace, pt2.trace
     errors = []
@@ -64,6 +65,7 @@ class RelationGraphValidation
                "progress trace length (src)" => pt1.trace.length,
                "progress trace length (dst)" => pt2.trace.length) if @options.stats
   end
+
   def is_machine_only_node(dstnode, srcnode)
     return false if dstnode.rg == srcnode.rg
     return @pml.machine_code_only_functions.include?(dstnode.get_block(:dst).function.label)
@@ -78,6 +80,7 @@ class RelationGraphValidationTool
     opts.binary_file(mandatory)
     opts.sweet_trace_file(mandatory)
   end
+
   def RelationGraphValidationTool.check_options(options)
     die_usage("Binary file is needed for validation. Try --help") unless options.binary_file
     die_usage("SWEET trace file is needed for validation. Try --help") unless options.sweet_trace_file

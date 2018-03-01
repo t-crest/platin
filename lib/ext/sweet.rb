@@ -24,6 +24,7 @@ module SWEET
     def initialize(src,target)
       @src, @target = src, target
     end
+
     def to_s
       "#{@src}->#{@target}"
     end
@@ -36,9 +37,11 @@ module SWEET
     def initialize(callstack)
       @ctx = callstack
     end
+
     def empty?
       @ctx.empty?
     end
+
     def to_s
       @ctx.map { |site| site.join(", ") }.join("  |  ")
     end
@@ -50,6 +53,7 @@ module SWEET
     def initialize(func,stmt=nil)
       @f,@stmt = func,stmt
     end
+
     def to_s
       if @stmt
         "(#{f}, #{stmt})"
@@ -65,6 +69,7 @@ module SWEET
     def initialize
       @vec, @const = Hash.new(0), 0
     end
+
     def add(coeff,r)
       if r
         @vec[r] += coeff
@@ -72,6 +77,7 @@ module SWEET
         @const  += coeff
       end
     end
+
     def Vector.negate(vec)
       vneg = {}
       vec.each do |k,v|
@@ -79,12 +85,14 @@ module SWEET
       end
       vneg
     end
+
     def Vector.subtract!(v1,v2)
       v2.each do |v,coeff|
         v1[v] -= coeff
       end
       v1
     end
+
     def to_s
       return const.to_s if @vec.empty?
       s = @vec.map { |v,coeff|
@@ -118,9 +126,11 @@ module SWEET
         @op, @vector, @rhs = '<=', -@rhs, Vector.negate(@vector)
       end
     end
+
     def vars
       @vector.map { |var,coeff| var }
     end
+
     def to_s
       lhs = @vector.map { |var,coeff|
         if coeff != 1
@@ -153,6 +163,7 @@ module SWEET
     def paren(p,left='(',right=')')
       left.r >> p << right.r
     end
+
     def sym(c)
       symbol(c.r)
     end
@@ -160,27 +171,33 @@ module SWEET
     def int
       /\d+/.r.map { |v| v.to_i }
     end
+
     def stmt
       /[^:*+\-;,() \s\d]([^:;,() \s*+\-]|:::?)*/.r
     end
+
     def func
       stmt
     end
+
     def callstring
       caller = paren(seq_(func,stmt, skip: sym(',')))
       call   = paren(seq_(caller,func, skip: sym(',')))
       (call << /\s*/.r).star.map { |cs| Callstring.new(cs.map { |c| c.flatten }) }
     end
+
     def context
       paren(seq_(func,stmt,skip: sym(','))).map { |xs| Context.new(*xs) } |
         func.map { |xs| Context.new(xs) }
     end
+
     def quantifier
       range   = seq_(int,'..'.r,int).map { |lb,_,ub| [lb,ub] }
       foreach = paren(range.maybe,'<','>').map { |p| if(p.empty?) then :foreach else p.first end }
       total   =  ( symbol('[') << symbol(']') ).map { :total }
       quantifier = foreach | total
     end
+
     def build_vector
       proc do |p,*ps|
         sum = Vector.new
@@ -197,6 +214,7 @@ module SWEET
         sum
       end
     end
+
     def constraint
       expr = sym /([^<>= -]|->)+/
       count_var = seq(stmt,('->'.r >> stmt).maybe).map { |c| c[1].empty? ? c[0] : Edge.new(c[0],c[1].first) }
@@ -207,6 +225,7 @@ module SWEET
       comparator = sym /[<>]=?|=/
       seq_(expr,comparator,expr).map { |as| Constraint.new(*as) }
     end
+
     def parser
       ff = seq_(callstring, context, quantifier, constraint, skip: sym(':')) << ";".r
       ff_comment = seq_(ff,sym('%%') >> /\w{4}/.r).map { |((cs,ctx,quant,constr),type)|
@@ -222,6 +241,7 @@ module SWEET
       super()
       @pml = pml
     end
+
     def run(tracefile)
       @executed_instructions = 0
       lines = File.readlines(tracefile)
@@ -277,12 +297,14 @@ class OptionParser
         options.alf_llc ||= "alf-llc"
       }
     end
+
     def sweet_command
       self.on("--sweet-command FILE", "path to sweet (=sweet)") { |f| options.sweet = f }
       self.add_check { |options|
         options.sweet   ||= "sweet"
       }
     end
+
     def bitcode_file(mandatory=Proc.new { |options| false })
       self.on("--bitcode FILE", "linked bitcode file") { |f| options.bitcode_file = f }
       self.add_check { |options|
@@ -291,6 +313,7 @@ class OptionParser
         end
       }
     end
+
     def alf_file(mandatory=Proc.new { |options| false })
       self.on("--alf FILE", "ALF program model file") { |f| options.alf_file = f }
       self.add_check { |options|
@@ -314,6 +337,7 @@ class OptionParser
         end
       }
     end
+
     def sweet_trace_file(mandatory = Proc.new { |options| true })
       self.on("--sweet-trace FILE.tf", "SWEET trace file") { |f| options.sweet_trace_file = f }
       self.add_check { |options|

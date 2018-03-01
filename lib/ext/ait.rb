@@ -16,16 +16,19 @@ class OptionParser
     self.on("-a", "--apx FILE", "APX file for a3") { |f| options.apx_file = f }
     self.add_check { |options| die_usage "Option --apx is mandatory" unless options.apx_file } if mandatory
   end
+
   def ais_file(mandatory=true)
     self.on("--ais FILE", "Path to AIS file") { |f| options.ais_file = f }
     self.add_check { |options| die_usage "Option --ais is mandatory" unless options.ais_file } if mandatory
   end
+
   def ait_report_prefix(mandatory=true)
     self.on("--ait-report-prefix PREFIX", "Path prefix for aiT's report and XML results") {
       |f| options.ait_report_prefix = f
     }
     self.add_check { |options| die_usage "Option --ait-report-prefix is mandatory" unless options.ait_report_prefix } if mandatory
   end
+
   def ait_icache_mode()
     self.on("--ait-icache-mode MODE", "aiT instruction cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") {
       |f| options.ait_icache_mode = case f
@@ -38,6 +41,7 @@ class OptionParser
 	  end
     }
   end
+
   def ait_dcache_mode()
     self.on("--ait-dcache-mode MODE", "aiT data cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") {
       |f| options.ait_dcache_mode = case f
@@ -50,6 +54,7 @@ class OptionParser
 	  end
     }
   end
+
   def ait_sca_type()
     # disable aiT's internal SC analysis (using a workaround) or enable different analysis methods using AIS annotations
     self.on("--ait-sca-type TYPE", "(internal(default)|anno-ptr|none)") { |t|
@@ -341,7 +346,6 @@ class AISExporter
     }
     true
   end
-
 
   # Export jumptables for a function
   def export_jumptables(func)
@@ -674,28 +678,35 @@ class AIS2Helper
     put("ais2 {")
     push :scope
   end
+
   def push(s)
     @stack.push(s)
   end
+
   def pop
     @stack.pop
   end
+
   def put(str)
     @outfile.puts(' ' * 2 * @stack.size + str)
   end
+
   def scope(type, pp)
     put "#{type} #{pp} {"
     push :scope
   end
+
   def enter(enter_or_exit)
     put "#{enter_or_exit} with:"
     push :enter
   end
+
   def close
     s = pop
     put "}" if s == :scope
     s
   end
+
   def close_n (n)
     while(n > 0 && s = close)
       n -= 1
@@ -789,6 +800,7 @@ class CacheStats
   def initialize(hits, misses)
     @hits, @misses = hits, misses
   end
+
   def empty?
     @hits == 0 && @misses == 0
   end
@@ -803,6 +815,7 @@ class AitImport
     @is_loopblock = {}
     @contexts = {}
   end
+
   def read_result_file(file)
     doc = REXML::Document.new(File.read(file))
     cycles = doc.elements["results/result[1]/cycles"].text.to_i
@@ -813,6 +826,7 @@ class AitImport
                     'level' => 'machinecode',
                     'origin' => options.timing_output)
   end
+
   def read_routines(analysis_elem)
     analysis_elem.each_element("decode/routines/routine") do |elem|
       address = Integer(elem.attributes['address'])
@@ -841,6 +855,7 @@ class AitImport
     end
     @routine_names = @routines.values.inject({}) { |memo,r| memo[r.name] = r; memo }
   end
+
   def read_contexts(contexts_element)
     contexts = {}
     contexts_element.each_element("context") { |elem|
@@ -875,6 +890,7 @@ class AitImport
     }
     contexts
   end
+
   #
   # read memory address ranges identified during value analysis
   #

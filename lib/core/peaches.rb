@@ -540,7 +540,6 @@ class ASTArithmeticOp < ASTExpr
     ASTNumberLiteral.new(Integer(lhs.value.public_send(desc[:op], rhs.value)))
   end
 
-
   def to_s
     "(#{@lhs} #{@op} #{@rhs})"
   end

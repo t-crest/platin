@@ -113,6 +113,7 @@ end
 class OSXExportTool
   def OSXExportTool.add_config_options(opts)
   end
+
   def OSXExportTool.add_options(opts, mandatory=true)
     opts.analysis_entry
 

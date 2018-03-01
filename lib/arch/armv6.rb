@@ -18,6 +18,7 @@ class M5SimulatorTrace
     @elf, @options = elf, options
     @stats_num_items = 0
   end
+
   def each
     die("No M5 trace file specified") unless @options.trace_file
     file_open(@options.trace_file) { |fh|
@@ -99,6 +100,7 @@ class Architecture < PML::Architecture
     @triple, @config = triple, config
     @config = self.class.default_config unless @config
   end
+
   def Architecture.default_config
   # TODO: FIXME dummy values
     memories = PML::MemoryConfigList.new([PML::MemoryConfig.new('main',2 * 1024 * 1024,16,0,21,0,21)])
@@ -111,9 +113,11 @@ class Architecture < PML::Architecture
                                PML::MemoryArea.new('data','data',caches.list[2], memories.first, full_range) ])
     PML::MachineConfig.new(memories,caches,memory_areas)
   end
+
   def update_cache_config(options)
   # FIXME: dummy stub
   end
+
   def Architecture.default_instr_cache(type)
   # TODO: FIXME dummy values
     if type == 'method-cache'
@@ -122,18 +126,23 @@ class Architecture < PML::Architecture
       PML::CacheConfig.new('instruction-cache','instruction-cache','dm',1,16,4096)
     end
   end
+
   def Architecture.simulator_options(opts)
   # FIXME: dummy stub
   end
+
   def config_for_clang(options)
   # FIXME: dummy stub
   end
+
   def config_for_simulator
   # FIXME: dummy stub
   end
+
   def simulator_trace(options, _watchpoints)
     M5SimulatorTrace.new(options.binary_file, self, options)
   end
+
   def extract_symbols(extractor, pml, options)
     # prefix="armv6-#{@triple[2]}-#{@triple[3]}"
     # cmd = "#{prefix}-objdump"
@@ -141,6 +150,7 @@ class Architecture < PML::Architecture
     cmd = "arm-none-eabi-objdump"
     ExtractSymbols.run(cmd, extractor, pml, options)
   end
+
   def path_wcet(ilist)
     cost = ilist.reduce(0) do |cycles, instr|
       # TODO: flushes for call??
@@ -152,10 +162,12 @@ class Architecture < PML::Architecture
     end
     cost
   end
+
   def edge_wcet(_ilist,_branch_index,_edge)
     # control flow is for free
     0
   end
+
   def lib_cycle_cost(func)
     case func
     when "__aeabi_uidivmod"
@@ -174,6 +186,7 @@ class Architecture < PML::Architecture
       die("Unknown library function: #{func}")
     end
   end
+
   def cycle_cost(instr)
     case instr.opcode
 

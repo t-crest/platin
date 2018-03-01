@@ -73,6 +73,7 @@ class InspectTool
 
     tool.show_loops(options.show_unbounded_loops)
   end
+
   def InspectTool.add_options(opts)
     TransformTool.add_options(opts)
     # opts.on("--find-loop-bounds", "find all loops and print their loop bounds") { opts.options.show_loop_bounds = true }

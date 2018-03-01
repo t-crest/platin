@@ -27,17 +27,25 @@ class PersistenceDataFlowAnalysis
 
   class ZeroTagSet < TagSet
     def access(_t); self; end
+
     def concat(_set); self ; end
+
     def join(other); other ; end
+
     def to_s; "0"; end
+
     def dup ; self ; end
   end
 
   class TopTagSet < TagSet
     def access(_t);   self ; end
+
     def concat(set); (set == ZERO) ? ZERO : self; end
+
     def join(_other); self ; end
+
     def to_s; "1"; end
+
     def dup; self ; end
   end
 
@@ -49,10 +57,12 @@ class PersistenceDataFlowAnalysis
       @set = initial_set
       @check_conflict = check_conflict
     end
+
     def create(set)
       return TOP if @check_conflict.call(set)
       TagSet.new(set, @check_conflict)
     end
+
     def access(t)
       if self == ZERO
         self
@@ -62,6 +72,7 @@ class PersistenceDataFlowAnalysis
         create(@set + Set[t])
       end
     end
+
     def concat(set)
       if set == ZERO || set == TOP
         set.concat(self)
@@ -69,16 +80,20 @@ class PersistenceDataFlowAnalysis
         create(@set + set.set)
       end
     end
+
     def join(other)
       return other.join(self) if other == ZERO || other == TOP
       create(@set + other.set)
     end
+
     def dup
       TagSet.new(@set.dup, @check_conflict)
     end
+
     def to_s
       "{#{@set.to_a.join(",")}}"
     end
+
     def ==(other)
       return (self.equal?(ZERO)) if other.equal?(ZERO)
       return (self.equal?(TOP)) if other.equal?(TOP)
@@ -100,7 +115,9 @@ class PersistenceDataFlowAnalysis
     # if t is not active in this scope, any of the active tags might
     # have been accessed without accessing t
     def no(t) ; @no_map[t] || new_tag_set(t, @active_tags); end
+
     def in(t) ; @in_map[t] || TagSet::ZERO; end
+
     def out(t) ; @out_map[t] || TagSet::ZERO; end
 
     def new_tag_set(t, initial_set = nil)
@@ -110,6 +127,7 @@ class PersistenceDataFlowAnalysis
       }
       TagSet.new(initial_set || Set.new, t_metric)
     end
+
     def access(x)
       @active_tags.each { |t|
         old_no_map = @no_map[t]
@@ -412,6 +430,7 @@ class PersistenceAnalysis
     analysis_results = @pdfa.analyze(node, @analysis.cache_properties.set_of(tag))
     analysis_results.locally_persistent?(tag)
   end
+
   #
   # Find persistent sub scopes in a scope with conflicts
   #

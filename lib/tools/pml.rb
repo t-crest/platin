@@ -182,9 +182,11 @@ class PMLTool
     end
     pml
   end
+
   def PMLTool.add_config_options(opts)
     opts.on("--schema FILE", "PML schema") { |f| opts.options.pml_schema_file = f }
   end
+
   def PMLTool.add_options(opts)
     PMLTool.add_config_options(opts)
     opts.writes_pml # output option => merge

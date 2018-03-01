@@ -21,6 +21,7 @@ class AnalyzeTraceTool
   def initialize(pml, options, entry)
     @pml, @options, @entry = pml, options, entry
   end
+
   def analyze_trace
     tm = MachineTraceMonitor.new(@pml, @options)
     debug(@options, :trace) {
@@ -48,6 +49,7 @@ class AnalyzeTraceTool
     end
     statistics("TRACE", "simulator trace length" => trace.stats_num_items) if @options.stats
   end
+
   def console_output
     # Verbose Output
     if @options.verbose || @options.console_output

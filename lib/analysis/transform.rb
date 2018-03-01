@@ -49,12 +49,15 @@ class ConstraintRef
     assert("num_elim_vars inconsistent") { @num_elim_vars == @elim_vars.size }
     "CR#<cid=#{cid},num_vars=#{num_vars},elim_vars=#{@elim_vars.to_a},constr=#{@constraint},status=#{status}>"
   end
+
   def ==(other)
     @cid == other.cid
   end
+
   def eql?(other)
     @cid == other.cid
   end
+
   def hash
     cid
   end
@@ -68,15 +71,18 @@ class RefSet
   def initialize
     @store = {}
   end
+
   def add(cref)
     sz = cref.num_elim_vars
     list = (@store[sz] ||= Array.new)
     list.push(cref)
     @minsz = sz if ! @minsz || sz < @minsz
   end
+
   def empty?
     @minsz.nil?
   end
+
   def pop
     return nil if empty?
     list = @store[@minsz]
@@ -88,6 +94,7 @@ class RefSet
     end
     v
   end
+
   def dump(io=$stdout)
     io.puts "RefSet"
     @store.each { |sz,vs|
@@ -568,6 +575,7 @@ class SymbolicBoundTransformation
   def initialize(pml, options)
     @pml, @options = pml, options
   end
+
   def transform(flowfacts, target_level)
     new_ffs = []
     level_source = (target_level == "bitcode") ? "machinecode" : "bitcode"
@@ -714,7 +722,6 @@ class SymbolicBoundTransformation
     scope_mapped = ContextRef.new(scope_ref_mapped, Context.empty)
     FlowFact.new(scope_mapped, TermList.new(lhs_mapped), ff.op, rhs_mapped, attrs)
   end
-
 
   # resolve chain of recurrences
   def resolve_chr(ff, loop_bounds)

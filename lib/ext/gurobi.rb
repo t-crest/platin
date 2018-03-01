@@ -15,6 +15,7 @@ class GurobiILP < ILP
   def initialize(options = nil)
     super(options)
   end
+
   # run solver to find maximum cost
   def solve_max
     # create LP problem (maximize)
@@ -72,9 +73,11 @@ class GurobiILP < ILP
   def cleanup_name(name)
     name.gsub(/[\@\: \/\(\)\-\>]/, "_")
   end
+
   def varname(vi)
     "v_#{vi}"
   end
+
   # create an LP with variables
   def add_variables(lp)
     lp.puts("Generals")
@@ -84,12 +87,14 @@ class GurobiILP < ILP
     lp.puts
     lp.puts("End")
   end
+
   # set LP ovjective
   def add_objective(lp)
     lp.puts("Maximize")
     @costs.each { |v,c| lp.print(" #{lp_term(c,index(v))}") }
     lp.puts
   end
+
   # add LP constraints
   def add_linear_constraints(lp)
     lp.puts("Subject To")
@@ -110,6 +115,7 @@ class GurobiILP < ILP
     end
     lp.puts
   end
+
   # extract solution vector
   def read_results(sol)
     obj = nil
@@ -125,12 +131,15 @@ class GurobiILP < ILP
     }
     [obj, vmap]
   end
+
   def lp_term(c,vi)
     "#{c < 0 ? '-' : '+'} #{c.abs} #{varname(vi)}"
   end
+
   def lp_lhs(lhs)
     lhs.map { |vi,c| " #{lp_term(c,vi)}" }.join
   end
+
   # lp comparsion operators
   def lp_op(op)
     case op
@@ -157,9 +166,11 @@ class GurobiILP < ILP
     end
     [nil, nil] # No error
   end
+
   def gurobi_error_msg(msg)
     "Gurobi Error: #{msg}"
   end
+
   def gurobi_error(msg)
     raise Exception.new(gurobi_error_msg(msg))
   end

@@ -83,6 +83,7 @@ class SymbolicExpression
   def to_f4
     raise Exception.new("#{self.class}#to_f4: no translation available")
   end
+
   def to_ffx
     raise Exception.new("#{self.class}#to_ffx: no translation available")
   end
@@ -90,12 +91,14 @@ end
 
 class SEInt
   def to_f4  ; self.to_s ; end
+
   def to_ffx ; self.to_s ; end
 end
 
 # Variables always reference arguments of functions
 class SEVar
   def to_f4  ; "@arg_#{self}" ; end
+
   def to_ffx ; "@arg_#{self}" ; end
 end
 
@@ -103,6 +106,7 @@ class SEBinary
   def to_f4
     raise Exception.new("#{self.class}#to_f4: no translation available")
   end
+
   def to_ffx
     raise Exception.new("#{self.class}#to_ffx: no translation available")
 #    left,right = self.a, self.b
@@ -149,6 +153,7 @@ class Function
       raise F4UnsupportedProgramPoint.new(self, "neither address nor label available (forgot 'platin extract-symbols'?)")
     end
   end
+
   def ffx_ref
     raise Exception.new("#{self.class}#to_ffx: no translation available")
   end
@@ -167,6 +172,7 @@ class Block
       raise F4UnsupportedProgramPoint.new(self, "neither address nor label available (forgot 'platin extract-symbols'?)")
     end
   end
+
   def ffx_ref
     raise Exception.new("#{self.class}#to_ffx: no translation available")
   end
@@ -189,6 +195,7 @@ class Loop
   def f4_ref
     raise F4UnsupportedProgramPoint.new(self)
   end
+
   def ffx_ref
     raise FFXUnsupportedProgramPoint.new(self)
   end
@@ -198,6 +205,7 @@ class Edge
   def f4_ref
     raise F4UnsupportedProgramPoint.new(self)
   end
+
   def ffx_ref
     raise FFXUnsupportedProgramPoint.new(self)
   end
@@ -550,7 +558,6 @@ class FFXExporter
     # TODO: not yet supported
     # gen_fact("instruction #{ins.ffx_ref} features \"#{feature}\" = #{value}", "SC blocks (source: llvm sca)")
   end
-
 
   def write(outfile)
     # Mandatory to use transitive formatter

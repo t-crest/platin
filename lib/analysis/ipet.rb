@@ -152,10 +152,12 @@ class IPETEdge
     arrow = {:bitcode => "~>", :machinecode => "->", :gcfg => "+>"}[@level]
     @qname = "#{@source.qname}#{arrow}#{:exit == @target ? 'exit' : @target.qname}"
   end
+
   def backedge?
     return false if target == :exit
     target.backedge_target?(source)
   end
+
   def cfg_edge?
     if source.kind_of?(GCFGNode) and (target == :exit || target.kind_of?(GCFGNode))
       return true
@@ -164,29 +166,38 @@ class IPETEdge
     return false unless :exit == target || target.kind_of?(Block)
     true
   end
+
   # function of source
   def function
     source.function
   end
+
   def cfg_edge
     assert("IPETEdge#cfg_edge: not a edge between blocks") { cfg_edge? }
     (:exit == target) ? source.edge_to_exit : source.edge_to(target)
   end
+
   def call_edge?
     source.kind_of?(Instruction) || target.kind_of?(Function)
   end
+
   def relation_graph_edge?
     source.kind_of?(RelationNode) || target.kind_of?(RelationNode)
   end
+
   def to_s
     arrow = {:bitcode => "~>", :machinecode => "->", :gcfg => "+>"}[@level]
     "#{@source}#{arrow}#{:exit == @target ? 'exit' : @target}"
   end
+
   def inspect
     to_s
   end
+
   def hash; @qname.hash ; end
+
   def ==(other); qname == other.qname ; end
+
   def eql?(other); self == other; end
 end
 
@@ -212,9 +223,11 @@ class IPETModel
   def assert_less_equal(lhs, rhs, name, tag)
     assert(lhs, "less-equal", rhs, name, tag)
   end
+
   def assert_equal(lhs, rhs, name, tag)
     assert(lhs, "equal", rhs, name, tag)
   end
+
   def assert(lhs, op, rhs, name, tag)
     terms = Hash.new(0)
     rhs_const = 0
@@ -541,7 +554,6 @@ class IPETBuilder
     end
   end
 
-
   # Build basic IPET Structure, when a GCFG is present
   def build_gcfg(entry, flowfacts, opts, cost_block)
     # Super Structure: set of reachable ABBs
@@ -662,6 +674,7 @@ class IPETBuilder
       @mc_model.sum_outgoing_override[bb] = e[:out]
     }
   end
+
   #
   # Add flowfacts
   #

@@ -18,6 +18,7 @@ class M5SimulatorTrace
     @elf, @options = elf, options
     @stats_num_items = 0
   end
+
   def each
     die("No M5 trace file specified") unless @options.trace_file
     file_open(@options.trace_file) { |fh|
@@ -98,15 +99,20 @@ class Architecture < PML::Architecture
   def initialize(triple, config)
     @triple, @config = triple, config
   end
+
   def Architecture.simulator_options(opts)
   end
+
   def config_for_clang(options)
   end
+
   def config_for_simulator
   end
+
   def simulator_trace(options, _watchpoints)
     M5SimulatorTrace.new(options.binary_file, self, options)
   end
+
   def extract_symbols(extractor, pml, options)
     prefix = "arm-#{@triple[2]}-#{@triple[3]}"
     cmd = "#{prefix}-objdump"

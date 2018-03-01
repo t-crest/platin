@@ -22,20 +22,25 @@ class SCCGraph
       @successors = []
       @has_backedge = false
     end
+
     def add_successor(n)
       @successors.push(n)
     end
+
     def trivial?
       return false if blocks.length > 1
       singleton = blocks.first
       singleton.successors.all? { |succ| succ != singleton || @graph_headers.include?(succ) }
     end
+
     def has_backedge?
       @has_backedge
     end
+
     def may_return?
       blocks.any? { |block| block.may_return? }
     end
+
     def to_s
       "SCCGraph::Node: #{blocks.join(", ")}"
     end
@@ -73,6 +78,7 @@ class SCCGraph
       }
     }
   end
+
   def dump(_io = $stdout)
     puts("SCC Graph")
     puts "SCCs: #{@sccs.inspect}"
@@ -110,6 +116,7 @@ class ScopeGraph
       @qname, @context = "#{name}#{context.qname}", context
       @predecessors, @successors = [], []
     end
+
     def add_successor(n)
       @successors.push(n)
       n.predecessors.push(self)
@@ -122,16 +129,20 @@ class ScopeGraph
       super("#F#{function.qname}", context)
       @function = function
     end
+
     def scope_entry
       @function
     end
+
     def region=(region_node)
       assert("FunctionNode: region already set") { @region.nil? }
       @region = region_node
     end
+
     def to_s
       "F:#{function}#{context.qname}"
     end
+
     def inspect
       to_s
     end
@@ -150,13 +161,16 @@ class ScopeGraph
       super("#L#{loop.qname}", context)
       @loop = loop
     end
+
     def scope_entry
       @loop
     end
+
     def region=(region_node)
       assert("LoopNode: region already set") { @region.nil? }
       @region = region_node
     end
+
     def to_s
       "L:#{loop}#{context.qname}"
     end
@@ -168,9 +182,11 @@ class ScopeGraph
       super("#B#{block.qname}", context)
       @block = block
     end
+
     def scope_entry
       @block
     end
+
     def to_s
       "B:#{@block}#{context.qname}"
     end
@@ -184,9 +200,11 @@ class ScopeGraph
       @function = callsite.function
       @callsite = callsite
     end
+
     def scope_entry
       @callsite
     end
+
     def to_s
       "C:#{callsite}#{context.qname}"
     end
@@ -419,15 +437,18 @@ class RegionGraph
       @qname = name
       @predecessors, @successors = [], []
     end
+
     def add_successor(n)
       @successors.push(n)
       n.predecessors.push(self)
     end
+
     def dup_node
       copy = self.dup
       copy.reset_edges!
       copy
     end
+
     def reset_edges!
       @successors = []
       @predecessors = []
@@ -438,6 +459,7 @@ class RegionGraph
     def initialize
       super("EntryNode")
     end
+
     def to_s
       "EntryNode"
     end
@@ -447,6 +469,7 @@ class RegionGraph
     def initialize
       super("ExitNode")
     end
+
     def to_s
       "ExitNode"
     end
@@ -458,6 +481,7 @@ class RegionGraph
       super(block.qname)
       @block = block
     end
+
     def to_s
       "BlockEntryNode: #{@block}"
     end
@@ -470,6 +494,7 @@ class RegionGraph
       @block = block
       @first, @last = first, last
     end
+
     def to_s
       "BlockSliceNode: #{@block}[#{first}..#{last}]"
     end
@@ -481,6 +506,7 @@ class RegionGraph
       super(scope_node.qname)
       @scope_node = scope_node
     end
+
     def to_s
       "SubScope: #{scope_node}"
     end
@@ -492,9 +518,11 @@ class RegionGraph
       super(action.to_s)
       @action, @blockslice = action, blockslice
     end
+
     def block
       blockslice.block
     end
+
     def to_s
       "ActionNode: #{action}"
     end
@@ -505,6 +533,7 @@ class RegionGraph
       super("RecNode: #{target.qname}")
       @target = target
     end
+
     def to_s
       "RecNode: #{@target}"
     end
@@ -657,14 +686,17 @@ class CallGraph < PMLObject
       @qname = "CGNode:#{function.qname}#{context.qname}"
       @successors_with_callsite = []
     end
+
     def add_callsite(callsite, targets)
       targets.each { |t|
         @successors_with_callsite.push([t,callsite])
       }
     end
+
     def successors
       Set[*@successors_with_callsite.map { |t,cs| t }].to_a
     end
+
     def to_s
       "CGNode:#{@function}#{@context.qname}"
     end
@@ -672,6 +704,7 @@ class CallGraph < PMLObject
   def initialize
     @nodes = []
   end
+
   def dump(io=$stdout)
     io.puts "Callgraph"
     @nodes.each { |n|
@@ -681,6 +714,7 @@ class CallGraph < PMLObject
       }
     }
   end
+
   def add_node(function, context)
     n = FunctionNode.new(function, context)
     @nodes.push(n)

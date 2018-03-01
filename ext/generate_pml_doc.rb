@@ -60,6 +60,7 @@ class PMLGenerator
       module PML
     EOF
   end
+
   def initialize(schema_file,options)
     @schema_file, @options = schema_file,options
     @preamble =
@@ -71,6 +72,7 @@ class PMLGenerator
     @klasses = {}
     @io = $stdout
   end
+
   def generate
     load_schema
     @worklist = [@schema]

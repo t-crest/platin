@@ -89,6 +89,7 @@ module PML
       @list = data.map { |i| Instruction.new(block, i) }
       set_yaml_repr(data)
     end
+
     def [](index)
       index = Integer(index) if index.instance_of? String
       @list[index]
@@ -100,6 +101,7 @@ module PML
     include QNameObject
     attr_reader :name
     def address ; data['address'] ; end
+
     def address=(addr); data['address'] = addr; end
 
     def ProgramPoint.from_pml(mod, data)
@@ -153,6 +155,7 @@ module PML
       @blocks = [] # Initialized by Function
       set_yaml_repr(data)
     end
+
     def loops
       @loopheader.loops
     end
@@ -160,6 +163,7 @@ module PML
     def blocks
       @blocks
     end
+
     def add_block(b)
       @blocks.push(b)
     end
@@ -167,9 +171,11 @@ module PML
     def to_s
       "#<Loop: #{loopheader}>"
     end
+
     def to_pml_ref
       { 'function' => loopheader.function.name, 'loop' => loopheader.name }
     end
+
     def Loop.from_qname(functions,qn)
       fn,bn = qn.split('/',2).map { |n| YAML::load(n) }
       functions.by_name(fn).blocks.by_name(bn).loop
@@ -189,18 +195,23 @@ module PML
       @qname = "#{source.qname}->#{target ? target.qname : 'exit' }"
       set_yaml_repr(data)
     end
+
     def ref
       self
     end
+
     def exitedge?
       target.nil?
     end
+
     def function
       source.function
     end
+
     def to_s
       "#{source.to_s}->#{target ? target.qname : 'exit'}"
     end
+
     def to_pml_ref
       pml = { 'function' => source.function.name,
         'edgesource' => source.name }
@@ -218,13 +229,16 @@ module PML
       @qname = "@#{@name}"
       set_yaml_repr(data)
     end
+
     def function
       # no function associated with marker
       nil
     end
+
     def to_s
       @qname
     end
+
     def to_pml_ref
       { 'marker' => @name }
     end
@@ -247,15 +261,19 @@ module PML
       set_yaml_repr(data)
       @function = function
     end
+
     def name
       data['name']
     end
+
     def index
       data['index']
     end
+
     def maps_to_register?
       registers.length == 1
     end
+
     def registers
       data['registers']
     end
@@ -285,21 +303,27 @@ module PML
       @blocks = blocknames.map { |bname| function.blocks.by_name(bname) }
       set_yaml_repr(data)
     end
+
     def to_s
       "#{qname}-#{last.name}"
     end
+
     def function
       entry.function
     end
+
     def entry
       @blocks.first
     end
+
     def last
       @blocks.last
     end
+
     def address
       entry.address
     end
+
     def size
       assert("SubFunction#size: no addresses available") { entry.address }
 
@@ -340,36 +364,46 @@ module PML
       @arguments = ArgumentList.new(self, data['arguments'] || [])
       @subfunctions = SubFunctionList.new(self, data['subfunctions'] || [])
     end
+
     def [](k)
       assert("Function: do not access blocks/loops directly") { k != 'blocks' && k != 'loops'}
       data[k]
     end
+
     def mapsto
       data['mapsto']
     end
+
     def to_s
       s = name
       s = "(#{data['mapsto']})#{s}" if data['mapsto']
       s
     end
+
     def to_pml_ref
       { 'function' => name }
     end
+
     def function
       self
     end
+
     def entry_block
       blocks.first
     end
+
     def address
       data['address'] || blocks.first.address
     end
+
     def label
       data[@labelkey] || blocks.first.label
     end
+
     def add_node(node)
       @blocks.add(node)
     end
+
     def add_subfunction(subfunc_data)
       # This is a ugly hack that is here, because the PML abstraction is not clean
       data['subfunctions'] = (data['subfunctions'] || []).push(subfunc_data)
@@ -439,6 +473,7 @@ module PML
       @is_loopheader = loopnames.first == self.name
       @instructions = InstructionList.new(self, data['instructions'] || [])
     end
+
     def mapsto
       data['mapsto']
     end
@@ -861,7 +896,6 @@ module PML
       lookup(@named[level], name, "#{level}-name", false)
     end
 
-
     # Special Case, because non-standard PML list
     def add(item)
       list.push(item)
@@ -919,21 +953,27 @@ private
       @dst = dst_funs.by_name(data['dst']['function'])
       @nodes = RelationNodeList.new(self, data['nodes'])
     end
+
     def status
       data['status']
     end
+
     def accept?(options)
       status == 'valid' or (options.accept_corrected_rgs and status == 'corrected')
     end
+
     def get_function(level)
       level == :src ? @src : @dst
     end
+
     def add_node(node)
       @nodes.add(node)
     end
+
     def qname
       "#{src.qname}<>#{dst.qname}"
     end
+
     def to_s
       "#{src}<->#{dst}"
     end
@@ -992,6 +1032,7 @@ private
       }.uniq
       @successors[level]
     end
+
     # Flooding of the graph is stopped at the argument node. This is useful
     # for single-entry; single-exit regions
     def reachable_till(stop)
@@ -1004,6 +1045,7 @@ private
       }
       rs
     end
+
     def to_s
       "#{type}:#{qname}"
     end
@@ -1040,6 +1082,7 @@ private
       }
       @regions = nil
     end
+
     def qname
       @name
     end
@@ -1094,6 +1137,7 @@ private
       }
       @regions[level]
     end
+
     def to_s
       "#{@function.name}/#{@name}"
     end
@@ -1124,24 +1168,30 @@ private
       @abb = abbs[data['abb']]
       @predecessors = []
     end
+
     def function
       abb.machine_function
     end
+
     def connect(nodes)
       @successors = data['successors'].map {|i| nodes[i] }
       data['successors'].each {|i|
         nodes[i].add_predecessor(self)
       }
     end
+
     def index
       data['index']
     end
+
     def to_s
       "GCFG:N#{index}(#{@abb.name})"
     end
+
     def qname
       "GCFG:N#{index}"
     end
+
     def may_return?
       return @successors.empty?
     end

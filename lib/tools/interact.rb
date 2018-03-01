@@ -37,6 +37,7 @@ class ListToken < Token
   def get_list
     raise ArgumentError 'This should be overwritten in the child class'
   end
+
   def complete(prefix)
     return get_list().grep(/^#{Regexp.escape(prefix)}/i)
   end

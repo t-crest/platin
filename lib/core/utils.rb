@@ -74,9 +74,11 @@ module PML
       @excluded_edge_targets = Set[*excluded_edge_targets]
       @nodeset = Set[*nodelist]
     end
+
     def tsort_each_node
       @nodelist.each { |node| yield node }
     end
+
     def tsort_each_child(node)
       node.successors.each { |succnode|
         if @nodeset.include?(succnode) && ! @excluded_edge_targets.include?(succnode)
@@ -251,6 +253,7 @@ module PML
     def initialize(io=$stderr)
       @io = io
     end
+
     def puts(str)
       @io.puts(format_msg("DEBUG",str))
     end

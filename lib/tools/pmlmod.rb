@@ -18,23 +18,28 @@ class PMLPath
     end
     warn ("Trailing unparsed PMLPath: #{str}") unless str.empty?
   end
+
   def parse_predicate(str)
     return :all if str == '*'
     m = /^\[@(.+?)=(.+)\]$/.match(str)
     raise Exception.new("Bad predicate in PMLpath: '#{str}'") unless m
     [m[1],m[2]]
   end
+
   def lvl_to_num(lvl)
     { :func => 0, :bb => 1, :inst => 2 }[lvl]
   end
+
   def has_level?(lvl)
     lvl = lvl_to_num(lvl) unless lvl.class == Fixnum
     lvl && lvl < @predicates.size
   end
+
   def pred_at_level(lvl)
     lvl = lvl_to_num(lvl) unless lvl.class == Fixnum
     lvl ? @predicates[lvl] : nil
   end
+
   def to_s
     @str
   end
@@ -68,6 +73,7 @@ class PMLMatchModify
     attrib = pml_object.send(attr_name)
     match_attrib(attrib, rx)
   end
+
   def match_attrib(attrib, rx)
     if attrib.class == Array
       m = attrib.map { |a| match_attrib(a,rx) }.compact

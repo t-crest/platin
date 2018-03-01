@@ -36,6 +36,7 @@ end
 
 class CallGraphVisualizer < Visualizer
   def initialize(pml, options) ; @pml, @options = pml, options ; end
+
   def visualize_callgraph(function)
     g = digraph("Callgraph for #{function}")
     refinement = ControlFlowRefinement.new(function, 'machinecode')
@@ -60,6 +61,7 @@ class PlainCallGraphVisualizer < Visualizer
   def initialize(entry, functions, mcmodel)
     @entry, @functions, @mc_model = entry, functions, mcmodel
   end
+
   def visualize_callgraph()
     g = digraph("Callgraph for #{@entry}")
     nodes, nids = {}, {}
@@ -87,6 +89,7 @@ end
 
 class ScopeGraphVisualizer < Visualizer
   def initialize(pml, options) ; @pml, @options = pml, options ; end
+
   def visualize_scopegraph(function)
     g = digraph("Scopegraph for #{function}")
     refinement = ControlFlowRefinement.new(function, 'machinecode')
@@ -109,6 +112,7 @@ end
 
 class FlowGraphVisualizer < Visualizer
   def initialize(pml, options) ; @pml, @options = pml, options ; end
+
   def extract_timing(function, timing)
     Hash[
       timing.select{ |t| t.profile }.map { |t|
@@ -127,11 +131,13 @@ class FlowGraphVisualizer < Visualizer
       }.select{ |k,v| not v.empty? }
     ]
   end
+
   def get_vblocks(node, adjacentcy)
     [*node].map { |n|
       n.block || get_vblocks(n.send(adjacentcy), adjacentcy)
     }.flatten
   end
+
   def find_vnode_timing(profile, node)
     if node.block
       profile[node.block] || []
@@ -139,6 +145,7 @@ class FlowGraphVisualizer < Visualizer
       find_vedge_timing(profile, node.predecessors, node.successors)
     end
   end
+
   def find_vedge_timing(profile, node, succ)
     start = Set.new( get_vblocks(node, :predecessors) )
     targets = Set.new( get_vblocks(succ, :successors) )
@@ -154,6 +161,7 @@ class FlowGraphVisualizer < Visualizer
       }
     end
   end
+
   def visualize_vcfg(function, arch, timing=nil)
     g = GraphViz.new( :G, :type => :digraph )
     g.node[:shape] = "rectangle"
@@ -261,6 +269,7 @@ class FlowGraphVisualizer < Visualizer
     end
     g
   end
+
   def visualize_cfg(function)
     g = GraphViz.new( :G, :type => :digraph )
     g.node[:shape] = "rectangle"
@@ -300,6 +309,7 @@ class FlowGraphVisualizer < Visualizer
 end
 class RelationGraphVisualizer < Visualizer
   def initialize(options) ; @options = options ; end
+
   def visualize(rg)
     nodes = {}
     g = GraphViz.new( :G, :type => :digraph )
@@ -616,10 +626,12 @@ class HtmlIndexPages
   def initialize
     @targets, @types = {}, Set.new
   end
+
   def add(target,type,image)
     (@targets[target] ||= {})[type] = image
     @types.add(type)
   end
+
   def generate(outdir)
     @targets.each do |target,images|
       images.each do |type,image|
@@ -637,6 +649,7 @@ class HtmlIndexPages
   def link(target,type)
     "#{target}.#{type}.html"
   end
+
   def type_index(selected_target, selected_type, io)
     io.puts("<div>")
     @targets[selected_target].each do |type,image|
@@ -645,6 +658,7 @@ class HtmlIndexPages
     end
     io.puts("</div>")
   end
+
   def target_index(selected_target, selected_type, io)
     io.puts("<div>")
     @targets.each do |target,images|
@@ -654,6 +668,7 @@ class HtmlIndexPages
     end
     io.puts("</div>")
   end
+
   def image_display(ref, io)
     io.puts("<image src=\"#{ref}\"/>")
   end
@@ -672,6 +687,7 @@ class VisualizeTool
       f.label
     }
   end
+
   def VisualizeTool.run(pml, options)
     targets = options.functions || VisualizeTool.default_targets(pml)
     outdir = options.outdir || "."

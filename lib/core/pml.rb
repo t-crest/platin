@@ -84,6 +84,7 @@ class PMLDoc
     @sca_graph ||= nil
     @text_symbols ||= nil
   end
+
   def valuefacts
     @valuefacts
   end
@@ -369,7 +370,6 @@ class PMLDoc
       machine_functions.by_label(options.analysis_entry)
     end
   end
-
 
   def functions_for_level(level)
     if level == 'bitcode'

@@ -15,9 +15,11 @@ class TraceMonitor
   def initialize
     @observers = []
   end
+
   def subscribe(obj)
     @observers.push(obj)
   end
+
   def publish(msg,*args)
     @observers.each do |obs|
       obs.send(msg,*args)
@@ -54,11 +56,13 @@ class MachineTraceMonitor < TraceMonitor
     # @wp_instr = {}
     build_watchpoints
   end
+
   def watchpoints
     wps = @wp.dup
     wps[@start] = true
     wps
   end
+
   # run monitor
   def run(trace)
     @finished = false # set to true on (observed) program exit
@@ -294,6 +298,7 @@ class MachineTraceMonitor < TraceMonitor
       end
     end
   end
+
   def add_watch(dict, addr, data)
     if ! addr
       warn ("No address for #{data.inspect[0..60]}")
@@ -311,6 +316,7 @@ class VerboseRecorder
   def initialize(out=$>)
     @out = out
   end
+
   def method_missing(event, *args)
     @out.puts("EVENT #{event.to_s.ljust(15)} #{args.join(" ")}")
   end
@@ -352,6 +358,7 @@ class RecorderSpecification
     out.puts("         f/2:b/1 ==> block frequencies for every executed function (distinguished by callstrings")
     out.puts("                     of length 2), virtually inlining directly called functions")
   end
+
   def RecorderSpecification.parse(str, default_callstring_length)
     recorders = []
     str.split(/\s*,\s*/).each { |recspec|
@@ -398,12 +405,15 @@ class RecorderScheduler
     }
     @running = false
   end
+
   def recorders
     @recorder_map.values
   end
+
   def global_recorders
     recorders.select { |r| r.global? }
   end
+
   def function(callee,callsite,cycles)
     if @running
       # adjust callstack
@@ -448,10 +458,12 @@ class RecorderScheduler
     @active[recorder.rid] = recorder
     recorder.start(scope_entity, cycles)
   end
+
   # NB: deactivate is called by the recorder
   def deactivate(recorder)
     @active.delete(recorder.rid)
   end
+
   def ret(rsite, csite, cycles, stall_cycles)
     if @running
       @active.values.each { |recorder| recorder.ret(rsite,csite,cycles,stall_cycles) }
@@ -463,28 +475,35 @@ class RecorderScheduler
       end
     end
   end
+
   def block(bb, cycles)
     return unless @running
     (@executed_blocks[bb.function] ||= Set.new).add(bb)
     @active.values.each { |recorder| recorder.block(bb, cycles) }
   end
+
   def loopenter(loop, cycles)
     return unless @running
     @active.values.each { |recorder| recorder.loopenter(loop, cycles) }
   end
+
   def loopcont(loop, cycles)
     return unless @running
     @active.values.each { |recorder| recorder.loopcont(loop, cycles) }
   end
+
   def loopexit(loop, cycles)
     return unless @running
     @active.values.each { |recorder| recorder.loopexit(loop, cycles) }
   end
+
   def stop(cycles)
     return unless @running
     @active.values.each { |recorder| recorder.stop(cycles) }
   end
+
   def eof ; end
+
   def method_missing(event, *args)
   end
 end
@@ -504,12 +523,15 @@ class FunctionRecorder
     @record_loopheaders = spec.entity_types.include?(:loop_header_bounds)
     @results = FrequencyRecord.new("FunctionRecorder_#{rid}(#{function}, #{context || 'global'})")
   end
+
   def global?
     ! @context
   end
+
   def type
     global? ? 'global' : 'function'
   end
+
   def scope
     if @context
       ContextRef.new(@function, @context)
@@ -517,45 +539,54 @@ class FunctionRecorder
       @function
     end
   end
+
   def active?
     return true unless @calllimit
     @callstack.length <= @calllimit
   end
+
   def start(function, cycles)
     # puts "#{self}: starting at #{cycles}"
     results.start(cycles)
     @callstack = []
     function.blocks.each { |bb| results.init_block(in_context(bb)) } if @record_block_frequencies
   end
+
   def stop(cycles)
     results.stop(cycles)
     @scheduler.deactivate(self)
   end
+
   def function(callee, callsite, _cycles)
     results.call(in_context(callsite),callee) if active? && @record_calltargets
     @callstack.push(callsite)
     callee.blocks.each { |bb| results.init_block(in_context(bb)) } if active? && @record_block_frequencies
   end
+
   def block(bb, _cycles)
     return unless active?
     # puts "#{self}: visiting #{bb} active:#{active?} calllimit:#{@calllimit}"
     results.increment_block(in_context(bb)) if @record_block_frequencies
   end
+
   def loopenter(loop, _cycles)
     return unless active?
     assert("loopenter: not a loop") { loop.kind_of?(Loop) }
     results.start_loop(in_context(loop)) if @record_loopheaders
   end
+
   def loopcont(loop, _)
     return unless active?
     assert("loopcont: not a loop") { loop.kind_of?(Loop) }
     results.increment_loop(in_context(loop)) if @record_loopheaders
   end
+
   def loopexit(loop, _)
     return unless active?
     assert("loopexit: not a loop") { loop.kind_of?(Loop) }
     results.stop_loop(in_context(loop)) if @record_loopheaders
   end
+
   def ret(_rsite, _csite, cycles, stall_cycles)
     if @callstack.length == 0
       # puts "#{self}: stopping at #{rsite}->#{csite}"
@@ -568,11 +599,15 @@ class FunctionRecorder
       @callstack.pop
     end
   end
+
   def eof ; end
+
   def method_missing(event, *args); end
+
   def to_s
     results.name
   end
+
   def dump(io=$stdout)
     header = "Observations for #{self}\n  function: #{@function}"
     header += "\n  context: #{@context}" if @context && ! @context.empty?
@@ -595,37 +630,46 @@ class FrequencyRecord
     @loopbounds = {}
     @blockfreqs = nil
   end
+
   def start(cycles)
     @cycles_start = cycles
     @runs += 1
     @current_record = {}
     @current_loops = {}
   end
+
   def init_block(pp)
     assert("pp has wrong type: #{pp.class}") { pp.kind_of?(ContextRef) }
     @current_record[pp] ||= 0 if @current_record
   end
+
   def increment_block(pp)
     @current_record[pp] += 1 if @current_record
   end
+
   def start_loop(hpp)
     return unless @current_loops
     @current_loops[hpp] = 1
   end
+
   def increment_loop(hpp)
     return unless @current_loops
     @current_loops[hpp] += 1
   end
+
   def stop_loop(hpp)
     merge_loop_bound(hpp, @current_loops[hpp])
   end
+
   def to_s
     "FrequencyRecord{ name = #{@name} }"
   end
+
   # add callee as possible target for ContextRef callsite_ref.
   def call(callsite_ref,callee)
     (@calltargets[callsite_ref] ||= Set.new).add(callee) if @current_record && callsite_ref
   end
+
   def stop(cycles)
     die "Recorder: stop without start: #{@name}" unless @current_record
     @cycles = merge_ranges(cycles - @cycles_start, @cycles)
@@ -648,6 +692,7 @@ class FrequencyRecord
     end
     @current_record, @current_loops = nil, nil
   end
+
   def dump(io=$>, header=nil)
     (io.puts "No records";return) unless @blockfreqs
     io.puts "---"
@@ -683,6 +728,7 @@ class ProgressTraceRecorder
     @internal_preds, @pred_list = [], []
     @rg_callstack = []
   end
+
   # set current relation graph
   # if there is no relation graph, skip function
   def function(callee,_callsite,_cycles)
@@ -691,6 +737,7 @@ class ProgressTraceRecorder
     @rg_callstack.push(@node)
     @node = nil
   end
+
   # follow relation graph, emit progress nodes
   def block(bb, _)
     return unless @rg
@@ -723,6 +770,7 @@ class ProgressTraceRecorder
     @node = succ
     # debug(@options,:trace) { "Visiting node: #{@node} (#{bb})" }
   end
+
   # set current relation graph
   def ret(_rsite, csite, _cycles, _stall_cycles)
     return if csite.nil?
@@ -730,7 +778,9 @@ class ProgressTraceRecorder
     @node = @rg_callstack.pop
     debug(@options, :trace) { "Return to rg for #{@rg_level}-#{csite.function}: #{@rg.nodes.first}" } if @rg
   end
+
   def eof ; end
+
   def method_missing(event, *args); end
 end
 

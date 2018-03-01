@@ -111,6 +111,7 @@ class ApxExportTool
     opts.ait_dcache_mode
     opts.ait_sca_type
   end
+
   def ApxExportTool.add_options(opts, mandatory=true)
     opts.analysis_entry
 

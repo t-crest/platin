@@ -33,6 +33,7 @@ class AitTool
       }
     end
   end
+
   def AitTool.add_config_options(opts)
     AisExportTool.add_config_options(opts)
     ApxExportTool.add_config_options(opts)
@@ -336,7 +337,6 @@ class WcetTool
     }
     FlowFact.new(scoperef, TermList.new(terms), 'less-equal', -1, attrs)
   end
-
 
   def report(additional_info = {})
     results = summarize_results(additional_info)

@@ -11,11 +11,13 @@ class AlfTool
   def AlfTool.add_config_options(opts)
     opts.alfllc_command
   end
+
   def AlfTool.add_options(opts)
     AlfTool.add_config_options(opts)
     opts.bitcode_file
     opts.alf_file
   end
+
   # Internal ALF options:
   #  standalone       ... create stubs (returning \TOP) for all undefined objects
   #  ignore_volatiles ... ignore LLVM's volatile qualitifier
@@ -40,6 +42,7 @@ class AlfTool
       die "#{options.alf_llc} failed with exit status #{$?}"
     end
   end
+
   def AlfTool.default_ignored_definitions
     %w{__adddf3 __addsf3 __divdf3 __divsf3 __eqdf2} +
       %w{__eqsf2 __extendsfdf2 __fixdfdi __fixdfsi __fixsfdi} +
@@ -62,6 +65,7 @@ class SweetAnalyzeTool
     opts.alfllc_command
     opts.sweet_command
   end
+
   def SweetAnalyzeTool.add_options(opts)
     SweetAnalyzeTool.add_config_options(opts)
     opts.analysis_entry
@@ -78,6 +82,7 @@ class SweetAnalyzeTool
       end
     }
   end
+
   def SweetAnalyzeTool.run(_pml, options)
     needs_options(options, :sweet, :alf_file, :analysis_entry, :sweet_flowfact_file)
     alfopts = {:standalone => true, :memory_areas => [(0..0xffff)], :ignored_definitions => AlfTool.default_ignored_definitions }

@@ -17,16 +17,20 @@ class ExtractSymbols
     @instructions = {}
 
   end
+
   def add_symbol(label,address)
     @text_symbols[label] = address
     @stats_address_count += 1
   end
+
   def add_instruction_address(label,index,address)
     (@instruction_addresses[label] ||= {})[index] = address
   end
+
   def add_instruction(label,address, data)
     (@instructions[label] ||= {})[address] = data
   end
+
   def analyze
     elf = @options.binary_file
     if ! File.exist?(elf)
@@ -52,6 +56,7 @@ class ExtractSymbols
     statistics("EXTRACT","extracted addresses" => stats_address_count) if @options.stats
     self
   end
+
   def update_pml
     @pml.machine_functions.each do |function|
       addr = @text_symbols[function.label] || @text_symbols[function.blocks.first.label]
@@ -143,9 +148,11 @@ class ExtractSymbolsTool
       options.text_sections = [".text"] unless options.text_sections
     end
   end
+
   def ExtractSymbolsTool.add_options(opts)
     ExtractSymbolsTool.add_config_options(opts)
   end
+
   def ExtractSymbolsTool.run(pml, options)
     needs_options(options, :objdump, :text_sections, :binary_file)
     ExtractSymbols.new(pml,options).analyze.update_pml

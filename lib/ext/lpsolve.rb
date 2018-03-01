@@ -24,6 +24,7 @@ class LpSolveILP < ILP
     super(options)
     @eps = EPS
   end
+
   # run solver to find maximum cost
   def solve_max
     # create LP problem (maximize)
@@ -67,6 +68,7 @@ class LpSolveILP < ILP
   def cleanup_name(name)
     name.gsub(/[@: \/()->]/, "_")
   end
+
   # create an LP with variables
   def create_lp
     lp = LPSolve.new(0, variables.size)
@@ -77,10 +79,12 @@ class LpSolveILP < ILP
     end
     lp
   end
+
   # set LP ovjective
   def set_objective(lp)
     lp.set_obj_fnex(@costs.map { |v,c| [index(v),c] })
   end
+
   # add LP constraints
   def add_linear_constraints(lp)
     @constraints.each do |constr|
@@ -91,6 +95,7 @@ class LpSolveILP < ILP
       end
     end
   end
+
   # extract solution vector
   def extract_frequencies(fs)
     vmap = {}
@@ -99,6 +104,7 @@ class LpSolveILP < ILP
     end
     vmap
   end
+
   # lp-solve comparsion operators
   def lpsolve_op(op)
     case op
@@ -112,6 +118,7 @@ class LpSolveILP < ILP
       internal_error("Unsupported comparison operator #{op}")
     end
   end
+
   def lp_solve_error_msg(r)
       case r
       when LPSolve::NOMEMORY
@@ -126,6 +133,7 @@ class LpSolveILP < ILP
         "ERROR_#{r}"
       end
   end
+
   def lp_solve_error(r)
     return "LPSolver Error: #{lp_solve_error_msg(r)} (E#{r})"
   end

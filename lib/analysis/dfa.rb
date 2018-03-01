@@ -13,16 +13,24 @@ class LiftedType
 end
 class LiftedBOT < LiftedType
   def lub(rhs) ; rhs ; end
+
   def bot? ; true ; end
+
   def top? ; false; end
+
   def to_s ; "BOT"; end
+
   def dup  ; self; end
 end
 class LiftedTOP < LiftedType
   def lub(_rhs) ; self ; end
+
   def bot? ; false; end
+
   def top? ; true ; end
+
   def to_s ; "TOP"; end
+
   def dup  ; self; end
 end
 class LiftedType
@@ -32,15 +40,21 @@ class LiftedType
   def initialize(value, lubop)
     @value, @op = value, lubop
   end
+
   def lub(rhs)
     return self if rhs.bot?
     return rhs  if rhs.top?
     LiftedType.new(@op.call(self.value,rhs.value),@op)
   end
+
   def top? ; false; end
+
   def bot? ; false; end
+
   def to_s ; end
+
   def dup  ; end
+
   def eq?(rhs)
     return false if rhs == TOP or rhs == BOT
     @value == rhs.value
@@ -50,18 +64,23 @@ end
 class DFAOperator
   # Return the initial (bottom) state for all nodes
   def init ; nil ; end
+
   # Return the state for the entry node
   def entry ; nil ; end
+
   # Return the joined state for a list of out states
   def join(_outs) ; nil ; end
+
   # Transfer in state to out state.
   def transfer(_node, ins) ; ins ; end
+
   # Check if state has changed
   def changed?(olds, news) ; olds != news ; end
 end
 
 class LiftedDFAOperator < DFAOperator
   def init ; LiftedType.BOT; end
+
   def join(outs) ; outs.reduce(:lub) ; end
 end
 
@@ -72,15 +91,20 @@ class DFASetOperator < LiftedDFAOperator
     @operator = operator
     @less = less
   end
+
   def init ; Set.new ; end
+
   def entry ; Set.new([@operator.entry]) ; end
+
   def join(outs)
     merge( outs.reduce(Set.new) { |set,out| set.merge(out) } )
   end
+
   def transfer(node, ins)
     outs = ins.map {|i| @operator.transfer(node, i) }.to_set
     merge(outs)
   end
+
   def merge(outs)
     outs.delete_if { |s1| outs.any? { |s2| s1 != s2 && @less.call(s1, s2) } }
   end
@@ -100,12 +124,17 @@ class DataFlowAnalysis
       @successors = []
       @outs = nil
     end
+
     def entry? ; false ; end
+
     def exit?  ; false ; end
+
     def reachable? ; order >= 0; end
+
     def <=>(rhs)
       @order <=> rhs.order
     end
+
     def to_s
       "##{order} #{exit? ? 'T' : ' '}#{@bundle}: #{@outs}"
     end
@@ -123,10 +152,12 @@ class DataFlowAnalysis
       # @worklist = []
       @worklist = SortedSet.new
     end
+
     def push(successors)
       # @worklist.concat(successors)
       @worklist.merge(successors)
     end
+
     def pop
       # Sort nodes in the worklist based on their topological order
       # @worklist.sort!{ |n1,n2| n1.order > n2.order }
@@ -135,8 +166,11 @@ class DataFlowAnalysis
       @worklist.delete(node)
       node
     end
+
     def empty? ; @worklist.empty? ; end
+
     def length ; @worklist.length ; end
+
     def include?(node) ; @worklist.include?(node) ; end
   end
 
@@ -253,6 +287,7 @@ class DataFlowAnalysis
     postorder.reverse_each.with_index { |n,idx| n.order = idx }
     @entry_node.order = 0
   end
+
   def topo_visit(node, postorder)
     # Found a cycle if node.order == -2
     return if node.order < -1

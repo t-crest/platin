@@ -45,14 +45,17 @@ class IndexedConstraint
     assert("unexpected op #{@op}") { %w{equal less-equal}.include? @op }
     normalize!
   end
+
   def tautology?
     normalize! if @tauto.nil?
     @tauto
   end
+
   def inconsistent?
     normalize! if @inconsistent.nil?
     @inconsistent
   end
+
   # Check if this constraint has the form 'x <= c' or 'x >= c'
   def bound?
     normalize! if @inconsistent.nil?
@@ -60,6 +63,7 @@ class IndexedConstraint
     v,c = @lhs.first
     c == -1 || c == 1
   end
+
   # Check if this constraint has the form '-x <= 0'
   def non_negative_bound?
     normalize! if @inconsistent.nil?
@@ -67,24 +71,30 @@ class IndexedConstraint
     v,c = @lhs.first
     c == -1
   end
+
   def get_coeff(v)
     @lhs[v]
   end
+
   def named_lhs
     named_lhs = Hash.new(0)
     @lhs.each { |vi,c| named_lhs[@ilp.var_by_index(vi)] = c }
     named_lhs
   end
+
   def set(v,c)
     @lhs[v] = c
     invalidate!
   end
+
   def add(v,c)
     set(v,c + @lhs[v])
   end
+
   def invalidate!
     @key, @hash, @gcd, @tauto, @inconsistent = nil, nil, nil, nil,nil
   end
+
   def normalize!
     return unless @tauto.nil?
     @lhs.delete_if { |v,c| c == 0 }
@@ -107,25 +117,32 @@ class IndexedConstraint
       @rhs /= @gcd
     end
   end
+
   def hash
     @hash if @hash
     @hash = key.hash
   end
+
   def key
     @key if @key
     normalize!
     @key = [@lhs,@op == 'equal',@rhs]
   end
+
   def ==(other)
     key == other.key
   end
+
   def <=>(other)
     key <=> other.key
   end
+
   def eql?(other); self == other ; end
+
   def inspect
     "Constraint#<#{lhs.inspect},#{@op.inspect},#{rhs.inspect}>"
   end
+
   def to_s(use_indices=false)
     lhs, rhs = Hash.new(0), Hash.new(0)
     (@lhs.to_a + [[0,-@rhs]]).each { |v,c|
@@ -164,14 +181,17 @@ class ILP
     @do_diagnose = ! options.disable_ipet_diagnosis
     reset_cost
   end
+
   # number of non-eliminated variables
   def num_variables
     variables.length - @eliminated.length
   end
+
   # short description
   def to_s
     "#<#{self.class}:#{num_variables} vars, #{constraints.length} cs>"
   end
+
   # print ILP
   def dump(io=$stderr)
     io.puts("max " + costs.map { |v,c| "#{c} #{v}" }.join(" + "))
@@ -183,30 +203,37 @@ class ILP
       io.puts " #{ix}: constraint #{c.name}: #{c}"
     end
   end
+
   # index of a variable
   def index(variable)
     @indexmap[variable] or raise UnknownVariableException.new("unknown variable: #{variable}")
   end
+
   # variable indices
   def variable_indices
     @indexmap.values
   end
+
   # variable by index
   def var_by_index(ix)
     @variables[ix - 1]
   end
+
   # set cost of all variables to 0
   def reset_cost
     @costs = Hash.new(0)
   end
+
   # get cost of variable
   def get_cost(v)
     @costs[v]
   end
+
   # remove all constraints
   def reset_constraints
     @constraints = Set.new
   end
+
   # add cost to the specified variable
   def add_cost(variable, cost)
     @costs[variable] += cost
@@ -232,6 +259,7 @@ class ILP
     add_indexed_constraint({index => -1},"less-equal",0,"non_negative_v_#{index}",Set.new([:positive]))
     index
   end
+
   # add constraint:
   # terms_lhs .. [ [v,c] ]
   # op        .. "equal" or "less-equal"

@@ -63,19 +63,31 @@ class SymbolicExpression
   end
 
   def constant;            nil  ; end
+
   def constant?;           false; end
+
   def chainOfRecurrences?; false; end
 
   def +(o) ;    SEBinary.collect_fold('+',self,o) ; end
+
   def add(*os); SEBinary.collect_fold('+',self,*os) ; end
+
   def -(o) ;    self + (-o) ; end
+
   def *(o) ;    SEBinary.collect_fold('*',self,o) ; end
+
   def -@   ;    SEBinary.create('*',self,SEInt.new(-1)) ; end
+
   def smax(o);  SEBinary.create('smax',self,o) ; end
+
   def umax(o);  SEBinary.create('umax',self,o) ; end
+
   def smin(o);  SEBinary.create('smin',self,o) ; end
+
   def umin(o);  SEBinary.create('umin',self,o) ; end
+
   def sdiv(o);  SEBinary.create('/s',self,o) ; end
+
   def ==(other)
     return false if other.nil?
     unless other.kind_of?(SymbolicExpression)
@@ -83,6 +95,7 @@ class SymbolicExpression
     end
     return super(other)
   end
+
   def eql?(other); self == other ; end
 end
 
@@ -91,14 +104,23 @@ class SEInt < SymbolicExpression
     raise Exception.new("Bad integer: #{int}/#{int.class}") unless int.kind_of?(Integer)
     @num = int
   end
+
   def constant; to_i;  end
+
   def constant?; true; end
+
   def to_i; @num     ; end
+
   def to_s; @num.to_s; end
+
   def eval(_,_lenv=nil);     @num ; end
+
   def resolve_loops(_lenv) ; self ; end
+
   def referenced_loops ; Set.new; end
+
   def referenced_vars  ; Set.new; end
+
   def map_names() ; self ; end
 end
 
@@ -401,7 +423,9 @@ class SEUnknown < SymbolicExpression
   def initialize(str)
     @str = str
   end
+
   def to_s; "#{@str}"; end
+
   def map_names(); self; end
 end
 
@@ -411,6 +435,7 @@ class SymbolicExpressionParser
   def initialize
     @parser = get_parser
   end
+
   def SymbolicExpressionParser.parse(expr_spec)
     return SEInt.new(expr_spec) if(expr_spec.kind_of?(Integer))
     p = SymbolicExpressionParser.new.parser
@@ -426,9 +451,11 @@ private
   def get_parser
     expr
   end
+
   def expr
     (rchain | composite_expr | variable | int)
   end
+
   def rchain
     spec = paren(seq(lazy{expr},sym(','),sym('+'),sym(','),lazy{expr}),'{','}').map { |a,_,_,_,b|
       [a,b]
@@ -440,6 +467,7 @@ private
       SEAffineRec.new(a,b,l,f)
     }
   end
+
   def composite_expr
     arithop = one_of_("+*") | sym('umax') | sym('smax') | sym('/u') | sym('/s')
     paren(lazy {expr}.join(arithop)).map { |ps|
@@ -460,21 +488,27 @@ private
       expr
     }
   end
+
   def paren(p,left='(',right=')')
     left.r >> p << right.r
   end
+
   def flag
     /n[us]?w/.r
   end
+
   def sym(c)
     symbol(c.r)
   end
+
   def int
     /-?\d+/.r.map { |v| SEInt.new(v.to_i) }
   end
+
   def loopname
     /[%@A-Za-z_][A-Za-z\.0-9_]*/.r
   end
+
   def variable
     loopname.map { |v| SEVar.new(v) }
   end

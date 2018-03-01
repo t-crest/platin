@@ -17,6 +17,7 @@ class FlowInformation
   def is_infeasible(_block, _context = nil)
     false
   end
+
   def get_calltargets(callsite, _context = nil)
     if callsite.unresolved_call?
       raise Exception.new("Unresolved call")
@@ -48,6 +49,7 @@ class ControlFlowModel
       # node.context_tree.dump($stdout,1)
     end
   end
+
   #
   # get or create the VCFG for the given function
   #
@@ -66,14 +68,12 @@ class ControlFlowModel
     get_vcfg(@function_list.by_label(label))
   end
 
-
   #
   # get location object (unique)
   #
   def location(node, ctx)
     (@locations[node] ||= {})[ctx] ||= Location.new(self, node,ctx)
   end
-
 
   #
   # record scope entry (lazy scope-graph construction)
@@ -160,9 +160,11 @@ private
       end
     end
   end
+
   def get_callnode(cs)
     get_vcfg(cs.function).get_callnode(cs)
   end
+
   def to_bounded_stack(callstring)
     BoundedStack.create(callstring.callsites.map { |csref| get_callnode(csref.instruction) })
   end
@@ -213,10 +215,12 @@ class VCFG
       end
     end
   end
+
   def get_callnode(callsite)
     assert("expecting instruction, not #{callsite.class}") { callsite.kind_of?(Instruction) }
     @callnodes[callsite]
   end
+
   def get_blockstart(block)
     assert("expecting block, not #{block.class}") { block.kind_of?(Block) }
     @blockstart[block]
@@ -348,20 +352,29 @@ class CfgNode
 
   # if this is a scope entry (call, loop-enter), matching scope exits in the given context
   def matching_scope_exits(_cfmodel, _location); [] ; end
+
   def callnode? ; false ; end
+
   def instructions ; [] ; end
+
   def entry? ; false ; end
+
   def exit? ; false ; end
+
   def block ; nil ; end
+
   def block_start? ; false ; end
 end
 
 class EntryNode < CfgNode
   def initialize(vcfg) ; super(vcfg); end
+
   def entry? ; true ; end
+
   def to_s
     "#<EntryNode #{vcfg.function}>"
   end
+
   def successors_with_context(cfmodel, location)
     Enumerator.new do |ss|
       @successors.each { |s| ss << cfmodel.location(s, location.context) }
@@ -377,9 +390,11 @@ class BlockSliceNode < CfgNode
     @block, @first_index, @last_index = block, first_ins, last_ins
     @infeasible = ContextTree.new
   end
+
   def set_infeasible(callstring)
     @infeasible.set(callstring.to_a, true)
   end
+
   def successors_with_context(cfmodel, location)
     # check infeasibility
     return [] if @infeasible.path_find_first(location.context.callstring.to_a)
@@ -387,12 +402,15 @@ class BlockSliceNode < CfgNode
       @successors.each { |s| ss << cfmodel.location(s, cfmodel.ctx_manager.blockslice(location.context, self)) }
     end
   end
+
   def instructions
     @block.instructions[@first_index..@last_index]
   end
+
   def block_start?
     @first_index == 0
   end
+
   def to_s
     "#<BlockSliceNode #{block} #{first_index} #{last_index}>"
   end
@@ -409,6 +427,7 @@ class CallNode < CfgNode
   def block
     @callsite.block
   end
+
   def block_start?
     # SH: Call nodes are always preceded by a BlockSliceNode.. (I think)
     false
@@ -467,6 +486,7 @@ class CallNode < CfgNode
   end
 
   def callnode? ; true; end
+
   def to_s
     "#<CallNode #{callsite}>"
   end
@@ -474,7 +494,9 @@ end
 
 class ExitNode < CfgNode
   def initialize(vcfg) ; super(vcfg) ; end
+
   def exit? ; true ; end
+
   def successors_with_context(cfmodel, location)
     Enumerator.new do |ss|
 
@@ -495,6 +517,7 @@ class ExitNode < CfgNode
       }
     end
   end
+
   def to_s
     "#<ExitNode #{vcfg.function}>"
   end
@@ -535,6 +558,7 @@ class LoopStateNode < CfgNode
       end
     end
   end
+
   def matching_scope_exits(cfmodel, location)
     return [] unless @action == :enter
     Enumerator.new do |ss|
@@ -543,6 +567,7 @@ class LoopStateNode < CfgNode
       cfmodel.matching_scope_exits(self, scope_entry_context).each { |location| ss << location }
     end
   end
+
   def to_s
     "#<LoopStateNode #{loop} #{action}>"
   end
@@ -555,25 +580,32 @@ class Location
   def initialize(cfmodel, node, context)
     @cfmodel, @node, @context = cfmodel, node, context
   end
+
   def successors
     @node.successors_with_context(@cfmodel, self)
   end
+
   def matching_scope_exits
     @node.matching_scope_exits(@cfmodel, self)
   end
+
   def to_s
     "#<Location #{@node} #{@context}>"
   end
+
   def ==(other)
     return false if other.nil?
     return false unless other.kind_of?(Location)
     @node == other.node && @context == other.context
   end
+
   def eql?(other); self == other ; end
+
   def hash
     return @hash if @hash
     @hash = @node.hash ^ @context.hash
   end
+
   def <=>(other)
     hash <=> other.hash
   end
@@ -591,6 +623,7 @@ class Interpreter
     @semantics, @cfmodel, @ctx_manager = semantics, cfmodel, cfmodel.ctx_manager
     @steps = 0
   end
+
   def interpret(initial_node, start_value)
     @in = {}
     @callcontexts, @returncontexts, @loopcontexts = {}, {}, {}
@@ -644,6 +677,7 @@ BOTTOM = :bottom
 # reachability semantics (trivial)
 class ReachabilitySemantics
   def transfer_value(_node, inval) ; inval ; end
+
   def merge(oldval, newval)
     if oldval
       false # no change

@@ -182,9 +182,11 @@ module PML
       @ppref, @factor = pp,factor
       set_yaml_repr(data)
     end
+
     def context
       @ppref.context
     end
+
     def programpoint
       @ppref.programpoint
     end
@@ -197,9 +199,11 @@ module PML
     def to_s
       "#{@factor} #{ppref}"
     end
+
     def to_pml
       { 'factor' => @factor, 'program-point' => @ppref.data }
     end
+
     def Term.from_pml(mod,data)
       Term.new(ContextRef.from_pml(mod,data['program-point']), data['factor'])
     end
@@ -267,9 +271,11 @@ module PML
       @mode = mode
       set_yaml_repr(data)
     end
+
     def programpoint
       @ppref.programpoint
     end
+
     def ModelFact.from_pml(pml, data, mode = 'platin')
       fs = pml.functions_for_level(data['level'])
       ModelFact.new(ContextRef.from_pml(fs,data['program-point']),
@@ -278,6 +284,7 @@ module PML
                     mode,
                     data)
     end
+
     def to_pml
       { 'program-point' => @ppref.data,
         'type' => @type,
@@ -307,11 +314,14 @@ module PML
       return false unless other.kind_of?(ModelFact)
       @ppref == other.ppref && @type == other.type && @expr == other.expr
     end
+
     def eql?(other); self == other ; end
+
     def hash
       return @hash if @hash
       @hash = @ppref.hash ^ @expr.hash ^ @type.hash
     end
+
     def <=>(other)
       hash <=> other.hash
     end
@@ -670,19 +680,24 @@ module PML
       set_yaml_repr(data)
       raise Exception.new("Bad ValueRange: #{self}") unless @min <= @max if @min
     end
+
     def inspect
       "ValueRange<min=#{min.inspect},max=#{max.inspect},symbol=#{symbol}>"
     end
+
     def to_s
       symbol.to_s + (range ? range.to_s : '')
     end
+
     def range
       return nil unless max
       Range.new(min,max)
     end
+
     def ValueRange.from_pml(_,data)
       ValueRange.new(data['min'],data['max'],data['symbol'],data)
     end
+
     def to_pml
       { 'min' => @min, 'max' => @max, 'symbol' => @symbol }.delete_if { |_,v| v.nil? }
     end
@@ -703,9 +718,11 @@ module PML
       @attributes = attrs
       set_yaml_repr(data)
     end
+
     def programpoint
       @ppref.programpoint
     end
+
     def ValueFact.from_pml(pml, data)
       fs = pml.functions_for_level(data['level'])
       ValueFact.new(ContextRef.from_pml(fs,data['program-point']),
@@ -714,6 +731,7 @@ module PML
                     ProgramInfoObject.attributes_from_pml(pml, data),
                     data)
     end
+
     def to_pml
       { 'program-point' => @ppref.data,
         'variable' => @variable,
@@ -745,18 +763,22 @@ module PML
        reference,  cycles,  wcetfreq,  wcet_contribution,  criticality
       set_yaml_repr(data)
     end
+
     def ProfileEntry.from_pml(fs, data)
       ProfileEntry.new(ContextRef.from_pml(fs,data['reference']), data['cycles'],
                        data['wcet-frequency'], data['wcet-contribution'], data['criticality'], data)
     end
+
     def criticality=(c)
       @criticality = c
       @data['criticality'] = c if @data
     end
+
     def to_pml
       { 'reference' => reference.data, 'cycles' => cycles, 'wcet-frequency' => wcetfreq,
         'criticality' => criticality, 'wcet-contribution' => wcet_contribution }.delete_if {|k,v| v.nil? }
     end
+
     def to_s
       data
     end
@@ -777,10 +799,12 @@ module PML
       @attributes = attrs
       set_yaml_repr(data)
     end
+
     def profile=(p)
       @profile = p
       @data['profile'] = @profile.data if @data
     end
+
     def TimingEntry.from_pml(pml, data)
       fs = pml.functions_for_level(data['level'])
       profile = data['profile'] ? Profile.from_pml(fs, data['profile']) : nil
@@ -788,6 +812,7 @@ module PML
                       profile,
                       ProgramInfoObject.attributes_from_pml(pml,data), data)
     end
+
     def to_pml
       pml = { 'scope' => @scope.data, 'cycles' => @cycles }.merge(attributes)
       pml['profile'] = @profile.data if @profile
@@ -839,9 +864,11 @@ module PML
       @function = pml.machine_functions.by_label(data['function'])
       @size = data['spillsize']
     end
+
     def to_s
       "#{id}:#{function}:#{size}"
     end
+
     def qname
       return @id
     end
@@ -857,6 +884,7 @@ module PML
       @block = data['callblock']
       @inst = data['callindex']
     end
+
     def to_s
       "#{src}:#{block}:#{inst}->#{dst}"
     end

@@ -22,6 +22,7 @@ class SimulatorTrace
     @elf, @arch, @options, @watchpoints = elf, arch, options, watchpoints
     @stats_num_items = 0
   end
+
   def each
     die("File '#{@elf}' (ELF) not found") unless File.exist?("#{@elf}")
     if @options.trace_file
@@ -76,6 +77,7 @@ class SimulatorTrace
     file.close
     file
   end
+
   def parse(line)
     return nil unless line and not line.chomp.empty?
     pc, cyc, instr = line.split(' ',3)
@@ -190,12 +192,14 @@ class Architecture < PML::Architecture
     @triple, @config = triple, config
     @config = self.class.default_config unless @config
   end
+
   def Architecture.simulator_options(opts)
     opts.on("--pasim-command FILE", "path to pasim (=pasim)") { |f| opts.options.pasim = f }
     opts.add_check do |options|
       options.pasim = "pasim" unless options.pasim || options.trace_file
     end
   end
+
   def Architecture.default_instr_cache(type)
     if type == 'method-cache'
       PML::CacheConfig.new('method-cache','method-cache','fifo',16,8,4096)
@@ -203,6 +207,7 @@ class Architecture < PML::Architecture
       PML::CacheConfig.new('instruction-cache','instruction-cache','dm',1,16,4096)
     end
   end
+
   def Architecture.default_config
     memories = PML::MemoryConfigList.new([PML::MemoryConfig.new('main',2 * 1024 * 1024,16,0,21,0,21)])
     caches = PML::CacheConfigList.new([Architecture.default_instr_cache('method-cache'),

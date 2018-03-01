@@ -17,6 +17,7 @@ class AitImportTool
     }
     opts.add_check { |options| options.ait_import_addresses = true if options.ait_import_addresses.nil? }
   end
+
   def AitImportTool.add_options(opts)
     ExtractSymbolsTool.add_config_options(opts)
     AitImportTool.add_config_options(opts)
@@ -26,6 +27,7 @@ class AitImportTool
     opts.timing_output("aiT")
     opts.import_block_timing
   end
+
   def AitImportTool.run(pml,options)
     needs_options(options, :analysis_entry, :ait_report_prefix)
     entry = pml.machine_functions.by_label(options.analysis_entry, true)
@@ -55,10 +57,12 @@ class AitAnalyzeTool
       options.ait_persistence_analysis = true if options.ait_persistence_analysis.nil?
     }
   end
+
   def AitAnalyzeTool.add_options(opts, mandatory = true)
     AitAnalyzeTool.add_config_options(opts)
     opts.apx_file(mandatory)
   end
+
   def AitAnalyzeTool.run(_pml, options)
     needs_options(options, :a3, :apx_file)
 

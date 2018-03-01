@@ -19,16 +19,20 @@ module PML
       assert("QNameObject: @qname not set (fatal)") { @qname }
       @qname
     end
+
     def ==(other)
       return false if other.nil?
       return false unless other.respond_to?(:qname)
       qname == other.qname
     end
+
     def eql?(other); self == other ; end
+
     def hash
       return @hash if @hash
       @hash = qname.hash
     end
+
     def <=>(other)
       qname <=> other.qname
     end
@@ -42,6 +46,7 @@ module PML
     def ProgramInfoObject.attribute_list
       %w{origin level}
     end
+
     def ProgramInfoObject.attributes_from_pml(_,data)
       if data.nil?
         {}
@@ -51,22 +56,28 @@ module PML
         attrs
       end
     end
+
     def attributes_to_pml(data)
       attributes.each { |k| data[k] = attributes[k] if attributes[k] }
     end
+
     def add_attribute(k,v)
       attributes[k] = v
       data[k] = v if data
     end
+
     def origin
       attributes['origin']
     end
+
     def origin=(origin)
       add_attribute('origin', origin)
     end
+
     def level
       attributes['level']
     end
+
     def level=(level)
       add_attribute('level', level)
     end
@@ -94,6 +105,7 @@ module PML
       super(new_obj)
       new_obj.reset_yaml_repr
     end
+
     def initialize_clone(new_obj)
       super(new_obj)
       new_obj.reset_yaml_repr
@@ -102,6 +114,7 @@ module PML
     # avoid recursive calls when printing an object
     # subclasses should override to_s/inspect if needed
     def to_s ; @qname || "#<#{self.class}:#{self.object_id}>" ; end
+
     def inspect ; to_s ; end
 
     private
@@ -126,36 +139,51 @@ module PML
     def to_s
       list.to_s
     end
+
     def to_pml
       list.map { |t| t.data }
     end
+
     def add(item)
       list.push(item)
       if @data ; data.push(item.data) ; end
       add_index(item)
     end
+
     def clear!
       @list = []
       @data = [] if @data
     end
+
     # basic list operations (delegators)
     def first ; list.first ; end
+
     def last ; list.last ; end
+
     def length ; list.length ; end
+
     def size ; length ; end
+
     def empty? ; list.empty? ; end
+
     def [](index) ; list[index]; end
+
     def each(&block) ; list.each(&block) ; end
+
     def delete_if(&block) ; list.delete_if(&block) ; end
+
     def each_with_index(&block) ; list.each_with_index(&block) ; end
 
     def push(item); add(item); end
+
     def dup
       self.class.new(@list.dup, data.dup)
     end
+
     def deep_clone
       self.class.new(@list.map { |item| item.deep_clone }, nil)
     end
+
     def lookup(dict,key,name,error_if_missing=true)
       v = dict[key]
       if ! v && error_if_missing
@@ -227,6 +255,7 @@ module PML
          _end_eval
       }
     end
+
     def pml_name_index_list(element_type, unique_indices = [], indices = [])
       pml_list(element_type, [:name,:qname] + unique_indices, indices)
       module_eval <<-"_end_eval", __FILE__, __LINE__

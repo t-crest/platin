@@ -21,6 +21,7 @@ class ToolConfigTool
       die("Option --tool is mandatory") unless options.tool
     end
   end
+
   def ToolConfigTool.run(pml, options)
     needs_options(options, :tool)
 
