@@ -203,7 +203,7 @@ class PMLTool
   end
 end
 
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
   synopsis = "Validate, inspect and/or merge PML documents"
   options, args = PML::optparse([], "", synopsis) do |opts|
     opts.needs_pml

@@ -158,7 +158,7 @@ class GurobiILP < ILP
     out = IO.popen("gurobi_cl ResultFile=#{sol} ResultFile=#{ilp} #{lp}")
     lines = out.readlines
     # Detect error messages
-    return "Gurobi terminated unexpectedly (#{$?.exitstatus})" if $?.exitstatus > 0
+    return "Gurobi terminated unexpectedly (#{$CHILD_STATUS.exitstatus})" if $CHILD_STATUS.exitstatus > 0
     lines.each do |line|
       return [INFEASIBLE, line] if line =~ /Model is infeasible/
       return [UNBOUNDED, line] if line =~ /Model is unbounded/

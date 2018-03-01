@@ -81,7 +81,7 @@ class InspectTool
   end
 end
 
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
   synopsis = "Inspect the program structure and flow/value facts"
   options, args = PML::optparse([], "", synopsis) do |opts|
     opts.needs_pml

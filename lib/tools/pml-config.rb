@@ -209,7 +209,7 @@ class PMLConfigTool
   end
 end
 
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
   synopsis = <<-EOF
     Create or modify a PML machine configuration. If no input configuration is given, a
     default configuation is generated.

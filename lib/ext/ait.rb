@@ -533,7 +533,7 @@ class AISExporter
       begin
         export_loopbounds(pml, scope, bounds_and_ffs)
       rescue Exception
-        warn("Not exporting loopsbounds for " + scope.to_s + ": " + $!.message)
+        warn("Not exporting loopsbounds for " + scope.to_s + ": " + $ERROR_INFO.message)
       end
     }
   end

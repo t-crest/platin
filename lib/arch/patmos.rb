@@ -56,7 +56,7 @@ class SimulatorTrace
           end
         end
       ensure
-        status = $?.exitstatus
+        status = $CHILD_STATUS.exitstatus
 	wpfile.unlink unless @options.outdir
         if status == 127
           die("Running the simulator '#{@options.pasim}' failed: Program not found (exit status 127)")
@@ -126,7 +126,7 @@ class ExtractSymbols
         end
       end
     end
-    die "The objdump command '#{options.objdump}' exited with status #{$?.exitstatus}" unless $?.success?
+    die "The objdump command '#{options.objdump}' exited with status #{$CHILD_STATUS.exitstatus}" unless $CHILD_STATUS.success?
   end
   private
   def ExtractSymbols.build_instruction(addr, _cond, size, instr, args)

@@ -185,8 +185,8 @@ class GCFGTool
   end
 end
 
-if __FILE__ == $0
-  SYNOPSIS = <<EOF if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
+  SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
 Transform Program according to the global control flow graph
 EOF
   options, args = PML::optparse([],"", SYNOPSIS) do |opts|

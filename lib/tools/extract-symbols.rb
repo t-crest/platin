@@ -47,7 +47,7 @@ class ExtractSymbols
         end
       end
     end
-    die "The objdump command '#{@options.objdump}' exited with status #{$?.exitstatus}" unless $?.success?
+    die "The objdump command '#{@options.objdump}' exited with status #{$CHILD_STATUS.exitstatus}" unless $CHILD_STATUS.success?
 
     # Run platform-specific extractor, if available
     # Computes instruction_addresses
@@ -159,7 +159,7 @@ class ExtractSymbolsTool
   end
 end
 
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
   SYNOPSIS = <<EOF
 Extract Symbol Addresses from ELF file. It is possible to specify the same file
 for input and output; as long as the ELF file does not change, this is an

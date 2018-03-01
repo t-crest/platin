@@ -313,7 +313,7 @@ end
 
 # Recorder which just dumps event to the given stream
 class VerboseRecorder
-  def initialize(out=$>)
+  def initialize(out=$DEFAULT_OUTPUT)
     @out = out
   end
 
@@ -693,7 +693,7 @@ class FrequencyRecord
     @current_record, @current_loops = nil, nil
   end
 
-  def dump(io=$>, header=nil)
+  def dump(io=$DEFAULT_OUTPUT, header=nil)
     (io.puts "No records";return) unless @blockfreqs
     io.puts "---"
     io.puts header if header

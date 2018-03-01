@@ -196,7 +196,7 @@ module PML
   def optparse(arg_range, arg_descr, synopsis)
     options = OpenStruct.new
     parser = PML::OptionParser.new(options) do |opts|
-      opts.banner = "Usage: platin #{File.basename($0,'.rb')} OPTIONS #{arg_descr}\n\n#{synopsis}\n"
+      opts.banner = "Usage: platin #{File.basename($PROGRAM_NAME,'.rb')} OPTIONS #{arg_descr}\n\n#{synopsis}\n"
       opts.separator("Options:")
       yield opts if block_given?
       opts.separator("")

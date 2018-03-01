@@ -416,7 +416,7 @@ class PMLDoc
 
   def dump_to_file(filename, write_config=false)
     if filename.nil? || filename == '-'
-      dump($>, write_config)
+      dump($DEFAULT_OUTPUT, write_config)
     else
       File.open(filename, "w") do |fh|
         dump(fh, write_config)

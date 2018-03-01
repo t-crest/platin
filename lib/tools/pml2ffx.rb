@@ -135,8 +135,8 @@ class OSXExportTool
   end
 end
 
-if __FILE__ == $0
-SYNOPSIS = <<EOF if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
+SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
 Export flow information from PML as OTAWA F4/FFX file and generate OTAWA OSX platform config files.
 EOF
   options, args = PML::optparse([:input], "file.pml", SYNOPSIS) do |opts|

@@ -170,7 +170,7 @@ SYNOPSIS = <<EOF
 Programmatically modify PML documents.
 EOF
 
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
   options, args = PML::optparse([], "", SYNOPSIS) do |opts|
     opts.needs_pml
     PMLModTool.add_options(opts)

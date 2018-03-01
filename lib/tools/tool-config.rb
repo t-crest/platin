@@ -67,7 +67,7 @@ class ToolConfigTool
   end
 end
 
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
   synopsis = <<-EOF
     Configure external tools to use the correct hardware (timing) model.
     Similar to pkg-config, this tool writes the arguments to be passed to $stdout. It uses

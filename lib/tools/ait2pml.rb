@@ -67,13 +67,13 @@ class AitAnalyzeTool
     needs_options(options, :a3, :apx_file)
 
     unless safe_system("#{options.a3} -b #{options.apx_file}")
-      die "aiT (command: '#{options.a3}') failed batch processing #{options.apx_file} (exit status #{$?})"
+      die "aiT (command: '#{options.a3}') failed batch processing #{options.apx_file} (exit status #{$CHILD_STATUS})"
     end
   end
 end
 
-if __FILE__ == $0
-SYNOPSIS = <<EOF if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
+SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
 Add aiT analysis results to the PML database.
 EOF
   options, args = PML::optparse([], "", SYNOPSIS) do |opts|

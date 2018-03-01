@@ -190,7 +190,7 @@ class AnalyzeTraceTool
 
 end
 
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
 SYNOPSIS = <<EOF
 Run simulator (patmos: pasim --debug-fmt trace), record execution frequencies
 of instructions and generate flow facts. Also records indirect call targets.

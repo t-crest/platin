@@ -1111,7 +1111,7 @@ class StackCacheAnalysis
         ipet_builder.mc_model.add_instruction(instruction)
         ipet_builder.ilp.add_cost(instruction, delay)
       rescue PML::UnknownVariableException
-        warn("cannot annotate inst #{instruction}: #{$!}")
+        warn("cannot annotate inst #{instruction}: #{$ERROR_INFO}")
       end
     }
   end
@@ -1125,7 +1125,7 @@ class StackCacheAnalysis
         ipet_builder.mc_model.add_instruction(instruction)
         ipet_builder.ilp.add_cost(instruction, delay)
       rescue PML::UnknownVariableException
-        warn("cannot annotate inst #{instruction}: #{$!}")
+        warn("cannot annotate inst #{instruction}: #{$ERROR_INFO}")
       end
     }
   end

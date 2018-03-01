@@ -200,13 +200,13 @@ module PML
     end
     Process.wait(pids.first)
     trap(0, "DEFAULT")
-    $? == 0
+    $CHILD_STATUS == 0
   end
 
   def assert(msg)
     unless yield
       pnt = Thread.current.backtrace[1]
-      $stderr.puts ("#{$0}: Assertion failed in #{pnt}: #{msg}")
+      $stderr.puts ("#{$PROGRAM_NAME}: Assertion failed in #{pnt}: #{msg}")
       puts "    " + Thread.current.backtrace[1..-1].join("\n    ")
 	  raise Exception, "Assertion Error"
     end
@@ -316,7 +316,7 @@ end
 
 # Development helpers
 class Hash
-  def dump(_io=$>)
+  def dump(_io=$DEFAULT_OUTPUT)
     self.each do |k,v|
       puts "#{k.to_s.ljust(24)} #{v}"
     end

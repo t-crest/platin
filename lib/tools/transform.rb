@@ -174,7 +174,7 @@ class TransformTool
 
 end
 
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
 SYNOPSIS = <<EOF
 Transforms flow facts from IR level to machine code level or simplify set of flow facts
 EOF

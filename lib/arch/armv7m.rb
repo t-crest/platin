@@ -48,7 +48,7 @@ class ExtractSymbols
         end
       end
     end
-    die "The objdump command '#{cmd}' exited with status #{$?.exitstatus}" unless $?.success?
+    die "The objdump command '#{cmd}' exited with status #{$CHILD_STATUS.exitstatus}" unless $CHILD_STATUS.success?
   end
   RE_HEX = /[0-9A-Fa-f]/
   RE_FUNCTION_LABEL = %r{ ^

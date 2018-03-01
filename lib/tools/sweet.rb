@@ -39,7 +39,7 @@ class AlfTool
     cmd.push(options.bitcode_file)
     $stderr.puts("Executing #{cmd.join(" ")}") if options.verbose
     unless safe_system(*cmd)
-      die "#{options.alf_llc} failed with exit status #{$?}"
+      die "#{options.alf_llc} failed with exit status #{$CHILD_STATUS}"
     end
   end
 
@@ -121,15 +121,15 @@ class SweetAnalyzeTool
         end
       end
     }
-    unless $? == 0
-      die "#{options.sweet} failed with exit status #{$?}"
+    unless $CHILD_STATUS == 0
+      die "#{options.sweet} failed with exit status #{$CHILD_STATUS}"
     end
     info("Successfully ran SWEET version #{version}") if options.verbose
   end
 end
 
-if __FILE__ == $0
-SYNOPSIS = <<EOF if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
+SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
 Run the Swedish Execution Time Analysis tool (SWEET)
 EOF
   options, args = PML::optparse([], "", SYNOPSIS) do |opts|

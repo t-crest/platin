@@ -141,8 +141,8 @@ class OneOneCheck
   end
 end
 
-if __FILE__ == $0
-SYNOPSIS = <<EOF if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
+SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
 Check if the control-flow relation graph is a 1:1 mapping between bc and mc
 EOF
   options, args = PML::optparse([],"", SYNOPSIS) do |opts|
