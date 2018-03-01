@@ -113,7 +113,7 @@ class FlowGraphVisualizer < Visualizer
 
   def extract_timing(function, timing)
     Hash[
-      timing.select{ |t| t.profile }.map do |t|
+      timing.select { |t| t.profile }.map do |t|
         profile = {}
         t.profile.select do |e|
           e.reference.function == function
@@ -126,7 +126,7 @@ class FlowGraphVisualizer < Visualizer
           profile[edge.source].push(e)
         end
         [t.origin, profile]
-      end.select{ |k,v| not v.empty? }
+      end.select { |k,v| not v.empty? }
     ]
   end
 
@@ -150,11 +150,11 @@ class FlowGraphVisualizer < Visualizer
     if (start == targets) && (not [*succ].any? { |s| s.kind_of?(CfgNode) && s.block_start? })
       [*node].map { |n| find_vnode_timing(profile, n) }.flatten
     elsif succ.kind_of?(ExitNode)
-      start.map{ |b| profile[b] || [] }.flatten.select do |t|
+      start.map { |b| profile[b] || [] }.flatten.select do |t|
         t.reference.programpoint.exitedge?
       end
     else
-      start.map{ |b| profile[b] || [] }.flatten.select do |t|
+      start.map { |b| profile[b] || [] }.flatten.select do |t|
         targets.include?(t.reference.programpoint.target)
       end
     end
@@ -204,7 +204,7 @@ class FlowGraphVisualizer < Visualizer
       elsif (not node.block) || node.kind_of?(CallNode)
         options["style"] = "rounded"
       end
-      if block_timing.any?{ |o,profile| find_vnode_timing(profile, node).any? { |e| e.wcetfreq > 0 } }
+      if block_timing.any? { |o,profile| find_vnode_timing(profile, node).any? { |e| e.wcetfreq > 0 } }
         # TODO: visualize criticality < 1
         options["color"] = "#ff0000"
         options["penwidth"] = 2
@@ -222,8 +222,8 @@ class FlowGraphVisualizer < Visualizer
         #      one of those edges here, it should be edge with the longest path through
         #      the block at least.
         t = block_timing.map do |origin,profile|
-          [origin, find_vedge_timing(profile, node, s).select{ |e| e.wcetfreq > 0 }]
-        end.select{ |o,p| not p.empty? }
+          [origin, find_vedge_timing(profile, node, s).select { |e| e.wcetfreq > 0 }]
+        end.select { |o,p| not p.empty? }
         unless t.empty?
           # TODO: visualize criticality < 1
           options["color"] = "#ff0000"
@@ -469,7 +469,7 @@ class ILPVisualisation < Visualizer
     node = @mapping[key]
     return node if node
 
-    assert("Not an IPETEdge"){ edge.is_a?(IPETEdge) }
+    assert("Not an IPETEdge") { edge.is_a?(IPETEdge) }
 
     src = add_node(edge.source)
     dst = add_node(edge.target)

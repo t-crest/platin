@@ -198,7 +198,7 @@ class DataFlowAnalysis
     while not worklist.empty?
       node = worklist.pop
 
-      ins  = operator.join(node.predecessors.map{ |p|p.outs })
+      ins  = operator.join(node.predecessors.map { |p|p.outs })
       outs = operator.transfer(node, ins)
       changed = operator.changed?(node.outs, outs)
 

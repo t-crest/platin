@@ -133,11 +133,11 @@ end
 
 class ProgramPointToken < ListToken
   def qnameblocks(pmllist)
-    pmllist.map { |f| f.blocks.list }.compact.flatten.map{ |b| b.qname }.flatten
+    pmllist.map { |f| f.blocks.list }.compact.flatten.map { |b| b.qname }.flatten
   end
 
   def qnameinstructions(pmllist)
-    pmllist.map { |f| f.blocks.list }.compact.flatten.map{ |b| b.instructions.list }.compact.flatten.map{ |i| i.qname }
+    pmllist.map { |f| f.blocks.list }.compact.flatten.map { |b| b.instructions.list }.compact.flatten.map { |i| i.qname }
   end
 
   def get_list

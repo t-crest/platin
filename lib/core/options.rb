@@ -203,7 +203,7 @@ module PML
       opts.on("--stats", "print statistics") { options.stats = true }
       opts.on("--verbose", "verbose output") { options.verbose = true }
       opts.on("--debug [TYPE]", Array, "debug output (trace,ilp,ipet,costs,wca,ait,sweet,visualize,=all)") do |d|
-        options.debug_type = d ? d.map{ |s| s.to_sym } : [:all]
+        options.debug_type = d ? d.map { |s| s.to_sym } : [:all]
       end
       opts.on_tail("-h", "--help [TOPIC]", "Show help / help on topic (#{opts.help_topics.join(", ")})") do |topic|
         if topic.nil?

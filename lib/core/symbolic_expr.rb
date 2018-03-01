@@ -451,7 +451,7 @@ private
   end
 
   def rchain
-    spec = paren(seq(lazy{ expr },sym(','),sym('+'),sym(','),lazy{ expr }),'{','}').map do |a,_,_,_,b|
+    spec = paren(seq(lazy { expr },sym(','),sym('+'),sym(','),lazy { expr }),'{','}').map do |a,_,_,_,b|
       [a,b]
     end
     flags = paren(flag,'<','>')

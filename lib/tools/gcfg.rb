@@ -126,7 +126,7 @@ class GCFGTool
         # Copy and rename subfunction to machien_code function
         data = subfunction.data.dup
         data['name'] = name_mapper.(data['name'])
-        data['blocks'] = data['blocks'].map{ |x| name_mapper.(x) }
+        data['blocks'] = data['blocks'].map { |x| name_mapper.(x) }
         machine_function.add_subfunction(data)
       end
     })

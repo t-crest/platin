@@ -430,7 +430,7 @@ module PML
         assert("Not a list: #{expr}") { listfields != nil }
         entries = listfields[1].split(",")
         # Remove whitespace
-        entries.map!{ |entry| entry.strip }
+        entries.map! { |entry| entry.strip }
 
         # If we have a qualified identifier, perform patmos-clang-style
         # namemangling (only for static identifiers)

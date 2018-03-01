@@ -488,7 +488,7 @@ module PML
         idx = bundle
         bundle += 1 unless i.bundled?
         idx
-      end.map{ |b| b[1] }
+      end.map { |b| b[1] }
     end
 
     # loops (not ready at initialization time)
@@ -1122,8 +1122,8 @@ private
       end
 
       assert("ABB is not well formed; No Single-Entry/Single-Exit region all levels") do
-        rg_nodes_lhs = Set.new rg_region.nodes.map{ |n| n.get_block(:src) }
-        rg_nodes_rhs = Set.new rg_region.nodes.map{ |n| n.get_block(:dst) }
+        rg_nodes_lhs = Set.new rg_region.nodes.map { |n| n.get_block(:src) }
+        rg_nodes_rhs = Set.new rg_region.nodes.map { |n| n.get_block(:dst) }
 
         (rg_nodes_lhs == Set.new(bitcode_region.nodes)) && (rg_nodes_rhs == Set.new(machine_region.nodes))
       end

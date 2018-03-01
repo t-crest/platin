@@ -238,7 +238,7 @@ module PML
   #  debug(@options,'ipet') { |&msgs| constraints.each { |c| msgs.call("Constraint: #{c}") } }
   #
   def debug(options, *type, &block)
-    return unless (options.debug_type || []).any?{ |t| t == :all || type.include?(t) }
+    return unless (options.debug_type || []).any? { |t| t == :all || type.include?(t) }
     msgs = []
     r = block.call { |m| msgs.push(m) }
     msgs.push(r) if msgs.empty?
