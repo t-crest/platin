@@ -365,8 +365,8 @@ class SweetFlowFactImport
     op =
       case ffsrc.constraint.op
       when "<="; "less-equal"
-      when "=" ; "equal"
-      else     ; raise Exception.new("Bad constraint op: #{ffsrc.constraint.op}")
+      when "="; "equal"
+      else; raise Exception.new("Bad constraint op: #{ffsrc.constraint.op}")
       end
     flowfact = FlowFact.new(scope, TermList.new(terms), op, ffsrc.constraint.rhs,
                             @fact_attributes.dup)

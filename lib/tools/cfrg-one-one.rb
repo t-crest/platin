@@ -28,7 +28,7 @@ class RGVisualizer
     info("#{outfile} ok") if options.verbose
   end
 
-  def initialize(options) ; @options = options ; end
+  def initialize(options); @options = options; end
 
   def visualize(rg)
     nodes = {}

@@ -229,7 +229,7 @@ class CallContextEntry < ContextEntry
     @callsite == other.callsite
   end
 
-  def eql?(other); self == other ; end
+  def eql?(other); self == other; end
 
   def hash
     return @hash if @hash
@@ -359,7 +359,7 @@ class LoopContextEntry < ContextEntry
     @loop == other.loop && @step == other.step && @offset == other.offset
   end
 
-  def eql?(other); self == other ; end
+  def eql?(other); self == other; end
 
   def hash
     return @hash if @hash
@@ -460,7 +460,7 @@ class Context < PMLObject
     @callstring == other.callstring
   end
 
-  def eql?(other); self == other ; end
+  def eql?(other); self == other; end
 
   def hash
     return @hash if @hash
@@ -532,7 +532,7 @@ class ContextRef < PMLObject
     @programpoint == other.programpoint && @context == other.context
   end
 
-  def eql?(other); self == other ; end
+  def eql?(other); self == other; end
 
   def hash
     return @hash if @hash
@@ -618,19 +618,19 @@ end
 # Trivial context manager (no history)
 #
 class ContextManagerEmpty
-  def initialize ; end
+  def initialize; end
 
-  def initial ; Context.empty ; end
+  def initial; Context.empty; end
 
-  def blockslice(ctx, _node) ; ctx ; end
+  def blockslice(ctx, _node); ctx; end
 
-  def store_loopcontext? ; false ; end
+  def store_loopcontext?; false; end
 
-  def push_call(ctx,_); ctx ; end
+  def push_call(ctx,_); ctx; end
 
-  def pop_call(ctx,_) ; ctx ; end
+  def pop_call(ctx,_); ctx; end
 
-  def exit_loop(ctx) ; ctx; end
+  def exit_loop(ctx); ctx; end
 
   def continue_loop(ctx); ctx; end
 

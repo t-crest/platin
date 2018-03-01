@@ -90,16 +90,16 @@ class SymbolicExpression
 end
 
 class SEInt
-  def to_f4  ; self.to_s ; end
+  def to_f4; self.to_s; end
 
-  def to_ffx ; self.to_s ; end
+  def to_ffx; self.to_s; end
 end
 
 # Variables always reference arguments of functions
 class SEVar
-  def to_f4  ; "@arg_#{self}" ; end
+  def to_f4; "@arg_#{self}"; end
 
-  def to_ffx ; "@arg_#{self}" ; end
+  def to_ffx; "@arg_#{self}"; end
 end
 
 class SEBinary

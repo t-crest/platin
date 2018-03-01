@@ -349,25 +349,25 @@ class CfgNode
   end
 
   # if this is a scope entry (call, loop-enter), matching scope exits in the given context
-  def matching_scope_exits(_cfmodel, _location); [] ; end
+  def matching_scope_exits(_cfmodel, _location); []; end
 
-  def callnode? ; false ; end
+  def callnode?; false; end
 
-  def instructions ; [] ; end
+  def instructions; []; end
 
-  def entry? ; false ; end
+  def entry?; false; end
 
-  def exit? ; false ; end
+  def exit?; false; end
 
-  def block ; nil ; end
+  def block; nil; end
 
-  def block_start? ; false ; end
+  def block_start?; false; end
 end
 
 class EntryNode < CfgNode
-  def initialize(vcfg) ; super(vcfg); end
+  def initialize(vcfg); super(vcfg); end
 
-  def entry? ; true ; end
+  def entry?; true; end
 
   def to_s
     "#<EntryNode #{vcfg.function}>"
@@ -483,7 +483,7 @@ class CallNode < CfgNode
     end
   end
 
-  def callnode? ; true; end
+  def callnode?; true; end
 
   def to_s
     "#<CallNode #{callsite}>"
@@ -491,9 +491,9 @@ class CallNode < CfgNode
 end
 
 class ExitNode < CfgNode
-  def initialize(vcfg) ; super(vcfg) ; end
+  def initialize(vcfg); super(vcfg); end
 
-  def exit? ; true ; end
+  def exit?; true; end
 
   def successors_with_context(cfmodel, location)
     Enumerator.new do |ss|
@@ -597,7 +597,7 @@ class Location
     @node == other.node && @context == other.context
   end
 
-  def eql?(other); self == other ; end
+  def eql?(other); self == other; end
 
   def hash
     return @hash if @hash
@@ -674,7 +674,7 @@ BOTTOM = :bottom
 
 # reachability semantics (trivial)
 class ReachabilitySemantics
-  def transfer_value(_node, inval) ; inval ; end
+  def transfer_value(_node, inval); inval; end
 
   def merge(oldval, newval)
     if oldval

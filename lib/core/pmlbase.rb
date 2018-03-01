@@ -26,7 +26,7 @@ module PML
       qname == other.qname
     end
 
-    def eql?(other); self == other ; end
+    def eql?(other); self == other; end
 
     def hash
       return @hash if @hash
@@ -113,9 +113,9 @@ module PML
 
     # avoid recursive calls when printing an object
     # subclasses should override to_s/inspect if needed
-    def to_s ; @qname || "#<#{self.class}:#{self.object_id}>" ; end
+    def to_s; @qname || "#<#{self.class}:#{self.object_id}>"; end
 
-    def inspect ; to_s ; end
+    def inspect; to_s; end
 
     private
 
@@ -156,23 +156,23 @@ module PML
     end
 
     # basic list operations (delegators)
-    def first ; list.first ; end
+    def first; list.first; end
 
-    def last ; list.last ; end
+    def last; list.last; end
 
-    def length ; list.length ; end
+    def length; list.length; end
 
-    def size ; length ; end
+    def size; length; end
 
-    def empty? ; list.empty? ; end
+    def empty?; list.empty?; end
 
-    def [](index) ; list[index]; end
+    def [](index); list[index]; end
 
-    def each(&block) ; list.each(&block) ; end
+    def each(&block); list.each(&block); end
 
-    def delete_if(&block) ; list.delete_if(&block) ; end
+    def delete_if(&block); list.delete_if(&block); end
 
-    def each_with_index(&block) ; list.each_with_index(&block) ; end
+    def each_with_index(&block); list.each_with_index(&block); end
 
     def push(item); add(item); end
 

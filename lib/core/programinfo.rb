@@ -108,7 +108,7 @@ module PML
 
     def reject!
       rejects = []
-      @list.reject! { |ff| r = yield ff ; rejects.push(r); r }
+      @list.reject! { |ff| r = yield ff; rejects.push(r); r }
       data.reject! { |ff| rejects.shift }
     end
 
@@ -236,7 +236,7 @@ module PML
 
     def reject!
       rejects = []
-      @list.reject! { |mf| r = yield mf ; rejects.push(r); r }
+      @list.reject! { |mf| r = yield mf; rejects.push(r); r }
       data.reject! { |mf| rejects.shift }
     end
 
@@ -315,7 +315,7 @@ module PML
       @ppref == other.ppref && @type == other.type && @expr == other.expr
     end
 
-    def eql?(other); self == other ; end
+    def eql?(other); self == other; end
 
     def hash
       return @hash if @hash

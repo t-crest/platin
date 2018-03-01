@@ -90,7 +90,7 @@ module PML
     end
 
     # tool generates WCET results
-    def timing_output(default_name = nil) ; calculates_wcet(default_name); end
+    def timing_output(default_name = nil); calculates_wcet(default_name); end
 
     def calculates_wcet(default_name = nil)
       self.on("--timing-output NAME", "name or prefix for set of calculated WCETs") { |n| options.timing_output = n }

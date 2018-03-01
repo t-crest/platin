@@ -496,7 +496,7 @@ class RecorderScheduler
     @active.values.each { |recorder| recorder.stop(cycles) }
   end
 
-  def eof ; end
+  def eof; end
 
   def method_missing(event, *args)
   end
@@ -592,7 +592,7 @@ class FunctionRecorder
     end
   end
 
-  def eof ; end
+  def eof; end
 
   def method_missing(event, *args); end
 
@@ -771,7 +771,7 @@ class ProgressTraceRecorder
     debug(@options, :trace) { "Return to rg for #{@rg_level}-#{csite.function}: #{@rg.nodes.first}" } if @rg
   end
 
-  def eof ; end
+  def eof; end
 
   def method_missing(event, *args); end
 end

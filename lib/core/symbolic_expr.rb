@@ -62,31 +62,31 @@ class SymbolicExpression
     raise Exception.new("map_names not implemented for #{self.class}")
   end
 
-  def constant;            nil  ; end
+  def constant;            nil; end
 
   def constant?;           false; end
 
   def chainOfRecurrences?; false; end
 
-  def +(o) ;    SEBinary.collect_fold('+',self,o) ; end
+  def +(o);    SEBinary.collect_fold('+',self,o); end
 
-  def add(*os); SEBinary.collect_fold('+',self,*os) ; end
+  def add(*os); SEBinary.collect_fold('+',self,*os); end
 
-  def -(o) ;    self + (-o) ; end
+  def -(o);    self + (-o); end
 
-  def *(o) ;    SEBinary.collect_fold('*',self,o) ; end
+  def *(o);    SEBinary.collect_fold('*',self,o); end
 
-  def -@   ;    SEBinary.create('*',self,SEInt.new(-1)) ; end
+  def -@;    SEBinary.create('*',self,SEInt.new(-1)); end
 
-  def smax(o);  SEBinary.create('smax',self,o) ; end
+  def smax(o);  SEBinary.create('smax',self,o); end
 
-  def umax(o);  SEBinary.create('umax',self,o) ; end
+  def umax(o);  SEBinary.create('umax',self,o); end
 
-  def smin(o);  SEBinary.create('smin',self,o) ; end
+  def smin(o);  SEBinary.create('smin',self,o); end
 
-  def umin(o);  SEBinary.create('umin',self,o) ; end
+  def umin(o);  SEBinary.create('umin',self,o); end
 
-  def sdiv(o);  SEBinary.create('/s',self,o) ; end
+  def sdiv(o);  SEBinary.create('/s',self,o); end
 
   def ==(other)
     return false if other.nil?
@@ -94,7 +94,7 @@ class SymbolicExpression
     return super(other)
   end
 
-  def eql?(other); self == other ; end
+  def eql?(other); self == other; end
 end
 
 class SEInt < SymbolicExpression
@@ -107,19 +107,19 @@ class SEInt < SymbolicExpression
 
   def constant?; true; end
 
-  def to_i; @num     ; end
+  def to_i; @num; end
 
   def to_s; @num.to_s; end
 
-  def eval(_,_lenv=nil);     @num ; end
+  def eval(_,_lenv=nil);     @num; end
 
-  def resolve_loops(_lenv) ; self ; end
+  def resolve_loops(_lenv); self; end
 
-  def referenced_loops ; Set.new; end
+  def referenced_loops; Set.new; end
 
-  def referenced_vars  ; Set.new; end
+  def referenced_vars; Set.new; end
 
-  def map_names() ; self ; end
+  def map_names(); self; end
 end
 
 class SEVar < SymbolicExpression
@@ -183,10 +183,10 @@ class SEBinary < SymbolicExpression
 
   def SEBinary.unit(op)
     case op
-    when '+' ; then 0
-    when '*' ; then 1
-    when 'umax' ; then 0
-    else ; nil
+    when '+'; then 0
+    when '*'; then 1
+    when 'umax'; then 0
+    else; nil
     end
   end
 
@@ -196,9 +196,9 @@ class SEBinary < SymbolicExpression
 
   def SEBinary.runit(op)
     case op
-    when '/s' ; then 1
-    when '/u' ; then 1
-    else ; SEBinary.unit(op)
+    when '/s'; then 1
+    when '/u'; then 1
+    else; SEBinary.unit(op)
     end
   end
 

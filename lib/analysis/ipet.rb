@@ -186,9 +186,9 @@ class IPETEdge
     to_s
   end
 
-  def hash; @qname.hash ; end
+  def hash; @qname.hash; end
 
-  def ==(other); qname == other.qname ; end
+  def ==(other); qname == other.qname; end
 
   def eql?(other); self == other; end
 end

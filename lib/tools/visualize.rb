@@ -35,7 +35,7 @@ protected
 end
 
 class CallGraphVisualizer < Visualizer
-  def initialize(pml, options) ; @pml, @options = pml, options ; end
+  def initialize(pml, options); @pml, @options = pml, options; end
 
   def visualize_callgraph(function)
     g = digraph("Callgraph for #{function}")
@@ -86,7 +86,7 @@ class PlainCallGraphVisualizer < Visualizer
 end
 
 class ScopeGraphVisualizer < Visualizer
-  def initialize(pml, options) ; @pml, @options = pml, options ; end
+  def initialize(pml, options); @pml, @options = pml, options; end
 
   def visualize_scopegraph(function)
     g = digraph("Scopegraph for #{function}")
@@ -109,7 +109,7 @@ class ScopeGraphVisualizer < Visualizer
 end
 
 class FlowGraphVisualizer < Visualizer
-  def initialize(pml, options) ; @pml, @options = pml, options ; end
+  def initialize(pml, options); @pml, @options = pml, options; end
 
   def extract_timing(function, timing)
     Hash[
@@ -304,7 +304,7 @@ class FlowGraphVisualizer < Visualizer
   end
 end
 class RelationGraphVisualizer < Visualizer
-  def initialize(options) ; @options = options ; end
+  def initialize(options); @options = options; end
 
   def visualize(rg)
     nodes = {}

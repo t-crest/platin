@@ -12,26 +12,26 @@ require 'set'
 class LiftedType
 end
 class LiftedBOT < LiftedType
-  def lub(rhs) ; rhs ; end
+  def lub(rhs); rhs; end
 
-  def bot? ; true ; end
+  def bot?; true; end
 
-  def top? ; false; end
+  def top?; false; end
 
-  def to_s ; "BOT"; end
+  def to_s; "BOT"; end
 
-  def dup  ; self; end
+  def dup; self; end
 end
 class LiftedTOP < LiftedType
-  def lub(_rhs) ; self ; end
+  def lub(_rhs); self; end
 
-  def bot? ; false; end
+  def bot?; false; end
 
-  def top? ; true ; end
+  def top?; true; end
 
-  def to_s ; "TOP"; end
+  def to_s; "TOP"; end
 
-  def dup  ; self; end
+  def dup; self; end
 end
 class LiftedType
   BOT = LiftedBOT.new
@@ -47,13 +47,13 @@ class LiftedType
     LiftedType.new(@op.call(self.value,rhs.value),@op)
   end
 
-  def top? ; false; end
+  def top?; false; end
 
-  def bot? ; false; end
+  def bot?; false; end
 
-  def to_s ; end
+  def to_s; end
 
-  def dup  ; end
+  def dup; end
 
   def eq?(rhs)
     return false if rhs == TOP or rhs == BOT
@@ -63,25 +63,25 @@ end
 
 class DFAOperator
   # Return the initial (bottom) state for all nodes
-  def init ; nil ; end
+  def init; nil; end
 
   # Return the state for the entry node
-  def entry ; nil ; end
+  def entry; nil; end
 
   # Return the joined state for a list of out states
-  def join(_outs) ; nil ; end
+  def join(_outs); nil; end
 
   # Transfer in state to out state.
-  def transfer(_node, ins) ; ins ; end
+  def transfer(_node, ins); ins; end
 
   # Check if state has changed
-  def changed?(olds, news) ; olds != news ; end
+  def changed?(olds, news); olds != news; end
 end
 
 class LiftedDFAOperator < DFAOperator
-  def init ; LiftedType.BOT; end
+  def init; LiftedType.BOT; end
 
-  def join(outs) ; outs.reduce(:lub) ; end
+  def join(outs); outs.reduce(:lub); end
 end
 
 class DFASetOperator < LiftedDFAOperator
@@ -92,9 +92,9 @@ class DFASetOperator < LiftedDFAOperator
     @less = less
   end
 
-  def init ; Set.new ; end
+  def init; Set.new; end
 
-  def entry ; Set.new([@operator.entry]) ; end
+  def entry; Set.new([@operator.entry]); end
 
   def join(outs)
     merge( outs.reduce(Set.new) { |set,out| set.merge(out) } )
@@ -125,11 +125,11 @@ class DataFlowAnalysis
       @outs = nil
     end
 
-    def entry? ; false ; end
+    def entry?; false; end
 
-    def exit?  ; false ; end
+    def exit?; false; end
 
-    def reachable? ; order >= 0; end
+    def reachable?; order >= 0; end
 
     def <=>(rhs)
       @order <=> rhs.order
@@ -140,10 +140,10 @@ class DataFlowAnalysis
     end
   end
   class EntryNode < Node
-    def entry? ; true ; end
+    def entry?; true; end
   end
   class ExitNode < Node
-    def exit?  ; true ; end
+    def exit?; true; end
   end
 
   # TODO: order matters here for performance. Use different worklist order based on DFA direction
@@ -167,11 +167,11 @@ class DataFlowAnalysis
       node
     end
 
-    def empty? ; @worklist.empty? ; end
+    def empty?; @worklist.empty?; end
 
-    def length ; @worklist.length ; end
+    def length; @worklist.length; end
 
-    def include?(node) ; @worklist.include?(node) ; end
+    def include?(node); @worklist.include?(node); end
   end
 
   # @param blocks Subset of blocks to analyze, or nil to analyze whole function.

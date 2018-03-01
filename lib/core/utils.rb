@@ -164,10 +164,10 @@ module PML
     internal_error "file_open: nil" unless path
     if path == "-"
       case mode
-      when "r" ; yield $stdin
-      when "w" ; yield $stdout
-      when "a" ; yield $stdout
-      else ; die "Cannot open stdout in mode #{mode}"
+      when "r"; yield $stdin
+      when "w"; yield $stdout
+      when "a"; yield $stdout
+      else; die "Cannot open stdout in mode #{mode}"
       end
     else
       File.open(path,mode) do |fh|

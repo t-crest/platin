@@ -28,25 +28,25 @@ class PersistenceDataFlowAnalysis
   class ZeroTagSet < TagSet
     def access(_t); self; end
 
-    def concat(_set); self ; end
+    def concat(_set); self; end
 
-    def join(other); other ; end
+    def join(other); other; end
 
     def to_s; "0"; end
 
-    def dup ; self ; end
+    def dup; self; end
   end
 
   class TopTagSet < TagSet
-    def access(_t);   self ; end
+    def access(_t);   self; end
 
     def concat(set); (set == ZERO) ? ZERO : self; end
 
-    def join(_other); self ; end
+    def join(_other); self; end
 
     def to_s; "1"; end
 
-    def dup; self ; end
+    def dup; self; end
   end
 
   class TagSet
@@ -114,11 +114,11 @@ class PersistenceDataFlowAnalysis
 
     # if t is not active in this scope, any of the active tags might
     # have been accessed without accessing t
-    def no(t) ; @no_map[t] || new_tag_set(t, @active_tags); end
+    def no(t); @no_map[t] || new_tag_set(t, @active_tags); end
 
-    def in(t) ; @in_map[t] || TagSet::ZERO; end
+    def in(t); @in_map[t] || TagSet::ZERO; end
 
-    def out(t) ; @out_map[t] || TagSet::ZERO; end
+    def out(t); @out_map[t] || TagSet::ZERO; end
 
     def new_tag_set(t, initial_set = nil)
       t_metric = Proc.new do |set|

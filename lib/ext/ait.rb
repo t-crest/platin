@@ -117,12 +117,12 @@ class SymbolicExpression
 end
 
 class SEInt
-  def to_ais ; self.to_s ; end
+  def to_ais; self.to_s; end
 end
 
 # Variables always reference arguments of functions
 class SEVar
-  def to_ais ; "@arg_#{self}" ; end
+  def to_ais; "@arg_#{self}"; end
 end
 
 class SEBinary

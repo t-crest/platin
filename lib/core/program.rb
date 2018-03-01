@@ -100,7 +100,7 @@ module PML
   class ProgramPoint < PMLObject
     include QNameObject
     attr_reader :name
-    def address ; data['address'] ; end
+    def address; data['address']; end
 
     def address=(addr); data['address'] = addr; end
 
@@ -856,9 +856,9 @@ module PML
     end
 
     # size of this instruction (binary level)
-    def size   ; data['size'] ; end
+    def size; data['size']; end
 
-    def opcode ; data['opcode'] ; end
+    def opcode; data['opcode']; end
 
     def to_s
       s = qname

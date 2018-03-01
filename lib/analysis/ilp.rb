@@ -137,7 +137,7 @@ class IndexedConstraint
     key <=> other.key
   end
 
-  def eql?(other); self == other ; end
+  def eql?(other); self == other; end
 
   def inspect
     "Constraint#<#{lhs.inspect},#{@op.inspect},#{rhs.inspect}>"
