@@ -90,9 +90,7 @@ class SymbolicExpression
 
   def ==(other)
     return false if other.nil?
-    unless other.kind_of?(SymbolicExpression)
-      raise Exception.new("unexpected comparsion with symbolic expression")
-    end
+    raise Exception.new("unexpected comparsion with symbolic expression") unless other.kind_of?(SymbolicExpression)
     return super(other)
   end
 
@@ -218,9 +216,7 @@ class SEBinary < SymbolicExpression
     args = args.map { |arg|
       if arg.kind_of?(Integer) then SEInt.new(arg) else arg end
     }
-    if SEBinary.commutative?(op)
-      args = args.select { |e| e.constant? } + args.select { |e| ! e.constant? }
-    end
+    args = args.select { |e| e.constant? } + args.select { |e| ! e.constant? } if SEBinary.commutative?(op)
     fst = args.shift
     raise Exception.new("SEbinary#fold: no arguments") unless fst
     args.inject(fst) { |a,b|

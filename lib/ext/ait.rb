@@ -128,18 +128,12 @@ end
 class SEBinary
   def to_ais
     left,right = self.a, self.b
-    if SEBinary.commutative?(op) && left.constant? && ! right.constant?
-      left, right = right, left
-    end
+    left, right = right, left if SEBinary.commutative?(op) && left.constant? && ! right.constant?
     lexpr, rexpr = [left,right].map { |v| v.to_ais }
     # simplify (x * -1) to (-x)
-    if right.constant? && right.constant == -1 && op == '*'
-      return "-(#{lexpr})"
-    end
+    return "-(#{lexpr})" if right.constant? && right.constant == -1 && op == '*'
     # simplify (a + -b) to (a - b)
-    if right.constant? && right.constant < 0 && op == '+'
-      return "#{lexpr} - #{-right}"
-    end
+    return "#{lexpr} - #{-right}" if right.constant? && right.constant < 0 && op == '+'
     # translation of all other ops
     case op
     when '+'    then "(#{lexpr} + #{rexpr})"
@@ -175,9 +169,7 @@ end
 
 class Block
   def ais_ref
-    if instructions.empty?
-      raise AISUnsupportedProgramPoint.new(self, "impossible to reference an empty block")
-    end
+    raise AISUnsupportedProgramPoint.new(self, "impossible to reference an empty block") if instructions.empty?
     if label
       dquote(label)
     elsif address
@@ -248,16 +240,12 @@ class AISExporter
 
     export_machine_description
 
-    if @options.ais_header_file
-      @outfile.puts(File.read(@options.ais_header_file))
-    end
+    @outfile.puts(File.read(@options.ais_header_file)) if @options.ais_header_file
     @outfile.puts
   end
 
   def export_machine_description
-    if @pml.arch.triple[0] == 'armv7m'
-      return
-    end
+    return if @pml.arch.triple[0] == 'armv7m'
 
     @pml.arch.config.caches.each { |cache|
       case cache.name
@@ -326,9 +314,7 @@ class AISExporter
       elsif area.type == 'scratchpad'
         properties.push("#{kw} locked")
       end
-      if area.type != 'code'
-        properties.push("#{kw} write time = #{tt_write_first_beat}")
-      end
+      properties.push("#{kw} write time = #{tt_write_first_beat}") if area.type != 'code'
       address_range = area.address_range
       address_range ||= ValueRange.new(0,0xFFFFFFFF,nil)
       transfer_bitsize = area.memory.transfer_size * 8
@@ -496,9 +482,7 @@ class AISExporter
 
     # Positivity constraints => do nothing
     rhs = ff.rhs.to_i
-    if rhs >= 0 && terms.all? { |t| t.factor < 0 }
-      return true
-    end
+    return true if rhs >= 0 && terms.all? { |t| t.factor < 0 }
 
     scope = scope.function.blocks.first
     terms.push(Term.new(scope,-rhs)) if rhs != 0
@@ -984,9 +968,7 @@ class AitImport
   # read the message lines with traces for n_spill and n_fill user regs
   def read_stack_cache_traces(analysis_task_elem)
     analysis_task_elem.each_element("value_analysis/messages/message/textline") { |e|
-      if e.text =~ /trace.*\(context\w*(.*)\).*\("user_(n_(?:fill|spill))"\).=.(\d+)/
-        yield $1,$2,$3
-      end
+      yield $1,$2,$3 if e.text =~ /trace.*\(context\w*(.*)\).*\("user_(n_(?:fill|spill))"\).=.(\d+)/
     }
   end
 

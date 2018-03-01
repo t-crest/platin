@@ -57,9 +57,7 @@ class GurobiILP < ILP
     # close temp files
     sol.close
 
-    if obj.nil?
-      gurobi_error("Could not read objective value from result file #{sol_name}")
-    end
+    gurobi_error("Could not read objective value from result file #{sol_name}") if obj.nil?
     if freqmap.length != @variables.length
       gurobi_error("Read #{freqmap.length} variables, expected #{@variables.length}")
     end

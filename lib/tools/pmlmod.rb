@@ -118,9 +118,7 @@ class PMLDoc
     end
 
     fs = ft.map { |ff| matcher.match_functions(ff.list, ppath.pred_at_level(:func)) }.flatten
-    if ppath.has_level? :bb
-      bb = fs.map { |f| matcher.match_other(f.blocks.list, ppath.pred_at_level(:bb)) }.flatten
-    end
+    bb = fs.map { |f| matcher.match_other(f.blocks.list, ppath.pred_at_level(:bb)) }.flatten if ppath.has_level? :bb
     if ppath.has_level? :inst
       ii = bb.map { |b| matcher.match_other(b.instructions.list, ppath.pred_at_level(:inst)) }.flatten
       ii.each { |i| matcher.modify(i, matcher.action) } if matcher.action
@@ -145,9 +143,7 @@ class PMLModTool
   def PMLModTool.run(pml, options)
     tool = PMLModTool.new(pml, options)
 
-    if options.clear_callees
-      action = [:clear,'callees']
-    end
+    action = [:clear,'callees'] if options.clear_callees
 
     matcher = PMLMatchModify.new(PMLPath.new(options.pml_path), options, action)
 

@@ -50,13 +50,9 @@ class PMLDoc
       @arch = nil
     end
 
-    if options.qualify_machinecode
-      retag_machinefunctions(@data)
-    end
+    retag_machinefunctions(@data) if options.qualify_machinecode
 
-    if options.run_linker
-      run_linker(@data)
-    end
+    run_linker(@data) if options.run_linker
 
     @bitcode_functions = FunctionList.new(@data['bitcode-functions'] || [], :labelkey => 'name')
     @machine_functions = FunctionList.new(@data['machine-functions'] || [], :labelkey => 'mapsto')
@@ -106,9 +102,7 @@ class PMLDoc
     # individual pmlfile. Therefore we qualify them via filename.
     (data['machine-functions'] || []).each do |m|
       assert("machine-functions have to be on machinecode level") { m['level'] == "machinecode" }
-      if m.has_key?('pmlsrcfile')
-        m['name'] = qualify_machinefunction_name(m['pmlsrcfile'], m['name'])
-      end
+      m['name'] = qualify_machinefunction_name(m['pmlsrcfile'], m['name']) if m.has_key?('pmlsrcfile')
     end
 
     (data['relation-graphs'] || []).each do |m|
@@ -363,9 +357,7 @@ class PMLDoc
     gcfg_name = options.analysis_entry.dup
     if gcfg_name.slice!(/^GCFG:/)
       gcfg = global_cfgs.by_name(gcfg_name)
-      if gcfg
-        gcfg.entry_node
-      end
+      gcfg.entry_node if gcfg
     else
       machine_functions.by_label(options.analysis_entry)
     end
@@ -435,9 +427,7 @@ class PMLDoc
     final.each do |k,v|
       if v.kind_of? Array
         v.map! { |elem|
-          if elem.kind_of? Hash
-            elem.delete('pmlsrcfile')
-          end
+          elem.delete('pmlsrcfile') if elem.kind_of? Hash
           elem
         }
       end
@@ -513,9 +503,7 @@ class PMLDoc
         doc.each do |k,v|
           if v.kind_of? Array
             v.map! { |elem|
-              if elem.kind_of? Hash
-                elem['pmlsrcfile'] = fname
-              end
+              elem['pmlsrcfile'] = fname if elem.kind_of? Hash
               elem
             }
             (merged_doc[k] ||= []).concat(v)

@@ -30,9 +30,7 @@ class FFXExportTool
         options.ff_disable_export = Set.new
       else
         unknown = (options.ff_disable_export - Set[*FF_EXPORT_TYPES])
-        unless unknown.empty?
-          die("F4/FFX export types #{unknown.to_a} not known. Try --help=ff.")
-        end
+        die("F4/FFX export types #{unknown.to_a} not known. Try --help=ff.") unless unknown.empty?
       end
     }
     opts.register_help_topic('ff') { |io|
@@ -99,9 +97,7 @@ class FFXExportTool
         }
       end
 
-      if options.export_ffx
-        ffx.write(outfile)
-      end
+      ffx.write(outfile) if options.export_ffx
 
       statistics("F4/FFX",
                  "exported flow facts" => ffx.stats_generated_facts,
@@ -149,11 +145,7 @@ EOF
     die_usage("Please speficy at least one of the F4/FF$ output file and the OSX platform file.")
   end
 
-  if options.ff_file
-    FFXExportTool.run(pml, options)
-  end
+  FFXExportTool.run(pml, options) if options.ff_file
 
-  if options.otawa_platform_file
-    OSXExportTool.run(pml, options)
-  end
+  OSXExportTool.run(pml, options) if options.otawa_platform_file
 end

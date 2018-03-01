@@ -18,9 +18,7 @@ class BoundedStack
 
   def BoundedStack.create(stack)
     bs = @@repository[stack]
-    if ! bs
-      bs = @@repository[stack] = BoundedStack.new(stack)
-    end
+    bs = @@repository[stack] = BoundedStack.new(stack) if ! bs
     bs
   end
 

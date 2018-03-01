@@ -58,9 +58,7 @@ class SimulatorTrace
       ensure
         status = $CHILD_STATUS.exitstatus
 	wpfile.unlink unless @options.outdir
-        if status == 127
-          die("Running the simulator '#{@options.pasim}' failed: Program not found (exit status 127)")
-        end
+        die("Running the simulator '#{@options.pasim}' failed: Program not found (exit status 127)") if status == 127
       end
     end
   end
@@ -115,9 +113,7 @@ class ExtractSymbols
 
           if current_function
             instr = build_instruction(addr, cond, size, instr, args)
-            if instr
-              extractor.add_instruction(current_label, addr, instr)
-            end
+            extractor.add_instruction(current_label, addr, instr) if instr
           end
         else
           assert("objdump parsing failed: #{line}") {
@@ -347,9 +343,7 @@ class Architecture < PML::Architecture
     cost = ilist.reduce(0) do |cycles, instr|
       flushes = 0
       if instr.delay_slots == 0
-        if instr.branch_type == 'call'
-          flushes = 3
-        end
+        flushes = 3 if instr.branch_type == 'call'
       end
       cycles + (instr.bundled? ? 0 : 1) + flushes
     end
@@ -428,9 +422,7 @@ class Architecture < PML::Architecture
       end
       opts.push("-mpatmos-stack-cache-block-size=#{sc.block_size}")
       opts.push("-mpatmos-stack-cache-size=#{sc.size}")
-      if sc.policy == 'ablock'
-        opts.push("-mpatmos-enable-block-aligned-stack-cache")
-      end
+      opts.push("-mpatmos-enable-block-aligned-stack-cache") if sc.policy == 'ablock'
     else
       opts.push("-mpatmos-disable-stack-cache")
     end

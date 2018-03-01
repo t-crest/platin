@@ -77,9 +77,7 @@ class PlainCallGraphVisualizer < Visualizer
       mf.callsites.each { |cs|
         next if @mc_model.infeasible?(cs.block)
         @mc_model.calltargets(cs).each { |callee|
-          if nodes[mf] && nodes[callee]
-            g.add_edges(nodes[mf],nodes[callee])
-          end
+          g.add_edges(nodes[mf],nodes[callee]) if nodes[mf] && nodes[callee]
         }
       }
     }
@@ -285,9 +283,7 @@ class FlowGraphVisualizer < Visualizer
       label << " |#{block.instructions.length}|"
       if @options.show_calls
         block.instructions.each do |ins|
-          unless ins.callees.empty?
-            label << "\\l call " << ins.callees.map { |c| "#{c}()" }.join(",")
-          end
+          label << "\\l call " << ins.callees.map { |c| "#{c}()" }.join(",") unless ins.callees.empty?
         end
       end
       if @options.show_instructions
@@ -406,9 +402,7 @@ class ILPVisualisation < Visualizer
         :line => line,
       }
 
-      if variable.respond_to?(:function)
-        hint[:function] = variable.function.to_s
-      end
+      hint[:function] = variable.function.to_s if variable.respond_to?(:function)
 
       return hint
     end
@@ -431,18 +425,10 @@ class ILPVisualisation < Visualizer
 
   def to_label(var)
     l = []
-    if var.respond_to?(:qname)
-      l << "<U>#{var.qname}</U>"
-    end
-    if var.respond_to?(:mapsto)
-      l << "<B>#{var.mapsto}</B>"
-    end
-    if var.respond_to?(:src_hint)
-      l << var.src_hint
-    end
-    if var.respond_to?(:loopheader?) && var.loopheader?
-      l << '<I>loopheader</I>'
-    end
+    l << "<U>#{var.qname}</U>" if var.respond_to?(:qname)
+    l << "<B>#{var.mapsto}</B>" if var.respond_to?(:mapsto)
+    l << var.src_hint if var.respond_to?(:src_hint)
+    l << '<I>loopheader</I>' if var.respond_to?(:loopheader?) && var.loopheader?
     str = l.join("<BR/>");
     return var.to_s if str.empty?
     return '<' + str + '>'
@@ -493,9 +479,7 @@ class ILPVisualisation < Visualizer
     e = @graph.add_edges(src, dst, :id => ename, :tooltip => edge.to_s, :labeltooltip => edge.to_s)
     @mapping[key] = e
 
-    if cost
-      e[:label] = cost.to_s
-    end
+    e[:label] = cost.to_s if cost
 
     if edge.cfg_edge?
       e[:style] = "solid"
@@ -583,13 +567,9 @@ class ILPVisualisation < Visualizer
       end
     end
 
-    if opts[:unbounded]
-      mark_unbounded(opts[:unbounded])
-    end
+    mark_unbounded(opts[:unbounded]) if opts[:unbounded]
 
-    if opts[:freqmap]
-      annotate_freqs(opts[:freqmap])
-    end
+    annotate_freqs(opts[:freqmap]) if opts[:freqmap]
 
     @graph
   end
@@ -610,9 +590,7 @@ class ILPVisualisation < Visualizer
       return nil
     end
 
-    if @graph.nil?
-      generate_graph(opts)
-    end
+    generate_graph(opts) if @graph.nil?
 
     output(opts)
   end

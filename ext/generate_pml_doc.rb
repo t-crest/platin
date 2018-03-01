@@ -102,9 +102,7 @@ private
     ty = entity['type']
     doc, attrs = parse_doc(entity['desc'])
     klass = get_klass(entity, attrs)
-    unless klass
-      raise Exception.new("generate_klass: #{entity['desc']} has no 'class' attribute'")
-    end
+    raise Exception.new("generate_klass: #{entity['desc']} has no 'class' attribute'") unless klass
     return false if @klasses[klass] # already generated
 
     @io.puts doc.indent_doc(KLASS_INDENT)

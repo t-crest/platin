@@ -367,9 +367,7 @@ class CacheRegionAnalysis < CacheAnalysisBase
     region_graph.action_nodes.each { |node|
       load_instruction = node.action
       tag = load_instruction.tag
-      if @cache_properties.set_of(tag) == set
-        (local_tags[tag] ||= Set.new).add(load_instruction)
-      end
+      (local_tags[tag] ||= Set.new).add(load_instruction) if @cache_properties.set_of(tag) == set
     }
     local_tags
   end
@@ -858,9 +856,7 @@ class DataCacheLine
     #      As a workaround we need to ensure that an (unknown) cache line in different sets has different names.
     if not address
       @qname = "CacheLine: unknown"
-      if uncached?
-        @qname = "#{qname} (uncached)"
-      end
+      @qname = "#{qname} (uncached)" if uncached?
     else
       @qname = "CacheLine: #{address}"
     end

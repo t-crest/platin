@@ -56,9 +56,7 @@ class GCFGTool
         src_mc.exit_node.data["instructions"].each {|instr|
           if instr["branch-targets"]
             idx = instr["branch-targets"].find_index(:next_node)
-            if idx != nil
-              instr["branch-targets"][idx] = dst_mc.entry_node.data["name"]
-            end
+            instr["branch-targets"][idx] = dst_mc.entry_node.data["name"] if idx != nil
           end
           break
         }
@@ -170,9 +168,7 @@ class GCFGTool
       end
 
       # Make all inner nodes progress nodes for now
-      if factory == RelationNode and ['exit', 'entry'].include?(data['type'])
-        data['type'] = 'progress'
-      end
+      data['type'] = 'progress' if factory == RelationNode and ['exit', 'entry'].include?(data['type'])
 
       bb = function.add_node(factory.new(function, data))
 

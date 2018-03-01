@@ -190,9 +190,7 @@ class Server
       begin
         realbase = Pathname.new(basedir).realpath.to_path
         realfile = Pathname.new(File.join(basedir, path)).realpath.to_path
-        if realfile.start_with? realbase
-          return realfile
-        end
+        return realfile if realfile.start_with? realbase
       rescue
       end
       return nil
@@ -250,9 +248,7 @@ class Server
   class SourceViewServlet < SourceServlet
     def do_GET(req, resp)
       file = req.query["file"]
-      if file
-        realfile = resolve_file(@srcroot, file)
-      end
+      realfile = resolve_file(@srcroot, file) if file
 
       if realfile.nil?
         resp.body = 'Illegal parameters, expecting filepath file and numbers line, range'

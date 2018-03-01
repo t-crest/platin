@@ -38,9 +38,7 @@ class AlfTool
     end
     cmd.push(options.bitcode_file)
     $stderr.puts("Executing #{cmd.join(" ")}") if options.verbose
-    unless safe_system(*cmd)
-      die "#{options.alf_llc} failed with exit status #{$CHILD_STATUS}"
-    end
+    die "#{options.alf_llc} failed with exit status #{$CHILD_STATUS}" unless safe_system(*cmd)
   end
 
   def AlfTool.default_ignored_definitions
@@ -90,9 +88,7 @@ class SweetAnalyzeTool
     AlfTool.run(options, alfopts)
     i_args  = [ "-i=#{options.alf_file}", "func=#{options.analysis_entry}" ]
     do_args = [ ]
-    if options.sweet_ignore_volatiles
-      do_args.push("floats=est")
-    end
+    do_args.push("floats=est") if options.sweet_ignore_volatiles
     ae_args = [ "-ae", "ffg=uhss,uhsf,uhsp,unss,unsf,unsp,uesp,uesf,uess,ubns", "vola=t" ]
     if f = options.sweet_generate_trace
       ae_args.push('css')
@@ -101,9 +97,7 @@ class SweetAnalyzeTool
       ae_args.push('pu')
     end
     ff_args = ["-f", "co", "o=#{options.sweet_flowfact_file}" ]
-    if options.sweet_ignore_volatiles
-      do_args = [ "-do" , "floats=est" ]
-    end
+    do_args = [ "-do" , "floats=est" ] if options.sweet_ignore_volatiles
     raise MissingToolException.new("sweet not found") unless which(options.sweet)
     cmd = ([options.sweet] + i_args + do_args + ae_args + ff_args)
     version, commands, parsed = nil, [], []
@@ -121,9 +115,7 @@ class SweetAnalyzeTool
         end
       end
     }
-    unless $CHILD_STATUS == 0
-      die "#{options.sweet} failed with exit status #{$CHILD_STATUS}"
-    end
+    die "#{options.sweet} failed with exit status #{$CHILD_STATUS}" unless $CHILD_STATUS == 0
     info("Successfully ran SWEET version #{version}") if options.verbose
   end
 end

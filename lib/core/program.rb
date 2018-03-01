@@ -106,9 +106,7 @@ module PML
 
     def ProgramPoint.from_pml(mod, data)
       # markers are special global program points
-      if data['marker']
-        return Marker.new(data['marker'])
-      end
+      return Marker.new(data['marker']) if data['marker']
 
       # otherwise, it is a function or part of a function
       fname = data['function']
@@ -352,9 +350,7 @@ module PML
       @labelkey = opts[:labelkey]
       @blocks = BlockList.new(self, data['blocks'])
       @blocks.each do |block|
-        if block.loopheader?
-          @loops.push(block.loop)
-        end
+        @loops.push(block.loop) if block.loopheader?
       end
       @blocks.each do |block|
         block.loops.each do |loop|
@@ -899,7 +895,7 @@ module PML
     # Special Case, because non-standard PML list
     def add(item)
       list.push(item)
-      if @data ; data.push(item.data) ; end
+      data.push(item.data) if @data
     end
 
     def build_lookup
@@ -1226,9 +1222,7 @@ private
       @nodes  = GCFGNodeList.new(@blocks, data['nodes'])
       # Find the Entry Edge into the system
       entry_nodes = @nodes.select {|e| e.predecessors.length == 0 }
-      unless entry_nodes.length == 1
-        die("GCFG #{name} is not well formed, multiple entries")
-      end
+      die("GCFG #{name} is not well formed, multiple entries") unless entry_nodes.length == 1
       @entry_node = entry_nodes[0]
     end
 

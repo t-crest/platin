@@ -396,9 +396,7 @@ class PersistenceAnalysis
         if persistent?(node, tag)
           # if the tag is persistent in the node, just mark it (unless it is the root)
           debug(options, :cache) { "Persistent in Scope: #{tag} in #{node}" }
-          if node == scopegraph.root
-            @analysis.add_scope_for_tag(node, tag)
-          end
+          @analysis.add_scope_for_tag(node, tag) if node == scopegraph.root
         else
           # analyze conflict scope
           self.analyze_conflict_scope(node, tag)
@@ -455,9 +453,7 @@ class PersistenceAnalysis
   def add_persistent_subscopes(node, tag)
     # add scope constraints for all conflict-free successors
     node.successors.each { |snode|
-      if accessed?(snode, tag) && persistent?(snode, tag)
-        @analysis.add_scope_for_tag(snode, tag)
-      end
+      @analysis.add_scope_for_tag(snode, tag) if accessed?(snode, tag) && persistent?(snode, tag)
     }
   end
 end

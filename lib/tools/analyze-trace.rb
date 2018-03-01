@@ -33,9 +33,7 @@ class AnalyzeTraceTool
     trace = @pml.arch.simulator_trace(@options, tm.watchpoints)
     tm.run(trace)
 
-    if @main_recorder.runs == 0
-      die "Analysis entry '#{@options.analysis_entry}' (pc: #{@entry.address}) never executed"
-    end
+    die "Analysis entry '#{@options.analysis_entry}' (pc: #{@entry.address}) never executed" if @main_recorder.runs == 0
     @executed_blocks = @main_recorder.executed_blocks
     @infeasible_functions = Set.new
     @executed_blocks.each do |function,bset|
@@ -64,9 +62,7 @@ class AnalyzeTraceTool
     end
     @executed_blocks.each do |function,bset|
       function.loops.each do |loop|
-        unless bset.include?(loop.loopheader)
-          warn "Loop #{loop} not executed by trace"
-        end
+        warn "Loop #{loop} not executed by trace" unless bset.include?(loop.loopheader)
       end
     end
     # # Console Output
@@ -174,9 +170,7 @@ class AnalyzeTraceTool
   def AnalyzeTraceTool.run(pml,options)
     needs_options(options, :analysis_entry, :trace_entry, :binary_file, :recorder_spec)
     entry = pml.machine_functions.by_label(options.analysis_entry, true)
-    if ! entry
-      die("Analysis entry (ELF label #{options.analysis_entry}) not found")
-    end
+    die("Analysis entry (ELF label #{options.analysis_entry}) not found") if ! entry
 
     unless entry.blocks.first.address
       warn("No addresses in PML file, trying to extract from ELF file")

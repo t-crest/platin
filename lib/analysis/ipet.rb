@@ -49,15 +49,11 @@ class ControlFlowRefinement
     return unless flowfact.globally_valid?(@entry)
     # add calltargets
     scope,cs,targets = flowfact.get_calltargets
-    if scope
-      add_calltargets(ContextRef.new(cs.instruction, scope.context), targets.map { |t| t.function})
-    end
+    add_calltargets(ContextRef.new(cs.instruction, scope.context), targets.map { |t| t.function}) if scope
     # set infeasible blocks
     infeasibleblocks = flowfact.get_block_infeasible
     infeasibleblocks.each do |scope,bref|
-      if scope
-        set_infeasible(ContextRef.new(bref.block, scope.context))
-      end
+      set_infeasible(ContextRef.new(bref.block, scope.context)) if scope
     end
   end
 
@@ -120,9 +116,7 @@ private
       }
       block.predecessors.each { |bpred|
         next if infeasible_block?(bpred, ctx)
-        if bpred.successors.all? { |bsucc| infeasible_block?(bsucc, ctx) }
-          worklist.push(bpred)
-        end
+        worklist.push(bpred) if bpred.successors.all? { |bsucc| infeasible_block?(bsucc, ctx) }
       }
     end
   end
@@ -159,9 +153,7 @@ class IPETEdge
   end
 
   def cfg_edge?
-    if source.kind_of?(GCFGNode) and (target == :exit || target.kind_of?(GCFGNode))
-      return true
-    end
+    return true if source.kind_of?(GCFGNode) and (target == :exit || target.kind_of?(GCFGNode))
     return false unless source.kind_of?(Block)
     return false unless :exit == target || target.kind_of?(Block)
     true
@@ -354,18 +346,14 @@ class IPETModel
   end
 
   def sum_incoming(block, factor=1)
-    if @sum_incoming_override[block]
-      return @sum_incoming_override[block].map {|e| [e, factor] }
-    end
+    return @sum_incoming_override[block].map {|e| [e, factor] } if @sum_incoming_override[block]
     block.predecessors.map { |pred|
       [IPETEdge.new(pred,block,level), factor]
     }
   end
 
   def sum_outgoing(block, factor=1)
-    if @sum_outgoing_override[block]
-      return @sum_outgoing_override[block].map {|e| [e, factor] }
-    end
+    return @sum_outgoing_override[block].map {|e| [e, factor] } if @sum_outgoing_override[block]
 
     block.successors.map { |succ|
       [IPETEdge.new(block,succ,level), factor]
@@ -385,9 +373,7 @@ class IPETModel
       bb.successors.each do |bb2|
         yield IPETEdge.new(bb,bb2,level)
       end
-      if bb.may_return?
-        yield IPETEdge.new(bb,:exit,level)
-      end
+      yield IPETEdge.new(bb,:exit,level) if bb.may_return?
     end
   end
 
@@ -397,9 +383,7 @@ class IPETModel
     gcfg_edge.successors.each do |n_gcfg_edge|
       yield IPETEdge.new(gcfg_edge,n_gcfg_edge,level)
     end
-    if gcfg_edge.may_return?
-      yield IPETEdge.new(gcfg_edge,:exit,level)
-    end
+    yield IPETEdge.new(gcfg_edge,:exit,level) if gcfg_edge.may_return?
   end
 
   def each_intra_abb_edge(abb)
@@ -407,13 +391,9 @@ class IPETModel
     region.nodes.each do |mbb|
       # Followup Blocks within
       mbb.successors.each {|mbb2|
-        if region.nodes.member?(mbb2)
-          yield IPETEdge.new(mbb, mbb2, level)
-        end
+        yield IPETEdge.new(mbb, mbb2, level) if region.nodes.member?(mbb2)
       }
-      if mbb == region.exit_node
-        yield IPETEdge.new(mbb, :exit, level)
-      end
+      yield IPETEdge.new(mbb, :exit, level) if mbb == region.exit_node
     end
   end
 end # end of class IPETModel
@@ -429,9 +409,7 @@ class IPETBuilder
       @pml_level = { :src => 'bitcode', :dst => 'machinecode' }
       @relation_graph_level = { 'bitcode' => :src, 'machinecode' => :dst }
     end
-    if options.gcfg_analysis
-      @gcfg_model = IPETModel.new(self, @ilp, 'gcfg')
-    end
+    @gcfg_model = IPETModel.new(self, @ilp, 'gcfg') if options.gcfg_analysis
 
     @ffcount = 0
     @pml, @options = pml, options
@@ -510,9 +488,7 @@ class IPETBuilder
     end
 
     # bitcode variables and markers
-    if @bc_model
-      add_bitcode_variables(mf_function)
-    end
+    add_bitcode_variables(mf_function) if @bc_model
 
     # Add block constraints
     mf_function.blocks.each_with_index do |block, ix|
@@ -522,9 +498,7 @@ class IPETBuilder
         next
       end
       @mc_model.add_block_constraint(block)
-      if @options.mbb_variables
-        @mc_model.add_block(block)
-      end
+      @mc_model.add_block(block) if @options.mbb_variables
     end
   end
 
@@ -767,9 +741,7 @@ private
     # record markers
     bitcode_function.blocks.each { |bb|
         bb.instructions.each { |i|
-            if i.marker
-              (@markers[i.marker] ||= []).push(i)
-            end
+            (@markers[i.marker] ||= []).push(i) if i.marker
         }
     }
   end
@@ -842,9 +814,7 @@ private
       [:src,:dst].each { |rg_level|
         next unless node.get_block(rg_level)
         node.successors(rg_level).each { |node2|
-          if node2.type == :exit || node2.get_block(rg_level)
-            yield IPETEdge.new(node,node2,pml_level(rg_level))
-          end
+          yield IPETEdge.new(node,node2,pml_level(rg_level)) if node2.type == :exit || node2.get_block(rg_level)
         }
       }
     }

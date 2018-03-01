@@ -53,9 +53,7 @@ class PMLTool
 
   def validate_rgs(rgs)
     rgs.each { |rg|
-      if rg.status != 'valid'
-        warn("Problematic relation graph (#{rg.status}): #{rg}")
-      end
+      warn("Problematic relation graph (#{rg.status}): #{rg}") if rg.status != 'valid'
     }
   end
 
@@ -153,9 +151,7 @@ class PMLTool
 
   def PMLTool.run(pml,options)
     tool = PMLTool.new(pml, options)
-    if options.validate
-      tool.validate
-    end
+    tool.validate if options.validate
     tool.print_markers if options.print_markers
     tool.print_flowfacts if options.print_flowfacts
     tool.print_valuefacts if options.print_valuefacts

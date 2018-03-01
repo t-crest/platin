@@ -38,9 +38,7 @@ class ExtractSymbols
 
           # SANITY CHECK (begin)
           if (re = OPCODE_NAMES[instruction.opcode])
-            if insname !~ re
-              die ("Address extraction heuristic probably failed at #{addr}: #{insname} not #{re}")
-            end
+            die ("Address extraction heuristic probably failed at #{addr}: #{insname} not #{re}") if insname !~ re
           end
           # SANITY CHECK (end)
 

@@ -165,9 +165,7 @@ class VariableElimination
           break
         end
       end
-      if ! elimvar
-        elimvar = elim_vids.first
-      end
+      elimvar = elim_vids.first if ! elimvar
 
       # "Eliminating #{var_by_index(elimvar)}: #{eq_constraints[elimvar].size}/#{bound_constraints[elimvar].size}"
 
@@ -513,9 +511,7 @@ private
       next unless constr.tags.any? { |tag| tags.include?(tag) }
 
       # Constraint is boring if it is a positivity constraint (a x <= 0, with a < 0)
-      if constr.lhs.all? { |_,coeff| coeff <= 0 } && constr.op == "less-equal" && constr.rhs == 0
-        next
-      end
+      next if constr.lhs.all? { |_,coeff| coeff <= 0 } && constr.op == "less-equal" && constr.rhs == 0
 
       # Simplify: edges->block if possible (lossless; see eliminate_edges for potentially lossy transformation)
       unless lhs.any? { |var,_| ! var.kind_of?(IPETEdge) }

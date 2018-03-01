@@ -71,9 +71,7 @@ class SCCGraph
             next
           end
           assert("Unknown node in SCC: #{succ}") { @node_of_block[succ] }
-          if @node_of_block[succ] != node
-            node.add_successor(@node_of_block[succ])
-          end
+          node.add_successor(@node_of_block[succ]) if @node_of_block[succ] != node
         }
       }
     }
@@ -395,9 +393,7 @@ private
         blocks_of_node[loop_node] = scc_node.blocks
         loop_of_node[loop_node]   = inner_loop
       end
-      if blocks.include?(entry)
-        region_graph.entry_node.add_successor(entry_node[scc_node])
-      end
+      region_graph.entry_node.add_successor(entry_node[scc_node]) if blocks.include?(entry)
     }
 
     scc_graph.nodes.each { |scc_node|
@@ -406,12 +402,8 @@ private
         target = entry_node[succ_scc_node]
         source.add_successor(target)
       }
-      if scc_node.has_backedge?
-        exit_node[scc_node].add_successor(region_graph.backedge_node(entry))
-      end
-      if scc_node.may_return?
-        exit_node[scc_node].add_successor(region_graph.exit_node)
-      end
+      exit_node[scc_node].add_successor(region_graph.backedge_node(entry)) if scc_node.has_backedge?
+      exit_node[scc_node].add_successor(region_graph.exit_node) if scc_node.may_return?
     }
   end
 

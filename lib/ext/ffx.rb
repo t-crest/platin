@@ -161,9 +161,7 @@ end
 
 class Block
   def f4_ref
-    if instructions.empty?
-      raise F4UnsupportedProgramPoint.new(self, "impossible to reference an empty block")
-    end
+    raise F4UnsupportedProgramPoint.new(self, "impossible to reference an empty block") if instructions.empty?
     if label && !EXPORT_ADDR
       dquote(label)
     elsif address

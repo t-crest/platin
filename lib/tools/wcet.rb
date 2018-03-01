@@ -437,9 +437,7 @@ class WcetTool
     # TODO Support running multiple analysis configurations? Would be more efficient to let the actual analysis tool handle this
     #      so analysis steps that are shared between configurations are run only once (like address extraction or trace analysis).
     config = pml.analysis_configurations.by_name('default')
-    if config and not options.analysis_entry
-      options.analysis_entry = config.analysis_entry
-    end
+    options.analysis_entry = config.analysis_entry if config and not options.analysis_entry
     if not options.analysis_entry
       warn("Analysis entry not specified, falling back to 'main'.") if config
       options.analysis_entry = "main"
@@ -530,9 +528,7 @@ EOF
     die("Computing criticalities is not possible in combined-WCA mode")
   end
 
-  if options.visualize_ilp and options.outdir == nil
-    die("Visualizing ILPs requires the additional --outdir parameter")
-  end
+  die("Visualizing ILPs requires the additional --outdir parameter") if options.visualize_ilp and options.outdir == nil
 
   updated_pml = WcetTool.run(PMLDoc.from_files(options.input, options), options)
   updated_pml.dump_to_file(options.output) if options.output

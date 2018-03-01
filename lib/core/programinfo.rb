@@ -505,9 +505,7 @@ module PML
           name
         elsif ty == :loop
           b = scope.function.blocks.by_name(name[1..-1]).loop
-          unless b
-            raise Exception.new("Unable to lookup loop: #{name} in #{b}")
-          end
+          raise Exception.new("Unable to lookup loop: #{name} in #{b}") unless b
           b
         end
       }
@@ -617,9 +615,7 @@ module PML
         # Note: this allows (factor = 0) without marking them infeasible. No
         #       This is intentional, as those blocks are _not_ infeasible from
         #       this formula
-        if factor.to_i > 0
-          infeasible_blocks << [scope, ppref]
-        end
+        infeasible_blocks << [scope, ppref] if factor.to_i > 0
       end
       require 'pp'
       pp infeasible_blocks

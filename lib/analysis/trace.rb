@@ -285,14 +285,10 @@ class MachineTraceMonitor < TraceMonitor
 
           # trigger return-instruction event at return instruction
           # CAVEAT: delay slots and predicated returns
-          if instruction.returns?
-            add_watch(@wp_return_instr,instruction.address,instruction)
-          end
+          add_watch(@wp_return_instr,instruction.address,instruction) if instruction.returns?
           # trigger call-instruction event at call instructions
           # CAVEAT: delay slots and predicated calls
-          if ! instruction.callees.empty?
-            add_watch(@wp_call_instr,instruction.address,instruction)
-          end
+          add_watch(@wp_call_instr,instruction.address,instruction) if ! instruction.callees.empty?
           abs_instr_index += 1
         end
       end
@@ -370,9 +366,7 @@ class RecorderSpecification
         entity_context = ectx ? ectx.to_i : default_callstring_length
         scope_context = scopectx ? scopectx.to_i : default_callstring_length
         entity_call_limit = nil
-        if scopestr == 'f' # intraprocedural
-          entity_call_limit = entity_context
-        end
+        entity_call_limit = entity_context if scopestr == 'f' # intraprocedural
         spec = RecorderSpecification.new(entity_types, entity_context, entity_call_limit)
         scope = SCOPES[scopestr] or die("Bad scope type #{scopestr}")
         recorders.push([scope,scope_context,spec])
@@ -590,9 +584,7 @@ class FunctionRecorder
   def ret(_rsite, _csite, cycles, stall_cycles)
     if @callstack.length == 0
       # puts "#{self}: stopping at #{rsite}->#{csite}"
-      if global? and not @options.target_callret_costs
-	cycles -= stall_cycles
-      end
+      cycles -= stall_cycles if global? and not @options.target_callret_costs
       results.stop(cycles)
       @scheduler.deactivate(self)
     else

@@ -122,9 +122,7 @@ module SWEET
       elsif op == '>'
         @op, @rhs = '>=', @rhs - 1
       end
-      if op == ">="
-        @op, @vector, @rhs = '<=', -@rhs, Vector.negate(@vector)
-      end
+      @op, @vector, @rhs = '<=', -@rhs, Vector.negate(@vector) if op == ">="
     end
 
     def vars
@@ -264,9 +262,7 @@ module SWEET
         elsif block != lastins.block && instruction.name != 0
           publish(:ret, lastins, instruction, @executed_instructions)
         end
-        if instruction.name == 0
-          publish(:block, block, @executed_instructions)
-        end
+        publish(:block, block, @executed_instructions) if instruction.name == 0
         lastins = block.instructions[insindex.to_i]
         @executed_instructions += 1
       end

@@ -102,17 +102,13 @@ class Context
   def lookup(label, index = :last)
     entry = nil
     list  = @bindings[label]
-    if list.nil?
-      raise PeachesBindingError.new "Unknown variable #{label}"
-    end
+    raise PeachesBindingError.new "Unknown variable #{label}" if list.nil?
     if index == :last
       entry = list.last
     else
-      list.each {|e| if e.level == index then entry = e end}
+      list.each {|e| entry = e if e.level == index}
     end
-    if entry.nil?
-      raise PeachesBindingError.new "No binding for variable #{label} on level #{level}"
-    end
+    raise PeachesBindingError.new "No binding for variable #{label} on level #{level}" if entry.nil?
     entry.val
   end
 
@@ -127,9 +123,7 @@ class Context
   def push_call(call, decl)
     @active_decls ||= {}
 
-    if @active_decls[decl]
-      throw PeachesRecursionError.new "Recursion detected: #{decl} already contained in callstack"
-    end
+    throw PeachesRecursionError.new "Recursion detected: #{decl} already contained in callstack" if @active_decls[decl]
 
     @callstack.push([call, decl])
     @active_decls[decl] = true;
@@ -455,30 +449,22 @@ end
 class ASTExpr < ASTNode
   def self.assert_full_eval(node, context, types)
     val = node.evaluate(context)
-    if !val.is_a?(ASTValueLiteral)
-      raise "Expression #{node} is not of a terminal value type: #{val}"
-    end
+    raise "Expression #{node} is not of a terminal value type: #{val}" if !val.is_a?(ASTValueLiteral)
 
     typecheck = types.map { |type|
       match = false
       case type
       when :boolean
-        if val.is_a?(ASTBoolLiteral)
-          match = true
-        end
+        match = true if val.is_a?(ASTBoolLiteral)
       when :number
-        if val.is_a?(ASTNumberLiteral)
-          match = true
-        end
+        match = true if val.is_a?(ASTNumberLiteral)
       else
         raise PeachesInternalError.new "Unknown type: #{type}"
       end
       match
     }.inject(false) { |x,y| x || y}
 
-    if !typecheck
-      raise PeachesTypeError.new "Expression #{node.class.name}:#{node} is no instance of #{types}"
-    end
+    raise PeachesTypeError.new "Expression #{node.class.name}:#{node} is no instance of #{types}" if !typecheck
 
     val
   end
@@ -530,9 +516,7 @@ class ASTArithmeticOp < ASTExpr
 
   def evaluate(context)
     desc = OP_MAP[@op]
-    if desc.nil?
-      raise PeachesInternalError.new "Unknown arithmetic operator: #{@op}"
-    end
+    raise PeachesInternalError.new "Unknown arithmetic operator: #{@op}" if desc.nil?
 
     lhs = ASTExpr.assert_full_eval(@lhs, context, desc[:types])
     rhs = ASTExpr.assert_full_eval(@rhs, context, desc[:types])
@@ -595,9 +579,7 @@ class ASTCompareOp < ASTExpr
 
   def evaluate(context)
     desc = OP_MAP[@op]
-    if desc.nil?
-      raise PeachesInternalError.new "Unknown compare operator: #{@op}"
-    end
+    raise PeachesInternalError.new "Unknown compare operator: #{@op}" if desc.nil?
 
     lhs = ASTExpr.assert_full_eval(@lhs, context, desc[:types])
     rhs = ASTExpr.assert_full_eval(@rhs, context, desc[:types])
@@ -653,9 +635,7 @@ class ReferenceCheckingVisitor < ASTVisitor
     # TODO: if we ever support a let ... in style construct, enter context and declare locals here
 
     begin
-      if node.is_a?(ASTIdentifier) || node.is_a?(ASTCall)
-          @context.lookup(node.label)
-      end
+      @context.lookup(node.label) if node.is_a?(ASTIdentifier) || node.is_a?(ASTCall)
     rescue PeachesBindingError
       raise PeachesBindingError.new "Unbound variable #{node.label} on right side of decl #{@current}"
     end

@@ -33,9 +33,7 @@ class ExtractSymbols
 
   def analyze
     elf = @options.binary_file
-    if ! File.exist?(elf)
-      die "The binary file '#{elf}' does not exist"
-    end
+    die "The binary file '#{elf}' does not exist" if ! File.exist?(elf)
     r = IO.popen("#{@options.objdump} -t '#{elf}'") do |io|
       io.each_line do |line|
         if record = objdump_extract(line.chomp)

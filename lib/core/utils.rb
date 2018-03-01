@@ -81,9 +81,7 @@ module PML
 
     def tsort_each_child(node)
       node.successors.each { |succnode|
-        if @nodeset.include?(succnode) && ! @excluded_edge_targets.include?(succnode)
-          yield succnode
-        end
+        yield succnode if @nodeset.include?(succnode) && ! @excluded_edge_targets.include?(succnode)
       }
     end
   end

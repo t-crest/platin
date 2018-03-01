@@ -58,9 +58,7 @@ class RelationGraphValidation
         ix_src,ix_dst = ix_src + 1, ix_dst + 1
       end
     end
-    if ! errors.empty?
-      raise Exception.new("Progress trace validation failed: #{errors.inspect}")
-    end
+    raise Exception.new("Progress trace validation failed: #{errors.inspect}") if ! errors.empty?
     statistics("CFRG-VALIDATION",
                "progress trace length (src)" => pt1.trace.length,
                "progress trace length (dst)" => pt2.trace.length) if @options.stats
@@ -119,9 +117,7 @@ class TransformTool
     }
     RelationGraphValidationTool.add_options(opts, false)
     opts.add_check { |options|
-      if options.validate
-        RelationGraphValidationTool.check_options(options)
-      end
+      RelationGraphValidationTool.check_options(options) if options.validate
       if options.transform_action == 'simplify' && options.transform_eliminate_edges.nil?
         options.transform_eliminate_edges = true
       end
@@ -132,9 +128,7 @@ class TransformTool
   def TransformTool.run(pml,options)
     needs_options(options,:flow_fact_selection,:flow_fact_srcs,:transform_action,:analysis_entry, :flow_fact_output)
 
-    if options.validate
-      RelationGraphValidationTool.run(pml,options)
-    end
+    RelationGraphValidationTool.run(pml,options) if options.validate
 
     # Analysis Entry
     if options.analysis_entry.start_with? "GCFG:"
@@ -142,9 +136,7 @@ class TransformTool
     end
     p options.transform_action
     machine_entry = pml.machine_functions.by_label(options.analysis_entry)
-    unless machine_entry
-      raise Exception.new("Analysis Entry #{options.analysis_entry} not found")
-    end
+    raise Exception.new("Analysis Entry #{options.analysis_entry} not found") unless machine_entry
 
     # Select flow facts
     flowfacts = pml.flowfacts.filter(pml, options.flow_fact_selection, options.flow_fact_srcs, ["bitcode","machinecode"])
@@ -159,9 +151,7 @@ class TransformTool
         else
           ["bitcode", "machinecode", machine_entry]
         end
-      if flowfacts.any? { |ff| ff.level == source_level }
-        fft.transform(target_analysis_entry, flowfacts, target_level)
-      end
+      fft.transform(target_analysis_entry, flowfacts, target_level) if flowfacts.any? { |ff| ff.level == source_level }
     elsif options.transform_action == "simplify"
       # Ignore symbolic loop bounds for now
       fft.simplify(machine_entry, flowfacts)

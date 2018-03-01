@@ -23,9 +23,7 @@ class AisExportTool
         options.ais_disable_export = Set.new
       else
         unknown = (options.ais_disable_export - Set[*AIS_EXPORT_TYPES])
-        unless unknown.empty?
-          die("AIS export types #{unknown.to_a} not known. Try --help=ais.")
-        end
+        die("AIS export types #{unknown.to_a} not known. Try --help=ais.") unless unknown.empty?
       end
     }
     opts.register_help_topic('ais') { |io|
@@ -154,7 +152,5 @@ EOF
   AisExportTool.run(pml, options)
 
   # TODO: make this available as separate platin-tool to to generate only the APX file!?
-  if options.apx_file
-    ApxExportTool.run(pml, options)
-  end
+  ApxExportTool.run(pml, options) if options.apx_file
 end

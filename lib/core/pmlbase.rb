@@ -146,7 +146,7 @@ module PML
 
     def add(item)
       list.push(item)
-      if @data ; data.push(item.data) ; end
+      data.push(item.data) if @data
       add_index(item)
     end
 

@@ -323,15 +323,11 @@ class ILP
     unbounded_functions, unbounded_loops = Set.new, Set.new
     unbounded.each { |v|
       next unless v.kind_of?(IPETEdge) && v.source.kind_of?(Block)
-      if v.source == v.source.function.blocks.first
-        unbounded_functions.add(v.source.function)
-      end
+      unbounded_functions.add(v.source.function) if v.source == v.source.function.blocks.first
     }
     unbounded.each { |v|
       next unless v.kind_of?(IPETEdge) && v.source.kind_of?(Block)
-      if ! unbounded_functions.include?(v.source.function) && v.source.loopheader?
-        unbounded_loops.add(v.source)
-      end
+      unbounded_loops.add(v.source) if ! unbounded_functions.include?(v.source.function) && v.source.loopheader?
     }
     if unbounded_functions.empty? && unbounded_loops.empty?
       warn("ILP: Unbounded variables: #{unbounded.join(", ")}")
@@ -376,9 +372,7 @@ class ILP
     # end
     cycles,freq = self.solve_max
     freq.each do |v,k|
-      if v.to_s =~ /__slack/ && k != 0
-        $stderr.puts "SLACK: #{v.to_s.ljust(40)} #{k.to_s.rjust(8)}"
-      end
+      $stderr.puts "SLACK: #{v.to_s.ljust(40)} #{k.to_s.rjust(8)}" if v.to_s =~ /__slack/ && k != 0
     end
     $stderr.puts "Finished diagnosis with objective #{cycles}"
     @do_diagnose = true

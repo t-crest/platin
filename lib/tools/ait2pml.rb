@@ -31,9 +31,7 @@ class AitImportTool
   def AitImportTool.run(pml,options)
     needs_options(options, :analysis_entry, :ait_report_prefix)
     entry = pml.machine_functions.by_label(options.analysis_entry, true)
-    if ! entry
-      die("Analysis entry (ELF label #{options.analysis_entry}) not found")
-    end
+    die("Analysis entry (ELF label #{options.analysis_entry}) not found") if ! entry
     unless entry.blocks.first.address
       die("No addresses in PML file, and no binary file given") unless options.binary_file
       warn("No addresses in PML file, trying to extract from ELF file")

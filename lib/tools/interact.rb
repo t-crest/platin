@@ -84,9 +84,7 @@ class TypeToken < ListToken
       input = $1
     end
 
-    if TYPES.grep(input).empty?
-      raise ArgumentError, "No such type: #{input}"
-    end
+    raise ArgumentError, "No such type: #{input}" if TYPES.grep(input).empty?
 
     return lambda { |args|
       conv = args.map do |x|
@@ -122,9 +120,7 @@ class OperationToken < ListToken
   end
 
   def coerce(tok)
-    if OPS.grep(tok).empty?
-      raise ArgumentError, "Unknown op: #{tok}"
-    end
+    raise ArgumentError, "Unknown op: #{tok}" if OPS.grep(tok).empty?
     return tok
   end
 end
@@ -165,9 +161,7 @@ class ProgramPointToken < ListToken
     squelch {pp ||= Block.from_qname(REPLContext.instance.pml.machine_functions, qname)}
     squelch {pp ||= Instruction.from_qname(REPLContext.instance.pml.bitcode_functions, qname)}
     squelch {pp ||= Instruction.from_qname(REPLContext.instance.pml.machine_functions, qname)}
-    if pp.nil?
-      raise ArgumentError, "Unknown programpoint: #{qname}"
-    end
+    raise ArgumentError, "Unknown programpoint: #{qname}" if pp.nil?
     return pp
   end
 end
@@ -180,9 +174,7 @@ class PlatinaToken < ListToken
   end
 
   def coerce(tok)
-    if ANNOTATIONS.grep(tok).empty?
-      raise ArgumentError, "Unknown annotation type: #{tok}"
-    end
+    raise ArgumentError, "Unknown annotation type: #{tok}" if ANNOTATIONS.grep(tok).empty?
     return tok
   end
 end
@@ -195,9 +187,7 @@ class EditCommandToken < ListToken
   end
 
   def coerce(tok)
-    if EDITTARGET.grep(tok).empty?
-      raise ArgumentError, "Unknown annotation type: #{tok}"
-    end
+    raise ArgumentError, "Unknown annotation type: #{tok}" if EDITTARGET.grep(tok).empty?
     return tok.to_sym
   end
 end
@@ -210,9 +200,7 @@ class VisualizeInfoToken < ListToken
   end
 
   def coerce(tok)
-    if VISUALISATIONS.grep(tok).empty?
-      raise ArgumentError, "Unknown annotation type: #{tok}"
-    end
+    raise ArgumentError, "Unknown annotation type: #{tok}" if VISUALISATIONS.grep(tok).empty?
     return tok.to_sym
   end
 end
@@ -225,9 +213,7 @@ class DiffCommandToken < ListToken
   end
 
   def coerce(tok)
-    if OPS.grep(tok).empty?
-      raise ArgumentError, "Unknown op: #{tok}"
-    end
+    raise ArgumentError, "Unknown op: #{tok}" if OPS.grep(tok).empty?
     return tok.to_sym
   end
 end
@@ -345,9 +331,7 @@ class WCETCommand < Command
   end
 
   def run(args)
-    if args.length <= 0
-      raise ArgumentError, "Usage: wcet <symbolname>"
-    end
+    raise ArgumentError, "Usage: wcet <symbolname>" if args.length <= 0
 
     puts "Analysing #{args[0]}"
     opts, pml = REPLContext.instance.options, REPLContext.instance.pml
@@ -385,9 +369,7 @@ class VisualizeCommand < Command
   end
 
   def run(args)
-    if args.length != 2
-      raise ArgumentError, "Usage: visualize (ilp) <symbolname>"
-    end
+    raise ArgumentError, "Usage: visualize (ilp) <symbolname>" if args.length != 2
 
     puts "Visualizing #{args[0]} #{args[1]}"
     opts, pml = REPLContext.instance.options, REPLContext.instance.pml
@@ -452,9 +434,7 @@ class VisualizeCommand < Command
       # We want to efficiently build an callgraph (without invoking scopegraphs)
       # Based on analysis/wca.rb
       machine_entry = pml.machine_functions.by_label(entry_label)
-      if machine_entry.nil?
-        raise ArgumentError, "No machine function to label #{machine_entry}"
-      end
+      raise ArgumentError, "No machine function to label #{machine_entry}" if machine_entry.nil?
       bitcode_entry = pml.bitcode_functions.by_name(entry_label)
       entry = { 'machinecode' => machine_entry,
                 'bitcode' => bitcode_entry,
@@ -615,9 +595,7 @@ class EditCommand < ModelFactCommand
   end
 
   def run(args)
-    if args.length != 1
-      raise ArgumentError, "Usage: edit (modelfacts)"
-    end
+    raise ArgumentError, "Usage: edit (modelfacts)" if args.length != 1
 
     opts, pml = REPLContext.instance.options, REPLContext.instance.pml
 
@@ -678,9 +656,7 @@ class EditCommand < ModelFactCommand
       file.close
       file.unlink
 
-      unless failed
-        REPLContext.instance.pml.modelfacts = facts
-      end
+      REPLContext.instance.pml.modelfacts = facts unless failed
     when :model
       if opts.modelfile && File.readable_real?(opts.modelfile)
         editor = get_edit_command('platinmodel') + [opts.modelfile]
@@ -716,9 +692,7 @@ class AnnotateCommand < ModelFactCommand
   end
 
   def run(args)
-    if args.length != 3
-      raise ArgumentError, "Usage: annotate <block> (guard|lbound|callee) \"expr\""
-    end
+    raise ArgumentError, "Usage: annotate <block> (guard|lbound|callee) \"expr\"" if args.length != 3
 
     modelfact = build_modelfact(args[0], args[1], args[2])
     REPLContext.instance.pml.modelfacts.add(modelfact)
@@ -803,9 +777,7 @@ class DiffCommand < Command
   end
 
   def run(args)
-    if args.length != 1
-      raise ArgumentError, "Usage: diff (annotations)"
-    end
+    raise ArgumentError, "Usage: diff (annotations)" if args.length != 1
 
     case @tokens[0].coerce(args[0])
     when :annotations
@@ -837,9 +809,7 @@ class ApplyCommand < DiffCommand
   end
 
   def run(args)
-    if args.length != 1
-      raise ArgumentError, "Usage: apply (annotations)"
-    end
+    raise ArgumentError, "Usage: apply (annotations)" if args.length != 1
 
     opts = REPLContext.instance.options
 
@@ -873,9 +843,7 @@ class ResultsCommand < Command
   end
 
   def run(args)
-    if args.length != 0
-      raise ArgumentError, "Usage: results"
-    end
+    raise ArgumentError, "Usage: results" if args.length != 0
 
     puts "Analysis results:"
     REPLContext.instance.timing.each do |k,v|
@@ -913,9 +881,7 @@ class GetCommand < Command
   end
 
   def run(args)
-    if args.length != 1
-      raise ArgumentError, "Usage: get <optionfield>"
-    end
+    raise ArgumentError, "Usage: get <optionfield>" if args.length != 1
 
     segments = args[0].split(/\./)
     element  = REPLContext.instance.options
@@ -957,9 +923,7 @@ class SetCommand < Command
   end
 
   def run(args)
-    if args.length < 3
-      raise ArgumentError, "Usage: <[...]|int,string,bool> <option> <=|<<> [<input>]"
-    end
+    raise ArgumentError, "Usage: <[...]|int,string,bool> <option> <=|<<> [<input>]" if args.length < 3
 
     conv     = @tokens[0].coerce(args.shift)
     segments = args.shift.split(/\./)
@@ -972,9 +936,7 @@ class SetCommand < Command
 
     while segments.length > 0
       key = segments.shift.to_sym
-      if !element.to_h.has_key?(key)
-        raise ArgumentError.new("No such key: #{key}")
-      end
+      raise ArgumentError.new("No such key: #{key}") if !element.to_h.has_key?(key)
       if segments.length == 0
         case op
         when '='
@@ -1152,9 +1114,7 @@ class Dispatcher
       # Extend only once
       break if valid || sanity > 1;
     end
-    if !valid
-      raise ArgumentError, "Failed to extend input"
-    end
+    raise ArgumentError, "Failed to extend input" if !valid
     return args
   end
 
