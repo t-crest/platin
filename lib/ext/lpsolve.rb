@@ -135,6 +135,6 @@ class LpSolveILP < ILP
   end
 
   def lp_solve_error(r)
-    return "LPSolver Error: #{lp_solve_error_msg(r)} (E#{r})"
+    "LPSolver Error: #{lp_solve_error_msg(r)} (E#{r})"
   end
 end

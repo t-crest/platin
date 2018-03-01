@@ -839,7 +839,7 @@ module PML
         ix += 1
       end
       return true if block.fallthrough_successor == target
-      return false
+      false
     end
 
     # the function corresponding the instruction is contained in
@@ -1191,7 +1191,7 @@ private
     end
 
     def may_return?
-      return @successors.empty?
+      @successors.empty?
     end
 
     ### MOCKUP like Block

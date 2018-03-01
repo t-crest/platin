@@ -392,7 +392,7 @@ class Context < PMLObject
   end
 
   def qname
-    return @callstring.to_a.map { |cs| "(#{cs.qname})" }.join("")
+    @callstring.to_a.map { |cs| "(#{cs.qname})" }.join("")
   end
 
   def self.empty
@@ -552,7 +552,7 @@ class ContextManager
 
   def self.create(history_length, looppeel = 0, loopunroll = 1)
     return ContextManagerEmpty.new if history_length < 1
-    return ContextManager.new(history_length, looppeel, loopunroll)
+    ContextManager.new(history_length, looppeel, loopunroll)
   end
 
   def initialize(history_length, looppeel = 0, loopunroll = 1)

@@ -303,7 +303,7 @@ class F4Exporter
 
   def export_linear_constraint(ff)
     warn("F4: no support for linear constraints: #{ff}")
-    return false
+    false
   end
 
   # export set of flow facts (minimum of loop bounds)
@@ -482,7 +482,7 @@ class FFXExporter
 
   def export_linear_constraint(ff)
     warn("FFX: no support for linear constraints: #{ff}")
-    return false
+    false
   end
 
   # export set of flow facts (minimum of loop bounds)

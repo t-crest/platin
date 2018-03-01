@@ -66,7 +66,7 @@ class RelationGraphValidation
 
   def is_machine_only_node(dstnode, srcnode)
     return false if dstnode.rg == srcnode.rg
-    return @pml.machine_code_only_functions.include?(dstnode.get_block(:dst).function.label)
+    @pml.machine_code_only_functions.include?(dstnode.get_block(:dst).function.label)
   end
 end
 

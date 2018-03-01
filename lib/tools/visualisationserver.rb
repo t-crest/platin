@@ -193,7 +193,7 @@ class Server
         return realfile if realfile.start_with? realbase
       rescue
       end
-      return nil
+      nil
     end
 
     def number_or_nil(string)

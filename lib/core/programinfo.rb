@@ -557,7 +557,7 @@ module PML
       # local relative flow facts are globally valid
       return true if local? && rhs.constant? && rhs.to_i == 0
       # otherwise, the scoep has to be the entry function
-      return scope.programpoint.kind_of?(Function) &&
+      scope.programpoint.kind_of?(Function) &&
              scope.function == entry_function &&
              scope.context.empty?
     end
@@ -577,7 +577,7 @@ module PML
 
     def context_sensitive?
       return true if lhs.any? { |term| !term.context.empty? }
-      return !scope.context.empty?
+      !scope.context.empty?
     end
 
     def references_empty_block?
@@ -621,7 +621,7 @@ module PML
       end
       require 'pp'
       pp infeasible_blocks
-      return infeasible_blocks
+      infeasible_blocks
     end
 
     # if this is a flowfact constraining the frequency of a single block,
@@ -871,7 +871,7 @@ module PML
     end
 
     def qname
-      return @id
+      @id
     end
   end
 

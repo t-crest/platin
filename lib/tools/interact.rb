@@ -39,19 +39,19 @@ class ListToken < Token
   end
 
   def complete(prefix)
-    return get_list().grep(/^#{Regexp.escape(prefix)}/i)
+    get_list().grep(/^#{Regexp.escape(prefix)}/i)
   end
 end
 
 class MachineFunctionToken < ListToken
   def get_list
-    return REPLContext.instance.pml.machine_functions.keys_label
+    REPLContext.instance.pml.machine_functions.keys_label
   end
 end
 
 class CommandToken < ListToken
   def get_list
-    return Dispatcher.instance.get_commands()
+    Dispatcher.instance.get_commands()
   end
 end
 
@@ -60,7 +60,7 @@ class BooleanToken < ListToken
   FALSE = ["false", "no", "n", "off"]
 
   def get_list
-    return TRUE + FALSE
+    TRUE + FALSE
   end
 
   def coerce(arg)
@@ -74,7 +74,7 @@ class TypeToken < ListToken
   TYPES = ['string', 'int', 'bool']
 
   def get_list
-    return TYPES + TYPES.map { |m| '[' + m + ']' }
+    TYPES + TYPES.map { |m| '[' + m + ']' }
   end
 
   def coerce(input)
@@ -86,7 +86,7 @@ class TypeToken < ListToken
 
     raise ArgumentError, "No such type: #{input}" if TYPES.grep(input).empty?
 
-    return lambda { |args|
+    lambda { |args|
       conv = args.map do |x|
         case input
         when 'string'
@@ -116,18 +116,18 @@ class OperationToken < ListToken
   OPS = ['=', '<<']
 
   def get_list
-    return OPS
+    OPS
   end
 
   def coerce(tok)
     raise ArgumentError, "Unknown op: #{tok}" if OPS.grep(tok).empty?
-    return tok
+    tok
   end
 end
 
 class OptionMemberToken < ListToken
   def get_list
-    return REPLContext.instance.options.to_h.keys
+    REPLContext.instance.options.to_h.keys
   end
 end
 
@@ -162,7 +162,7 @@ class ProgramPointToken < ListToken
     squelch { pp ||= Instruction.from_qname(REPLContext.instance.pml.bitcode_functions, qname) }
     squelch { pp ||= Instruction.from_qname(REPLContext.instance.pml.machine_functions, qname) }
     raise ArgumentError, "Unknown programpoint: #{qname}" if pp.nil?
-    return pp
+    pp
   end
 end
 
@@ -170,12 +170,12 @@ class PlatinaToken < ListToken
   ANNOTATIONS = ['guard', 'lbound', 'callee']
 
   def get_list
-    return ANNOTATIONS
+    ANNOTATIONS
   end
 
   def coerce(tok)
     raise ArgumentError, "Unknown annotation type: #{tok}" if ANNOTATIONS.grep(tok).empty?
-    return tok
+    tok
   end
 end
 
@@ -183,12 +183,12 @@ class EditCommandToken < ListToken
   EDITTARGET = ['modelfacts', 'model']
 
   def get_list
-    return EDITTARGET
+    EDITTARGET
   end
 
   def coerce(tok)
     raise ArgumentError, "Unknown annotation type: #{tok}" if EDITTARGET.grep(tok).empty?
-    return tok.to_sym
+    tok.to_sym
   end
 end
 
@@ -196,12 +196,12 @@ class VisualizeInfoToken < ListToken
   VISUALISATIONS = ['ilp', 'callgraph']
 
   def get_list
-    return VISUALISATIONS
+    VISUALISATIONS
   end
 
   def coerce(tok)
     raise ArgumentError, "Unknown annotation type: #{tok}" if VISUALISATIONS.grep(tok).empty?
-    return tok.to_sym
+    tok.to_sym
   end
 end
 
@@ -209,12 +209,12 @@ class DiffCommandToken < ListToken
   OPS = ['annotations']
 
   def get_list
-    return OPS
+    OPS
   end
 
   def coerce(tok)
     raise ArgumentError, "Unknown op: #{tok}" if OPS.grep(tok).empty?
-    return tok.to_sym
+    tok.to_sym
   end
 end
 
@@ -269,7 +269,7 @@ class HelpCommand < Command
   end
 
   def get_tokens
-    return @tokens
+    @tokens
   end
 end
 
@@ -310,7 +310,7 @@ class DebugCommand < Command
   end
 
   def get_tokens
-    return @tokens
+    @tokens
   end
 end
 
@@ -348,7 +348,7 @@ class WCETCommand < Command
   end
 
   def get_tokens
-    return @tokens
+    @tokens
   end
 end
 
@@ -496,7 +496,7 @@ class VisualizeCommand < Command
   end
 
   def get_tokens
-    return @tokens
+    @tokens
   end
 end
 
@@ -531,7 +531,7 @@ class ModelFactCommand < Command
   end
 
   def get_model_tokens
-    return @modeltokens
+    @modeltokens
   end
 end
 
@@ -672,7 +672,7 @@ class EditCommand < ModelFactCommand
   end
 
   def get_tokens
-    return @tokens
+    @tokens
   end
 
 end
@@ -754,7 +754,7 @@ class DiffCommand < Command
       return res if res != 0
       return res if op == other.op
       return -1 if op == :-
-      return 1
+      1
     end
   end
 
@@ -771,7 +771,7 @@ class DiffCommand < Command
     diffs = add.to_a + del.to_a
     diffs.sort!
 
-    return diffs.map do |d|
+    diffs.map do |d|
       d.emit(colorize)
     end.join("\n")
   end
@@ -788,7 +788,7 @@ class DiffCommand < Command
   end
 
   def get_tokens
-    return @tokens
+    @tokens
   end
 end
 
@@ -856,7 +856,7 @@ class ResultsCommand < Command
   end
 
   def get_tokens
-    return []
+    []
   end
 end
 
@@ -877,7 +877,7 @@ class GetCommand < Command
   end
 
   def get_tokens
-    return @tokens
+    @tokens
   end
 
   def run(args)
@@ -919,7 +919,7 @@ class SetCommand < Command
   end
 
   def get_tokens
-    return @tokens
+    @tokens
   end
 
   def run(args)
@@ -975,7 +975,7 @@ class REPLContext
   @@instance = REPLContext.new
 
   def self.instance
-    return @@instance
+    @@instance
   end
 
   private_class_method :new
@@ -989,7 +989,7 @@ class Dispatcher
   @@instance = Dispatcher.new
 
   def self.instance
-    return @@instance
+    @@instance
   end
 
   def register(name, command)
@@ -997,15 +997,15 @@ class Dispatcher
   end
 
   def get_commands()
-    return @commands.keys.sort
+    @commands.keys.sort
   end
 
   def get_commands_map()
-    return @commands
+    @commands
   end
 
   def [](cmd)
-    return @commands[cmd]
+    @commands[cmd]
   end
 
   def show_unresolved(unresolvedindirectcallexception)
@@ -1115,7 +1115,7 @@ class Dispatcher
       break if valid || sanity > 1;
     end
     raise ArgumentError, "Failed to extend input" if !valid
-    return args
+    args
   end
 
   def complete(input)

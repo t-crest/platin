@@ -52,7 +52,7 @@ class AisExportTool
   def self.get_exports_list(except = [])
     unknown = (Set[*except] - Set[*AIS_EXPORT_TYPES])
     assert("unknown export(s): #{unknown.map { |e| e }.join(',')}") { unknown.empty? }
-    return Set[*AIS_EXPORT_TYPES] - Set[*except]
+    Set[*AIS_EXPORT_TYPES] - Set[*except]
   end
 
   def self.add_options(opts)

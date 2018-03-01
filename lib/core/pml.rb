@@ -95,7 +95,7 @@ class PMLDoc
     # Mangle the slashes (necessary, as qname relies on the following format:
     # fun/block/instr
     file.gsub!(/\//, '_')
-    return file + ":" + name
+    file + ":" + name
   end
 
   def retag_machinefunctions(data)
@@ -172,16 +172,16 @@ class PMLDoc
     end
 
     def is_external?
-      return (@linkage == "ExternalLinkage")
+      (@linkage == "ExternalLinkage")
     end
 
     def is_weak?
       # FIXME: What is ExternalWeakLinkage
-      return (@linkage == "WeakAnyLinkage" || @linkage == "WeakODRLinkage")
+      (@linkage == "WeakAnyLinkage" || @linkage == "WeakODRLinkage")
     end
 
     def to_s
-      return "#{@name}(#{@file}, #{@linkage})"
+      "#{@name}(#{@file}, #{@linkage})"
     end
   end
 
@@ -311,7 +311,7 @@ class PMLDoc
       prune
     end
 
-    return data
+    data
   end
 
   # The linker operates on pmlfile level. Therefore it assumes that each pml
@@ -351,7 +351,7 @@ class PMLDoc
     # Purge obsolete information from data
     purge_unlinked_symbols(data, resolved)
 
-    return data
+    data
   end
 
   def analysis_entry(options)

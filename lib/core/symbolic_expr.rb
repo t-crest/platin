@@ -91,7 +91,7 @@ class SymbolicExpression
   def ==(other)
     return false if other.nil?
     raise Exception, "unexpected comparsion with symbolic expression" unless other.kind_of?(SymbolicExpression)
-    return super(other)
+    super(other)
   end
 
   def eql?(other); self == other; end

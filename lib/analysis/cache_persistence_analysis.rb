@@ -97,7 +97,7 @@ class PersistenceDataFlowAnalysis
     def ==(other)
       return (equal?(ZERO)) if other.equal?(ZERO)
       return (equal?(TOP)) if other.equal?(TOP)
-      return @set == other.set
+      @set == other.set
     end
   end
 
@@ -238,7 +238,7 @@ class PersistenceDataFlowAnalysis
 
     def subscope_persistent?(t, results)
       return false unless locally_persistent?(t)
-      return results.out(t).join(@final_state.in(t)) != TagSet::TOP
+      results.out(t).join(@final_state.in(t)) != TagSet::TOP
     end
 
     def dump(io = $stdout)

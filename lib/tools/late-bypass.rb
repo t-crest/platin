@@ -25,7 +25,7 @@ class LateBypassTool
   end
 
   def self.has_large_range(vf, threshold)
-    return vf.values.map do |v|
+    vf.values.map do |v|
       r = v.range
       (r.max - r.min) >= threshold if r # else, evaluates to nil
     end.any?

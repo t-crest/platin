@@ -286,7 +286,7 @@ private
       end
       current_node.last_index = block.instructions.size - 1
     end
-    return [first_nodes, block_predecessors, callnodes]
+    [first_nodes, block_predecessors, callnodes]
   end
 
   # compute index of instruction that should be the start of a new block after
@@ -310,7 +310,7 @@ private
       current_index += 1
     end
     current_node.last_index = current_index
-    return (current_node.last_index + 1)
+    (current_node.last_index + 1)
   end
 
   def add_block_predecessor(dict, succblock, prednode)

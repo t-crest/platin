@@ -111,11 +111,11 @@ class LoadInstruction
   end
 
   def store?
-    return @store
+    @store
   end
 
   def bypass?
-    return @bypass
+    @bypass
   end
 
   # True if the accessed address is known precisely
@@ -542,7 +542,7 @@ class ConflictFreeRegionFormation
     return nil if node.predecessors.any? { |pred| @region_header[pred] != pred_region }
 
     return nil unless expanded_conflict_free?(pred_region, node)
-    return pred_region
+    pred_region
   end
 end
 
@@ -571,7 +571,7 @@ class ConflictAnalysis
     def expanded_conflict_free?(pred_region, node)
       pred_tags = @region_tags[pred_region]
       node_tags = get_node_tags(node)
-      return analysis.cache_properties.conflict_free?(pred_tags + node_tags)
+      analysis.cache_properties.conflict_free?(pred_tags + node_tags)
     end
 
     def get_node_tags(node)
@@ -1176,7 +1176,7 @@ class IPETEdgeSCA < IPETEdge
   end
 
   def cfg_edge?
-    return false
+    false
   end
 end
 

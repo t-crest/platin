@@ -381,12 +381,12 @@ class ILPVisualisation < Visualizer
 
   def get_level(var)
     if var.respond_to?(:level)
-      return var.level
+      var.level
     elsif var.respond_to?(:function)
-      return var.function.level
+      var.function.level
     else
       STDERR.puts "Cannot infer level for #{var}"
-      return "unknown"
+      "unknown"
     end
   end
 
@@ -431,7 +431,7 @@ class ILPVisualisation < Visualizer
     l << '<I>loopheader</I>' if var.respond_to?(:loopheader?) && var.loopheader?
     str = l.join("<BR/>");
     return var.to_s if str.empty?
-    return '<' + str + '>'
+    '<' + str + '>'
   end
 
   def add_node(variable)
@@ -520,7 +520,7 @@ class ILPVisualisation < Visualizer
       v = @ilp.var_by_index(vi)
       vars.add(v)
     end
-    return vars
+    vars
   end
 
   def get_constraints
@@ -548,7 +548,7 @@ class ILPVisualisation < Visualizer
       c2v << vals
     end
 
-    return {
+    {
       constraints: constraints,
       c2v: c2v,
       v2c: v2c,

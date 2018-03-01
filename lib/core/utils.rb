@@ -151,7 +151,7 @@ module PML
       binary = File.join(path, "#{cmd}")
       return binary if File.executable? binary
     end
-    return nil
+    nil
   end
 
   class MissingToolException < Exception
