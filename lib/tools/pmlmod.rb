@@ -66,7 +66,7 @@ class PMLMatchModify
 
   def match_other(oo, pred)
     return oo if pred == :all
-    oo.select { |o| match_object(o, pred[0], Regexp.new(pred[1])) != nil }
+    oo.reject { |o| match_object(o, pred[0], Regexp.new(pred[1])) == nil }
   end
 
   def match_object(pml_object, attr_name, rx)

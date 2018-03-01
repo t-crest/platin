@@ -199,12 +199,12 @@ class PMLDoc
     # 5. Purge valuefacts based on both
 
     # Step 1: bit-code
-    (data['bitcode-functions'] || []).reject! do |fun|
+    (data['bitcode-functions'] || []).select! do |fun|
       symname = fun['name']
       assert ("Insufficient data for bitcode-function: #{symname}") do
         fun.key?('name') && resolved.key?(symname) && fun.key?('pmlsrcfile')
       end
-      resolved[symname] != fun['pmlsrcfile']
+      resolved[symname] == fun['pmlsrcfile']
     end
 
     # Step 2: machine-code

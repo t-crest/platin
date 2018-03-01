@@ -629,7 +629,7 @@ module PML
     # list of callsites in this block
     def callsites
       return @callsites if @callsites
-      @callsites = instructions.list.select { |i| !i.callees.empty? }
+      @callsites = instructions.list.reject { |i| i.callees.empty? }
     end
 
     # XXX: LLVM specific/arch specific

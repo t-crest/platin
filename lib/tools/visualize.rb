@@ -128,7 +128,7 @@ class FlowGraphVisualizer < Visualizer
           profile[edge.source].push(e)
         end
         [t.origin, profile]
-      end.select { |k,v| !v.empty? }
+      end.reject { |k,v| v.empty? }
     ]
   end
 
@@ -149,7 +149,7 @@ class FlowGraphVisualizer < Visualizer
   def find_vedge_timing(profile, node, succ)
     start = Set.new(get_vblocks(node, :predecessors))
     targets = Set.new(get_vblocks(succ, :successors))
-    if (start == targets) && ![*succ].any? { |s| s.kind_of?(CfgNode) && s.block_start? }
+    if (start == targets) && [*succ].none? { |s| s.kind_of?(CfgNode) && s.block_start? }
       [*node].map { |n| find_vnode_timing(profile, n) }.flatten
     elsif succ.kind_of?(ExitNode)
       start.map { |b| profile[b] || [] }.flatten.select do |t|
@@ -225,7 +225,7 @@ class FlowGraphVisualizer < Visualizer
         #      the block at least.
         t = block_timing.map do |origin,profile|
           [origin, find_vedge_timing(profile, node, s).select { |e| e.wcetfreq > 0 }]
-        end.select { |o,p| !p.empty? }
+        end.reject { |o,p| p.empty? }
         unless t.empty?
           # TODO: visualize criticality < 1
           options["color"] = "#ff0000"

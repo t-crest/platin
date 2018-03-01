@@ -234,8 +234,8 @@ class VariableElimination
       elim_vids.delete(elimvar)
     end
     new_constraints = []
-    known_constraints.values.select do |cref|
-      cref.status != :garbage
+    known_constraints.values.reject do |cref|
+      cref.status == :garbage
     end.map do |cref|
       cref.constraint
     end
@@ -493,7 +493,7 @@ private
     ipet = IPETBuilder.new(pml,builder_opts,ilp)
 
     # Build IPET (no cost) and add flow facts
-    ffs = flowfacts.select { |ff| !ff.symbolic_bound? }
+    ffs = flowfacts.reject { |ff| ff.symbolic_bound? }
     ipet.build(entry, ffs, mbb_variables: true) { |edge| 0 }
     ipet
   end
@@ -540,7 +540,7 @@ private
       lhs[entry_block] = 0
 
       # Create flow-fact (with dealing different IPET edges)
-      terms = lhs.select { |v,c| c != 0 }.map do |v,c|
+      terms = lhs.reject { |v,c| c == 0 }.map do |v,c|
         pp = if v.kind_of?(IPETEdge)
                if v.cfg_edge?
                  v.cfg_edge

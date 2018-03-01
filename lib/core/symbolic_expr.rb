@@ -215,7 +215,7 @@ class SEBinary < SymbolicExpression
     args = args.map do |arg|
       if arg.kind_of?(Integer) then SEInt.new(arg) else arg end
     end
-    args = args.select { |e| e.constant? } + args.select { |e| !e.constant? } if SEBinary.commutative?(op)
+    args = args.select { |e| e.constant? } + args.reject { |e| e.constant? } if SEBinary.commutative?(op)
     fst = args.shift
     raise Exception, "SEbinary#fold: no arguments" unless fst
     args.inject(fst) do |a,b|

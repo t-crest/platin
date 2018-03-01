@@ -265,7 +265,7 @@ class ILP
   # const_rhs .. integer
   def add_constraint(terms_lhs,op,const_rhs,name,tag)
     assert("Markers should not appear in ILP") do
-      !terms_lhs.any? { |v,c| v.kind_of?(Marker) }
+      terms_lhs.none? { |v,c| v.kind_of?(Marker) }
     end
     terms_indexed = Hash.new(0)
     terms_lhs.each do |v,c|

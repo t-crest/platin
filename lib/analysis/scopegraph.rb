@@ -276,9 +276,9 @@ private
     @visited[node] = true
 
     # feasible blocks in the function
-    function_blocks = node.function.blocks.select do |b|
+    function_blocks = node.function.blocks.reject do |b|
       # if block is infeasible, ignore it
-      !@refinement.infeasible_block?(b, node.context)
+      @refinement.infeasible_block?(b, node.context)
     end
     # build SCCs
     build_regions(node, function_blocks)
