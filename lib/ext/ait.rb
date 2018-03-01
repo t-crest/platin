@@ -529,7 +529,7 @@ class AISExporter
   def export_flowfact(ff)
     assert("export_flowfact: loop bounds need to be exported separately") { ff.get_loop_bound.nil? }
 
-    if (!ff.local?) && ff.scope.function != @entry
+    if !ff.local? && ff.scope.function != @entry
       warn("aiT: non-local flow fact in scope #{ff.scope} not supported")
       false
 

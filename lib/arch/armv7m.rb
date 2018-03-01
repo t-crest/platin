@@ -24,7 +24,7 @@ class ExtractSymbols
           instruction = current_function.instructions[current_ix]
           if instruction.nil?
             if insname[0] != "." && insname != "nop"
-              warn ("No instruction found at #{current_function}+#{current_ix} instructions (#{insname})")
+              warn "No instruction found at #{current_function}+#{current_ix} instructions (#{insname})"
             end
             next
           end
@@ -38,7 +38,7 @@ class ExtractSymbols
 
           # SANITY CHECK (begin)
           if (re = OPCODE_NAMES[instruction.opcode])
-            die ("Address extraction heuristic probably failed at #{addr}: #{insname} not #{re}") if insname !~ re
+            die "Address extraction heuristic probably failed at #{addr}: #{insname} not #{re}" if insname !~ re
           end
           # SANITY CHECK (end)
 

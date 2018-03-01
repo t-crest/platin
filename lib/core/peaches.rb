@@ -91,7 +91,7 @@ class Context
   def insert(label, val)
     list  = (@bindings[label] ||= [])
     entry = Entry.new(@level, val)
-    if (!list.empty?) && (list.last.level >= level)
+    if !list.empty? && (list.last.level >= level)
       raise PeachesBindingError, "Variable #{label} already bound at same scope #{level}"
     end
     list << entry
@@ -674,7 +674,7 @@ class Parser
   end
 
   NUM = prim :int64 do
-    |num| ASTNumberLiteral.new (Integer(num))
+    |num| ASTNumberLiteral.new Integer(num)
   end
   # Magic here: negative lookahead to prohibit keyword/symbol ambiguity
   IDENTIFIER = seq((''.r ^ lazy { KEYWORD }), symbol_(/[a-zA-Z]\w*/)) do |_,id|
@@ -895,23 +895,23 @@ if __FILE__ == $PROGRAM_NAME
   parser.program.eof.parse! "f a b = a * b"
   parser.program.eof.parse! "f a b = if 2 /= 4 then a * b else b"
 
-  parser.arith_expr.eof.parse! ("f")
+  parser.arith_expr.eof.parse! "f"
 
-  parser.arith_expr.eof.parse! ("hugo4")
-  parser.arith_expr.eof.parse! ("42 - 8 * 4*25 + 20 - 32")
-  parser.arith_expr.eof.parse! ("2*42 - 8 * 4*25 + 20 - 32")
-  parser.arith_expr.eof.parse! ("4 + 25 * 8")
+  parser.arith_expr.eof.parse! "hugo4"
+  parser.arith_expr.eof.parse! "42 - 8 * 4*25 + 20 - 32"
+  parser.arith_expr.eof.parse! "2*42 - 8 * 4*25 + 20 - 32"
+  parser.arith_expr.eof.parse! "4 + 25 * 8"
 
-  parser.cond_expr.eof.parse! ("(32 - 1) /= 42")
-  parser.cond_expr.eof.parse! ("(4 /= 5)")
-  parser.cond_expr.eof.parse! ("(4 /= 5) && ((32 - 1) /= 42)")
-  parser.cond_expr.eof.parse! ("4 /= 5 && 32 - 1 /= 42")
+  parser.cond_expr.eof.parse! "(32 - 1) /= 42"
+  parser.cond_expr.eof.parse! "(4 /= 5)"
+  parser.cond_expr.eof.parse! "(4 /= 5) && ((32 - 1) /= 42)"
+  parser.cond_expr.eof.parse! "4 /= 5 && 32 - 1 /= 42"
 
-  parser.expr.eof.parse! ("if 4 /= 5 then 42 else 21")
-  parser.expr.eof.parse! ("BUFSIZE >= 10")
+  parser.expr.eof.parse! "if 4 /= 5 then 42 else 21"
+  parser.expr.eof.parse! "BUFSIZE >= 10"
 
-  parser.decl.eof.parse! ("x = if 4 /= 5 then 42 else 21")
-  parser.decl.eof.parse! ("f x y = if 4 /= 5 then 42 else 21")
+  parser.decl.eof.parse! "x = if 4 /= 5 then 42 else 21"
+  parser.decl.eof.parse! "f x y = if 4 /= 5 then 42 else 21"
 
   parser.program.eof.parse! %Q[x = 4
 y = 10 * x + 20
@@ -928,22 +928,22 @@ y = 10 * x + 20 {-
 -}
 f a b = if 2 /= 4 || (10 / 2 == 5) then a + b else a * b]
 
-  parser.comment.parse! ("{- asdf -}")
-  parser.comment.parse! ("-- ASDF ASDF")
-  parser.comment.eof.parse! ("-- ASDF ASDF")
-  parser.space.parse! (" {- asdf -}")
+  parser.comment.parse! "{- asdf -}"
+  parser.comment.parse! "-- ASDF ASDF"
+  parser.comment.eof.parse! "-- ASDF ASDF"
+  parser.space.parse! " {- asdf -}"
 
-  parser.program.eof.parse! ("x = 1 + {- asdf -} 4")
-  parser.program.eof.parse! ("x = 1 +{- asdf -}4")
-  parser.program.eof.parse! ("x = 1 + 4 -- asdf")
+  parser.program.eof.parse! "x = 1 + {- asdf -} 4"
+  parser.program.eof.parse! "x = 1 +{- asdf -}4"
+  parser.program.eof.parse! "x = 1 + 4 -- asdf"
 
   program = parser.program.parse! %Q[x = 4
 y = 10 * x + 20
 z = if y > 10 && 1 /= 2 then x else y]
   assert_literal.call(program, "z", 4)
 
-  program = parser.call.parse! ("f 4*5 42")
-  program = parser.call.parse! ("f")
+  program = parser.call.parse! "f 4*5 42"
+  program = parser.call.parse! "f"
 
   program = parser.program.parse! %Q[-- Full size comment
 x ={- "ASDF" -} 4

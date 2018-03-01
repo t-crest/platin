@@ -421,7 +421,7 @@ class Context < PMLObject
 
   def self.callstack_suffix(stack, length)
     return Context.new(BoundedStack.empty) if length == 0
-    start = (length >= stack.length) ? 0 : (-length)
+    start = (length >= stack.length) ? 0 : -length
     entries = stack[start..-1].map do |callsite|
       CallContextEntry.new(callsite)
     end

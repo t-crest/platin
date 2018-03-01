@@ -16,7 +16,7 @@ class PMLPath
       @predicates.push(parse_predicate($1))
       str = $'
     end
-    warn ("Trailing unparsed PMLPath: #{str}") unless str.empty?
+    warn "Trailing unparsed PMLPath: #{str}" unless str.empty?
   end
 
   def parse_predicate(str)
@@ -86,7 +86,7 @@ class PMLMatchModify
 
   def modify(pml_object, action)
     unless [:clear].include? action
-      warn ("Unknown PML modification action: #{action.to_s}")
+      warn "Unknown PML modification action: #{action.to_s}"
       return
     end
     data = pml_object.data

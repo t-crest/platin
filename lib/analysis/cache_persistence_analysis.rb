@@ -94,8 +94,8 @@ class PersistenceDataFlowAnalysis
     end
 
     def ==(other)
-      return (equal?(ZERO)) if other.equal?(ZERO)
-      return (equal?(TOP)) if other.equal?(TOP)
+      return equal?(ZERO) if other.equal?(ZERO)
+      return equal?(TOP) if other.equal?(TOP)
       @set == other.set
     end
   end

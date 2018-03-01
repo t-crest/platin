@@ -411,7 +411,7 @@ class VisualizeCommand < Command
       }
 
       assetdir = File.realpath(File.join(__dir__, '..', '..', 'assets'))
-      assert ("Not a directory #{assetdir}") { File.directory? (assetdir) }
+      assert ("Not a directory #{assetdir}") { File.directory? assetdir }
 
       server = VisualisationServer::Server.new( \
                           :ilp, \
@@ -1047,7 +1047,7 @@ class Dispatcher
     begin
       args = input.shellsplit
     rescue ArgumentError => arg
-      STDERR.puts (arg)
+      STDERR.puts arg
       return
     end
 

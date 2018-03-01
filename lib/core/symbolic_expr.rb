@@ -71,7 +71,7 @@ class SymbolicExpression
 
   def add(*os); SEBinary.collect_fold('+',self,*os); end
 
-  def -(o);    self + (-o); end
+  def -(o);    self + -o; end
 
   def *(o);    SEBinary.collect_fold('*',self,o); end
 

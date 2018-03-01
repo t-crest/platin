@@ -204,7 +204,7 @@ module PML
   def assert(msg)
     unless yield
       pnt = Thread.current.backtrace[1]
-      $stderr.puts ("#{$PROGRAM_NAME}: Assertion failed in #{pnt}: #{msg}")
+      $stderr.puts "#{$PROGRAM_NAME}: Assertion failed in #{pnt}: #{msg}"
       puts "    " + Thread.current.backtrace[1..-1].join("\n    ")
           raise Exception, "Assertion Error"
     end

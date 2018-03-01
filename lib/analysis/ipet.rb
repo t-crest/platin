@@ -235,7 +235,7 @@ class IPETModel
         when Loop
           sum_loop_entry(pp,c * sgn).each { |k,v| terms[k] += v }
         when Integer
-          rhs_const += pp * (-sgn)
+          rhs_const += pp * -sgn
         else
           terms[pp] += c * sgn
         end
@@ -779,7 +779,7 @@ private
     each_relation_edge(rg) do |edge|
       rg_level = relation_graph_level(edge.level.to_s)
       source_block = edge.source.get_block(rg_level)
-      target_block = (edge.target.type == :exit) ? :exit : (edge.target.get_block(rg_level))
+      target_block = (edge.target.type == :exit) ? :exit : edge.target.get_block(rg_level)
 
       assert("Bad RG: #{edge}") { source_block && target_block }
       # (3),(4)
