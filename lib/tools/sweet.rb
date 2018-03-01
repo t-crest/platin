@@ -83,7 +83,7 @@ class SweetAnalyzeTool
 
   def self.run(_pml, options)
     needs_options(options, :sweet, :alf_file, :analysis_entry, :sweet_flowfact_file)
-    alfopts = {standalone: true, memory_areas: [(0..0xffff)], ignored_definitions: AlfTool.default_ignored_definitions }
+    alfopts = { standalone: true, memory_areas: [(0..0xffff)], ignored_definitions: AlfTool.default_ignored_definitions }
     alfopts[:ignore_volatiles] = true if options.sweet_ignore_volatiles
     AlfTool.run(options, alfopts)
     i_args  = [ "-i=#{options.alf_file}", "func=#{options.analysis_entry}" ]

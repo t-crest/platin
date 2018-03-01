@@ -579,7 +579,7 @@ class ILPVisualisation < Visualizer
     format ||= :svg
 
     assert("Graph has to be drawn first drawn") { !@graph.nil? }
-    @graph.output({format => String})
+    @graph.output({ format => String })
   end
 
   def visualize(_title, opts = {})

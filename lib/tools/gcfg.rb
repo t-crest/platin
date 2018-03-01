@@ -14,19 +14,19 @@ class GCFGTool
   def transform_gcfg(gcfg, address)
     # Frist we add some functions and containers for our data
     ## Bitcode Function
-    data = {'name' => gcfg.name, 'level' => 'bitcode',
-            'blocks' => [], 'address' => address}
+    data = { 'name' => gcfg.name, 'level' => 'bitcode',
+             'blocks' => [], 'address' => address }
     bitcode_function = @pml_out.bitcode_functions.add_function(data)
 
     ## Machine Code Function
-    data = {'name' => address, 'mapsto' => gcfg.name,
-            'level' => 'machinecode', 'blocks' => [], 'address' => 0}
+    data = { 'name' => address, 'mapsto' => gcfg.name,
+             'level' => 'machinecode', 'blocks' => [], 'address' => 0 }
     machine_function = @pml_out.machine_functions.add_function(data)
 
     # Relationship Graph Container
-    data = {'src' => {'level' => 'bitcode', 'function' => bitcode_function.name},
-            'dst' => {'level' => 'machinecode', 'function' => machine_function.name},
-           'nodes' => [], 'status' => 'valid'}
+    data = { 'src' => { 'level' => 'bitcode', 'function' => bitcode_function.name },
+             'dst' => { 'level' => 'machinecode', 'function' => machine_function.name },
+             'nodes' => [], 'status' => 'valid' }
     rg = RelationGraph.new(data, @pml_out.bitcode_functions, @pml_out.machine_functions)
     @pml_out.relation_graphs.add(rg)
 
@@ -38,7 +38,7 @@ class GCFGTool
       mapping[gcfg_node] = [rg_region, bc_region, mc_region]
     end
 
-    exit_node = rg.add_node(RelationNode.new(rg, {'name' => 'RG_exit', 'type' => 'exit'}))
+    exit_node = rg.add_node(RelationNode.new(rg, { 'name' => 'RG_exit', 'type' => 'exit' }))
     # Connect Regions according to the GCFG Edges
     mapping.each do |source, value|
       src_rg, src_bc, src_mc = value

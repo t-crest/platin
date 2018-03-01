@@ -240,7 +240,7 @@ class Server
         out = code[from, to - from].join("\n")
       end
       resp.content_type = 'application/json'
-      resp.body = JSON.generate({from: from + 1, to: to + 1, code: out})
+      resp.body = JSON.generate({ from: from + 1, to: to + 1, code: out })
       raise WEBrick::HTTPStatus::OK
     end
   end

@@ -32,9 +32,9 @@ class WCA
     if entry_label.start_with?("GCFG:")
       gcfg_entry = @pml.analysis_entry(@options)
       machine_entry = gcfg_entry.abb.get_region(:dst).entry_node
-      entry = {'gcfg' => gcfg_entry,
-               'machinecode' => gcfg_entry,
-               'bitcode' => gcfg_entry,
+      entry = { 'gcfg' => gcfg_entry,
+                'machinecode' => gcfg_entry,
+                'bitcode' => gcfg_entry,
               }
       @options.gcfg_analysis = true
     else

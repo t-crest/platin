@@ -143,7 +143,7 @@ class IPETEdge
   attr_reader :qname,:source,:target, :level
   def initialize(edge_source, edge_target, level)
     @source,@target,@level = edge_source, edge_target, level.to_sym
-    arrow = {bitcode: "~>", machinecode: "->", gcfg: "+>"}[@level]
+    arrow = { bitcode: "~>", machinecode: "->", gcfg: "+>" }[@level]
     @qname = "#{@source.qname}#{arrow}#{:exit == @target ? 'exit' : @target.qname}"
   end
 
@@ -178,7 +178,7 @@ class IPETEdge
   end
 
   def to_s
-    arrow = {bitcode: "~>", machinecode: "->", gcfg: "+>"}[@level]
+    arrow = { bitcode: "~>", machinecode: "->", gcfg: "+>" }[@level]
     "#{@source}#{arrow}#{:exit == @target ? 'exit' : @target}"
   end
 
@@ -619,9 +619,9 @@ class IPETBuilder
     # Add all edges within the ABB
     edges = {}
     region.nodes.each do |bb|
-      edges[bb] = {in: [], out: []}
+      edges[bb] = { in: [], out: [] }
     end
-    edges[:exit] = {in: [], out: []}
+    edges[:exit] = { in: [], out: [] }
 
 
     @mc_model.each_intra_abb_edge(abb) do |ipet_edge|
@@ -779,7 +779,7 @@ private
     # map from src/dst edge to set of corresponding relation edges (constraint set (3) and (4))
     rg_edges_of_edge = { src: {}, dst: {} }
     # map from progress node to set of outgoing src/dst edges (constraint set (5))
-    rg_progress_edges = { }
+    rg_progress_edges = {}
     each_relation_edge(rg) do |edge|
       rg_level = relation_graph_level(edge.level.to_s)
       source_block = edge.source.get_block(rg_level)

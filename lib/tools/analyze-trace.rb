@@ -84,7 +84,7 @@ class AnalyzeTraceTool
   def export_facts
     outpml = @pml
 
-    fact_context = { 'level' => 'machinecode', 'origin' => @options.flow_fact_output || 'trace'}
+    fact_context = { 'level' => 'machinecode', 'origin' => @options.flow_fact_output || 'trace' }
 
     # if we have a global recorder, add timing extracted from trace
     global_recorders = @main_recorder.global_recorders

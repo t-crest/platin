@@ -386,7 +386,7 @@ class FlowFactTransformation
     rs, unresolved = target_functions.reachable_from(target_analysis_entry.name)
 
     # partition local flow-facts by entry (if possible), rest is transformed in global scope
-    flowfacts_by_entry = { }
+    flowfacts_by_entry = {}
     flowfacts.each do |ff|
       next if ff.symbolic_bound? # skip symbolic flow facts
       transform_entry = nil

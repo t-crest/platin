@@ -256,7 +256,7 @@ class ILP
     @indexmap[v] = index
     @vartype[v] = vartype
     @eliminated.delete(v)
-    add_indexed_constraint({index => -1},"less-equal",0,"non_negative_v_#{index}",Set.new([:positive]))
+    add_indexed_constraint({ index => -1 },"less-equal",0,"non_negative_v_#{index}",Set.new([:positive]))
     index
   end
 

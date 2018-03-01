@@ -40,7 +40,7 @@ end
 class ExtractSymbols
   OP_CONSTPOOL = 121
   OP_IMPLICIT_DEF = 8
-  OPCODE_NAMES = {233 => /mov/}
+  OPCODE_NAMES = { 233 => /mov/ }
   def self.run(cmd,extractor,pml,options)
     r = IO.popen("#{cmd} -d --no-show-raw-insn '#{options.binary_file}'") do |io|
       current_label, current_ix, current_function = nil, 0, nil

@@ -126,7 +126,7 @@ class ExtractSymbols
   end
   private
   def self.build_instruction(addr, _cond, size, instr, args)
-    ret = {'address' => addr, 'size' => size, 'source' => 'objdump', 'opcode' => instr}
+    ret = { 'address' => addr, 'size' => size, 'source' => 'objdump', 'opcode' => instr }
     reg_args = args.scan('$r').length
     case instr
     when "add", "sub", "and"
@@ -143,8 +143,8 @@ class ExtractSymbols
       ret
     when "sws", "swm", "swl", "swc", "lwl", "lwm", "lwc"
       ret['opcode'] = instr.upcase
-      ret['memode'] = {"s" => "store", "l" => "load"}[instr[0]]
-      ret['memtype'] = {"l" => "local", "m" => "memory", "s" => "stack", "c" => "cache"}[instr[2]]
+      ret['memode'] = { "s" => "store", "l" => "load" }[instr[0]]
+      ret['memtype'] = { "l" => "local", "m" => "memory", "s" => "stack", "c" => "cache" }[instr[2]]
       ret
     when "ret", "retnd", "xret"
       ret['opcode'] = instr.upcase
