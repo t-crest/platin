@@ -18,9 +18,9 @@ EOF
 
   pml = PMLDoc.from_files(options.input, options)
 
-  pml.flowfacts.delete_if { |ff|
+  pml.flowfacts.delete_if do |ff|
     ff.origin == "user.bc"
-  }
+  end
 
   pml.data['flowfacts'] = pml.flowfacts.to_pml
 

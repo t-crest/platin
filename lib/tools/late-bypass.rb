@@ -11,13 +11,13 @@ class LateBypassTool
 
   def LateBypassTool.add_config_options(opts)
     opts.on("-t", "--threshold [THRESHOLD]", Integer,
-            "classify as unknown if a range is wider than 2^THRESHOLD") { |num|
+            "classify as unknown if a range is wider than 2^THRESHOLD") do |num|
       opts.options.range_threshold = (1 << num) unless num.nil?
-    }
+    end
     opts.options.backup = false
-    opts.on("--backup", "backup binary before modifying") {
+    opts.on("--backup", "backup binary before modifying") do
       opts.options.backup = true
-    }
+    end
   end
 
   def LateBypassTool.add_options(opts)
@@ -25,10 +25,10 @@ class LateBypassTool
   end
 
   def LateBypassTool.has_large_range(vf, threshold)
-    return vf.values.map { |v|
+    return vf.values.map do |v|
       r = v.range
       (r.max - r.min) >= threshold if r # else, evaluates to nil
-    }.any?
+    end.any?
   end
 
   def LateBypassTool.run(pml, options)
@@ -38,7 +38,7 @@ class LateBypassTool
 
     # select all valuefacts that come from aiT describing a load[/store]
     # possibly accessing a large address range
-    valuefacts = pml.valuefacts.select { |vf|
+    valuefacts = pml.valuefacts.select do |vf|
         vf.level == "machinecode" &&
         vf.origin == "aiT" &&
         vf.programpoint.kind_of?(PML::Instruction) &&
@@ -47,18 +47,18 @@ class LateBypassTool
         ['mem-address-read'].include?(vf.variable) &&
         vf.programpoint.memtype == "cache" &&
         has_large_range(vf, options.range_threshold)
-    }
+    end
 
     # get the instruction addresses these facts refer to;
     # as they can be contained more than once (multiple contexts),
     # create a set
-    addresses = valuefacts.map { |vf|
+    addresses = valuefacts.map do |vf|
       die("Cannot obtain address for instruction " +
           "(forgot 'platin extract-symbols'?)") unless vf.programpoint.address
       assert("Wrong read instruction") { vf.programpoint.memmode == "load" }
       vf.programpoint.memtype = "memory" # rewrite memory type in pml
       vf.programpoint.address
-    }.to_set
+    end.to_set
 
     unless addresses.empty?
       # if we have a list of addresses of instructions to rewrite,
@@ -69,9 +69,9 @@ class LateBypassTool
       info "Rewriting #{addresses.size} instructions"
       IO.popen(
         ["#{File.dirname(__FILE__)}/../ext/patch_loads", options.binary_file],
-        'w') { |f|
+        'w') do |f|
           addresses.each { |addr| f.puts(addr) }
-      }
+      end
     else
       info "No instructions to rewrite"
     end

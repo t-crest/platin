@@ -46,9 +46,9 @@ class InspectTool
       fun.loops.each do |loop|
         next if unbounded and ffmap[loop.loopheader]
         io.puts "=== #{level} loop #{loop.to_s} ==="
-        (ffmap[loop.loopheader] || []).each { |ff|
+        (ffmap[loop.loopheader] || []).each do |ff|
           io.puts "bounded by #{ff.to_s}"
-        }
+        end
       end
     end
   end

@@ -13,10 +13,10 @@ class ToolConfigTool
   def ToolConfigTool.add_options(opts)
     opts.on("-t","--tool TOOL", "tool to configure (=clang)") { |t| opts.options.tool = t }
     opts.on("-m","--mode MODE", "configuration mode (tool specific)") { |m| opts.options.mode = m }
-    opts.on("--sca BOUNDS:SOLVER", "stack cache analysis options (required to enable analysis in clang") { |s|
+    opts.on("--sca BOUNDS:SOLVER", "stack cache analysis options (required to enable analysis in clang") do |s|
       sopts = s.split(':')
       opts.options.sca = { 'bounds' => sopts[0], 'solver' => sopts[1] }
-    }
+    end
     opts.add_check do |options|
       die("Option --tool is mandatory") unless options.tool
     end

@@ -43,16 +43,16 @@ class CallGraphVisualizer < Visualizer
     cg = ScopeGraph.new(function, refinement, @pml, @options).callgraph
     nodes, nids = {}, {}
     cg.nodes.each_with_index { |n,i| nids[n] = i }
-    cg.nodes.each { |node|
+    cg.nodes.each do |node|
       nid = nids[node]
       label = node.to_s
       nodes[node] = g.add_nodes(nid.to_s, :label => label)
-    }
-    cg.nodes.each { |n|
-      n.successors.each { |s|
+    end
+    cg.nodes.each do |n|
+      n.successors.each do |s|
         g.add_edges(nodes[n],nodes[s])
-      }
-    }
+      end
+    end
     g
   end
 end
@@ -66,21 +66,21 @@ class PlainCallGraphVisualizer < Visualizer
     g = digraph("Callgraph for #{@entry}")
     nodes, nids = {}, {}
     @functions.each_with_index { |n,i| nids[n] = i }
-    @functions.each { |node|
+    @functions.each do |node|
       nid = nids[node]
       src_hint = node.blocks.first.src_hint
       src_hint = src_hint ? '<BR/>' + src_hint : ''
       label = '<' + node.to_s + '<BR/><B>' + node.label.to_s + '</B>' + src_hint + '>'
       nodes[node] = g.add_nodes(nid.to_s, :label => label)
-    }
-    @functions.each { |mf|
-      mf.callsites.each { |cs|
+    end
+    @functions.each do |mf|
+      mf.callsites.each do |cs|
         next if @mc_model.infeasible?(cs.block)
-        @mc_model.calltargets(cs).each { |callee|
+        @mc_model.calltargets(cs).each do |callee|
           g.add_edges(nodes[mf],nodes[callee]) if nodes[mf] && nodes[callee]
-        }
-      }
-    }
+        end
+      end
+    end
     g
   end
 end
@@ -94,16 +94,16 @@ class ScopeGraphVisualizer < Visualizer
     sg = ScopeGraph.new(function, refinement, @pml, @options)
     nodes, nids = {}, {}
     sg.nodes.each_with_index { |n,i| nids[n] = i }
-    sg.nodes.each { |node|
+    sg.nodes.each do |node|
       nid = nids[node]
       label = node.to_s
       nodes[node] = g.add_nodes(nid.to_s, :label => label)
-    }
-    sg.nodes.each { |n|
-      n.successors.each { |s|
+    end
+    sg.nodes.each do |n|
+      n.successors.each do |s|
         g.add_edges(nodes[n],nodes[s])
-      }
-    }
+      end
+    end
     g
   end
 end
@@ -113,27 +113,27 @@ class FlowGraphVisualizer < Visualizer
 
   def extract_timing(function, timing)
     Hash[
-      timing.select{ |t| t.profile }.map { |t|
+      timing.select{ |t| t.profile }.map do |t|
 	profile = {}
-	t.profile.select { |e|
+	t.profile.select do |e|
 	  e.reference.function == function
-	}.each { |e|
+	end.each do |e|
 	  next unless e
 	  edge = e.reference.programpoint
 	  # We only keep edge profiles here
 	  next unless edge.kind_of?(Edge)
 	  profile[edge.source] ||= []
 	  profile[edge.source].push(e)
-	}
+	end
 	[t.origin, profile]
-      }.select{ |k,v| not v.empty? }
+      end.select{ |k,v| not v.empty? }
     ]
   end
 
   def get_vblocks(node, adjacentcy)
-    [*node].map { |n|
+    [*node].map do |n|
       n.block || get_vblocks(n.send(adjacentcy), adjacentcy)
-    }.flatten
+    end.flatten
   end
 
   def find_vnode_timing(profile, node)
@@ -150,13 +150,13 @@ class FlowGraphVisualizer < Visualizer
     if start == targets and not [*succ].any? { |s| s.kind_of?(CfgNode) and s.block_start? }
       [*node].map { |n| find_vnode_timing(profile, n) }.flatten
     elsif succ.kind_of?(ExitNode)
-      start.map{ |b| profile[b] || [] }.flatten.select { |t|
+      start.map{ |b| profile[b] || [] }.flatten.select do |t|
         t.reference.programpoint.exitedge?
-      }
+      end
     else
-      start.map{ |b| profile[b] || [] }.flatten.select { |t|
+      start.map{ |b| profile[b] || [] }.flatten.select do |t|
 	targets.include?( t.reference.programpoint.target )
-      }
+      end
     end
   end
 
@@ -221,9 +221,9 @@ class FlowGraphVisualizer < Visualizer
 	#      them twice. No easy way to fix this tough.. If we choose to annotate only
 	#      one of those edges here, it should be edge with the longest path through
 	#      the block at least.
-	t = block_timing.map{ |origin,profile|
+	t = block_timing.map do |origin,profile|
 	  [origin, find_vedge_timing(profile, node, s).select{ |e| e.wcetfreq > 0 } ]
-	}.select{ |o,p| not p.empty? }
+	end.select{ |o,p| not p.empty? }
 	if not t.empty?
 	  # TODO: visualize criticality < 1
 	  options["color"] = "#ff0000"
@@ -241,14 +241,14 @@ class FlowGraphVisualizer < Visualizer
 	      #      Merging timing results should go into core library functions.
 	      #      We might need to merge differently depending on origin!!
 	      #      In that case, ask the ext plugins (aiT,..) to do the work.
-	      freq, cycles, wcet, crit = profile.inject([0,0,0,0]) { |v,e|
+	      freq, cycles, wcet, crit = profile.inject([0,0,0,0]) do |v,e|
 		freq, cycles, wcet, crit = v
 		[freq + e.wcetfreq,
 		 [cycles, e.cycles].max,
 		 wcet + e.wcet_contribution,
 		 [crit, e.criticality || 1].max
 		]
-	      }
+	      end
 	      # Avoid overlapping of the first character and the edge by starting
 	      # the label with a space
 	      options["label"] += "\\l" if options["label"] != ""
@@ -659,11 +659,11 @@ class VisualizeTool
 
   def VisualizeTool.default_targets(pml)
     entry = pml.machine_functions.by_label("main")
-    pml.machine_functions.reachable_from(entry.name).first.reject { |f|
+    pml.machine_functions.reachable_from(entry.name).first.reject do |f|
       f.label =~ /printf/
-    }.map { |f|
+    end.map do |f|
       f.label
-    }
+    end
   end
 
   def VisualizeTool.run(pml, options)
@@ -714,10 +714,10 @@ class VisualizeTool
       # Visualize VCFG (machine code)
       begin
         mf = pml.machine_functions.by_label(target)
-	t = pml.timing.select { |t|
+	t = pml.timing.select do |t|
 	  t.level == mf.level && options.show_timings &&
 	  (options.show_timings.include?(t.origin) || options.show_timings.include?("all"))
-	}
+	end
         graph = fgv.visualize_vcfg(mf, pml.arch, t)
         file = File.join(outdir, target + ".mc" + suffix)
         fgv.generate(graph , file)
@@ -749,20 +749,20 @@ class VisualizeTool
     opts.on("-f","--function FUNCTION,...","Name of the function(s) to visualize") { |f| opts.options.functions = f.split(/\s*,\s*/) }
     opts.on("--show-calls", "Visualize call sites") { opts.options.show_calls = true }
     opts.on("--show-instr", "Show instructions in basic block nodes") { opts.options.show_instructions = true }
-    opts.on("--show-timings [ORIGIN]", Array, "Show timing results in flow graphs (=all; can be a list of origins))") { |o|
+    opts.on("--show-timings [ORIGIN]", Array, "Show timing results in flow graphs (=all; can be a list of origins))") do |o|
       opts.options.show_timings = o ? o : ["all"]
-    }
+    end
     opts.on("-O","--outdir DIR","Output directory for image files") { |d| opts.options.outdir = d }
-    opts.on("--graphviz-format FORMAT", "GraphViz output format (=png,svg,...)") { |format|
+    opts.on("--graphviz-format FORMAT", "GraphViz output format (=png,svg,...)") do |format|
       opts.options.graphviz_format = format
-    }
-    opts.add_check { |options|
+    end
+    opts.add_check do |options|
       options.graphviz_format ||= "png"
       unless VisualizeTool::VALID_FORMATS.include?(options.graphviz_format)
         info("Valid GraphViz formats: #{VisualizeTool.VALID_FORMATS.join(", ")}")
         die("Bad GraphViz format: #{options.graphviz_format}")
       end
-    }
+    end
   end
 end
 

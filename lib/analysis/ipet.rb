@@ -82,22 +82,22 @@ class ControlFlowRefinement
   def dump(io=$stderr)
     io.puts "INFEASIBLE"
     io.puts
-    @infeasible.each { |ref,val|
+    @infeasible.each do |ref,val|
       io.puts "#{ref.inspect} #{val.inspect}"
-    }
+    end
     io.puts "CALLTARGETS"
     io.puts
-    @calltargets.each { |cs,ts|
+    @calltargets.each do |cs,ts|
       io.puts "#{cs}: #{ts}"
-    }
+    end
   end
 
 private
 
   def add_calltargets(callsite_ref, targets)
-    add_refinement(callsite_ref, Set[targets], @calltargets) { |oldval,newval|
+    add_refinement(callsite_ref, Set[targets], @calltargets) do |oldval,newval|
       oldval.intersection(newval)
-    }
+    end
   end
 
   # set block infeasible, and propagate infeasibility
@@ -108,16 +108,16 @@ private
     while ! worklist.empty?
       block = worklist.pop
       add_refinement(ContextRef.new(block, ctx), true, @infeasible) { |oldval, _| true }
-      block.successors.each { |bsucc|
+      block.successors.each do |bsucc|
         next if infeasible_block?(bsucc, ctx)
         if bsucc.predecessors.all? { |bpred| infeasible_block?(bpred, ctx) || bsucc.backedge_target?(bpred) }
           worklist.push(bsucc)
         end
-      }
-      block.predecessors.each { |bpred|
+      end
+      block.predecessors.each do |bpred|
         next if infeasible_block?(bpred, ctx)
         worklist.push(bpred) if bpred.successors.all? { |bsucc| infeasible_block?(bsucc, ctx) }
-      }
+      end
     end
   end
 
@@ -223,8 +223,8 @@ class IPETModel
   def assert(lhs, op, rhs, name, tag)
     terms = Hash.new(0)
     rhs_const = 0
-    [[lhs,1],[rhs,-1]].each { |ts,sgn|
-      ts.to_a.each { |pp, c|
+    [[lhs,1],[rhs,-1]].each do |ts,sgn|
+      ts.to_a.each do |pp, c|
         case pp
         when Instruction
           block_frequency(pp.block, c * sgn).each { |k,v| terms[k] += v }
@@ -241,8 +241,8 @@ class IPETModel
         else
           terms[pp] += c * sgn
         end
-      }
-    }
+      end
+    end
     c = ilp.add_constraint(terms, op, rhs_const, name, tag)
   end
 
@@ -297,9 +297,9 @@ class IPETModel
 
   # add cost to basic block
   def add_block_cost(block, cost)
-    block_frequency(block).each { |edge,c|
+    block_frequency(block).each do |edge,c|
       ilp.add_cost(edge, c * cost)
-    }
+    end
   end
 
   # frequency of incoming is frequency of outgoing edges
@@ -347,23 +347,23 @@ class IPETModel
 
   def sum_incoming(block, factor=1)
     return @sum_incoming_override[block].map {|e| [e, factor] } if @sum_incoming_override[block]
-    block.predecessors.map { |pred|
+    block.predecessors.map do |pred|
       [IPETEdge.new(pred,block,level), factor]
-    }
+    end
   end
 
   def sum_outgoing(block, factor=1)
     return @sum_outgoing_override[block].map {|e| [e, factor] } if @sum_outgoing_override[block]
 
-    block.successors.map { |succ|
+    block.successors.map do |succ|
       [IPETEdge.new(block,succ,level), factor]
-    }
+    end
   end
 
   def sum_loop_entry(loop, factor=1)
-    sum_incoming(loop.loopheader,factor).reject { |edge,factor|
+    sum_incoming(loop.loopheader,factor).reject do |edge,factor|
       edge.backedge?
-    }
+    end
   end
 
   # returns all edges, plus all return blocks
@@ -390,9 +390,9 @@ class IPETModel
     region = abb.get_region(:dst)
     region.nodes.each do |mbb|
       # Followup Blocks within
-      mbb.successors.each {|mbb2|
+      mbb.successors.each do |mbb2|
         yield IPETEdge.new(mbb, mbb2, level) if region.nodes.member?(mbb2)
-      }
+      end
       yield IPETEdge.new(mbb, :exit, level) if mbb == region.exit_node
     end
   end
@@ -428,13 +428,13 @@ class IPETBuilder
     reachable_set(function) do |mf_function|
       # inspect callsites in the current function
       succs = Set.new
-      mf_function.callsites.each { |cs|
+      mf_function.callsites.each do |cs|
         next if @mc_model.infeasible?(cs.block)
-        @mc_model.calltargets(cs).each { |f|
+        @mc_model.calltargets(cs).each do |f|
           assert("calltargets(cs) is nil") { ! f.nil? }
           succs.add(f)
-        }
-      }
+        end
+      end
       succs
     end
   end
@@ -458,9 +458,9 @@ class IPETBuilder
     end
 
     mf_functions = get_functions_reachable_from_function(@entry['machinecode'])
-    mf_functions.each { |mf_function |
+    mf_functions.each do |mf_function |
       add_function_with_blocks(mf_function, cost_block)
-    }
+    end
 
     mf_functions.each do |f|
       add_bitcode_constraints(f) if @bc_model
@@ -471,10 +471,10 @@ class IPETBuilder
 
     add_global_call_constraints()
 
-    flowfacts.each { |ff|
+    flowfacts.each do |ff|
       debug(@options,:ipet) { "adding flowfact #{ff}" }
       add_flowfact(ff)
-    }
+    end
   end
 
   def add_function_with_blocks(mf_function, cost_block)
@@ -534,12 +534,12 @@ class IPETBuilder
     abbs = Set.new
     # WITH BLOCK => Default value []
     abb_outgoing_edge = Hash.new {|hsh, key| hsh[key] = [] }
-    reachable_set(entry['gcfg']) { |node|
+    reachable_set(entry['gcfg']) do |node|
       abb = node.abb
       abbs.add(abb)
 
       # Every Super-structure edge has a variable
-      @gcfg_model.each_gcfg_edge(node) { |ipet_edge|
+      @gcfg_model.each_gcfg_edge(node) do |ipet_edge|
         @ilp.add_variable(ipet_edge, :gcfg)
 
         # Every GCFG Edge is also a flow between two machine blocks
@@ -558,10 +558,10 @@ class IPETBuilder
           abb_outgoing_edge[abb].push(ipet_edge)
 
 	end
-      }
+      end
       @gcfg_model.add_block_constraint(node)
       node.successors
-    }
+    end
 
     # Add Constraint for the Super-Structure entry
     @gcfg_model.add_gcfg_entry_constraint(entry['gcfg'])
@@ -569,27 +569,27 @@ class IPETBuilder
     # Super Structure: set of reachable machine basic blocks
     abb_mbbs = []
     gcfg_mfs = Set.new # Tracks all functions the super structure is working on
-    abbs.each {|abb|
+    abbs.each do |abb|
       # ABB belongs to function
       gcfg_mfs.add(abb.function)
 
       abb_mbbs += abb.get_region(:dst).nodes
       # Add inner structure of ABB
       build_gcfg_abb(abb, abb_outgoing_edge[abb], flowfacts, opts, cost_block)
-    }
+    end
 
     # Super Structure: what functions are activated from the super structure?
     abb_mfs = Set.new
-    abb_mbbs.each {|bb|
-      bb.callsites.each { |cs|
+    abb_mbbs.each do |bb|
+      bb.callsites.each do |cs|
         next if @mc_model.infeasible?(cs.block)
-        @mc_model.calltargets(cs).each { |f|
+        @mc_model.calltargets(cs).each do |f|
           assert("calltargets(cs) is nil") { ! f.nil? }
           funcs = get_functions_reachable_from_function(f)
           abb_mfs += get_functions_reachable_from_function(f)
-        }
-      }
-    }
+        end
+      end
+    end
 
     abb_mfs.each do |mf|
       add_function_with_blocks(mf, cost_block)
@@ -601,9 +601,9 @@ class IPETBuilder
       add_calls_in_block(bb)
     end
 
-    assert("Function calls are not allowed into the super structure") {
+    assert("Function calls are not allowed into the super structure") do
       (abb_mfs & gcfg_mfs).length == 0
-    }
+    end
 
     add_global_call_constraints()
 
@@ -618,13 +618,13 @@ class IPETBuilder
 
     # Add all edges within the ABB
     edges = {}
-    region.nodes.each {|bb|
+    region.nodes.each do |bb|
       edges[bb] = {:in => [], :out => []}
-    }
+    end
     edges[:exit] = {:in => [], :out => []}
 
 
-    @mc_model.each_intra_abb_edge(abb) { |ipet_edge|
+    @mc_model.each_intra_abb_edge(abb) do |ipet_edge|
       @ilp.add_variable(ipet_edge)
       if not @options.ignore_instruction_timing
 	cost = cost_block.call(ipet_edge)
@@ -633,10 +633,10 @@ class IPETBuilder
       # Collect edges
       edges[ipet_edge.source][:out].push(ipet_edge)
       edges[ipet_edge.target][:in].push(ipet_edge)
-    }
+    end
     # The first block is activated as often, as the ABB is left
     edges[region.entry_node][:in] = outgoing_abb_flux
-    edges.each {|bb, e|
+    edges.each do |bb, e|
       next if bb == :exit
       incoming = e[:in].map {|x| [x, 1]}
       outgoing = e[:out].map {|x| [x, -1]}
@@ -646,7 +646,7 @@ class IPETBuilder
       # Override the incoming and outgoing frequencies
       @mc_model.sum_incoming_override[bb] = e[:in]
       @mc_model.sum_outgoing_override[bb] = e[:out]
-    }
+    end
   end
 
   #
@@ -668,7 +668,7 @@ class IPETBuilder
       end
     end
     lhs, rhs = [], ff.rhs.to_i
-    ff.lhs.each { |term|
+    ff.lhs.each do |term|
       unless term.context.empty?
         warn("IPETBuilder#add_flowfact: context sensitive program points not supported: #{ff}")
         return false
@@ -686,7 +686,7 @@ class IPETBuilder
       else
         raise Exception.new("IPETBuilder#add_flowfact: Unknown programpoint type: #{term.programpoint.class}")
       end
-    }
+    end
     scope = ff.scope
     unless scope.context.empty?
       warn("IPETBUilder#add_flowfact: context sensitive scopes not supported: #{ff}")
@@ -713,14 +713,14 @@ class IPETBuilder
   # flow information used to prune the callgraph/CFG)
   def build_refinement(entry, ffs)
     @refinement = {}
-    entry.each { |level,function|
+    entry.each do |level,function|
       cfr = ControlFlowRefinement.new(function, level)
-      ffs.each { |ff|
+      ffs.each do |ff|
         next if ff.level != level
         cfr.add_flowfact(ff)
-      }
+      end
       @refinement[level] = cfr
-    }
+    end
   end
 
 private
@@ -739,29 +739,29 @@ private
       @ilp.add_variable(edge, :relationgraph)
     end
     # record markers
-    bitcode_function.blocks.each { |bb|
-        bb.instructions.each { |i|
+    bitcode_function.blocks.each do |bb|
+        bb.instructions.each do |i|
             (@markers[i.marker] ||= []).push(i) if i.marker
-        }
-    }
+        end
+    end
   end
 
   # replace markers by instructions
   def replace_markers(ff)
     new_lhs = TermList.new([])
-    ff.lhs.each { |term|
+    ff.lhs.each do |term|
         if term.programpoint.kind_of?(Marker)
           factor = term.factor
           if ! @markers[term.programpoint.name]
             raise Exception.new("No instructions corresponding to marker #{term.programpoint.name.inspect}")
           end
-          @markers[term.programpoint.name].each { |instruction|
+          @markers[term.programpoint.name].each do |instruction|
               new_lhs.push(Term.new(instruction.block, factor))
-            }
+            end
         else
           new_lhs.push(term)
         end
-      }
+      end
     FlowFact.new(ff.scope, new_lhs, ff.op, ff.rhs, ff.attributes)
   end
 
@@ -772,9 +772,9 @@ private
     rg = @pml.relation_graphs.by_name(machine_function.name, :dst)
     return unless rg.accept?(@options)
     bitcode_function = rg.get_function(:src)
-    bitcode_function.blocks.each { |block|
+    bitcode_function.blocks.each do |block|
       @bc_model.add_block_constraint(block)
-    }
+    end
     # Our LCTES 2013 paper describes 5 sets of constraints referenced below
     # map from src/dst edge to set of corresponding relation edges (constraint set (3) and (4))
     rg_edges_of_edge = { :src => {}, :dst => {} }
@@ -810,14 +810,14 @@ private
 
   # return all relation-graph edges
   def each_relation_edge(rg)
-    rg.nodes.each { |node|
-      [:src,:dst].each { |rg_level|
+    rg.nodes.each do |node|
+      [:src,:dst].each do |rg_level|
         next unless node.get_block(rg_level)
-        node.successors(rg_level).each { |node2|
+        node.successors(rg_level).each do |node2|
           yield IPETEdge.new(node,node2,pml_level(rg_level)) if node2.type == :exit || node2.get_block(rg_level)
-        }
-      }
-    }
+        end
+      end
+    end
   end
 end # IPETModel
 

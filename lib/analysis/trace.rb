@@ -142,9 +142,9 @@ class MachineTraceMonitor < TraceMonitor
             # puts "Call: #{pending_call.first} -> #{b.function}"
             pending_call = nil
           else
-            assert("Empty call history at function entry, but not main function (#{b.function},#{@program_entry})") {
+            assert("Empty call history at function entry, but not main function (#{b.function},#{@program_entry})") do
               b.function == @program_entry
-            }
+            end
           end
 
           # set current function
@@ -166,7 +166,7 @@ class MachineTraceMonitor < TraceMonitor
         # Empty blocks are problematic (cannot be distinguished) - what do do?
         # They are rare (only with -O0), so we tolerate some work. An empty block
         # is published only if it is a successor of the last block
-        @empty_blocks[b.address].each { |b0|
+        @empty_blocks[b.address].each do |b0|
           if ! @last_block || @last_block.successors.include?(b0)
             while b0.instructions.size == 0
               debug(@options,:trace) { "Publishing empty block #{b0} (<-#{@last_block})" }
@@ -177,16 +177,16 @@ class MachineTraceMonitor < TraceMonitor
             end
             break
           end
-        } if @empty_blocks[b.address]
+        end if @empty_blocks[b.address]
         publish(:block, b, @cycles)
         @last_block = b
       end
 
       # Handle Call
       if c = @wp_call_instr[pc]
-        assert("Call instruction #{c} does not match current function #{@current_function}") {
+        assert("Call instruction #{c} does not match current function #{@current_function}") do
           c.function == @current_function
-        }
+        end
         pending_call = [c, @executed_instructions]
 	@finished = false
         # debug(@options, :trace) { "#{pc}: Call: #{c} in #{@current_function}" }
@@ -230,9 +230,9 @@ class MachineTraceMonitor < TraceMonitor
   end
 
   def handle_call(c, call_pc)
-    assert("No call instruction before function entry #{call_pc + 1 + c.delay_slots} != #{@executed_instructions}") {
+    assert("No call instruction before function entry #{call_pc + 1 + c.delay_slots} != #{@executed_instructions}") do
       call_pc + 1 + c.delay_slots == @executed_instructions
-    }
+    end
     @lastblock = nil
     @callstack.push(c)
     # debug(@options, :trace) { "Call from #{@callstack.inspect}" }
@@ -357,12 +357,12 @@ class RecorderSpecification
 
   def RecorderSpecification.parse(str, default_callstring_length)
     recorders = []
-    str.split(/\s*,\s*/).each { |recspec|
+    str.split(/\s*,\s*/).each do |recspec|
       if recspec =~ SPEC_RE
         scopestr,scopectx,etypes,ectx,elimit = $1,$2,$3,$4,$5
-        entity_types = etypes.scan(/./).map { |etype|
+        entity_types = etypes.scan(/./).map do |etype|
           ENTITIES[etype] or die("RecorderSpecification '#{recspec}': Unknown entity type #{etype}")
-        }
+        end
         entity_context = ectx ? ectx.to_i : default_callstring_length
         scope_context = scopectx ? scopectx.to_i : default_callstring_length
         entity_call_limit = nil
@@ -373,7 +373,7 @@ class RecorderSpecification
       else
         die("Bad recorder Specfication '#{recspec}': does not match #{SPEC_RE}")
       end
-    }
+    end
     recorders
   end
 end
@@ -388,7 +388,7 @@ class RecorderScheduler
     @executed_blocks = {}
     @recorder_map = {}
     @global_specs, @function_specs = [], []
-    recorder_specs.each { |type,ctx,spec|
+    recorder_specs.each do |type,ctx,spec|
       if type == :global
         @global_specs.push(spec)
       elsif type == :function
@@ -396,7 +396,7 @@ class RecorderScheduler
       else
         die("RecorderScheduler: Bad recorder scope '#{type}'")
       end
-    }
+    end
     @running = false
   end
 
@@ -735,12 +735,12 @@ class ProgressTraceRecorder
     return unless @rg
     if ! @node
       first_node = @rg.nodes.first
-      assert("at_entry == at entry RG node") {
+      assert("at_entry == at entry RG node") do
         first_node.type == :entry
-      }
-      assert("at_entry == at first block") {
+      end
+      assert("at_entry == at first block") do
         bb == first_node.get_block(@rg_level)
-      }
+      end
       @node = first_node
       # debug(@options, :trace) { "Visiting first node: #{@node} (#{bb})" }
       return
@@ -748,9 +748,9 @@ class ProgressTraceRecorder
     # find matching successor progress node
     succs = @node.successors_matching(bb, @rg_level)
     assert("progress trace: no (unique) successor (but #{succs.length}) at #{@node}, " +
-           "following #{@node.get_block(@rg_level)}->#{bb} (level #{@rg_level})") {
+           "following #{@node.get_block(@rg_level)}->#{bb} (level #{@rg_level})") do
       succs.length == 1
-    }
+    end
     succ = succs.first
     if succ.type == :progress
       trace.push(succ)

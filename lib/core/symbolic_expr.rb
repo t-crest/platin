@@ -213,15 +213,15 @@ class SEBinary < SymbolicExpression
   end
 
   def SEBinary.fold(op, *args)
-    args = args.map { |arg|
+    args = args.map do |arg|
       if arg.kind_of?(Integer) then SEInt.new(arg) else arg end
-    }
+    end
     args = args.select { |e| e.constant? } + args.select { |e| ! e.constant? } if SEBinary.commutative?(op)
     fst = args.shift
     raise Exception.new("SEbinary#fold: no arguments") unless fst
-    args.inject(fst) { |a,b|
+    args.inject(fst) do |a,b|
       SEBinary.create(op,a,b)
-    }
+    end
   end
 
   # optimized creation for commutative operators
@@ -453,20 +453,20 @@ private
   end
 
   def rchain
-    spec = paren(seq(lazy{expr},sym(','),sym('+'),sym(','),lazy{expr}),'{','}').map { |a,_,_,_,b|
+    spec = paren(seq(lazy{expr},sym(','),sym('+'),sym(','),lazy{expr}),'{','}').map do |a,_,_,_,b|
       [a,b]
-    }
+    end
     flags = paren(flag,'<','>')
     loop = paren(loopname,'<','>')
-    seq(spec,flags * (0..5),loop).map { |s,f,l|
+    seq(spec,flags * (0..5),loop).map do |s,f,l|
       a,b = s
       SEAffineRec.new(a,b,l,f)
-    }
+    end
   end
 
   def composite_expr
     arithop = one_of_("+*") | sym('umax') | sym('smax') | sym('/u') | sym('/s')
-    paren(lazy {expr}.join(arithop)).map { |ps|
+    paren(lazy {expr}.join(arithop)).map do |ps|
       stack = []
       last_op = nil
       while ps.length > 1
@@ -482,7 +482,7 @@ private
         expr = SEBinary.create(op,a,expr)
       end
       expr
-    }
+    end
   end
 
   def paren(p,left='(',right=')')

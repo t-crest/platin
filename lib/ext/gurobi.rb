@@ -118,7 +118,7 @@ class GurobiILP < ILP
   def read_results(sol)
     obj = nil
     vmap = {}
-    sol.readlines.each { |line|
+    sol.readlines.each do |line|
       if line =~ /# Objective value = ([0-9][0-9.+e]*)/
 	# Need to convert to float first, otherwise very large results that are printed in exp format
 	# are truncated to the first digit.
@@ -126,7 +126,7 @@ class GurobiILP < ILP
       elsif line =~ /v_([0-9]*) ([0-9]*)/
         vmap[var_by_index($1.to_i)] = $2.to_i
       end
-    }
+    end
     [obj, vmap]
   end
 

@@ -353,15 +353,15 @@ class Server
 
     case mode
     when :ilp
-      assert("HashServlet expects an Hash") { \
+      assert("HashServlet expects an Hash") do \
         opts.is_a?(Hash) && opts.has_key?(:data) && opts[:data].is_a?(Hash) \
-      }
+      end
       @server.mount '/api/data', HashServlet, opts[:data]
       @server.mount '/', ILPServlet, opts[:entrypoint], '/api/data/ilp.svg', '/api/data/constraints.json', '/api/data/srchints.json', '/sourceview'
     when :callgraph
-      assert("HashServlet expects an Hash") { \
+      assert("HashServlet expects an Hash") do \
         opts.is_a?(Hash) && opts.has_key?(:data) && opts[:data].is_a?(Hash) \
-      }
+      end
       @server.mount '/api/data', HashServlet, opts[:data]
       @server.mount '/', RedirectServlet, '/api/data/callgraph.svg'
     else

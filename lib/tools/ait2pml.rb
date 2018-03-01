@@ -12,9 +12,9 @@ include PML
 
 class AitImportTool
   def AitImportTool.add_config_options(opts)
-    opts.on("--[no-]import-addresses", "import memory address range identified during value analysis (=true)") { |b|
+    opts.on("--[no-]import-addresses", "import memory address range identified during value analysis (=true)") do |b|
       opts.options.ait_import_addresses = b
-    }
+    end
     opts.add_check { |options| options.ait_import_addresses = true if options.ait_import_addresses.nil? }
   end
 
@@ -47,13 +47,13 @@ end
 class AitAnalyzeTool
   def AitAnalyzeTool.add_config_options(opts)
     opts.on("--a3-command COMMAND", "path to a3patmos executable (=a3patmos)") { |cmd| opts.options.a3 = cmd }
-    opts.on("--[no-]ait-persistence-analysis", "enable aiT cache persistence analysis (=true)") { |b|
+    opts.on("--[no-]ait-persistence-analysis", "enable aiT cache persistence analysis (=true)") do |b|
       opts.options.ait_persistence_analysis = b
-    }
-    opts.add_check { |options|
+    end
+    opts.add_check do |options|
       options.a3 = "a3patmos"                 if options.a3.nil?
       options.ait_persistence_analysis = true if options.ait_persistence_analysis.nil?
-    }
+    end
   end
 
   def AitAnalyzeTool.add_options(opts, mandatory = true)

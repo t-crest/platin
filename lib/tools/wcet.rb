@@ -27,10 +27,10 @@ class AitTool
       timing = pml.timing.by_origin(opts.timing_output).last
       puts "Cycles: #{timing.cycles}"
       puts "Edge Profile:"
-      timing.profile.each { |pe|
+      timing.profile.each do |pe|
         next unless pe.wcetfreq > 0
         puts "  #{pe.reference}: #{pe.wcetfreq} (#{pe.wcetfreq * pe.cycles} cyc)"
-      }
+      end
     end
   end
 
@@ -200,10 +200,10 @@ class WcetTool
 	opts.disable_dca = true
       end
       WcaTool.run(pml, opts)
-      compute_criticalities(opts) { |pml,tmp_opts,src,round|
+      compute_criticalities(opts) do |pml,tmp_opts,src,round|
         tmp_opts.flow_fact_srcs.push(src)
         WcaTool.run(pml,tmp_opts)
-      } if opts.compute_criticalities
+      end if opts.compute_criticalities
     end
   end
 
@@ -225,12 +225,12 @@ class WcetTool
         AitTool.run(pml,opts)
 
         # criticality analysis
-        compute_criticalities(opts) { |pml,tmp_opts,src,round|
+        compute_criticalities(opts) do |pml,tmp_opts,src,round|
           simplify_flowfacts([src], tmp_opts)
           tmp_opts.flow_fact_srcs.push(src + ".simplified")
           configure_ait_files(tmp_opts, File.dirname(options.ait_report_prefix), "criticality", true)
           AitTool.run(pml,tmp_opts)
-        } if opts.compute_criticalities
+        end if opts.compute_criticalities
       end
     end
   end
@@ -238,23 +238,23 @@ class WcetTool
   def simplify_flowfacts(srcs, opts)
     opts = opts.dup
     opts.flow_fact_selection ||= "all"
-    srcs.each { |src|
+    srcs.each do |src|
       opts.flow_fact_srcs = [src]
       opts.flow_fact_output = src + ".simplified"
       opts.transform_action = 'simplify'
       opts.transform_eliminate_edges = true
       TransformTool.run(pml, opts)
-    }
+    end
   end
 
   def compute_criticalities(opts)
     opts = opts.dup
     criticality = {}
     missing_blocks, missing_edges = Set.new, Set.new
-    pml.machine_functions.each { |f|
+    pml.machine_functions.each do |f|
       f.blocks.each { |b| missing_blocks.add(b) }
       f.edges.each { |e| missing_edges.add(e) }
-    }
+    end
     timing = pml.timing.find { |t| t.origin == opts.timing_output }
     cycles = timing.cycles
     wcet_cycles = timing.cycles
@@ -270,7 +270,7 @@ class WcetTool
         end
       else
         found_new_edge = false
-        timing.profile.each { |t|
+        timing.profile.each do |t|
           next unless t.wcetfreq > 0
           unless criticality[t.reference.programpoint]
             criticality[t.reference.programpoint] = cycles
@@ -278,7 +278,7 @@ class WcetTool
             missing_edges.delete(t.reference.programpoint)
             found_new_edge = true
           end
-        }
+        end
         if missing_edges.empty?
           debug(opts,:wcet) { "compute_criticalities: 100% edge coverage" }
           break
@@ -317,7 +317,7 @@ class WcetTool
     # TODO: create context-free profile, unless available
     timing = pml.timing.find { |t| t.origin == opts.timing_output }
 
-    criticality.each { |ref,v|
+    criticality.each do |ref,v|
       ref = ContextRef.new(ref,Context.empty)
       crit = v.to_f / wcet_cycles
       pe = timing.profile.by_reference(ref)
@@ -326,15 +326,15 @@ class WcetTool
         timing.profile.add(pe)
       end
       pe.criticality = crit
-    }
+    end
   end
 
   def enforce_blocks_constraint(edges_or_blocks, origin)
     attrs = { 'level' => 'machinecode', 'origin' => origin }
     scoperef = pml.analysis_entry(options)
-    terms = edges_or_blocks.map { |ppref|
+    terms = edges_or_blocks.map do |ppref|
       Term.new(ppref, -1)
-    }
+    end
     FlowFact.new(scoperef, TermList.new(terms), 'less-equal', -1, attrs)
   end
 
@@ -351,9 +351,9 @@ class WcetTool
     wcet_cycles = nil
     combined_cycles = 0
 
-    results = pml.timing.sort_by { |te|
+    results = pml.timing.sort_by do |te|
       [ te.scope.qname, te.cycles, te.origin ]
-    }.map { |te|
+    end.map do |te|
       trace_cycles = te.cycles if te.origin == "trace"
       wcet_cycles = [wcet_cycles,te.cycles].compact.min if te.origin != "trace"
       combined_cycles += case te.origin
@@ -368,7 +368,7 @@ class WcetTool
       te.attributes.select { |k,v| k.start_with? 'cache-' }.each { |k,v| dict[k] = v }
       (additional_info[te.origin] || []).each { |k,v| dict[k] = v }
       dict
-    }
+    end
     if options.combine_wca
       wcet_cycles = combined_cycles
       results.push( { 'analysis-entry' => options.analysis_entry,
@@ -379,7 +379,7 @@ class WcetTool
     if options.runcheck and not trace_cycles.nil?
       die("wcet check: No timing for simulator trace") unless trace_cycles > 0
       die("wcet check: No WCET results") unless wcet_cycles and wcet_cycles > 0
-      pml.timing.each { |te|
+      pml.timing.each do |te|
         next if te.origin == "trace"
 	next if te.origin != "combined" and options.combine_wca
         next unless te.cycles >= 0
@@ -396,7 +396,7 @@ class WcetTool
             EOF
           end
         end
-      }
+      end
     end
     info "#{"Trace analysis: #{trace_cycles} cycles; " if trace_cycles}best WCET bound: #{wcet_cycles} cycles"
     results
@@ -496,10 +496,10 @@ class WcetTool
     opts.alf_file(Proc.new { false })
     opts.sweet_options
     opts.sweet_flowfact_file(Proc.new { false })
-    opts.on("--check [FACTOR]", "check that analyzed WCET is higher than MOET [and less than MOET * FACTOR]") { |factor|
+    opts.on("--check [FACTOR]", "check that analyzed WCET is higher than MOET [and less than MOET * FACTOR]") do |factor|
       opts.options.runcheck = true
       opts.options.runcheck_factor = factor.to_f
-    }
+    end
     TOOLS.each { |toolclass| toolclass.add_config_options(opts) }
   end
 end

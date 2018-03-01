@@ -12,21 +12,21 @@ class AisExportTool
   AIS_EXPORT_TYPES = %w{header jumptables loop-bounds symbolic-loop-bounds flow-constraints infeasible-code call-targets mem-addresses stack-cache}
 
   def AisExportTool.add_config_options(opts)
-    opts.on("--ais-header-file FILE", "the contents of this file is copied verbatim to the final AIS file") { |file|
+    opts.on("--ais-header-file FILE", "the contents of this file is copied verbatim to the final AIS file") do |file|
       opts.options.ais_header_file = file
-    }
-    opts.on("--ais-disable-exports LIST","AIS information that should not be exported (see --help=ais)") { |list|
+    end
+    opts.on("--ais-disable-exports LIST","AIS information that should not be exported (see --help=ais)") do |list|
       opts.options.ais_disable_export = Set.new(list.split(/\s*,\s*/))
-    }
-    opts.add_check { |options|
+    end
+    opts.add_check do |options|
       if options.ais_disable_export.nil?
         options.ais_disable_export = Set.new
       else
         unknown = (options.ais_disable_export - Set[*AIS_EXPORT_TYPES])
         die("AIS export types #{unknown.to_a} not known. Try --help=ais.") unless unknown.empty?
       end
-    }
-    opts.register_help_topic('ais') { |io|
+    end
+    opts.register_help_topic('ais') do |io|
       io.puts <<-EOF.strip_heredoc
         == AIS Exporter ==
 
@@ -44,7 +44,7 @@ class AisExportTool
         mem-addresses        ... value ranges of accesses memory addresses
         stack-cache          ... information about stack cache behavior
         EOF
-    }
+    end
   end
 
   # return the list of exports (filter the ones given in the 'except' argument)
@@ -65,7 +65,7 @@ class AisExportTool
     needs_options(options, :ais_file, :flow_fact_selection, :flow_fact_srcs)
     options.ais_disable_export = Set.new unless options.ais_disable_export
 
-    File.open(options.ais_file, "w") { |outfile|
+    File.open(options.ais_file, "w") do |outfile|
       ais = AISExporter.new(pml, outfile, options)
       ais.export_header unless options.ais_disable_export.include?('header')
 
@@ -74,32 +74,32 @@ class AisExportTool
       ais.export_flowfacts(pml, flowfacts)
 
       unless options.ais_disable_export.include?('mem-addresses')
-        pml.valuefacts.select { |vf|
+        pml.valuefacts.select do |vf|
           vf.level == "machinecode" && vf.origin == "llvm.mc" &&
             vf.ppref.context.empty? &&
             ['mem-address-read', 'mem-address-write'].include?(vf.variable)
-        }.each { |vf|
+        end.each do |vf|
           ais.export_valuefact(vf)
-        }
+        end
       end
 
       unless options.ais_disable_export.include?('stack-cache')
-        pml.machine_functions.each { |func|
-          func.blocks.each { |mbb|
-            mbb.instructions.each { |ins|
+        pml.machine_functions.each do |func|
+          func.blocks.each do |mbb|
+            mbb.instructions.each do |ins|
               ais.add_stack_cache_inst(:reserve, ins, ins.sc_arg) if ins.opcode == "SRESi"
               ais.add_stack_cache_inst(:free, ins, ins.sc_arg) if ins.opcode == "SFREEi"
               ais.add_stack_cache_inst(:ensure, ins, ins.sc_arg) if ins.opcode == "SENSi"
               # ais.export_stack_cache_update(:spill, ins, ins.sc_spill) if ins.sc_spill
-            }
-          }
-        }
+            end
+          end
+        end
         ais.export_stack_cache_annotations()
       end
       statistics("AIS",
                  "exported flow facts" => ais.stats_generated_facts,
                  "unsupported flow facts" => ais.stats_skipped_flowfacts) if options.stats
-    }
+    end
   end
 end
 
@@ -117,13 +117,13 @@ class ApxExportTool
     opts.binary_file(mandatory)
     opts.ait_report_prefix(mandatory)
 
-    opts.add_check { |options|
+    opts.add_check do |options|
       die_usage "No apx file specified." if mandatory && ! options.apx_file
       if options.apx_file
         die_usage "Option --binary  is mandatory when generating apx file" unless options.binary_file
         die_usage "Option --ait-report-prefix is mandatory when generating apx file" unless options.ait_report_prefix
       end
-    }
+    end
   end
 
   def ApxExportTool.run(pml, options)

@@ -451,7 +451,7 @@ class ASTExpr < ASTNode
     val = node.evaluate(context)
     raise "Expression #{node} is not of a terminal value type: #{val}" if !val.is_a?(ASTValueLiteral)
 
-    typecheck = types.map { |type|
+    typecheck = types.map do |type|
       match = false
       case type
       when :boolean
@@ -462,7 +462,7 @@ class ASTExpr < ASTNode
         raise PeachesInternalError.new "Unknown type: #{type}"
       end
       match
-    }.inject(false) { |x,y| x || y}
+    end.inject(false) { |x,y| x || y}
 
     raise PeachesTypeError.new "Expression #{node.class.name}:#{node} is no instance of #{types}" if !typecheck
 
@@ -708,22 +708,22 @@ class Parser
 
   def arith_expr
     if @ARITH_EXPR.nil?
-      arith_expr = ( seq__(lazy{sub_term}, ADD_OP, lazy{arith_expr}) { |lhs, op, rhs|
+      arith_expr = ( seq__(lazy{sub_term}, ADD_OP, lazy{arith_expr}) do |lhs, op, rhs|
                         puts "arith_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
-                      } \
+                      end \
                    | lazy{sub_term} \
                    )
-      sub_term   = ( seq__(lazy{term}, SUB_OP, lazy{sub_term}) { |lhs, op, rhs|
+      sub_term   = ( seq__(lazy{term}, SUB_OP, lazy{sub_term}) do |lhs, op, rhs|
                         puts "arith_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
-                      } \
+                      end \
                    | lazy{term} \
                    )
-      term       = ( seq__(lazy{factor}, MULT_OP, lazy{term}) { |lhs, op, rhs|
+      term       = ( seq__(lazy{factor}, MULT_OP, lazy{term}) do |lhs, op, rhs|
                         puts "term: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
-                      }\
+                      end\
                    | lazy{factor} \
                    )
       factor     = ( seq__('(', arith_expr, ')')[1] \
@@ -739,20 +739,20 @@ class Parser
 
   def cond_expr
     if @COND_EXPR.nil?
-      cond_expr = ( seq__(lazy{ao_expr}, LOGIC_OP, lazy{cond_expr}) { |lhs, op, rhs|
+      cond_expr = ( seq__(lazy{ao_expr}, LOGIC_OP, lazy{cond_expr}) do |lhs, op, rhs|
                        puts "cond_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                        ASTLogicalOp.new(lhs, op, rhs)
-                     } \
-                  | seq__(lazy{ao_expr}, CMP_OP, lazy{cond_expr}) { |lhs, op, rhs|
+                     end \
+                  | seq__(lazy{ao_expr}, CMP_OP, lazy{cond_expr}) do |lhs, op, rhs|
                       puts "cond_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                       ASTCompareOp.new(lhs, op, rhs)
-                    } \
+                    end \
                   | lazy{ao_expr} \
                   )
-      ao_expr   = ( seq__(lazy{arith_expr}, CMP_OP, lazy{arith_expr}) { |lhs, op, rhs|
+      ao_expr   = ( seq__(lazy{arith_expr}, CMP_OP, lazy{arith_expr}) do |lhs, op, rhs|
                        puts "ao_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                        ASTCompareOp.new(lhs, op, rhs)
-                     } \
+                     end \
                   | seq__('(', cond_expr, ')')[1] \
                   | lazy{arith_expr} \
                   | BOOLEAN \
@@ -765,10 +765,10 @@ class Parser
 
   def expr
     if @EXPR.nil?
-      expr = ( seq__(IF, lazy{cond_expr}, THEN, lazy{expr}, ELSE, lazy{expr}) { |_,cond,_,e1,_,e2|
+      expr = ( seq__(IF, lazy{cond_expr}, THEN, lazy{expr}, ELSE, lazy{expr}) do |_,cond,_,e1,_,e2|
                       puts "IF #{cond} then {#{e1}} else {#{e2}}" if DEBUG_PARSER
                       ASTIf.new(cond, e1, e2)
-                    } \
+                    end \
                   | lazy{cond_expr} \
                   | UNDEF \
                   | ERROR \
@@ -792,11 +792,11 @@ class Parser
       callsite =  ( seq__(IDENTIFIER, arg_list) \
                   | IDENTIFIER \
                   )
-      @CALL = seq(''.r, callsite).cached { |_,xs|
+      @CALL = seq(''.r, callsite).cached do |_,xs|
         id, args = *xs
         puts "CALL: #{id}(#{listify(args).join(',')})" if DEBUG_PARSER
         ASTCall.new(id.label, listify(args))
-      }
+      end
     end
     @CALL
   end
@@ -811,11 +811,11 @@ class Parser
                     ).fail "function declaration"
       definition  = expr
 
-      @DECL = seq__(declaration, '=', definition, comment.maybe) { |decl,_,expr|
+      @DECL = seq__(declaration, '=', definition, comment.maybe) do |decl,_,expr|
         id, params = decl
         puts "decl: #{id} = (#{decl})" if DEBUG_PARSER
         ASTDecl.new(id, listify(params), expr)
-      }
+      end
     end
     @DECL
   end

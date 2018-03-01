@@ -57,14 +57,14 @@ class SCCGraph
 
     @node_of_block = {}
     @nodes = @sccs.map { |scc| Node.new(scc, graph_headers) }
-    nodes.each { |node|
-      node.blocks.each { |b|
+    nodes.each do |node|
+      node.blocks.each do |b|
         @node_of_block[b] = node
-      }
-    }
-    nodes.each { |node|
-      node.blocks.each { |block|
-        block.successors.each { |succ|
+      end
+    end
+    nodes.each do |node|
+      node.blocks.each do |block|
+        block.successors.each do |succ|
           next unless @blockset.include?(succ)
           if @graph_headers.include?(succ)
             node.has_backedge = true
@@ -72,20 +72,20 @@ class SCCGraph
           end
           assert("Unknown node in SCC: #{succ}") { @node_of_block[succ] }
           node.add_successor(@node_of_block[succ]) if @node_of_block[succ] != node
-        }
-      }
-    }
+        end
+      end
+    end
   end
 
   def dump(_io = $stdout)
     puts("SCC Graph")
     puts "SCCs: #{@sccs.inspect}"
-    nodes.each { |node|
+    nodes.each do |node|
       puts "- #{node}"
-      node.successors.each { |succ|
+      node.successors.each do |succ|
         puts "    => #{succ.first}"
-      }
-    }
+      end
+    end
   end
 end
 
@@ -245,9 +245,9 @@ class ScopeGraph
 
   # bottom-up traversal (note that scope graphs are acyclic)
   def bottom_up
-    Enumerator.new { |ss|
+    Enumerator.new do |ss|
       topological_order.reverse.each { |n| ss << n }
-    }
+    end
   end
 
   def topological_order
@@ -278,10 +278,10 @@ private
     @visited[node] = true
 
     # feasible blocks in the function
-    function_blocks = node.function.blocks.select { |b|
+    function_blocks = node.function.blocks.select do |b|
       # if block is infeasible, ignore it
       ! @refinement.infeasible_block?(b, node.context)
-    }
+    end
     # build SCCs
     build_regions(node, function_blocks)
   end
@@ -298,7 +298,7 @@ private
     loop_of_node   = { function_node => nil }
     loopqueue = WorkList.new([function_node])
 
-    loopqueue.process { |scope_node|
+    loopqueue.process do |scope_node|
       loop = loop_of_node[scope_node]
       entry = loop ? loop.loopheader : function_node.function.entry_block
 
@@ -312,41 +312,41 @@ private
       build_region_graph(region_graph, scc_graph, entry, loop, scope_node.context, blocks_of_node, loop_of_node)
 
       # expand scope graph
-      region_graph.loop_nodes.each { |loop_node|
+      region_graph.loop_nodes.each do |loop_node|
         add_node(loop_node)
         scope_node.add_successor(loop_node)
         loopqueue.enqueue(loop_node)
-      }
-      region_graph.call_nodes.each { |call_node|
+      end
+      region_graph.call_nodes.each do |call_node|
         add_node(call_node)
         callsite = call_node.callsite
         scope_node.add_successor(call_node)
         # scope graph: process callsite target
-        @refinement.calltargets(callsite, scope_node.context).each { |f|
+        @refinement.calltargets(callsite, scope_node.context).each do |f|
           new_context = @ctx_manager.push_call(scope_node.context, callsite)
           callee_node = add_node(FunctionNode.new(f, new_context))
           call_node.add_successor(callee_node)
           @worklist.push(callee_node)
-        }
-      }
-    }
+        end
+      end
+    end
 
     # correctness check
     slice_groups = @blockslices.group_by { |bs| bs.first.block }
-    blocks.each { |b|
+    blocks.each do |b|
       current = -1
       slice_groups[b] ||= [] # empty blocks
-      slice_groups[b].each { |bs|
+      slice_groups[b].each do |bs|
         assert("Block slices not complete: #{b}") { bs.first.index == current + 1 }
         current = bs.last.index
-      }
+      end
       assert("Block slices not complete: #{b}") { current + 1 == b.instructions.length }
-    }
+    end
   end
 
   def build_region_graph(region_graph, scc_graph, entry, _scope_loop, context, blocks_of_node, loop_of_node)
     entry_node, exit_node = {}, {}
-    scc_graph.nodes.each { |scc_node|
+    scc_graph.nodes.each do |scc_node|
       blocks = scc_node.blocks
       # distinguish whether SCC is trivial (block) or loop (subscope)
       if scc_node.trivial?
@@ -359,7 +359,7 @@ private
         entry_node[scc_node] = region_node
         next_index = 0
 
-        block.callsites.each { |c|
+        block.callsites.each do |c|
           raise Exception.new("unresolved call (in function: #{block.function.label})") if c.unresolved_call?
 
           # block slice node
@@ -373,7 +373,7 @@ private
           # subscope node for callsite
           callsite_node = CallNode.new(c, context)
           region_node = region_graph.add_callsite(region_node, callsite_node)
-        }
+        end
         if next_index != block.instructions.length
           first_ins, last_ins = [next_index, block.instructions.length - 1].map { |ix| block.instructions[ix] }
           region_node = region_graph.add_block_slice(region_node, first_ins, last_ins)
@@ -394,17 +394,17 @@ private
         loop_of_node[loop_node]   = inner_loop
       end
       region_graph.entry_node.add_successor(entry_node[scc_node]) if blocks.include?(entry)
-    }
+    end
 
-    scc_graph.nodes.each { |scc_node|
-      scc_node.successors.each { |succ_scc_node|
+    scc_graph.nodes.each do |scc_node|
+      scc_node.successors.each do |succ_scc_node|
         source = exit_node[scc_node]
         target = entry_node[succ_scc_node]
         source.add_successor(target)
-      }
+      end
       exit_node[scc_node].add_successor(region_graph.backedge_node(entry)) if scc_node.has_backedge?
       exit_node[scc_node].add_successor(region_graph.exit_node) if scc_node.may_return?
-    }
+    end
   end
 
   def add_node(n)
@@ -544,26 +544,26 @@ class RegionGraph
   def action_graph
     arg = RegionGraph.new(@scopegraph, @name)
     entry_node, exit_node = {}, {}
-    self.nodes.each { |n|
+    self.nodes.each do |n|
       current_node = arg.add_node(n.dup_node)
       entry_node[n] = current_node
       if current_node.kind_of?(BlockSliceNode)
         block_node = current_node
         fst, lst = n.first.index, n.last.index
-        fst.upto(lst) { |ix|
+        fst.upto(lst) do |ix|
           actions = yield n.first.block.instructions[ix]
-          actions.each { |action|
+          actions.each do |action|
             current_node = arg.add_action_node(current_node, action, block_node)
-          }
-        }
+          end
+        end
       end
       exit_node[n] = current_node
-    }
-    self.nodes.each { |n|
-      n.successors.each { |succ|
+    end
+    self.nodes.each do |n|
+      n.successors.each do |succ|
         exit_node[n].add_successor(entry_node[succ])
-      }
-    }
+      end
+    end
     arg
   end
 
@@ -629,26 +629,26 @@ class RegionGraph
 
   def dump(_io=$stdout)
     puts "Dumping RegionGraph with #{@nodes.length} nodes"
-    @nodes.each { |n|
+    @nodes.each do |n|
       puts "- #{n}"
       n.successors.each { |s| puts "  --> #{s}" }
-    }
+    end
     require 'graphviz'
     g = GraphViz.new(:G, :type => :digraph)
     g.node[:shape] = "rectangle"
     g[:label] = "Region Graoh #{name}"
     node_dict, nids = {}, {}
     nodes.each_with_index { |n,i| nids[n] = i }
-    nodes.each { |node|
+    nodes.each do |node|
       nid = nids[node]
       label = node.to_s
       node_dict[node] = g.add_nodes(nid.to_s, :label => label)
-    }
-    nodes.each { |n|
-      n.successors.each { |s|
+    end
+    nodes.each do |n|
+      n.successors.each do |s|
         g.add_edges(node_dict[n],node_dict[s])
-      }
-    }
+      end
+    end
     file = "tmp/region_#{name.gsub('/','_')}.eps"
     puts "DEBUG file: #{file}"
     g.output( :eps => file)
@@ -680,9 +680,9 @@ class CallGraph < PMLObject
     end
 
     def add_callsite(callsite, targets)
-      targets.each { |t|
+      targets.each do |t|
         @successors_with_callsite.push([t,callsite])
-      }
+      end
     end
 
     def successors
@@ -699,12 +699,12 @@ class CallGraph < PMLObject
 
   def dump(io=$stdout)
     io.puts "Callgraph"
-    @nodes.each { |n|
+    @nodes.each do |n|
       io.puts " Node #{n}"
-      n.successors_with_callsite.each { |t,cs|
+      n.successors_with_callsite.each do |t,cs|
         io.puts "   #{cs}->#{t}"
-      }
-    }
+      end
+    end
   end
 
   def add_node(function, context)
@@ -720,26 +720,26 @@ class ScopeGraph
   def callgraph
     nodes, edges = Set.new, []
     worklist = WorkList.new([ [self.root, self.root] ])
-    worklist.process { |node, function_node|
+    worklist.process do |node, function_node|
       assert("ScopeGraph#callgraph: function_node of wrong type") { function_node.kind_of?(FunctionNode) }
       nodes.add(node) if node.kind_of?(FunctionNode)
-      node.successors.each { |successor_node|
+      node.successors.each do |successor_node|
         if successor_node.kind_of?(FunctionNode)
           edges.push([function_node,successor_node,node])
           worklist.enqueue([successor_node, successor_node])
         else
           worklist.enqueue([successor_node, function_node])
         end
-      }
-    }
+      end
+    end
     cg = CallGraph.new
     cg_nodes = {}
-    nodes.each { |n|
+    nodes.each do |n|
       cg_nodes[n] = cg.add_node(n.function, n.context)
-    }
-    edges.each { |pre,succ,cs|
+    end
+    edges.each do |pre,succ,cs|
       cg_nodes[pre].add_callsite(cs, [ cg_nodes[succ] ])
-    }
+    end
     cg
   end
 end

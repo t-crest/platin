@@ -185,9 +185,9 @@ class DataFlowAnalysis
     worklist = Worklist.new
     init = operator.init
     # Initialize sets
-    @nodes.each { |n|
+    @nodes.each do |n|
       n.outs = init
-    }
+    end
     # Get out set of entry node
     @entry_node.outs = operator.entry
 
@@ -208,9 +208,9 @@ class DataFlowAnalysis
 
       # Debug
       step_count += 1
-      debug(@options,:dfa) {
+      debug(@options,:dfa) do
         "DFA step #{step_count} @ #{node.bundle}: #{ins} -> #{outs} #{changed ? 'CHANGED' : ''}"
-      }
+      end
     end
 
     # dump(worklist,step_count)
@@ -227,7 +227,7 @@ class DataFlowAnalysis
     first_node = {}
 
     # Build nodes
-    @blocks.each { |b|
+    @blocks.each do |b|
       # add all instruction bundles except the last one and link them
       # TODO this code is not quite correct: We assume here that there is only
       #      one branch instruction in the block. We should identify the targets
@@ -236,11 +236,11 @@ class DataFlowAnalysis
       targets = b.successors.select { |s| @blocks.include?(s) }
       last = nil
       bundles = b.bundles
-      bundles[0..-2].each { |i|
+      bundles[0..-2].each do |i|
         node = Node.new(i)
 	add_node(b, node, last, first_node)
 	last = node
-      }
+      end
       if bundles.empty?
 	node = Node.new
       else
@@ -254,27 +254,27 @@ class DataFlowAnalysis
 	end
       end
       add_node(b, node, last, first_node, targets, pred_nodes)
-    }
+    end
 
     # Add edges between blocks
-    pred_nodes.each { |b,preds|
+    pred_nodes.each do |b,preds|
       first_node[b].predecessors = preds
-    }
+    end
     # Add entry edge
     first_node[@entry_block].predecessors.push(@entry_node)
 
     # Add successor edges
-    @nodes.each { |n|
+    @nodes.each do |n|
       n.predecessors.each { |pred| pred.successors.push(n) }
-    }
+    end
 
     if @reverse
       # TODO: need to reverse entry and exit as well!
-      nodes.each { |n|
+      nodes.each do |n|
         pred = n.predecessors
 	n.predecessors = n.successors
 	n.successors = pred
-      }
+      end
     end
 
     topological_sort
@@ -303,17 +303,17 @@ class DataFlowAnalysis
     node.predecessors.push(last) if last
     first_node[b] = node if not last
     @nodes.push(node)
-    targets.each { |s|
+    targets.each do |s|
       pred_nodes[s] ||= []
       pred_nodes[s].push(node)
-    }
+    end
   end
 
   def dump(worklist, step)
     puts "DFA Step #{step}, Worklist size #{worklist.length}:"
-    @nodes.each { |node|
+    @nodes.each do |node|
       puts "  #{worklist.include?(node) ? '*' : ' '}#{node.exit? ? 'T' : ' '} ##{node.order} #{node.bundle}: #{node.outs}"
-    }
+    end
     puts
   end
 end

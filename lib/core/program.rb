@@ -42,19 +42,19 @@ module PML
     # unresolved .. set of callsites that could not be resolved
     def reachable_from(name)
       unresolved = Set.new
-      rs = reachable_set(by_name(name)) { |f|
+      rs = reachable_set(by_name(name)) do |f|
         callees = []
-        f.callsites.each { |cs|
-          cs.callees.each { |n|
+        f.callsites.each do |cs|
+          cs.callees.each do |n|
             if (f = by_label_or_name(n,false))
               callees.push(f)
             else
               unresolved.add(cs)
             end
-          }
-        }
+          end
+        end
         callees
-      }
+      end
       [rs, unresolved]
     end
 
@@ -120,9 +120,9 @@ module PML
       is_edge = ! data['edgesource'].nil?
       if lname || bname
         block = function.blocks.by_name(lname || bname)
-        assert("ProgramPoint.from_pml: no such block: #{lname || bname}") {
+        assert("ProgramPoint.from_pml: no such block: #{lname || bname}") do
           block
-        }
+        end
         if iname
           instruction = block.instructions[Integer(iname)]
           return instruction
@@ -183,9 +183,9 @@ module PML
   class Edge < ProgramPoint
     attr_reader :source, :target
     def initialize(source, target, data = nil)
-      assert("PML::Edge: source and target need to be blocks, not #{source.class}/#{target.class}") {
+      assert("PML::Edge: source and target need to be blocks, not #{source.class}/#{target.class}") do
         source.kind_of?(Block) && (target.nil? || target.kind_of?(Block))
-      }
+      end
       assert("PML::Edge: source and target function need to match") { target.nil? || source.function == target.function }
 
       @source, @target = source, target
@@ -413,34 +413,34 @@ module PML
     # all (intra-procedural) edges in this function
     def edges
       Enumerator.new do |ss|
-        blocks.each { |b|
-          b.outgoing_edges.each { |e|
+        blocks.each do |b|
+          b.outgoing_edges.each do |e|
             ss << e
-          }
-        }
+          end
+        end
       end
     end
 
     # all callsites found in this function
     def callsites
       Enumerator.new do |ss|
-        blocks.each { |b|
-          b.callsites.each { |cs|
+        blocks.each do |b|
+          b.callsites.each do |cs|
             ss << cs
-          }
-        }
+          end
+        end
       end
     end
 
     # find all instructions that a callee may return to
     def identify_return_sites
-      blocks.each { |b|
-        b.instructions.each { |i|
+      blocks.each do |b|
+        b.instructions.each do |i|
           i.set_return_site(false)
-        }
-      }
-      blocks.each { |b|
-        b.instructions.each { |i|
+        end
+      end
+      blocks.each do |b|
+        b.instructions.each do |i|
           if i.calls?
             return_index = i.index + i.delay_slots + 1
             overflow = return_index - b.instructions.length
@@ -450,8 +450,8 @@ module PML
               b.next.instructions[overflow].set_return_site(true)
             end
           end
-        }
-      }
+        end
+      end
     end
   end # of class Function
 
@@ -482,11 +482,11 @@ module PML
     # Returns a list of instruction bundles (array of instructions per bundle)
     def bundles
       bundle = 0
-      instructions.chunk { |i|
+      instructions.chunk do |i|
 	idx = bundle
 	bundle += 1 unless i.bundled?
 	idx
-      }.map{|b| b[1]}
+      end.map{|b| b[1]}
     end
 
     # loops (not ready at initialization time)
@@ -565,9 +565,9 @@ module PML
     # yields outgoing edges
     def outgoing_edges
       Enumerator.new do |ss|
-        successors.each { |s|
+        successors.each do |s|
           ss << edge_to(s)
-        }
+        end
         ss << edge_to(nil) if self.may_return?
       end
     end
@@ -602,10 +602,10 @@ module PML
       return @has_preheader unless @has_preheader.nil?
       return (@has_preheader = false) unless loopheader?
       preheaders = []
-      predecessors.each { |pred|
+      predecessors.each do |pred|
         next if self.backedge_target?(pred)
         preheaders.push(pred)
-      }
+      end
       @has_preheader = (preheaders.length == 1)
     end
 
@@ -670,13 +670,13 @@ module PML
     # of the graph is stopped at the argument block. This is useful
     # for single-entry; single-exit regions
     def reachable_till(stop)
-      rs = reachable_set(self) { |block|
+      rs = reachable_set(self) do |block|
         if block != stop
           block.successors
         else
           []
         end
-      }
+      end
       rs
     end
 
@@ -746,7 +746,7 @@ module PML
     # called functions
     def called_functions
       return nil if unresolved_call?
-      data['callees'].reject { |n|
+      data['callees'].reject do |n|
         # XXX: hackish
         # filter known pseudo functions on bitcode
         n =~ /llvm\..*/ ||
@@ -755,9 +755,9 @@ module PML
         n =~ /__udivsi3/ ||
         n =~ /__divsi3/ ||
         n =~ /__udivmodsi4/
-      }.map { |n|
+      end.map do |n|
         block.function.module.by_label_or_name(n, true)
-      }
+      end
     end
 
     # whether this instruction is an indirect (unresolved) call
@@ -1010,10 +1010,10 @@ private
 
     def successors_matching(block, level)
       assert("successors_matching: nil argument") { ! block.nil? }
-      successors(level).select { |b|
+      successors(level).select do |b|
         succblock = b.get_block(level)
         ! succblock.nil? && succblock == block
-      }
+      end
     end
 
     def add_successor(node, level)
@@ -1023,22 +1023,22 @@ private
 
     def successors(level)
       return @successors[level] if @successors[level]
-      @successors[level] = (data["#{level}-successors"] || []).map { |succ|
+      @successors[level] = (data["#{level}-successors"] || []).map do |succ|
         @rg.nodes.by_name(succ)
-      }.uniq
+      end.uniq
       @successors[level]
     end
 
     # Flooding of the graph is stopped at the argument node. This is useful
     # for single-entry; single-exit regions
     def reachable_till(stop)
-      rs = reachable_set(self) { |node|
+      rs = reachable_set(self) do |node|
         if node != stop
           node.successors(:src) + node.successors(:dst)
         else
           []
         end
-      }
+      end
       rs
     end
 
@@ -1064,18 +1064,18 @@ private
     def initialize(relation_graphs, data)
       set_yaml_repr(data)
       @rg = relation_graphs.by_name(data['function'], :src)
-      assert("No relationship graph for #{data['function']} found") {
+      assert("No relationship graph for #{data['function']} found") do
         @rg != nil
-      }
+      end
       @function = @rg.get_function(:src)
       @machine_function = @rg.get_function(:dst)
 
       @name = data['name']
       @entry_block = @function.blocks.by_name(data['entry-block'])
       @exit_block  = @function.blocks.by_name(data['exit-block'])
-      assert("Could not find ABB Entry/Exit Blocks #{data}") {
+      assert("Could not find ABB Entry/Exit Blocks #{data}") do
         @entry_block != nil and @exit_block != nil
-      }
+      end
       @regions = nil
     end
 
@@ -1102,30 +1102,30 @@ private
       exit_rg  = @rg.nodes.by_basic_block(@exit_block, :src)
 
       # Validity Checking on the ABB
-      assert("ABB is not well formed; Entry/Exit BB is not uniquly mappable (#{to_s}, #{entry_rg}, #{exit_rg})") {
+      assert("ABB is not well formed; Entry/Exit BB is not uniquly mappable (#{to_s}, #{entry_rg}, #{exit_rg})") do
         entry_rg.length == 1 and exit_rg.length == 1
-      }
+      end
 
       rg_region = RegionContainer.new(entry_rg[0], exit_rg[0])
 
       # Entry and Exit must be progress nodes (or similar)
-      assert("ABB is not well formed; Entry/Exit nodes are of wrong type") {
+      assert("ABB is not well formed; Entry/Exit nodes are of wrong type") do
         [:progress, :entry, :exit].include?(rg_region.entry_node.type) and
           [:progress, :entry, :exit].include?(rg_region.exit_node.type)
-      }
+      end
 
       # Generate Bitcode and Machine Regions
-      bitcode_region, machine_region = [:src, :dst].map { |type|
+      bitcode_region, machine_region = [:src, :dst].map do |type|
         RegionContainer.new(rg_region.entry_node.get_block(type),
                             rg_region.exit_node.get_block(type))
-      }
+      end
 
-      assert("ABB is not well formed; No Single-Entry/Single-Exit region all levels") {
+      assert("ABB is not well formed; No Single-Entry/Single-Exit region all levels") do
         rg_nodes_lhs = Set.new rg_region.nodes.map{|n| n.get_block(:src)}
         rg_nodes_rhs = Set.new rg_region.nodes.map{|n| n.get_block(:dst)}
 
         rg_nodes_lhs == Set.new(bitcode_region.nodes) and rg_nodes_rhs == Set.new(machine_region.nodes)
-      }
+      end
       @regions = {
         :rg => rg_region,
         :src => bitcode_region,
@@ -1145,11 +1145,11 @@ private
 
     def initialize(abbs, nodes)
       @list = nodes.map { |n| GCFGNode.new(abbs, n) }
-      @list.each_with_index {|item, index|
-        assert("Invalid Indices of GCFG Edges; Nodes are sorted") {
+      @list.each_with_index do |item, index|
+        assert("Invalid Indices of GCFG Edges; Nodes are sorted") do
           item.index == index
-        }
-      }
+        end
+      end
       @list.each { |n| n.connect(@list) }
       set_yaml_repr(data)
       build_index
@@ -1171,9 +1171,9 @@ private
 
     def connect(nodes)
       @successors = data['successors'].map {|i| nodes[i] }
-      data['successors'].each {|i|
+      data['successors'].each do |i|
         nodes[i].add_predecessor(self)
-      }
+      end
     end
 
     def index
@@ -1238,9 +1238,9 @@ private
 
     # customized constructor
     def initialize(data, relation_graphs)
-      @list = data.map { |g|
+      @list = data.map do |g|
         GCFG.new(g, relation_graphs)
-      }
+      end
       set_yaml_repr(data)
       build_index
     end

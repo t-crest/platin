@@ -259,9 +259,9 @@ private
           has_branchtarget = true
           index = get_split_index(current_node, block, index)
           split_node = current_node
-          current_instruction.branch_targets.each { |succblock|
+          current_instruction.branch_targets.each do |succblock|
             add_block_predecessor(block_predecessors,succblock,split_node)
-          }
+          end
         else
           index += 1
         end
@@ -276,9 +276,9 @@ private
       elsif ! has_branchtarget
         # Either no branch information available or no branches in the block
         # warn("No branch-target information available") if block.successors.size != 1
-        block.successors.each { |b|
+        block.successors.each do |b|
           add_block_predecessor(block_predecessors, b, current_node)
-        }
+        end
       elsif b = block.fallthrough_successor
         # There was branch information available, and the block is fall-through
         add_block_predecessor(block_predecessors,b,current_node)
@@ -444,10 +444,10 @@ class CallNode < CfgNode
       callee_context = cfmodel.ctx_manager.push_call(location.context, self)
 
       # yield locations at callee's entries
-      callees(location).each { |vcfg|
+      callees(location).each do |vcfg|
         cfmodel.record_scope_entry(vcfg.entry, callee_context.scope_context, location.context)
         ss << cfmodel.location(vcfg.entry, callee_context)
-      }
+      end
     end
   end
 
@@ -458,11 +458,11 @@ class CallNode < CfgNode
       # add call to context
       scope_entry_context = cfmodel.ctx_manager.push_call(location.context, self).scope_context
 
-      callees(location).each { |vcfg|
-        cfmodel.matching_scope_exits(vcfg.entry, scope_entry_context).each { |location|
+      callees(location).each do |vcfg|
+        cfmodel.matching_scope_exits(vcfg.entry, scope_entry_context).each do |location|
           ss << location
-        }
-      }
+        end
+      end
     end
   end
 
@@ -477,9 +477,9 @@ class CallNode < CfgNode
       raise Exception.new("Indirect calls not yet supported: #{location.node.callsite}")
     end
     Enumerator.new do |ss|
-      callsite.callees.each { |flabel|
+      callsite.callees.each do |flabel|
         ss << location.cfmodel.by_label(flabel)
-      }
+      end
     end
   end
 
@@ -509,10 +509,10 @@ class ExitNode < CfgNode
       cfmodel.record_scope_exit(vcfg.entry, scope_entry_context, location)
 
       # for all registered scope entry contexts
-      cfmodel.matching_scope_entries(vcfg.entry, scope_entry_context).each { |scope_context_before|
+      cfmodel.matching_scope_entries(vcfg.entry, scope_entry_context).each do |scope_context_before|
         refined_context = return_context.with_scope_context(scope_context_before)
         callnode.successors.each { |s| ss << cfmodel.location(s, refined_context) }
-      }
+      end
     end
   end
 
@@ -547,10 +547,10 @@ class LoopStateNode < CfgNode
         # record scope exit
         cfmodel.record_scope_exit(loopnode, scope_entry_context, location)
         # for all registered scope entry contexts
-        cfmodel.matching_scope_entries(loopnode, scope_entry_context).each { |scope_context_before|
+        cfmodel.matching_scope_entries(loopnode, scope_entry_context).each do |scope_context_before|
           refined_context = exit_context.with_scope_context(scope_context_before)
           successors.each { |s| ss << cfmodel.location(s, refined_context) }
-        }
+        end
       else
         raise Exception.new("Bad loop state action")
       end
@@ -633,12 +633,12 @@ class Interpreter
       loc = @queue.pop
       inval = @in[loc]
       outval = @semantics.transfer_value(loc.node, inval)
-      loc.successors.each { |loc|
+      loc.successors.each do |loc|
         if change = @semantics.merge(@in[loc],outval)
           @in[loc] = change[1]
           @queue.unshift(loc)
         end
-      }
+      end
       # enqueue matching scope exit nodes (lazy construction of context-sensitive callgraph)
       loc.matching_scope_exits.each { |loc| @queue.unshift(loc) }
     end

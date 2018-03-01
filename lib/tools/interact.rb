@@ -257,9 +257,9 @@ class HelpCommand < Command
     case args.length
     when 0
       help = []
-      Dispatcher.instance.get_commands_map.each { |k,v|
+      Dispatcher.instance.get_commands_map.each do |k,v|
         help << "  " + k.ljust(20) + " - " + v.help(false)
-      }
+      end
       puts help.join("\n")
     when 1
       puts "  " + Dispatcher.instance[args[0]].help(true)
@@ -771,9 +771,9 @@ class DiffCommand < Command
     diffs = add.to_a + del.to_a
     diffs.sort!
 
-    return diffs.map {|d|
+    return diffs.map do |d|
       d.emit(colorize)
-    }.join("\n")
+    end.join("\n")
   end
 
   def run(args)
@@ -818,10 +818,10 @@ class ApplyCommand < DiffCommand
       file = Tempfile.new('annotations-quickfix')
       file.write(diff_annotations(false))
       file.flush
-      Dir.chdir(opts.source_path) {
+      Dir.chdir(opts.source_path) do
         editor = ['vim', '-c', 'copen', '-q', file.path]
         system *editor
-      }
+      end
       file.close
       file.unlink
     else

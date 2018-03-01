@@ -96,7 +96,7 @@ class WCA
             src = edge.source
             dst = edge.target
           end
-          src.instructions.each_with_index { |ins,ix|
+          src.instructions.each_with_index do |ins,ix|
             if ins.returns? && (dst == :exit || edge.level == :gcfg)
               branch_index = ix # last instruction that returns
             elsif ! ins.branch_targets.empty? && ins.branch_targets.include?(dst)
@@ -104,7 +104,7 @@ class WCA
             elsif ! ins.branch_targets.empty? && edge.level == :gcfg && dst != :exit
               branch_index = ix
             end
-          }
+          end
           if ! branch_index
             src.instructions
           else
@@ -183,7 +183,7 @@ class WCA
 
     # collect edge timings
     edgefreqs, edgecosts, totalcosts = {}, Hash.new(0), Hash.new(0)
-    freqs.each { |v,freq|
+    freqs.each do |v,freq|
       edgecost = builder.ilp.get_cost(v)
       freq = freq.to_i
       if edgecost > 0 || (v.kind_of?(IPETEdge) && v.cfg_edge?)
@@ -207,37 +207,37 @@ class WCA
         edgecosts[ref] += edgecost
         totalcosts[ref] += edgecost * freq
       end
-    }
-    edgecosts.each { |ref, edgecost|
+    end
+    edgecosts.each do |ref, edgecost|
       unless edgefreqs.include?(ref)
         warn("edge cost (#{ref} -> #{edgecost}), but no corresponding IPETEdge variable")
         next
       end
       edgefreq = edgefreqs[ref]
       profile.add(ProfileEntry.new(ref, edgecost, edgefreqs[ref], totalcosts[ref]))
-    }
+    end
     # FIXME: CacheAnalysis is currently broken for armv7
     # ca.summarize(@options, freqs, Hash[freqs.map{ |v,freq| [v,freq * builder.ilp.get_cost(v)] }], report)
     if @options.verbose
       puts "Cycles: #{cycles}"
       puts "Edge Profile:"
-      freqs.map { |v,freq|
+      freqs.map do |v,freq|
         [v,freq * builder.ilp.get_cost(v)]
-      }.sort_by { |v,freq|
+      end.sort_by do |v,freq|
         [v.function || machine_entry, -freq]
-      }.each { |v,cost|
+      end.each do |v,cost|
         puts "  #{v}: #{freqs[v]} (#{cost} cyc)"
-      }
+      end
       puts "Function Profile:"
       mf_costs = Hash.new {|x| 0}
       freqs.each do |v,freq|
         mf_costs[v.function] += freq * builder.ilp.get_cost(v)
       end
-      mf_costs.sort_by { |v,freq|
+      mf_costs.sort_by do |v,freq|
         [v.function || machine_entry, -freq]
-      }.each { |v,cost|
+      end.each do |v,cost|
         puts "  #{v}: #{freqs[v]} (#{cost} cyc)"
-      }
+      end
     end
     report
   end

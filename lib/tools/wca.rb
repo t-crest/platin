@@ -11,40 +11,40 @@ include PML
 class WcaTool
 
   def WcaTool.add_config_options(opts)
-    opts.on("--[no-]wca-cache-regions","use single-entry cache regions (=true)") { |b|
+    opts.on("--[no-]wca-cache-regions","use single-entry cache regions (=true)") do |b|
       opts.options.wca_cache_regions = b
-    }
-    opts.on("--[no-]wca-persistence-analysis","use (more expensive) persistence DFA for LRU caches (=false)") { |b|
+    end
+    opts.on("--[no-]wca-persistence-analysis","use (more expensive) persistence DFA for LRU caches (=false)") do |b|
       opts.options.wca_persistence_analysis = b
-    }
-    opts.on("--wca-ideal-cache","assume each cache block is loaded at most once (=false)") { |b|
+    end
+    opts.on("--wca-ideal-cache","assume each cache block is loaded at most once (=false)") do |b|
       opts.options.wca_ideal_cache = b
-    }
-    opts.on("--wca-minimal-cache","assume there is only one cache block (=false)") { |b|
+    end
+    opts.on("--wca-minimal-cache","assume there is only one cache block (=false)") do |b|
       opts.options.wca_minimal_cache = b
-    }
-    opts.on("--wca-data-cache-analysis ANALYSIS","data cache analysis type (scope,always-hit,=always-miss)") { |v|
+    end
+    opts.on("--wca-data-cache-analysis ANALYSIS","data cache analysis type (scope,always-hit,=always-miss)") do |v|
       opts.options.wca_data_cache_analysis = v
-    }
-    opts.on("--wca-write-lp-file FILE", "write the ILP problem to an .lp file") { |f|
+    end
+    opts.on("--wca-write-lp-file FILE", "write the ILP problem to an .lp file") do |f|
       # TODO: Set wca_write_lp, and set options.write_lp only when invoking the ILP solver.
       #      Or only set a dir and prefix here and create unique filenames per ILP invocation.
       opts.options.write_lp = f
-    }
-    opts.on("--wca-use-gurobi", "use Gurobi solver instead of lp_solve") { |v|
+    end
+    opts.on("--wca-use-gurobi", "use Gurobi solver instead of lp_solve") do |v|
       opts.options.use_gurobi = v
-    }
+    end
     # Disable all cache related costs.
-    opts.on("--wca-disable-cache", "disable all cache related  costs") { |f|
+    opts.on("--wca-disable-cache", "disable all cache related  costs") do |f|
       opts.options.disable_dca = true
       opts.options.disable_sca = true
       opts.options.disable_ica = true
-    }
-    opts.add_check { |options|
+    end
+    opts.add_check do |options|
       options.wca_cache_regions = true if options.wca_cache_regions.nil?
       # TODO: change this default to 'scope' once the scope analysis works properly
       options.wca_data_cache_analysis = 'always-miss' if options.wca_data_cache_analysis.nil?
-    }
+    end
     opts.stack_cache_analysis
     opts.target_callret_costs
   end

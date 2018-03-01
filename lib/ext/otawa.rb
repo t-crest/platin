@@ -18,9 +18,9 @@ class OptionParser
   end
 
   def otawa_report_file(mandatory=true)
-    self.on("--otawa-report-file FILE", "Filename for OTAWA's result file") {
+    self.on("--otawa-report-file FILE", "Filename for OTAWA's result file") do
       |f| options.otawa_report_file = f
-    }
+    end
     self.add_check { |options| die_usage "Option --otawa-report-file is mandatory" unless options.otawa_report_file } if mandatory
   end
 end
@@ -104,27 +104,27 @@ class OSXExporter
     address_range = area.address_range
     address_range ||= ValueRange.new(0,0xFFFFFFFF,nil)
 
-    add_element(banks, "bank") { |bank|
+    add_element(banks, "bank") do |bank|
       bank << rexml_str("name", "RAM")
 
       bank << rexml_bool("cached", true) if area.cache
-    }
+    end
   end
 
   def add_memory(platform)
-    add_element(platform, "memory") { |mem|
-      add_element(mem, "banks") { |banks|
-        @pml.arch.config.memory_areas.each { |area|
+    add_element(platform, "memory") do |mem|
+      add_element(mem, "banks") do |banks|
+        @pml.arch.config.memory_areas.each do |area|
 	  add_bank(banks, area)
-	}
-      }
-    }
+	end
+      end
+    end
   end
 
   def add_caches(platform)
-    add_element(platform, "caches") { |caches|
+    add_element(platform, "caches") do |caches|
 
-    }
+    end
   end
 
   def export_platform(outfile)

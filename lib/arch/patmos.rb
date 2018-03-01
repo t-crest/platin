@@ -34,10 +34,10 @@ class SimulatorTrace
         elsif @options.trace_file != '-'
           fh = File.open(@options.trace_file, "r")
         end
-        fh.each_line { |line|
+        fh.each_line do |line|
           yield parse(line)
           @stats_num_items += 1
-        }
+        end
       ensure
         fh.close
       end
@@ -69,9 +69,9 @@ class SimulatorTrace
     else
       file = Tempfile.new('wp')
     end
-    @watchpoints.each { |wp,_|
+    @watchpoints.each do |wp,_|
       file.puts(wp.to_s)
-    }
+    end
     file.close
     file
   end
@@ -116,9 +116,9 @@ class ExtractSymbols
             extractor.add_instruction(current_label, addr, instr) if instr
           end
         else
-          assert("objdump parsing failed: #{line}") {
+          assert("objdump parsing failed: #{line}") do
             line[0] == "." or line == "\n" or /Disassembly of section/ =~ line
-          }
+          end
         end
       end
     end
@@ -426,14 +426,14 @@ class Architecture < PML::Architecture
     else
       opts.push("-mpatmos-disable-stack-cache")
     end
-    @config.memory_areas.each { |c|
+    @config.memory_areas.each do |c|
       heap_end = c.get_attribute('heap-end')
       opts.push("-mpatmos-heap-end=#{heap_end}") if heap_end
       stack_base = c.get_attribute('stack-base')
       opts.push("-mpatmos-stack-base=#{stack_base}") if stack_base
       shadow_stack_base = c.get_attribute('shadow-stack-base')
       opts.push("-mpatmos-shadow-stack-base=#{shadow_stack_base}") if shadow_stack_base
-    }
+    end
     opts
   end
 
@@ -624,10 +624,10 @@ class Architecture < PML::Architecture
 	@config.caches.add(ic)
       end
       # Deactivate the other instruction caches
-      @config.caches.each { |cache|
+      @config.caches.each do |cache|
         next if cache.name == ic_key
 	cache.type = 'none' if ['instruction-cache','method-cache'].include?(cache.name)
-      }
+      end
       if ic
 	ic.size = options.instr_cache_size if options.instr_cache_size
 	# We are not deleting the cache entry here, partly because it

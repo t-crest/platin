@@ -67,11 +67,11 @@ class OneOneCheck
 
   def OneOneCheck.default_targets(pml, entryfunc)
     entry = pml.machine_functions.by_label(entryfunc)
-    pml.machine_functions.reachable_from(entry.name).first.reject { |f|
+    pml.machine_functions.reachable_from(entry.name).first.reject do |f|
       f.label =~ /printf/
-    }.map { |f|
+    end.map do |f|
       f.label
-    }
+    end
   end
 
   def OneOneCheck.is_one_one(rg)

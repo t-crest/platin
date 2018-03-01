@@ -35,7 +35,7 @@ options = OpenStruct.new
 options.override = {}
 args, initial_args = [], []
 
-ARGV.each_with_index { |arg,ix|
+ARGV.each_with_index do |arg,ix|
   if arg =~ /^-mconfig=(.*)$/
     $stderr.puts("The option -mconfig is deprecated; use --target-config and/or --flow-facts instead")
     options.target_config = $1
@@ -70,7 +70,7 @@ ARGV.each_with_index { |arg,ix|
   elsif arg == '--debug'
     options.debug = true
   end
-}
+end
 if ! options.target_config
   $stderr.puts("Warning: using default target configuration")
 elsif ! File.exist?(options.target_config)
@@ -91,13 +91,13 @@ platin_derived_options += " #{options.platin_wcet_options}"
 
 outfile =
   if options.save_temps
-    Proc.new { |fname,ext|
+    Proc.new do |fname,ext|
       fname + ext
-    }
+    end
   else
-    Proc.new { |fname,ext|
+    Proc.new do |fname,ext|
       Tempfile.new([fname,ext]).path
-    }
+    end
   end
 
 # clang arguments

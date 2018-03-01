@@ -117,11 +117,11 @@ class ContextTree
   def path_find_first(path)
     node = @root
     return node.value unless node.value.nil?
-    path.each { |path_item|
+    path.each do |path_item|
       node = node.get_child(path_item)
       return nil        unless node
       return node.value unless node.value.nil?
-    }
+    end
     nil
   end
 
@@ -129,11 +129,11 @@ class ContextTree
   def path_find_last(path)
     node = @root
     value = @root.value
-    path.each { |path_item|
+    path.each do |path_item|
       node = node.get_child(path_item)
       return value       unless node
       value = node.value unless node.value.nil?
-    }
+    end
     value
   end
 
@@ -170,10 +170,10 @@ class ContextNode
 
   def dump(io=$stdout, level = 0)
     io.puts " " * (level * 2) + "NODE VALUE #{@value.to_s}" if @value
-    @children.each { |key,node|
+    @children.each do |key,node|
       io.puts " " * (level * 2 + 1) + key.to_s
       node.dump(io, level + 1)
-    }
+    end
   end
 end
 
@@ -375,9 +375,9 @@ end
 class Context < PMLObject
   attr_reader :callstring
   def initialize(callstring, data=nil)
-    assert("Context: expecting BoundedStack") {
+    assert("Context: expecting BoundedStack") do
       callstring.kind_of?(BoundedStack)
-    }
+    end
     @callstring = callstring
     set_yaml_repr(data)
   end
@@ -422,16 +422,16 @@ class Context < PMLObject
   def Context.callstack_suffix(stack, length)
     return Context.new(BoundedStack.empty) if length == 0
     start = (length >= stack.length) ? 0 : (-length)
-    entries = stack[start..-1].map { |callsite|
+    entries = stack[start..-1].map do |callsite|
       CallContextEntry.new(callsite)
-    }
+    end
     Context.new(BoundedStack.create(entries))
   end
 
   def Context.from_list(list)
-    assert("Context.from_list: not a list of context entries (#{list.first.class})") {
+    assert("Context.from_list: not a list of context entries (#{list.first.class})") do
       list.all? { |e| e.kind_of?(ContextEntry) }
-    }
+    end
     Context.new(BoundedStack.create(list.reverse))
   end
 
@@ -599,18 +599,18 @@ class ContextManager
 
   def continue_loop(ctx)
     return ctx unless store_loopcontext?
-    ctx.map_top { |lc|
+    ctx.map_top do |lc|
       assert("continue_loop: not a loop context #{lc}") { lc.kind_of?(LoopContextEntry) }
       lc.with_increment(@looppeel, @loopunroll)
-    }
+    end
   end
 
   def reset_loop(ctx, loop)
     return ctx unless store_loopcontext?
-    ctx.map_top { |lc|
+    ctx.map_top do |lc|
       assert("continue_loop: not a loop context #{lc}") { lc.kind_of?(LoopContextEntry) }
       LoopContextEntry.new(loop)
-    }
+    end
   end
 end
 

@@ -33,16 +33,16 @@ class GCFGTool
     # Cut out Regions identified by the abb field of the edge object.
     # The region is copied to the given functions, relation graphs.
     mapping = {}
-    gcfg.nodes.each { |gcfg_node|
+    gcfg.nodes.each do |gcfg_node|
       rg_region, bc_region, mc_region = copy_basic_blocks(gcfg_node, rg, bitcode_function, machine_function)
       mapping[gcfg_node] = [rg_region, bc_region, mc_region]
-    }
+    end
 
     exit_node = rg.add_node(RelationNode.new(rg, {'name' => 'RG_exit', 'type' => 'exit'}))
     # Connect Regions according to the GCFG Edges
-    mapping.each { |source, value|
+    mapping.each do |source, value|
       src_rg, src_bc, src_mc = value
-      source.successors.each { |dst|
+      source.successors.each do |dst|
         dst_rg, dst_bc, dst_mc = mapping[dst]
 
         # Add Bitcode Edges
@@ -53,36 +53,36 @@ class GCFGTool
         src_mc.exit_node.add_successor(dst_mc.entry_node)
         dst_mc.entry_node.add_predecessor(src_mc.exit_node)
 
-        src_mc.exit_node.data["instructions"].each {|instr|
+        src_mc.exit_node.data["instructions"].each do |instr|
           if instr["branch-targets"]
             idx = instr["branch-targets"].find_index(:next_node)
             instr["branch-targets"][idx] = dst_mc.entry_node.data["name"] if idx != nil
           end
           break
-        }
+        end
 
         # Add relationship edges
         src_rg.exit_node.add_successor(dst_rg.entry_node, :src)
         src_rg.exit_node.add_successor(dst_rg.entry_node, :dst)
-      }
+      end
       # Region has no followup regions. It must be connected to an
       # Exit Region
       if source.successors.length == 0
         src_rg.exit_node.add_successor(exit_node, :src)
         src_rg.exit_node.add_successor(exit_node, :dst)
       end
-    }
+    end
 
     # Now we have to identify and copy all functions that are called
     bc_funcs = Set.new(bitcode_function.instructions\
                         .collect_concat { |instr| instr.callees || [] })
     mc_funcs = Set.new(machine_function.instructions\
                         .collect_concat { |instr| instr.callees || [] })
-    bc_funcs.each { |func|
+    bc_funcs.each do |func|
       func = @pml_in.bitcode_functions.by_name(func)
       @pml_out.bitcode_functions.add_function(func.data.dup)
-    }
-    mc_funcs.each { |func|
+    end
+    mc_funcs.each do |func|
       data = @pml_in.machine_functions.by_label(func).data.dup
       address += 1
       data['name'] = address
@@ -92,10 +92,10 @@ class GCFGTool
         data['dst']['function'] = address
         @pml_out.relation_graphs.add(RelationGraph.new(data, @pml_out.bitcode_functions, @pml_out.machine_functions))
       end
-    }
-    mc_funcs.intersection(bc_funcs).each { |func|
+    end
+    mc_funcs.intersection(bc_funcs).each do |func|
 
-    }
+    end
   end
 
   private
@@ -120,9 +120,9 @@ class GCFGTool
     rg.get_function(:dst).subfunctions.select &(lambda {|subfunction|
       blocks_included = subfunction.blocks.map {|block| machine_region.nodes.include? block }
       if blocks_included.any?
-        assert("If one block of a subfunction is included in the region, all subfunction blocks must be included") {
+        assert("If one block of a subfunction is included in the region, all subfunction blocks must be included") do
           blocks_included.all?
-        }
+        end
         # Copy and rename subfunction to machien_code function
         data = subfunction.data.dup
         data['name'] = name_mapper.(data['name'])
@@ -138,11 +138,11 @@ class GCFGTool
     # Copy Blocks to Bitcode Functions
     target_region = ABB::RegionContainer.new
     blocks_within = Set.new region.nodes.map {|x| x.name}
-    region.nodes.each {|bb_in|
+    region.nodes.each do |bb_in|
       data = Marshal.load(Marshal.dump(bb_in.data))
-      ['name', 'mapsto', 'src-block', 'dst-block'].each {|key|
+      ['name', 'mapsto', 'src-block', 'dst-block'].each do |key|
         data[key] = name_mapper.(data[key]) if data[key]
-      }
+      end
 
       map_sequence = lambda { |seq|
         seq \
@@ -151,12 +151,12 @@ class GCFGTool
           .map    {|name| name_mapper.(name) }
       }
 
-      ['successors', 'predecessors', 'src-successors', 'dst-successors', 'loops'].each {|key|
+      ['successors', 'predecessors', 'src-successors', 'dst-successors', 'loops'].each do |key|
         data[key] = map_sequence.(data[key]) if data[key]
-      }
+      end
 
       if data["instructions"]
-        data["instructions"].each {|instr|
+        data["instructions"].each do |instr|
           if instr["branch-targets"]
             if bb_in == region.exit_node
               instr["branch-targets"] = map_sequence.(instr["branch-targets"]) + [:next_node]
@@ -164,7 +164,7 @@ class GCFGTool
               instr["branch-targets"] = map_sequence.(instr["branch-targets"])
             end
           end
-        }
+        end
       end
 
       # Make all inner nodes progress nodes for now
@@ -176,7 +176,7 @@ class GCFGTool
       target_region.nodes.push(bb)
       target_region.entry_node = bb if region.entry_node == bb_in
       target_region.exit_node = bb if region.exit_node == bb_in
-    }
+    end
     target_region
   end
 end
@@ -193,10 +193,10 @@ EOF
 
   rewriter = GCFGTool.new(pml_in, options)
   address = 0
-  pml_in.global_cfgs.each {|gcfg|
+  pml_in.global_cfgs.each do |gcfg|
     rewriter.transform_gcfg(gcfg, address)
     address += 100000
-  }
+  end
 
   # gcfg = pml_in.global_cfgs.by_name("system")
 

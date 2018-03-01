@@ -21,12 +21,12 @@ class M5SimulatorTrace
 
   def each
     die("No M5 trace file specified") unless @options.trace_file
-    file_open(@options.trace_file) { |fh|
-      fh.each_line { |line|
+    file_open(@options.trace_file) do |fh|
+      fh.each_line do |line|
         yield parse(line)
         @stats_num_items += 1
-      }
-    }
+      end
+    end
   end
   private
   def parse(line)

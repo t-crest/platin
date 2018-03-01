@@ -85,12 +85,12 @@ class CacheAnalysis
     puts "Data cache contribution:" if @dca and options.verbose
     dca_results = @dca.summarize(options, freqs, cost) if @dca
 
-    { "instr" => ica_results, "stack" => sca_results, "data" => dca_results }.each { |type,r|
-      r.each { |k,v|
+    { "instr" => ica_results, "stack" => sca_results, "data" => dca_results }.each do |type,r|
+      r.each do |k,v|
         report.attributes[k + "-" + type] = v
 	total_cycles += v if k == "cache-max-cycles"
-      } if r
-    }
+      end if r
+    end
 
     report.attributes['cache-max-cycles'] = total_cycles
   end
@@ -168,7 +168,7 @@ class CacheAnalysisBase
     bypasses = 0
     known = 0
     unknown = 0
-    @all_load_edges.each { |me|
+    @all_load_edges.each do |me|
       li = me.load_instruction
       puts "  cache load edge #{me}: #{freqs[me] || '??'} / #{freqs[me.edgeref] || '??'} (#{cost[me]} cyc)" if options.verbose
       cycles += cost[me] || 0
@@ -181,7 +181,7 @@ class CacheAnalysisBase
       # count known and unknown accesses indepenently
       known += freqs[me] || 0 if li.known?
       unknown += freqs[me] || 0 if li.unknown?
-    }
+    end
     { "cache-max-cycles" => cycles, "cache-min-hits" => hits, "cache-max-misses" => misses,
       "cache-max-stores" => stores, "cache-max-bypass" => bypasses,
       "cache-known-address" => known, "cache-unknown-address" => unknown
@@ -208,12 +208,12 @@ class AlwaysMissCacheAnalysis < CacheAnalysisBase
     @all_load_edges = []
 
     # iterate over all instructions in the call graph
-    scopegraph.bottom_up.each { |n|
+    scopegraph.bottom_up.each do |n|
       # TODO: Handle SCCNodes from recursive calls
       next unless n.kind_of?(ScopeGraph::FunctionNode)
 
-      n.function.blocks.each { |block|
-        block.instructions.each { |i|
+      n.function.blocks.each do |block|
+        block.instructions.each do |i|
 
 	  load_instructions = @cache_properties.load_instructions(i)
 	  next unless load_instructions
@@ -224,7 +224,7 @@ class AlwaysMissCacheAnalysis < CacheAnalysisBase
           debug(options,:cache) { "Load instructions for instruction: #{i}: #{load_instructions.join(",")}" }
 
           # add a variable for each load instruction
-          load_instructions.each { |li|
+          load_instructions.each do |li|
 
 	    ipet_builder.ilp.add_variable(li)
 	    # load instruction is less equal to instruction frequency
@@ -232,7 +232,7 @@ class AlwaysMissCacheAnalysis < CacheAnalysisBase
 
 	    # add load edges to attribute cost to
 	    load_edges = []
-	    li.insref.block.outgoing_edges.each { |edge|
+	    li.insref.block.outgoing_edges.each do |edge|
 	      me = MemoryEdge.new(edge, li)
 	      ipet_builder.ilp.add_variable(me)
 	      ipet_builder.ilp.add_cost(me, @cache_properties.load_cost(li.tag))
@@ -240,16 +240,16 @@ class AlwaysMissCacheAnalysis < CacheAnalysisBase
 	      # memory edge frequency is less equal to edge frequency
 	      ipet_builder.mc_model.assert_less_equal({me => 1},{me.edgeref => 1},"load_edge_#{me}",:cache)
 	      load_edges.push(me)
-	    }
+	    end
 	    # sum of load edges is equal to load instructions
 	    load_edge_sum = load_edges.map { |me| [me,1] }
 	    ipet_builder.mc_model.assert_equal(load_edge_sum, {li => 1}, "load_edges_#{li}",:cache)
 	    # collect all load edges
 	    @all_load_edges.concat(load_edges)
-	  }
-	}
-      }
-    }
+	  end
+	end
+      end
+    end
   end
 
 end
@@ -292,15 +292,15 @@ class CacheRegionAnalysis < CacheAnalysisBase
     # modify IPET
     0.upto(@cache_properties.sets) do |set|
 
-      get_all_tags(scopegraph.root, set).each { |tag,load_instructions|
+      get_all_tags(scopegraph.root, set).each do |tag,load_instructions|
 
         load_instructions = load_instructions.to_a
         debug(options,:cache) { "Load instructions for tag #{tag}: #{load_instructions.join(",")}" }
-        debug(options,:cache) {
+        debug(options,:cache) do
           "Scopes for tag #{tag}: #{conflict_free_scopes[tag]}"
-        }
+        end
         # add a variable for each load instruction
-        load_instructions.each { |li|
+        load_instructions.each do |li|
 
           ipet_builder.ilp.add_variable(li)
           # load instruction is less equal to instruction frequency
@@ -308,7 +308,7 @@ class CacheRegionAnalysis < CacheAnalysisBase
 
           # add load edges to attribute cost to
           load_edges = []
-          li.insref.block.outgoing_edges.each { |edge|
+          li.insref.block.outgoing_edges.each do |edge|
             me = MemoryEdge.new(edge, li)
             ipet_builder.ilp.add_variable(me)
             ipet_builder.ilp.add_cost(me, @cache_properties.load_cost(tag))
@@ -316,13 +316,13 @@ class CacheRegionAnalysis < CacheAnalysisBase
             # memory edge frequency is less equal to edge frequency
             ipet_builder.mc_model.assert_less_equal({me => 1},{me.edgeref => 1},"load_edge_#{me}",:cache)
             load_edges.push(me)
-          }
+          end
           # sum of load edges is equal to load instructions
           load_edge_sum = load_edges.map { |me| [me,1] }
           ipet_builder.mc_model.assert_equal(load_edge_sum, {li => 1}, "load_edges_#{li}",:cache)
 	  # collect all load edges
 	  @all_load_edges.concat(load_edges)
-        }
+        end
 
         # add variable for tag
         ipet_builder.ilp.add_variable(tag)
@@ -332,11 +332,11 @@ class CacheRegionAnalysis < CacheAnalysisBase
         ipet_builder.mc_model.assert_equal(load_ins_sum, {tag => 1}, "tag_#{tag}", :cache)
 
         # tag is less equal sum of all scopes
-        scope_sum = conflict_free_scopes[tag].map { |scope_node, f|
+        scope_sum = conflict_free_scopes[tag].map do |scope_node, f|
           [scope_node.scope_entry, f]
-        }
+        end
         ipet_builder.mc_model.assert_less_equal({tag => 1}, scope_sum, "tagsum_#{tag}", :cache)
-      }
+      end
     end
   end
 
@@ -347,12 +347,12 @@ class CacheRegionAnalysis < CacheAnalysisBase
     all_tags = @all_tags[[node,set]]
     return all_tags if all_tags
     all_tags = get_local_tags(node,set)
-    node.successors.each { |succ|
-      get_all_tags(succ, set).each { |t,is|
+    node.successors.each do |succ|
+      get_all_tags(succ, set).each do |t,is|
         all_tags[t] ||= Set.new
         all_tags[t] += is
-      }
-    }
+      end
+    end
     @all_tags[[node,set]] = all_tags
   end
 
@@ -364,11 +364,11 @@ class CacheRegionAnalysis < CacheAnalysisBase
     local_tags = {}
     region_graph = get_region_graph(node)
     return local_tags unless region_graph
-    region_graph.action_nodes.each { |node|
+    region_graph.action_nodes.each do |node|
       load_instruction = node.action
       tag = load_instruction.tag
       (local_tags[tag] ||= Set.new).add(load_instruction) if @cache_properties.set_of(tag) == set
-    }
+    end
     local_tags
   end
 
@@ -383,19 +383,19 @@ class CacheRegionAnalysis < CacheAnalysisBase
     @conflict_free_scopes = {}
 
     # for each region node, we compute the cache access graph
-    scopegraph.bottom_up.each { |n|
+    scopegraph.bottom_up.each do |n|
       if rg = n.region
-        assert("Inconsistent region graph") {
+        assert("Inconsistent region graph") do
           sub_scope_nodes = rg.nodes.select { |n| n.kind_of?(RegionGraph::SubScopeNode) }.map { |n| n.scope_node }
           Set[*sub_scope_nodes] == Set[*n.successors]
-        }
-        arg = rg.action_graph { |instruction|
+        end
+        arg = rg.action_graph do |instruction|
           @cache_properties.load_instructions(instruction)
-        }
+        end
         @region_graphs[n] = arg
         # arg.dump #(nice for debugging)
       end
-    }
+    end
 
     # compute cache miss constraints
     all_tags = []
@@ -470,13 +470,13 @@ class ConflictFreeRegionFormation
   def build_regions
     # NOTE: ruby tsort is recursive, and does not work for large graphs :(
     # therefore, we use our own, efficient implementation
-    topological_sort(@rg.entry_node).each { |node|
+    topological_sort(@rg.entry_node).each do |node|
       if (pred_region = expandable?(node))
         join_regions(pred_region, node)
       else
         new_region(node)
       end
-    }
+    end
     self
   end
 
@@ -493,9 +493,9 @@ class ConflictFreeRegionFormation
 
   # yields region headers
   def each
-    @regions.each { |region_header|
+    @regions.each do |region_header|
       yield region_header
-    }
+    end
   end
 
   def nodes_of_region(header)
@@ -598,20 +598,20 @@ class ConflictAnalysis
 
   def compute_conflict_free_scopes(scopegraph, set)
     @conflict_free = {}
-    scopegraph.bottom_up.each { |node|
+    scopegraph.bottom_up.each do |node|
       if conflict_free?(node, set)
         # if the node is conflict free, just mark it (unless it is the entry)
         debug(options, :cache) { "Conflict-free Scope: #{node} #{set}" }
         if node == scopegraph.root
-          get_all_tags(node, set).each { |tag, load_instructions|
+          get_all_tags(node, set).each do |tag, load_instructions|
             @analysis.add_scope_for_tag(node, tag)
-          }
+          end
         end
       else
         # analyze conflict scope
         self.analyze_conflict_scope(node, set)
       end
-    }
+    end
   end
 
   #
@@ -633,23 +633,23 @@ class ConflictAnalysis
       if options.wca_cache_regions
         # process region graph in topological order
         rf = RegionFormationRA.new(rg, set, self)
-        rf.build_regions.each { |header|
+        rf.build_regions.each do |header|
           tags = rf.tags_of_region(header)
           next if tags.empty?
           scope_node = rf.scope_of_region(header, node)
-          tags.each { |tag|
+          tags.each do |tag|
             @analysis.add_scope_for_tag(scope_node, tag)
-          }
-        }
+          end
+        end
       else
         # If this is a region node, add misses for all actions in the current set
-        rg.action_nodes.each { |action_node|
+        rg.action_nodes.each do |action_node|
           load_instruction = action_node.action
           tag = load_instruction.tag
           if cache_properties.set_of(tag) == set
             @analysis.add_scope_for_tag(ScopeGraph::BlockNode.new(action_node.block, node.context), tag)
           end
-        }
+        end
         add_conflict_free_subscopes(node, set)
       end
     else
@@ -659,14 +659,14 @@ class ConflictAnalysis
 
   def add_conflict_free_subscopes(node, set)
     # add scope constraint for all conflict-free successors
-    node.successors.each { |snode|
+    node.successors.each do |snode|
       debug(options, :cache) { "conflict_scope: subscope #{snode}, needs action: #{conflict_free?(snode,set)}" }
       if conflict_free?(snode, set)
-        get_all_tags(snode,set).each { |tag, load_instructions|
+        get_all_tags(snode,set).each do |tag, load_instructions|
           @analysis.add_scope_for_tag(snode, tag)
-        }
+        end
       end
-    }
+    end
   end
 
 end
@@ -699,9 +699,9 @@ class MethodCacheAnalysis
   def subfunction_of_block(b)
     unless sf_of_block = @block_subfunction_map[b.function]
       sf_of_block = @block_subfunction_map[b.function] = {}
-      b.function.subfunctions.each { |sf|
+      b.function.subfunctions.each do |sf|
         sf.blocks.each { |b| sf_of_block[b] = sf }
-      }
+      end
     end
     sf_of_block[b]
   end
@@ -817,9 +817,9 @@ class InstructionCacheAnalysis
       same_cache_line_as_prev = true
     end
     if ! same_cache_line_as_prev || i.may_return_to?
-      get_aligned_addresses(i.address, last_byte).map { |addr|
+      get_aligned_addresses(i.address, last_byte).map do |addr|
         LoadInstruction.new(i, CacheLine.new(addr, i.function))
-      }
+      end
     else
       []
     end
@@ -1042,7 +1042,7 @@ class DataCacheAnalysis < DataCacheAnalysisBase
 
     # Check if any set entry is an uncached acccess
     # We could also check for set-id, if we would get it here
-    cache_lines.each { |cache_line|
+    cache_lines.each do |cache_line|
       return false if cache_line.uncached?
 
       # We need to be conservative here if we do not know the address exactly,
@@ -1053,7 +1053,7 @@ class DataCacheAnalysis < DataCacheAnalysisBase
       #      conflict scope. We need to distinguish different unknowm accesses for that, i.e. the cacheline
       #      tag (qname) must be different for constant and truly unknown accesses.
       return false unless cache_line.known?
-    }
+    end
 
     cache_lines.length <= @cache.associativity
   end
@@ -1067,30 +1067,30 @@ class StackCacheAnalysis
 
   def analyze(scope_graph)
     @fill_blocks, @spill_blocks = Hash.new(0), Hash.new(0)
-    scope_graph.bottom_up.each { |n|
+    scope_graph.bottom_up.each do |n|
       next unless n.kind_of?(ScopeGraph::FunctionNode)
       f = n.function
-      f.instructions.each { |i|
+      f.instructions.each do |i|
         if i.sc_fill.to_i > 0
           @fill_blocks[i] += i.sc_fill
         elsif i.sc_spill.to_i > 0
           @spills[i] += i.sc_spill
         end
-      }
-    }
+      end
+    end
   end
 
   def analyze_nonscope()
     @fill_blocks, @spill_blocks = Hash.new(0), Hash.new(0)
-    @pml.machine_functions.each { |f|
-      f.instructions.each { |i|
+    @pml.machine_functions.each do |f|
+      f.instructions.each do |i|
         if i.sc_fill.to_i > 0
           @fill_blocks[i] += i.sc_fill
         elsif i.sc_spill.to_i > 0
           @spill_blocks[i] += i.sc_spill
         end
-      }
-    }
+      end
+    end
   end
 
   def extend_ipet(ipet_builder)
@@ -1099,7 +1099,7 @@ class StackCacheAnalysis
   end
 
   def extend_ipet_fills(ipet_builder)
-    @fill_blocks.each { |instruction,fill_blocks|
+    @fill_blocks.each do |instruction,fill_blocks|
       begin
         delay = @pml.arch.config.main_memory.read_delay(0, fill_blocks * @cache.block_size)
         debug(@options, :cache, :costs) { "Cost for stack cache fill: #{fill_blocks}*#{@cache.block_size}=#{delay}" }
@@ -1109,11 +1109,11 @@ class StackCacheAnalysis
       rescue PML::UnknownVariableException
         warn("cannot annotate inst #{instruction}: #{$ERROR_INFO}")
       end
-    }
+    end
   end
 
   def extend_ipet_spills(ipet_builder)
-    @spill_blocks.each { |instruction,spill_blocks|
+    @spill_blocks.each do |instruction,spill_blocks|
       begin
         delay = @pml.arch.config.main_memory.write_delay(0, spill_blocks * @cache.block_size)
         debug(@options, :cache, :costs) { "Cost for stack cache spill: #{spill_blocks}*#{@cache.block_size}=#{delay}" }
@@ -1123,7 +1123,7 @@ class StackCacheAnalysis
       rescue PML::UnknownVariableException
         warn("cannot annotate inst #{instruction}: #{$ERROR_INFO}")
       end
-    }
+    end
   end
 
   def summarize(options, freqs, cost)
@@ -1135,22 +1135,22 @@ class StackCacheAnalysis
   def summarize_fills(options, freqs, cost)
     cycles = 0
     misses = 0
-    @fill_blocks.each { |v,_|
+    @fill_blocks.each do |v,_|
       puts "  sc fill #{v}: #{freqs[v] || '??'} (#{cost[v]} cyc)" if options.verbose
       cycles += cost[v] || 0
       misses += freqs[v] || 0
-    }
+    end
     { "cache-max-cycles" => cycles, "cache-max-misses" => misses }
   end
 
   def summarize_spills(options, freqs, cost)
     cycles = 0
     misses = 0
-    @spill_blocks.each { |v,_|
+    @spill_blocks.each do |v,_|
       puts "  sc spill #{v}: #{freqs[v] || '??'} (#{cost[v]} cyc)" if options.verbose
       cycles += cost[v] || 0
       misses += freqs[v] || 0
-    }
+    end
     { "cache-max-cycles" => cycles, "cache-max-misses" => misses }
   end
 end
@@ -1184,11 +1184,11 @@ class StackCacheAnalysisGraphBased < StackCacheAnalysis
     @spills = {}
     preds, succs = {}, {}
     assert("missing sca graph data") { @pml.sca_graph }
-    @pml.sca_graph.nodes.each { |node|
+    @pml.sca_graph.nodes.each do |node|
       @nodes[node.id] = node
       # @mc_model.ipet.add_variable(node.id, :sca)
-    }
-    @pml.sca_graph.edges.each { |edge|
+    end
+    @pml.sca_graph.edges.each do |edge|
       srcn = @nodes[edge.src]
       dstn = @nodes[edge.dst]
       f = srcn.function
@@ -1200,34 +1200,34 @@ class StackCacheAnalysisGraphBased < StackCacheAnalysis
       (succs[srcn] ||= []) << edge
       (preds[dstn] ||= []) << edge
       (@spills[[cs,dstn.function]] ||= []) << IPETEdgeSCA.new(srcn, dstn, cs)
-    }
-    @spills.values.flat_map { |i| i }.each { |e|
+    end
+    @spills.values.flat_map { |i| i }.each do |e|
       ilp.add_variable(e)
       next if e.target.size == 0
       # TODO: we should get the memory for the 'data' area
       delay = @pml.arch.config.main_memory.write_delay(0, e.target.size * @cache.block_size)
       debug(@options, :cache, :costs) { "Cost for stack cache spill: #{e.target.size}*#{@cache.block_size}=#{delay}" }
       ilp.add_cost(e, delay)
-    }
+    end
     # puts ipet_builder.ilp.variables.select{ |v| v.kind_of? IPETEdge and v.call_edge? }
-    ipet_builder.call_edges.each { |ce|
+    ipet_builder.call_edges.each do |ce|
       k = [ce.source,ce.target]
       puts "k: #{k}"
       puts "ce: #{ce}"
       puts "sca: #{@spills[k]}"
       lhs = [[ce,1]] + @spills[k].map { |e| [e,-1] }
       ilp.add_constraint(lhs, "equal", 0, "sca_link", :sca)
-    }
+    end
   end
 
   def summarize_spills(options, freqs, cost)
     cycles = 0
     misses = 0
-    @spills.values.flat_map { |i| i }.each { |v|
+    @spills.values.flat_map { |i| i }.each do |v|
       puts "  sc spill #{v}: #{freqs[v]} (#{cost[v]} cyc)" if freqs[v] and freqs[v] > 0 if options.verbose
       cycles += cost[v] || 0
       misses += freqs[v] || 0
-    }
+    end
     { "cache-max-cycles" => cycles, "cache-max-misses" => misses }
   end
 end

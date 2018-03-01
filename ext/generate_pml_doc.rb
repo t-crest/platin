@@ -27,9 +27,9 @@ class String
     first_line_indent = $1.length
     add_indent = ' ' * ([new_indent - first_line_indent, 0].max)
     del_indent_count = [new_indent - first_line_indent, 0].min.abs
-    self.gsub(/^([ \t]{0,#{del_indent_count}})(\s*)(\S)/) {
+    self.gsub(/^([ \t]{0,#{del_indent_count}})(\s*)(\S)/) do
       add_indent + $2.to_s + $3
-    }
+    end
   end
 end
 
@@ -129,7 +129,7 @@ private
   def generate_dict(klass, attrs, fields)
     superklass = attrs[:super] || 'PMLObject'
     @io.puts "  class #{klass} < #{superklass}"
-    fields.each { |k,v|
+    fields.each do |k,v|
       field = ruby_name(k)
       field_doc, field_attrs = parse_doc(v['desc'])
       field_klass = get_klass(v, field_attrs)
@@ -159,7 +159,7 @@ private
       end
       @io.puts "attr_reader :#{field}".indent_doc(METHOD_INDENT)
       @io.puts ""
-    }
+    end
     @io.puts "end # class #{klass}".indent_doc(KLASS_INDENT)
   end
 
@@ -190,21 +190,21 @@ private
     doc,attrs = $1, $2
     doc_lines = []
 
-    doc.split(/\n/).each { |line|
+    doc.split(/\n/).each do |line|
       line =~ /^(\s*)(.*)/
       indent, rest = $1, $2
       doc_lines.push("##{indent}")
       no_split = ( rest =~ /^\s*[\-\*]/ ) # do not split enumerations
-      rest.scan(/\S+/) { |w|
+      rest.scan(/\S+/) do |w|
         doc_lines.push("##{indent}") if doc_lines.last.length > 80 - w.length && ! no_split
         doc_lines.last << ' ' << w
-      }
-    }
+      end
+    end
 
-    attrs = (attrs || "").split(/\s*,\s*/).map { |pair|
+    attrs = (attrs || "").split(/\s*,\s*/).map do |pair|
       k,v = pair.split(/\s*=\s*/,2)
       v ? [k,v] : [k,true]
-    }.flatten
+    end.flatten
 
    [ doc_lines.join("\n"), Hash[*attrs.flatten] ]
   end

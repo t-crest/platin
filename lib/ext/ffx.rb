@@ -227,10 +227,10 @@ class F4Exporter
   def gen_fact(f4_fact, descr, derived_from=nil)
     @stats_generated_facts += 1
     @outfile.puts(f4_fact + ";" + " // " + descr)
-    debug(@options,:ffx) {
+    debug(@options,:ffx) do
       s = " derived from #{derived_from}" if derived_from
       "Wrote F4 instruction: #{f4_fact}#{s}"
-    }
+    end
     true
   end
 
@@ -246,9 +246,9 @@ class F4Exporter
         branches += 1 if ins.branch_type && ins.branch_type != "none"
         if ins.branch_type == 'indirect'
           successors = ins.branch_targets ? ins.branch_targets : mbb.successors
-          targets = successors.uniq.map { |succ|
+          targets = successors.uniq.map do |succ|
             succ.f4_ref
-          }.join(", ")
+          end.join(", ")
 	  # TODO: where does the flow fact actually come from?
           gen_fact("multibranch #{ins.f4_ref(:branch_index => branches)} to #{targets}","jumptable (source: llvm)",ins)
         end
@@ -282,7 +282,7 @@ class F4Exporter
     loopblock = scope.programpoint.loopheader
     loopname = loopblock.f4_ref
 
-    bounds_and_ffs.each { |bound,ff|
+    bounds_and_ffs.each do |bound,ff|
       if bound.referenced_vars.empty?
         gen_fact("loop #{loopname} #{bound.to_f4}",
                  "global loop header bound (source: #{ff.origin})")
@@ -290,7 +290,7 @@ class F4Exporter
 	warn("F4: symbolic loop bound #{bound} not supported")
         @stats_skipped_flowfacts += 1
       end
-    }
+    end
   end
 
   # export global infeasibles
@@ -307,7 +307,7 @@ class F4Exporter
   def export_flowfacts(ffs)
     loop_bounds = {}
 
-    ffs.each { |ff|
+    ffs.each do |ff|
       if scope_bound = ff.get_loop_bound
         scope,bound = scope_bound
         next if options.ff_disable_export.include?('loop-bounds')
@@ -317,10 +317,10 @@ class F4Exporter
         supported = export_flowfact(ff)
         @stats_skipped_flowfacts += 1 unless supported
       end
-    }
-    loop_bounds.each { |scope,bounds_and_ffs|
+    end
+    loop_bounds.each do |scope,bounds_and_ffs|
       export_loopbounds(scope, bounds_and_ffs)
-    }
+    end
   end
 
   # export linear-constraint flow facts
@@ -410,9 +410,9 @@ class FFXExporter
         branches += 1 if ins.branch_type && ins.branch_type != "none"
         if ins.branch_type == 'indirect'
           successors = ins.branch_targets ? ins.branch_targets : mbb.successors
-          targets = successors.uniq.map { |succ|
+          targets = successors.uniq.map do |succ|
             succ.f4_ref
-          }.join(", ")
+          end.join(", ")
           # gen_fact("multibranch #{ins.f4_ref(:branch_index => branches)} to #{targets}","jumptable (source: llvm)",ins)
         end
       end
@@ -482,7 +482,7 @@ class FFXExporter
   # export set of flow facts (minimum of loop bounds)
   def export_flowfacts(ffs)
     loop_bounds = {}
-    ffs.each { |ff|
+    ffs.each do |ff|
       if scope_bound = ff.get_loop_bound
         scope,bound = scope_bound
         next if options.ff_disable_export.include?('loop-bounds')
@@ -492,10 +492,10 @@ class FFXExporter
         supported = export_flowfact(ff)
         @stats_skipped_flowfacts += 1 unless supported
       end
-    }
-    loop_bounds.each { |scope,bounds_and_ffs|
+    end
+    loop_bounds.each do |scope,bounds_and_ffs|
       export_loopbounds(scope, bounds_and_ffs)
-    }
+    end
   end
 
   # export linear-constraint flow facts

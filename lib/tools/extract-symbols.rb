@@ -38,9 +38,9 @@ class ExtractSymbols
       io.each_line do |line|
         if record = objdump_extract(line.chomp)
           next unless @options.text_sections.include?(record.section)
-          debug(@options, :elf) {
+          debug(@options, :elf) do
             "Adding address for label #{record.label}: #{record.address}"
-          }
+          end
           add_symbol(record.label, record.address)
         end
       end
@@ -99,9 +99,9 @@ class ExtractSymbols
             instruction_data.push(instruction.data)
           else # INLINEASM instruction
             addr, size = instruction.address, instruction.size
-            debug(@options,:elf) {
+            debug(@options,:elf) do
               "Replace INLINEASM block of size #{size} in #{function.label}"
-            }
+            end
             while size > 0
               instr = @instructions[function.label][addr]
               assert("Could not disassemble address @ #{addr} #{instr}") { instr != nil and !instr['invalid']}
@@ -109,9 +109,9 @@ class ExtractSymbols
               addr += instr['size']
               size -= instr['size']
             end
-            assert("Could not resolve INLINEASM block") {
+            assert("Could not resolve INLINEASM block") do
               size == 0
-            }
+            end
           end
         end
         # Reorder instructions

@@ -97,12 +97,12 @@ module PML
 
     def add_copies(flowfacts, new_origin)
       copies = []
-      flowfacts.each { |ff|
+      flowfacts.each do |ff|
         ff_copy = ff.deep_clone
         ff_copy.origin = new_origin
         add(ff_copy)
         copies.push(ff_copy)
-      }
+      end
       copies
     end
 
@@ -114,7 +114,7 @@ module PML
 
     def filter(pml, ff_selection, ff_srcs, _ff_levels, _exclude_symbolic = false)
       classifier = FlowFactClassifier.new(pml)
-      @list.select { |ff|
+      @list.select do |ff|
         # skip if level does not match
         # if ! ff_levels.include?(ff.level)
         #  false
@@ -131,13 +131,13 @@ module PML
         else
           true
         end
-      }
+      end
     end
 
     def stats(pml)
       classifier = FlowFactClassifier.new(pml)
       by_level = {}
-      @list.each { |ff|
+      @list.each do |ff|
         klass = classifier.classification_group(ff)
         by_origin = (by_level[ff.level] ||= {})
         by_origin[:cnt] = (by_origin[:cnt] || 0) + 1
@@ -145,23 +145,23 @@ module PML
         by_group[:cnt] = (by_group[:cnt] || 0) + 1
         by_klass = (by_group[klass] ||= {})
         by_klass[:cnt] = (by_klass[:cnt] || 0) + 1
-      }
+      end
       by_level
     end
 
     def dump_stats(pml, io=$stderr)
       io.puts "Flow-Facts, classified"
-      stats(pml).each { |level,by_group|
+      stats(pml).each do |level,by_group|
         io.puts " #{level.to_s.ljust(39)} #{by_group[:cnt]}"
-        by_group.each { |group,by_klass|
+        by_group.each do |group,by_klass|
           next if group == :cnt
           io.puts "   #{group.to_s.ljust(37)} #{by_klass[:cnt]}"
-          by_klass.each { |klass,stats|
+          by_klass.each do |klass,stats|
             next if klass == :cnt
             io.puts "     #{klass.to_s.ljust(35)} #{stats[:cnt]}"
-          }
-        }
-      }
+          end
+        end
+      end
     end
   end
 
@@ -225,12 +225,12 @@ module PML
 
     def add_copies(flowfacts, new_origin)
       copies = []
-      flowfacts.each { |mf|
+      flowfacts.each do |mf|
         mf_copy = mf.deep_clone
         mf_copy.origin = new_origin
         add(mf_copy)
         copies.push(mf_copy)
-      }
+      end
       copies
     end
 
@@ -352,10 +352,10 @@ module PML
         assert("guards match on function scope, no function found #{ppref} in #{self}") \
               { ppref.respond_to?(:function)}
         assert("guards set a blockfreq, no block found for #{ppref} in #{self}") \
-              {    ppref.kind_of?(ContextRef) \
+              do    ppref.kind_of?(ContextRef) \
                 && ppref.respond_to?("programpoint") \
                 && ppref.programpoint.kind_of?(Block)
-              }
+              end
         assert("guard operate on bitcode level") { level == 'bitcode'}
         fun = ppref.function
 
@@ -385,10 +385,10 @@ module PML
         assert("lbounds match on function scope, no function found #{ppref} in #{self}") \
               { ppref.respond_to?(:function)}
         assert("lbounds set a blockfreq, no block found for #{ppref} in #{self}") \
-              {    ppref.kind_of?(ContextRef) \
+              do    ppref.kind_of?(ContextRef) \
                 && ppref.respond_to?("programpoint") \
                 && ppref.programpoint.kind_of?(Block)
-              }
+              end
 
         # To use Flowfact.loop_bound, we need a scope at the level of our
         # programpoint easiest way to achieve this is to use ProgramPoint.from_pml...
@@ -402,9 +402,9 @@ module PML
               { scope != nil && scope.programpoint.kind_of?(Loop) }
         # XXX: use model-eval-foo here
         bound = Peaches::evaluate_expression(model.context, expr, :number)
-        assert("lbounds operate on positive integers, but (#{expr}) evaluates to #{bound}") {
+        assert("lbounds operate on positive integers, but (#{expr}) evaluates to #{bound}") do
           bound >= 0
-        }
+        end
 
         fact = FlowFact.loop_bound(scope, SEInt.new(bound + 1), attributes)
         fact.origin = 'model.bc'
@@ -418,11 +418,11 @@ module PML
         assert("callee operates on machinecode level") { level == 'machinecode'}
         assert("callee targets call instructions" + \
                ", no unresolved call found for #{ppref} in #{self}") \
-              {    ppref.kind_of?(ContextRef) \
+              do    ppref.kind_of?(ContextRef) \
                 && ppref.respond_to?("programpoint") \
                 && ppref.programpoint.kind_of?(Instruction) \
                 && ppref.programpoint.calls? && ppref.programpoint.unresolved_call?
-              }
+              end
 
         # XXX: use model-eval-foo here
         listfields = /\[(.*)\]/.match(expr)
@@ -433,11 +433,11 @@ module PML
 
         # If we have a qualified identifier, perform patmos-clang-style
         # namemangling (only for static identifiers)
-        entries.map!{|entry| entry.sub(/^([^:]+):(.+)$/) {
+        entries.map! do |entry| entry.sub(/^([^:]+):(.+)$/) do
           fname = $2; # because, well, fuck you, we are using global variables
                       # for our regex matching. scoping is for loosers.
           $1.gsub(/[^0-9A-Za-z]/, '_') + '_' + fname
-        }}
+        end end
 
         mutation = PMLMachineCalleeMutation.new(ppref.programpoint, entries)
         mutation
@@ -500,7 +500,7 @@ module PML
       lhs = TermList.new(data['lhs'].map { |t| Term.from_pml(mod,t) })
       attrs = ProgramInfoObject.attributes_from_pml(pml, data)
       rhs = SymbolicExpression.parse(data['rhs'])
-      rhs = rhs.map_names { |ty,name|
+      rhs = rhs.map_names do |ty,name|
         if ty == :variable # ok
           name
         elsif ty == :loop
@@ -508,7 +508,7 @@ module PML
           raise Exception.new("Unable to lookup loop: #{name} in #{b}") unless b
           b
         end
-      }
+      end
       ff = FlowFact.new(scope, lhs, data['op'], rhs, attrs, data)
       ff
     end
@@ -561,8 +561,8 @@ module PML
     end
 
     def local?
-      lhs.all? { |term| term.programpoint.function &&
-                        term.programpoint.function == scope.function }
+      lhs.all? do |term| term.programpoint.function &&
+                        term.programpoint.function == scope.function end
     end
 
     def loop_bound?
@@ -638,19 +638,19 @@ module PML
     #   cs      ... ContextRef <Instruction>
     #   targets ... [Function]
     def get_calltargets
-      callsite_candidate = lhs.list.select { |term|
+      callsite_candidate = lhs.list.select do |term|
         term.factor == 1 && term.programpoint.kind_of?(Instruction)
-      }
+      end
       return nil unless callsite_candidate.length == 1
       callsite_ref = callsite_candidate.first.ppref
       opposite_factor = -1
       targets = []
-      lhs.each { |term|
+      lhs.each do |term|
         next if term == callsite_candidate.first
         return nil unless term.factor == opposite_factor
         return nil unless term.programpoint.kind_of?(Function)
         targets.push(term.programpoint)
-      }
+      end
       [scope, callsite_ref, targets]
     end
   end

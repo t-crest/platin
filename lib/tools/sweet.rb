@@ -31,9 +31,9 @@ class AlfTool
     cmd.push("-alf-ignore-volatiles") if alf_opts[:ignore_volatiles]
     cmd.push("-alf-ignore-definitions=#{alf_opts[:ignored_definitions].join(",")}") if alf_opts[:ignored_definitions]
     if alf_opts[:memory_areas]
-      areas = alf_opts[:memory_areas].map { |mem_area|
+      areas = alf_opts[:memory_areas].map do |mem_area|
         sprintf("0x%x-0x%x",mem_area.min, mem_area.max)
-      }.join(",")
+      end.join(",")
       cmd.push("-alf-memory-areas=#{areas}")
     end
     cmd.push(options.bitcode_file)
@@ -73,12 +73,12 @@ class SweetAnalyzeTool
     opts.on("--sweet-generate-trace") { opts.options.sweet_generate_trace = true }
     opts.sweet_flowfact_file
     opts.sweet_trace_file(false)
-    opts.add_check { |options|
+    opts.add_check do |options|
       if options.sweet_generate_trace
         options.sweet_ignore_volatiles = true
         die("Option sweet_trace_file is mandatory given --sweet-generate-trace") unless options.sweet_trace_file
       end
-    }
+    end
   end
 
   def SweetAnalyzeTool.run(_pml, options)
@@ -102,7 +102,7 @@ class SweetAnalyzeTool
     cmd = ([options.sweet] + i_args + do_args + ae_args + ff_args)
     version, commands, parsed = nil, [], []
     $stderr.puts("Executing #{cmd.join(" ")}") if options.verbose
-    IO.popen(cmd + [:err => [:child,:out]]) { |sweet_io|
+    IO.popen(cmd + [:err => [:child,:out]]) do |sweet_io|
       while l = sweet_io.gets
         if l =~ /SWEET version (.*)/
           version = $1
@@ -114,7 +114,7 @@ class SweetAnalyzeTool
           warn("SWEET reports: #{l}")
         end
       end
-    }
+    end
     die "#{options.sweet} failed with exit status #{$CHILD_STATUS}" unless $CHILD_STATUS == 0
     info("Successfully ran SWEET version #{version}") if options.verbose
   end

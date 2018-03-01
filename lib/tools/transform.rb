@@ -35,12 +35,12 @@ class RelationGraphValidation
           info("Trace to SRC:")
           (-SHOW_ERROR_TRACE..SHOW_ERROR_TRACE).each do |off|
             is,id = [ [0,ix_src + off].max, tsrc.length - 1].min, [ [0,ix_dst + off].max, tdst.length - 1 ].min
-            pt1.internal_preds[is].each { |n|
+            pt1.internal_preds[is].each do |n|
               $stderr.puts "        #{n}"
-            }
-            pt2.internal_preds[id].each { |n|
+            end
+            pt2.internal_preds[id].each do |n|
               $stderr.puts "        #{" " * 30} #{n}"
-            }
+            end
             $stderr.puts "    #{off.to_s.rjust(3)} #{tsrc[is].to_s.ljust(30)} #{tdst[id]}"
           end
         end
@@ -109,19 +109,19 @@ class TransformTool
     opts.generates_flowfacts
     opts.accept_corrected_rgs
     opts.on("--validate", "Validate relation graph") { opts.options.validate = true }
-    opts.on("--transform-action ACTION", "action to perform (=down,up,copy,simplify)") { |action|
+    opts.on("--transform-action ACTION", "action to perform (=down,up,copy,simplify)") do |action|
       opts.options.transform_action = action
-    }
-    opts.on("--[no-]transform-eliminate-edges", "eliminate edges in favor of blocks") { |b|
+    end
+    opts.on("--[no-]transform-eliminate-edges", "eliminate edges in favor of blocks") do |b|
       opts.options.transform_eliminated_edges = b
-    }
+    end
     RelationGraphValidationTool.add_options(opts, false)
-    opts.add_check { |options|
+    opts.add_check do |options|
       RelationGraphValidationTool.check_options(options) if options.validate
       if options.transform_action == 'simplify' && options.transform_eliminate_edges.nil?
         options.transform_eliminate_edges = true
       end
-    }
+    end
   end
 
   # pml ... PML for the prgoam

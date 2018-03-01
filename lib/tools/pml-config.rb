@@ -36,9 +36,9 @@ class PMLConfigTool
   end
 
   def PMLConfigTool.add_options(opts)
-    opts.on("--target TRIPLE", "Target architecture triple (required if no PML input is given)") { |a|
+    opts.on("--target TRIPLE", "Target architecture triple (required if no PML input is given)") do |a|
       opts.options.triple = a
-    }
+    end
 
     # TODO: Some (if not all) of the options here may be specific to an architecture. There are several ways to handle this
     #      - Let pml.arch define and check the options. This requires that at least the --target option is already
@@ -52,71 +52,71 @@ class PMLConfigTool
     #        user, which options are actually used for a given architecture.
     #      - Make the options more generic to avoid architecture-specific options altogether.
 
-    opts.on("-g", "--gsize SIZE", "Global memory size") { |s|
+    opts.on("-g", "--gsize SIZE", "Global memory size") do |s|
       opts.options.memory_size = parse_size(s)
-    }
-    opts.on("-G", "--gtime CYCLES", Integer, "Global memory transfer time per burst in cycles") { |t|
+    end
+    opts.on("-G", "--gtime CYCLES", Integer, "Global memory transfer time per burst in cycles") do |t|
       opts.options.memory_transfer_time = t
-    }
-    opts.on("-t", "--tdelay CYCLES", Integer, "Delay to global memory per request in cycles") { |t|
+    end
+    opts.on("-t", "--tdelay CYCLES", Integer, "Delay to global memory per request in cycles") do |t|
       opts.options.memory_delay = t
-    }
-    opts.on("-r", "--rdelay CYCLES", Integer, "Read delay to global memory per request in cycles (overrides --tdelay") { |t|
+    end
+    opts.on("-r", "--rdelay CYCLES", Integer, "Read delay to global memory per request in cycles (overrides --tdelay") do |t|
       opts.options.memory_read_delay = t
-    }
-    opts.on("-w", "--wdelay CYCLES", Integer, "Write delay to global memory per request in cycles (overrides --tdelay)") { |t|
+    end
+    opts.on("-w", "--wdelay CYCLES", Integer, "Write delay to global memory per request in cycles (overrides --tdelay)") do |t|
       opts.options.memory_write_delay = t
-    }
-    opts.on("--bsize SIZE", "Transfer size (burst size) of the global memory in bytes") { |b|
+    end
+    opts.on("--bsize SIZE", "Transfer size (burst size) of the global memory in bytes") do |b|
       opts.options.memory_transfer_size = parse_size(b)
-    }
-    opts.on("--psize SIZE", "Maximum request burst size (page burst size) of the global memory in bytes") { |b|
+    end
+    opts.on("--psize SIZE", "Maximum request burst size (page burst size) of the global memory in bytes") do |b|
       opts.options.memory_burst_size = parse_size(b)
-    }
+    end
 
-    opts.on("-d", "--dcsize SIZE", "Data cache size in bytes") { |s|
+    opts.on("-d", "--dcsize SIZE", "Data cache size in bytes") do |s|
       opts.options.data_cache_size = parse_size(s)
-    }
-    opts.on("-D", "--dckind KIND", "Type of data cache (ideal, no, dm, lru<N>, fifo<N>)") { |p|
+    end
+    opts.on("-D", "--dckind KIND", "Type of data cache (ideal, no, dm, lru<N>, fifo<N>)") do |p|
       opts.options.data_cache_policy = parse_policy(p)
-    }
-    opts.on("-s", "--scsize SIZE", "Stack cache size in bytes") { |s|
+    end
+    opts.on("-s", "--scsize SIZE", "Stack cache size in bytes") do |s|
       opts.options.stack_cache_size = parse_size(s)
-    }
-    opts.on("-S", "--sckind KIND", %w[no ideal block ablock lblock dcache], "Type of the stack cache (no, ideal, block, ablock, lblock, dcache)") { |t|
+    end
+    opts.on("-S", "--sckind KIND", %w[no ideal block ablock lblock dcache], "Type of the stack cache (no, ideal, block, ablock, lblock, dcache)") do |t|
       opts.options.stack_cache_type = t
-    }
-    opts.on("-m", "--icsize SIZE", "Size of the instruction/method cache in bytes") { |s|
+    end
+    opts.on("-m", "--icsize SIZE", "Size of the instruction/method cache in bytes") do |s|
       opts.options.instr_cache_size = parse_size(s)
-    }
-    opts.on("-C", "--icache KIND", %w[mcache icache], "Type of instruction cache (mcache, icache)") { |k|
+    end
+    opts.on("-C", "--icache KIND", %w[mcache icache], "Type of instruction cache (mcache, icache)") do |k|
       opts.options.instr_cache_kind = k
-    }
-    opts.on("-M", "--ickind KIND", "Policy of instruction cache (ideal, no, dm, lru<N>, fifo<N>). 'dm' is not applicable to a method cache.") { |p|
+    end
+    opts.on("-M", "--ickind KIND", "Policy of instruction cache (ideal, no, dm, lru<N>, fifo<N>). 'dm' is not applicable to a method cache.") do |p|
       opts.options.instr_cache_policy = parse_policy(p)
-    }
-    opts.on("--ibsize SIZE", "Size of an instruction cache line or method cache block in bytes") { |s|
+    end
+    opts.on("--ibsize SIZE", "Size of an instruction cache line or method cache block in bytes") do |s|
       opts.options.instr_cache_line_size = parse_size(s)
-    }
+    end
 
-    opts.on("--set-cache-attr CACHE,NAME,VALUE", Array, "Set an attribute with a given value to the given named cache (can be specified multiple times)") { |a|
+    opts.on("--set-cache-attr CACHE,NAME,VALUE", Array, "Set an attribute with a given value to the given named cache (can be specified multiple times)") do |a|
       die("Missing attribute name in --set-cache-attr #{a}") if a.length < 2
       die("Too many values for --set-cache-attr #{a}") if a.length > 3
       (opts.options.set_cache_attrs ||= []).push(a)
-    }
-    opts.on("--set-area-attr AREA,NAME,VALUE", Array, "Set an attribute with a given value to the given memory area (can be specified multiple times)") { |a|
+    end
+    opts.on("--set-area-attr AREA,NAME,VALUE", Array, "Set an attribute with a given value to the given memory area (can be specified multiple times)") do |a|
       die("Missing attribute name in --set-area-attr #{a}") if a.length < 2
       die("Too many values for --set-area-attr #{a}") if a.length > 3
       (opts.options.set_area_attrs ||= []).push(a)
-    }
+    end
 
-    opts.on("--update-heap-syms [SIZE,NUM]", Array, "Recalculate heap-end and stack-top attribute values for the new memory size assuming NUM stacks of size SIZE (defaults to 32k,16.") { |a|
+    opts.on("--update-heap-syms [SIZE,NUM]", Array, "Recalculate heap-end and stack-top attribute values for the new memory size assuming NUM stacks of size SIZE (defaults to 32k,16.") do |a|
       a = [] if a.nil?
       die("Too many values for --update-heap-syms #{a}") if a.length > 2
       a[0] ||= "32k"
       a[1] ||= "16"
       opts.options.update_heap_syms = { :stack_size => parse_size(a[0]), :num_stacks => a[1].to_i }
-    }
+    end
 
     # TODO: Add options to remove attributes
     # TODO Add options to modify tool-configurations and analysis-configurations.
@@ -160,7 +160,7 @@ class PMLConfigTool
   end
 
   def PMLConfigTool.set_attributes(list, attrs)
-    attrs.each { |name,key,value|
+    attrs.each do |name,key,value|
       entry = list.by_name(name)
       # Cache/area must exist by now for us to attach attributes
       next unless entry
@@ -173,7 +173,7 @@ class PMLConfigTool
 	value = Integer(value)
       end
       entry.set_attribute(key, value)
-    } if attrs
+    end if attrs
   end
 
   def PMLConfigTool.update_attributes(arch, options)

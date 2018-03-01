@@ -25,9 +25,9 @@ class ConstraintRef
     @cid, @constraint = cid, constraint
     @num_elim_vars = 0
     @elim_vars = Set.new
-    @constraint.lhs.keys.each { |v|
+    @constraint.lhs.keys.each do |v|
       @elim_vars.add(v) if all_elim_vars.include?(v)
-    }
+    end
     @num_elim_vars = @elim_vars.size
     @elim_vars.freeze
     @status = :active
@@ -97,12 +97,12 @@ class RefSet
 
   def dump(io=$stdout)
     io.puts "RefSet"
-    @store.each { |sz,vs|
+    @store.each do |sz,vs|
       io.puts " #{sz} variables to eliminate:"
-      vs.each { |v|
+      vs.each do |v|
         io.puts " - #{v}"
-      }
-    }
+      end
+    end
   end
 end
 
@@ -130,16 +130,16 @@ class VariableElimination
     elim_eqs = RefSet.new
 
     # initialize set of variables to eliminate
-    vars.each { |v|
+    vars.each do |v|
       raise Exception.new("VariableElimination: variable #{v} has cost assigned and cannot be eliminated") if @ilp.get_cost(v) > 0
       vid = @ilp.index(v)
       elim_vids.add(@ilp.index(v))
       eq_constraints[vid] = Set.new
       bound_constraints[vid] = Set.new
-    }
+    end
 
     # setup initial constraints
-    @ilp.constraints.each { |constr|
+    @ilp.constraints.each do |constr|
       cref = ConstraintRef.new(known_constraints.size, constr, elim_vids)
       known_constraints[constr] = cref
       if constr.lhs.all? { |v,c| ! elim_vids.include?(v) }
@@ -147,12 +147,12 @@ class VariableElimination
       else
         dict = (constr.op == "equal") ? eq_constraints : bound_constraints
         elimeq_list = []
-        constr.lhs.each { |vid,c|
+        constr.lhs.each do |vid,c|
           dict[vid].add(cref) if dict[vid]
-        }
+        end
         elim_eqs.add(cref) if constr.op == "equal" && cref.num_elim_vars > 0
       end
-    }
+    end
 
     # eliminate all variables
     while ! elim_vids.empty?
@@ -172,20 +172,20 @@ class VariableElimination
       if elimeq # Substitution
         # mark equation as garbage and remove it from all eq_constraints
         elimeq.status = :garbage
-        elimeq.elim_vars.each { |v|
+        elimeq.elim_vars.each do |v|
           tmp = eq_constraints[v].delete(elimeq)
           raise Exception.new("Internal Error: inconstinstent eq_constraints dictionary") unless tmp
-        }
+        end
 
         # substitute in all constraints referenced by elimvar
-        [eq_constraints,bound_constraints].each { |dict|
-          dict[elimvar].each { |subst_constr|
+        [eq_constraints,bound_constraints].each do |dict|
+          dict[elimvar].each do |subst_constr|
             # mark old constraint as garbage and remove it from dict
             subst_constr.status = :garbage
-            subst_constr.elim_vars.each { |v|
+            subst_constr.elim_vars.each do |v|
               tmp = dict[v].delete(subst_constr)
               raise Exception.new("Internal Error: inconsistent constraint dictionary") unless tmp
-            }
+            end
 
             # substitute
             @elim_steps += 1
@@ -194,17 +194,17 @@ class VariableElimination
             # create new constraint reference, if necessary
             if neweq && ! known_constraints[neweq]
               cref = known_constraints[neweq] = ConstraintRef.new(known_constraints.size, neweq, elim_vids)
-              cref.elim_vars.each { |v|
+              cref.elim_vars.each do |v|
                 dict[v].add(cref)
-              }
+              end
               elim_eqs.add(cref) if neweq.op == "equal" && cref.num_elim_vars > 0
             end
-          }
-        }
+          end
+        end
       else # FM elimination
         raise Exception.new("Internal error: equations left") unless eq_constraints[elimvar].empty?
         l, u = [], []
-        bound_constraints[elimvar].each { |cref|
+        bound_constraints[elimvar].each do |cref|
           coeff = cref.constraint.get_coeff(elimvar)
           if coeff < 0
             l.push(cref)
@@ -213,20 +213,20 @@ class VariableElimination
           end
           cref.status = :garbage
           # remove from all bound_constraints
-          cref.elim_vars.each { |v|
+          cref.elim_vars.each do |v|
             tmp = bound_constraints[v].delete(cref)
             raise Exception.new("Internal Error: inconstinstent bound_constraints dictionary") unless tmp
-          }
-        }
+          end
+        end
         l.each do |l_constr|
           u.each do |u_constr|
             @elim_steps += 1
             newconstr = transitive_constraint(elimvar, l_constr.constraint, u_constr.constraint)
             if newconstr && ! known_constraints[newconstr]
               cref = known_constraints[newconstr] = ConstraintRef.new(known_constraints.size, newconstr, elim_vids)
-              cref.elim_vars.each { |v|
+              cref.elim_vars.each do |v|
                 bound_constraints[v].add(cref)
-              }
+              end
             end
           end
         end
@@ -234,11 +234,11 @@ class VariableElimination
       elim_vids.delete(elimvar)
     end
     new_constraints = []
-    known_constraints.values.select { |cref|
+    known_constraints.values.select do |cref|
       cref.status != :garbage
-    }.map { |cref|
+    end.map do |cref|
       cref.constraint
-    }
+    end
   end
 
   # Given constraints
@@ -285,12 +285,12 @@ class VariableElimination
     assert("Not a lower bound for #{e_var}: #{l_constr.inspect}") { l_coeff < 0 }
     assert("Not an upper bound for #{e_var}: #{u_constr.inspect}") { u_coeff > 0 }
 
-    l_constr.lhs.each { |v,c|
+    l_constr.lhs.each do |v,c|
       terms[v] += u_coeff * c
-    }
-    u_constr.lhs.each { |v,c|
+    end
+    u_constr.lhs.each do |v,c|
       terms[v] -= l_coeff * c
-    }
+    end
     rhs = u_coeff * l_constr.rhs - l_coeff * u_constr.rhs
 
     assert("Variable #{e_var} not eliminated as it should be") { terms[e_var] == 0 }
@@ -325,7 +325,7 @@ class FlowFactTransformation
 
     # Filter flow facts that need to be simplified
     copy, simplify = [], []
-    flowfacts.each { |ff|
+    flowfacts.each do |ff|
       if ff.symbolic_bound?
         copy.push(ff)
       elsif options.transform_eliminate_edges && ff.references_edges? && ! ff.get_calltargets
@@ -338,7 +338,7 @@ class FlowFactTransformation
       else
         copy.push(ff)
       end
-    }
+    end
     copied = pml.flowfacts.add_copies(copy, options.flow_fact_output)
 
     # Build ILP for transformation
@@ -387,7 +387,7 @@ class FlowFactTransformation
 
     # partition local flow-facts by entry (if possible), rest is transformed in global scope
     flowfacts_by_entry = { }
-    flowfacts.each { |ff|
+    flowfacts.each do |ff|
       next if ff.symbolic_bound? # skip symbolic flow facts
       transform_entry = nil
       if ff.local?
@@ -401,7 +401,7 @@ class FlowFactTransformation
       end
       transform_entry ||= target_analysis_entry
       (flowfacts_by_entry[transform_entry] ||= []).push(ff)
-    }
+    end
     selected_flowfacts = flowfacts_by_entry.values.flatten(1)
 
     debug(options, :transform) { "Transforming #{selected_flowfacts.length} flow facts to #{target_level}" }
@@ -410,15 +410,15 @@ class FlowFactTransformation
     stats_num_constraints_before, stats_num_constraints_after, stats_elim_steps = 0,0,0
     new_ffs = []
 
-    flowfacts_by_entry.each { |entry,ffs|
+    flowfacts_by_entry.each do |entry,ffs|
       begin
         # Build ILP for transformation
         debug(options, :transform) { "Transforming #{ffs.length} flowfacts in scope #{entry} to #{target_level}" }
-        debug(options, :transform) { |&msgs|
-          ffs.each { |ff|
+        debug(options, :transform) do |&msgs|
+          ffs.each do |ff|
               msgs.call(" - Adding flow fact #{ff}")
-            }
-        }
+            end
+        end
         entries =
           if target_level == "machinecode"
             { 'machinecode' => entry, 'bitcode' => pml.bitcode_functions.by_name(entry.label) }
@@ -428,23 +428,23 @@ class FlowFactTransformation
         ilp = build_model(entries, ffs, :use_rg => true).ilp
 
         # If direction up/down, eliminate all vars but dst/src
-        elim_set = ilp.variables.select { |var|
+        elim_set = ilp.variables.select do |var|
           ilp.vartype[var] != target_level.to_sym || ! var.kind_of?(IPETEdge) || ! var.cfg_edge?
-        }
+        end
         ve = VariableElimination.new(ilp, options)
         new_constraints = ve.eliminate_set(elim_set)
         # Extract and add new flow facts
-        new_ffs += extract_flowfacts(new_constraints, entries, target_level).select { |ff|
+        new_ffs += extract_flowfacts(new_constraints, entries, target_level).select do |ff|
           # FIXME: for now, we do not export interprocedural flow-facts relative to a function other than the entry,
           # because this is not supported by any of the WCET analyses
           r = ff.local? || ff.scope.function == target_analysis_entry
           unless r
-            debug(options, :transform) { "Skipping unsupported flow fact scope of transformed flow fact #{ff}: " +
-                 "(function: #{ff.scope.function}, local: #{ff.local?})" }
+            debug(options, :transform) do "Skipping unsupported flow fact scope of transformed flow fact #{ff}: " +
+                 "(function: #{ff.scope.function}, local: #{ff.local?})" end
           end
           puts "Transformed flowfact #{ff}" if options.verbose
           r
-        }
+        end
 
         stats_num_constraints_before += ilp.constraints.length
         stats_num_constraints_after += new_constraints.length
@@ -453,7 +453,7 @@ class FlowFactTransformation
         warn("Failed to transfrom flowfacts for entry #{entry}: #{ex}")
         raise ex
       end
-    }
+    end
     new_ffs.each { |ff| pml.flowfacts.add(ff) }
 
     # direct translation of loop bounds and symbolic bounds (FM difficult and not implemented)
@@ -520,7 +520,7 @@ private
         lhs.each { |edge,coeff| out_blocks[edge.source] = 0 }
         # (2) for each block, find minimum coeff for all of its outgoing edges
         #     and replace min_coeff * outgoing-edges by min_coeff * block
-        out_blocks.keys.each { |b|
+        out_blocks.keys.each do |b|
           edges = b.successors.map { |b2| IPETEdge.new(b,b2,target_level) }
           edges = [ IPETEdge.new(b,:exit,target_level) ] if b.may_return?
           min_coeff = edges.map { |e| lhs[e] }.min
@@ -528,7 +528,7 @@ private
             edges.each { |e| lhs[e] -= min_coeff ; lhs.delete(e) if lhs[e] == 0 }
             lhs[b] += min_coeff
           end
-        }
+        end
       end
 
       # replace reference to entry block by constant
@@ -538,7 +538,7 @@ private
       lhs[entry_block] = 0
 
       # Create flow-fact (with dealing different IPET edges)
-      terms = lhs.select { |v,c| c != 0 }.map { |v,c|
+      terms = lhs.select { |v,c| c != 0 }.map do |v,c|
         pp = if v.kind_of?(IPETEdge)
                if v.cfg_edge?
                  v.cfg_edge
@@ -553,12 +553,12 @@ private
                v
              end
         Term.new(pp, c)
-      }
+      end
       termlist = TermList.new(terms)
-      debug(options, :transform) {
+      debug(options, :transform) do
         "Adding transformed constraint #{name} #{constr.tags.to_a}: #{constr} -> in #{scope} :" +
         "#{termlist} #{constr.op} #{rhs}"
-      }
+      end
       ff = FlowFact.new(scope, termlist, constr.op, rhs, attrs.dup)
       new_flowfacts.push(ff)
     end
@@ -578,29 +578,29 @@ class SymbolicBoundTransformation
 
     # select all loop bounds at the level we are transforming from
     ffs = {}
-    flowfacts.each { |ff|
+    flowfacts.each do |ff|
       next unless ff.level == level_source
       next if ff.context_sensitive?
       s,b = ff.get_loop_bound
       next unless s
       (ffs[s.programpoint.function] ||= []).push(ff)
-    }
+    end
 
 
     # resolve CHRs
     # translate blocks and arguments
-    ffs.each { |f,lbs|
+    ffs.each do |f,lbs|
 
       # resolve CHR on bitcode level, out loops first
       lbs_resolved = []
       loop_bounds = {}
-      lbs.sort_by { |ff|
+      lbs.sort_by do |ff|
         if ff.scope.programpoint.kind_of?(Loop)
           ff.scope.programpoint.loops.length
         else
           1024 # loops first
         end
-      }.map { |ff|
+      end.map do |ff|
         # resolve CHR on bitcode level
         ff_r, ff_triangle = resolve_chr(ff, loop_bounds)
         unless ff_r
@@ -611,10 +611,10 @@ class SymbolicBoundTransformation
         lbs_resolved.push(ff_triangle) if ff_triangle
         loopscope, loopbound = ff_r.get_loop_bound
         loop_bounds[loopscope.programpoint] = loopbound if loopscope
-      }
+      end
 
       # translate
-      lbs_resolved.each { |ff|
+      lbs_resolved.each do |ff|
         debug(options, :transform) { "Attempting to transform: #{ff}" }
         # translate blocks and variables
         ff_t = translate_blocks_and_variables(ff, target_level)
@@ -625,8 +625,8 @@ class SymbolicBoundTransformation
           debug(options, :transform) { "Translated flow fact:    #{ff_t}" }
         end
         new_ffs.push(ff_t)
-      }
-    }
+      end
+    end
     new_ffs
   end
 
@@ -663,7 +663,7 @@ class SymbolicBoundTransformation
     blocks = ff.lhs.map { |t| t.programpoint }
     blocks.push(loopblock) if loopblock
     blocks.concat(ff.rhs.referenced_loops.map { |lref| lref.loopheader })
-    blocks.each { |b|
+    blocks.each do |b|
       ns = rg.nodes.by_basic_block(b, rg_src_level)
       return nil if ns.length != 1
       n = ns.first
@@ -671,7 +671,7 @@ class SymbolicBoundTransformation
       # find (unique) progress node for B
       nb = n.get_block(rg_target_level)
       blockmap[b] = nb
-    }
+    end
     scope_ref_mapped =
       if loopblock
         mapped_loopblock = blockmap[loopblock]
@@ -689,10 +689,10 @@ class SymbolicBoundTransformation
       else
         rg.get_function(rg_target_level)
       end
-    lhs_mapped = ff.lhs.map { |t|
+    lhs_mapped = ff.lhs.map do |t|
       Term.new(ContextRef.new(blockmap[t.programpoint], Context.empty),t.factor)
-    }
-    rhs_mapped = ff.rhs.map_names { |ty,n|
+    end
+    rhs_mapped = ff.rhs.map_names do |ty,n|
       if ty == :variable
         if ff.level == 'machinecode'
           warn("Mapping of registers to bitcode variables is not available")
@@ -712,7 +712,7 @@ class SymbolicBoundTransformation
       elsif ty == :loop
         blockmap[n.loopheader].loop
       end
-    }
+    end
     attrs = { 'origin' =>  options.flow_fact_output,
               'level'  =>  target_level }
     scope_mapped = ContextRef.new(scope_ref_mapped, Context.empty)
@@ -745,9 +745,9 @@ class SymbolicBoundTransformation
       sum = b.loop_bound_sum(refd_loop_bound)
       while parent_loops.first != referenced_loop
         ind_bound = loop_bounds[parent_loops.shift.loopheader]
-        debug(options,:transform) {
+        debug(options,:transform) do
           "A loop different from the parent loop is referenced in a CHR - multiplying sum by indepent bound #{ind_bound}"
-        }
+        end
         sum = ind_bound * sum
       end
       ff_triangle = FlowFact.inner_loop_bound(ContextRef.new(b.loopheader, s.context),

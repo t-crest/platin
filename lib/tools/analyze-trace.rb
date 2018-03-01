@@ -24,10 +24,10 @@ class AnalyzeTraceTool
 
   def analyze_trace
     tm = MachineTraceMonitor.new(@pml, @options)
-    debug(@options, :trace) {
+    debug(@options, :trace) do
       tm.subscribe(VerboseRecorder.new(DebugIO.new))
       "Starting trace analysis"
-    }
+    end
     @main_recorder = RecorderScheduler.new(@options.recorders, @entry, @options)
     tm.subscribe(@main_recorder)
     trace = @pml.arch.simulator_trace(@options, tm.watchpoints)
@@ -95,7 +95,7 @@ class AnalyzeTraceTool
 
     flowfacts_before = @pml.flowfacts.length
 
-    @main_recorder.recorders.each { |recorder|
+    @main_recorder.recorders.each do |recorder|
       scope = recorder.scope
       suffix = recorder.type
       # Export call targets (mandatory for WCET analysis)
@@ -119,7 +119,7 @@ class AnalyzeTraceTool
           outpml.flowfacts.add(FlowFact.loop_bound(loop_ref, bound.max, fact_context))
         end
       end
-    }
+    end
     statistics("TRACE", "extracted flow-flact hypotheses" => outpml.flowfacts.length - flowfacts_before) if @options.stats
     outpml
   end
@@ -133,29 +133,29 @@ class AnalyzeTraceTool
     opts.trace_entry
     opts.callstring_length
     opts.target_callret_costs
-    opts.on("--recorders LIST", "recorder specification (=#{DEFAULT_RECORDER_SPEC}; see --help=recorders)") { |recorder_spec|
+    opts.on("--recorders LIST", "recorder specification (=#{DEFAULT_RECORDER_SPEC}; see --help=recorders)") do |recorder_spec|
       opts.options.recorder_spec = recorder_spec
-    }
+    end
     opts.on("--max-cycles NUM", Integer,
-            "consider only the first NUM cycles of the trace") { |num|
+            "consider only the first NUM cycles of the trace") do |num|
       opts.options.max_cycles = num
-    }
+    end
     opts.on("--max-instructions NUM", Integer,
-            "consider only the first NUM instructions of the trace") { |num|
+            "consider only the first NUM instructions of the trace") do |num|
       opts.options.max_instructions = num
-    }
+    end
     opts.on("--max-target-traces NUM", Integer,
-            "maximum number of target function executions to trace (unlimited if not set)") { |num|
+            "maximum number of target function executions to trace (unlimited if not set)") do |num|
       opts.options.max_target_traces = num
-    }
+    end
     opts.on("--sim-input FILE", "Pass file as input to program under test.") { |f| opts.options.sim_input = f }
-    opts.register_help_topic('recorders') { |io|
+    opts.register_help_topic('recorders') do |io|
       RecorderSpecification.help(io)
-    }
-    opts.add_check { |options|
+    end
+    opts.add_check do |options|
       options.recorder_spec = DEFAULT_RECORDER_SPEC unless options.recorder_spec
       options.recorders = RecorderSpecification.parse(options.recorder_spec, options.callstring_length)
-    }
+    end
   end
 
   def AnalyzeTraceTool.add_options(opts)

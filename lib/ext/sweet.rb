@@ -95,13 +95,13 @@ module SWEET
 
     def to_s
       return const.to_s if @vec.empty?
-      s = @vec.map { |v,coeff|
+      s = @vec.map do |v,coeff|
         if coeff == 1
           v
         else
           "#{coeff} * #{v}"
         end
-      }.join(" + ")
+      end.join(" + ")
       s << " + #{const}" if @const != 0
       s
     end
@@ -130,13 +130,13 @@ module SWEET
     end
 
     def to_s
-      lhs = @vector.map { |var,coeff|
+      lhs = @vector.map do |var,coeff|
         if coeff != 1
           "#{coeff} * #{var}"
         else
           var.to_s
         end
-      }.join(" + ")
+      end.join(" + ")
       "#{lhs} #{op} #{rhs}"
     end
   end
@@ -226,9 +226,9 @@ module SWEET
 
     def parser
       ff = seq_(callstring, context, quantifier, constraint, skip: sym(':')) << ";".r
-      ff_comment = seq_(ff,sym('%%') >> /\w{4}/.r).map { |((cs,ctx,quant,constr),type)|
+      ff_comment = seq_(ff,sym('%%') >> /\w{4}/.r).map do |((cs,ctx,quant,constr),type)|
         FlowFact.new(type,cs,ctx,quant,constr)
-      }
+      end
     end
   end
   #
@@ -289,58 +289,58 @@ end
 class OptionParser
     def alfllc_command
       self.on("--alf-llc FILE", "path to alf-llc (=alf-llc)") { |f| options.alf_llc = f }
-      self.add_check { |options|
+      self.add_check do |options|
         options.alf_llc ||= "alf-llc"
-      }
+      end
     end
 
     def sweet_command
       self.on("--sweet-command FILE", "path to sweet (=sweet)") { |f| options.sweet = f }
-      self.add_check { |options|
+      self.add_check do |options|
         options.sweet   ||= "sweet"
-      }
+      end
     end
 
     def bitcode_file(mandatory=Proc.new { |options| false })
       self.on("--bitcode FILE", "linked bitcode file") { |f| options.bitcode_file = f }
-      self.add_check { |options|
+      self.add_check do |options|
         if mandatory.call(options)
           die_usage "Specifying a bitcode file (--bitcode) is mandatory" unless options.bitcode_file
         end
-      }
+      end
     end
 
     def alf_file(mandatory=Proc.new { |options| false })
       self.on("--alf FILE", "ALF program model file") { |f| options.alf_file = f }
-      self.add_check { |options|
+      self.add_check do |options|
         if mandatory.call(options)
           die_usage "Specifying an ALF file is mandatory for SWEET analysis" unless options.alf_file
         end
-      }
+      end
     end
 
     def sweet_options
-      self.on("--sweet-ignore-volatiles", "treat volatile memory areas as ordinary ones") { |f|
+      self.on("--sweet-ignore-volatiles", "treat volatile memory areas as ordinary ones") do |f|
         options.sweet_ignore_volatiles = true
-      }
+      end
     end
 
     def sweet_flowfact_file(mandatory=Proc.new { |options| true })
       self.on("--sweet-flowfacts FILE.ff", "SWEET flowfact file") { |f| options.sweet_flowfact_file = f }
-      self.add_check { |options|
+      self.add_check do |options|
         if mandatory.call(options)
           die_usage "Specifying SWEET flowfact file is mandatory" unless options.sweet_flowfact_file
         end
-      }
+      end
     end
 
     def sweet_trace_file(mandatory = Proc.new { |options| true })
       self.on("--sweet-trace FILE.tf", "SWEET trace file") { |f| options.sweet_trace_file = f }
-      self.add_check { |options|
+      self.add_check do |options|
         if mandatory && mandatory.call(options)
           die_usage "Specifying SWEET trace file is mandatory" unless options.sweet_trace_file
         end
-      }
+      end
     end
   end
 
@@ -359,9 +359,9 @@ class SweetFlowFactImport
     raise UnsupportedFlowFactException.new("call strings not yet supported", ffsrc) unless ffsrc.callstring.empty?
 
     scope = @functions.by_name(ffsrc.scope.f)
-    terms = ffsrc.constraint.vector.map { |pp,factor|
+    terms = ffsrc.constraint.vector.map do |pp,factor|
       Term.new(pp_to_ref(pp), factor)
-    }
+    end
     op =
       case ffsrc.constraint.op
       when "<="; "less-equal"

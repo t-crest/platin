@@ -23,14 +23,14 @@ class OptionParser
   end
 
   def ait_report_prefix(mandatory=true)
-    self.on("--ait-report-prefix PREFIX", "Path prefix for aiT's report and XML results") {
+    self.on("--ait-report-prefix PREFIX", "Path prefix for aiT's report and XML results") do
       |f| options.ait_report_prefix = f
-    }
+    end
     self.add_check { |options| die_usage "Option --ait-report-prefix is mandatory" unless options.ait_report_prefix } if mandatory
   end
 
   def ait_icache_mode()
-    self.on("--ait-icache-mode MODE", "aiT instruction cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") {
+    self.on("--ait-icache-mode MODE", "aiT instruction cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do
       |f| options.ait_icache_mode = case f
               when "normal" then "Normal"
 	      when "always-miss" then "Always miss"
@@ -39,11 +39,11 @@ class OptionParser
 	      when "hit-if-unknown" then "Hit if unknown"
 	      else f
 	  end
-    }
+    end
   end
 
   def ait_dcache_mode()
-    self.on("--ait-dcache-mode MODE", "aiT data cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") {
+    self.on("--ait-dcache-mode MODE", "aiT data cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do
       |f| options.ait_dcache_mode = case f
               when "normal" then "Normal"
 	      when "always-miss" then "Always miss"
@@ -52,12 +52,12 @@ class OptionParser
 	      when "hit-if-unknown" then "Hit if unknown"
 	      else f
 	  end
-    }
+    end
   end
 
   def ait_sca_type()
     # disable aiT's internal SC analysis (using a workaround) or enable different analysis methods using AIS annotations
-    self.on("--ait-sca-type TYPE", "(internal(default)|anno-ptr|none)") { |t|
+    self.on("--ait-sca-type TYPE", "(internal(default)|anno-ptr|none)") do |t|
       options.ait_sca_type = case t
             when "internal" then nil # do nothing, the default
             when "none" # deactivate aiT's internal analysis
@@ -69,7 +69,7 @@ class OptionParser
             else
               die_usage("unknown TYPE: #{t}")
             end
-    }
+    end
   end
 end
 
@@ -247,7 +247,7 @@ class AISExporter
   def export_machine_description
     return if @pml.arch.triple[0] == 'armv7m'
 
-    @pml.arch.config.caches.each { |cache|
+    @pml.arch.config.caches.each do |cache|
       case cache.name
       when 'data-cache'
         if cache.policy == "lru" or cache.policy == "fifo"
@@ -285,16 +285,16 @@ class AISExporter
 	# TODO check if the configuration requests a S$ or if the S$ is set to ideal and the memory is ideal, otherwise
 	# die with an unsupported configuration error
       end
-    }
+    end
 
     # work around aiT internal analysis by providing a 0-latency memory range for the stack cache accesses
     if @options.ait_disable_internal_sc
-      @pml.arch.config.memory_areas.each { |area|
+      @pml.arch.config.memory_areas.each do |area|
         if area.type == 'data' and area.address_range.max > 0xFFFF8000
           ar = area.address_range
           area.address_range = ValueRange.new(ar.min,0xFFFF7FFF,ar.symbol)
         end
-      }
+      end
       sc_phantom = MemoryArea.new('sc_no_latency', 'data', nil,
                                   @pml.arch.config.memories.by_name('local'),
                                   ValueRange.new(0xFFFF8000,0xFFFFFFFF,nil))
@@ -303,7 +303,7 @@ class AISExporter
     end
 
 
-    @pml.arch.config.memory_areas.each { |area|
+    @pml.arch.config.memory_areas.each do |area|
       kw = if area.type == 'code' then 'code' else 'data' end
       tt_read_first_beat = area.memory.read_latency + area.memory.read_transfer_time
       tt_write_first_beat = area.memory.write_latency + area.memory.write_transfer_time
@@ -320,16 +320,16 @@ class AISExporter
       transfer_bitsize = area.memory.transfer_size * 8
       gen_fact("area #{address_range.to_ais} features \"port_width\" = #{transfer_bitsize} and access #{properties.join(", ")}",
                "PML machine configuration")
-    }
+    end
   end
 
   def gen_fact(ais_instr, descr, derived_from=nil)
     @stats_generated_facts += 1
     @outfile.puts(ais_instr + ";" + " # " + descr)
-    debug(@options,:ait) {
+    debug(@options,:ait) do
       s = " derived from #{derived_from}" if derived_from
       "Wrote AIS instruction: #{ais_instr}#{s}"
-    }
+    end
     true
   end
 
@@ -341,9 +341,9 @@ class AISExporter
         branches += 1 if ins.branch_type && ins.branch_type != "none"
         if ins.branch_type == 'indirect'
           successors = ins.branch_targets ? ins.branch_targets : mbb.successors
-          targets = successors.uniq.map { |succ|
+          targets = successors.uniq.map do |succ|
             succ.ais_ref
-          }.join(", ")
+          end.join(", ")
           gen_fact("instruction #{ins.ais_ref(:branch_index => branches)} branches to #{targets}","jumptable (source: llvm)",ins)
         end
       end
@@ -376,11 +376,11 @@ class AISExporter
     loopblock = scope.programpoint.loopheader
 
     origins = Set.new
-    ais_bounds = bounds_and_ffs.map { |bound,ff|
+    ais_bounds = bounds_and_ffs.map do |bound,ff|
       # (1) collect registers needed (and safe)
       # (2) generate symbolic expression
       origins.add(ff.origin)
-      bound.referenced_vars.each { |v|
+      bound.referenced_vars.each do |v|
         user_reg = @extracted_arguments[ [loopblock.function,v] ]
         unless user_reg
           user_reg = "@arg_#{v}"
@@ -388,9 +388,9 @@ class AISExporter
           gen_fact("instruction #{loopblock.function.ais_ref} is entered with #{user_reg} = trace(reg #{v})",
                    "extracted argument for symbolic loop bound")
         end
-      }
+      end
       bound.to_ais
-    }.uniq
+    end.uniq
     bound = ais_bounds.length == 1 ? ais_bounds.first : "min(#{ais_bounds.join(",")})"
 
     # As we export loop header bounds, we should say the loop header is 'at the end'
@@ -402,9 +402,9 @@ class AISExporter
     # warn("#{loopblock.name} is in #{func}")
 
     addr = nil
-    func.blocks.each { |b|
+    func.blocks.each do |b|
       addr = b.address if b.mapsto == loopblock.name
-    }
+    end
 
     assert("Cannot find address for #{loopblock.name}") { addr != nil }
 
@@ -486,14 +486,14 @@ class AISExporter
 
     scope = scope.function.blocks.first
     terms.push(Term.new(scope,-rhs)) if rhs != 0
-    terms.each { |t|
+    terms.each do |t|
       set = (t.factor < 0) ? terms_rhs : terms_lhs
       set.push("#{t.factor.abs} (#{t.programpoint.block.ais_ref})")
-    }
+    end
     cmp_op = "<="
-    constr = [terms_lhs, terms_rhs].map { |set|
+    constr = [terms_lhs, terms_rhs].map do |set|
       set.empty? ? "0" : set.join(" + ")
-    }.join(cmp_op)
+    end.join(cmp_op)
     gen_fact("flow #{constr}",
              "linear constraint on block frequencies (source: #{ff.origin})",
              ff)
@@ -502,7 +502,7 @@ class AISExporter
   # export set of flow facts (minimum of loop bounds)
   def export_flowfacts(pml, ffs)
     loop_bounds = {}
-    ffs.each { |ff|
+    ffs.each do |ff|
       if scope_bound = ff.get_loop_bound
         scope,bound = scope_bound
         next if options.ais_disable_export.include?('loop-bounds')
@@ -512,14 +512,14 @@ class AISExporter
         supported = export_flowfact(ff)
         @stats_skipped_flowfacts += 1 unless supported
       end
-    }
-    loop_bounds.each { |scope,bounds_and_ffs|
+    end
+    loop_bounds.each do |scope,bounds_and_ffs|
       begin
         export_loopbounds(pml, scope, bounds_and_ffs)
       rescue Exception
         warn("Not exporting loopsbounds for " + scope.to_s + ": " + $ERROR_INFO.message)
       end
-    }
+    end
   end
 
   # export linear-constraint flow facts
@@ -608,7 +608,7 @@ class AISExporter
     ais2.put("user(\"m_top\")  = 0x5000000;")
     ais2.close
     ais2.close
-    @sc.each { |instr,(type,n)|
+    @sc.each do |instr,(type,n)|
       n_spill = "max(0, user(\"m_top\") - (user(\"sc_top\") - #{n}) - #{sz})"
       n_fill  = "max(0, #{n} - (user(\"m_top\") - user(\"sc_top\")))"
       ais2.scope("instruction", "#{instr.ais_ref(:ais2 => true)}")
@@ -637,11 +637,11 @@ class AISExporter
         ais2.put("user(\"m_top\") = user(\"m_top\") + #{n_fill};")
       end
       ais2.close_n(2)
-    }
+    end
     @outfile.puts("}")
 
     # generate AIS1 instruction facts for spill/fill latencies
-    @sc.each { |instr,(type,n)|
+    @sc.each do |instr,(type,n)|
       data_area = @pml.arch.config.memory_areas.by_name('data')
       case type
       when :reserve
@@ -651,7 +651,7 @@ class AISExporter
         gen_fact("instruction #{instr.ais_ref} additionally takes trace(@n_fill) / #{sc_cache.block_size} * "\
                  "#{data_area.memory.read_transfer_time} + #{data_area.memory.read_latency} cycles", "fill cost")
       end
-    }
+    end
   end
 end
 
@@ -719,8 +719,8 @@ class APXExporter
     doc = REXML::Document.new "<!DOCTYPE APX><project></project>"
     project = doc.root
     project.add_attributes('xmlns' => xmlns_url, 'target' => @pml.arch.triple.first, 'version' => '13.04i')
-    add_element(project, "options") { |proj_options|
-      add_element(proj_options, "analyses_options") { |an_options|
+    add_element(project, "options") do |proj_options|
+      add_element(proj_options, "analyses_options") do |an_options|
         an_options << rexml_bool("extract_annotations_from_source_files", true)
         an_options << rexml_bool("xml_call_graph", true)
         an_options << rexml_bool("xml_show_per_context_info", true)
@@ -730,27 +730,27 @@ class APXExporter
         an_options << rexml_str("path_analysis_variant", "Prediction file based (ILP)")
 	an_options << rexml_str("instruction_cache_mode", @options.ait_icache_mode) if @options.ait_icache_mode
 	an_options << rexml_str("data_cache_mode", @options.ait_dcache_mode) if @options.ait_dcache_mode
-      }
-      add_element(proj_options, "general_options") { |gen_options|
+      end
+      add_element(proj_options, "general_options") do |gen_options|
         gen_options << rexml_str("include_path",".")
-      }
+      end
       if arch_el = @pml.arch.config_for_apx(@options)
         proj_options << arch_el
       end
-    }
-    add_element(project, "files") { |files|
+    end
+    add_element(project, "files") do |files|
       [ ['executables', binary],  ['ais',aisfile],
-        ['xml_results', results], ['report',report] ].each { |k,v|
+        ['xml_results', results], ['report',report] ].each do |k,v|
         files << rexml_file(k,v)
-      }
-    }
-    add_element(project, "analyses") { |analyses|
-      add_element(analyses, "analysis") { |analysis|
+      end
+    end
+    add_element(project, "analyses") do |analyses|
+      add_element(analyses, "analysis") do |analysis|
         analysis.add_attributes('id' => "aiT", 'type' => 'wcet_analysis', 'enabled' => true)
         analysis << rexml_str("analysis_start", analysis_entry)
         analysis << rexml_file("xml_report", report_analysis)
-      }
-    }
+      end
+    end
     # Mandatory to use transitive formatter
     REXML::Formatters::Transitive.new( 2, false ).write(doc, @outfile)
   end
@@ -827,7 +827,7 @@ class AitImport
       end
       routine.name = elem.attributes['name']
       @routines[elem.attributes['id']] = routine
-      elem.each_element("block") { |be|
+      elem.each_element("block") do |be|
         @is_loopblock[be.attributes['id']] = true if elem.attributes['loop']
         unless be.attributes['address']
           debug(options,:ait) { "No address for block #{be}" }
@@ -835,14 +835,14 @@ class AitImport
         end
         ins = pml.machine_functions.instruction_by_address(Integer(be.attributes['address']))
         @blocks[be.attributes['id']] = ins
-      }
+      end
     end
     @routine_names = @routines.values.inject({}) { |memo,r| memo[r.name] = r; memo }
   end
 
   def read_contexts(contexts_element)
     contexts = {}
-    contexts_element.each_element("context") { |elem|
+    contexts_element.each_element("context") do |elem|
       ctx = OpenStruct.new
       ctx.id = elem.attributes['id']
       ctx.routine = @routines[elem.attributes['routine']]
@@ -871,7 +871,7 @@ class AitImport
         raise Exception.new("Duplicate context with different meaning: #{ctx.id}")
       end
       @contexts[ctx.id] = Context.from_list(ctx.context)
-    }
+    end
     contexts
   end
 
@@ -885,15 +885,15 @@ class AitImport
     facts = []
     fact_attrs = { 'level' => 'machinecode', 'origin' => 'aiT' }
 
-    analysis_task_elem.each_element("value_analysis/value_accesses/value_access") { |e|
+    analysis_task_elem.each_element("value_analysis/value_accesses/value_access") do |e|
 
       ins = pml.machine_functions.instruction_by_address(Integer(e.attributes['address']))
 
-      e.each_element("value_context") { |ce|
+      e.each_element("value_context") do |ce|
 
         context = @contexts[ce.attributes['context']]
 
-        ce.each_element("value_step") { |se|
+        ce.each_element("value_step") do |se|
 
           # value_step#index ? value_step#mode?
           # value_area#mod? value_area#rem?
@@ -909,25 +909,25 @@ class AitImport
           var_bitwidth = 32 # XXX: address width is always 32 for patmos
 
           unpredictable = false
-          se.each_element("value_area") { |area|
+          se.each_element("value_area") do |area|
             unpredictable = true if area.attributes['min'] != area.attributes['max']
-          }
+          end
           debug(options,:ait) { "Access #{ins} in #{context}" } if unpredictable
 
           values = []
-          se.each_element("value_area") { |area|
-            min,max,rem,mod = %w{min max rem mod}.map { |k|
+          se.each_element("value_area") do |area|
+            min,max,rem,mod = %w{min max rem mod}.map do |k|
               Integer(area.attributes[k]) if area.attributes[k]
-            }
+            end
             # XXX: this is an aiT bug (probably because ranges are represented in a signed way)
             if min >= 0xffff_ffff_8000_000
               warn("Bad value range element #{min} - this should be fixed in recent aiT versions")
               min,max = [min,max].map { |v| v - 0xffff_ffff_0000_0000 }
             end
-            debug(options,:ait) {
+            debug(options,:ait) do
               sprintf("- %s 0x%08x..0x%08x (%d bytes), mod=0x%x rem=0x%x\n",
                       se.attributes['type'],min,max,max - min,mod || -1,rem || -1)
-            } if unpredictable
+            end if unpredictable
             if max < min
               # aiT uses a wraparound domain in the new versions
               # see:
@@ -954,22 +954,22 @@ class AitImport
             else
               values.push(ValueRange.new(min,max,nil))
             end
-          }
+          end
           value_analysis_stats[(unpredictable ? 'un' : '') + 'predictable ' + (is_read ? 'reads' : 'writes')] += 1
           fact_values = ValueSet.new(values)
           facts.push(ValueFact.new(fact_pp, fact_variable, var_width, fact_values, fact_attrs.dup))
-        }
-      }
-    }
+        end
+      end
+    end
     statistics("AIT",value_analysis_stats) if options.stats
     facts
   end
 
   # read the message lines with traces for n_spill and n_fill user regs
   def read_stack_cache_traces(analysis_task_elem)
-    analysis_task_elem.each_element("value_analysis/messages/message/textline") { |e|
+    analysis_task_elem.each_element("value_analysis/messages/message/textline") do |e|
       yield $1,$2,$3 if e.text =~ /trace.*\(context\w*(.*)\).*\("user_(n_(?:fill|spill))"\).=.(\d+)/
-    }
+    end
   end
 
   #
@@ -991,14 +991,14 @@ class AitImport
 
     ait_ins_cost, ait_ins_contrib = Hash.new(0), Hash.new(0)
 
-    wcet_elem.each_element("wcet_path") { |e|
+    wcet_elem.each_element("wcet_path") do |e|
       # only read results for analysis entry
       rentry = e.get_elements("wcet_entry").first.attributes["routine"]
       entry = @routines[rentry]
       next unless entry.function == analysis_entry
 
       # read results for each routine
-      e.each_element("wcet_routine") { |re|
+      e.each_element("wcet_routine") do |re|
         # extract function cost
         routine = @routines[re.attributes['routine']]
         if routine.function
@@ -1009,7 +1009,7 @@ class AitImport
         end
 
         # extract edge cost (relative to LLVM terminology)
-        re.each_element("wcet_context") { |ctx_elem|
+        re.each_element("wcet_context") do |ctx_elem|
 
           context = @contexts[ctx_elem.attributes['context']]
 
@@ -1018,20 +1018,20 @@ class AitImport
 
           # Special Case #1: (StartNode -> Node) is ignored
           # => If the target block is a start block, ignore the edge
-          ctx_elem.each_element("wcet_start") { |elem|
+          ctx_elem.each_element("wcet_start") do |elem|
             start_nodes[elem.attributes['block']] = true
-          }
+          end
 
           # Special Case #2: (Node -> CallNode[Loop]) => (Node -> LoopHeaderNode)
           # => If we have an edge from a node to a 'loop call node', we need to replace
           #    it by an edge to the loop header node
-          ctx_elem.each_element("wcet_edge_call") { |call_edge|
+          ctx_elem.each_element("wcet_edge_call") do |call_edge|
             if loopblock = @routines[call_edge.attributes['target_routine']].loop
               loop_nodes[call_edge.attributes['source_block']] = loopblock
             else
               call_nodes[call_edge.attributes['source_block']] = true
             end
-          }
+          end
 
           # Special case #3: The unsolveable one?
           # In aiT we have edges from nodes within a loop to loop end nodes,
@@ -1047,12 +1047,12 @@ class AitImport
           # If, however, all loop exit nodes x have a unique successor E(x) outside of the loop,
           # we simply increment the frequency of x->E(x) if we see x->EndOfLoop.
           # As I do not know of a better way to do it, we stuck with this strategy for now.
-          ctx_elem.each_element("wcet_edge_return") { |return_edge|
+          ctx_elem.each_element("wcet_edge_return") do |return_edge|
             return_nodes[return_edge.attributes['target_block']] = true
-          }
+          end
 
           # Now read in the cost for WCET edges
-          ctx_elem.each_element("wcet_edge") { |edge|
+          ctx_elem.each_element("wcet_edge") do |edge|
 
             # skip if no cost associated with edge
             next unless edge.attributes['cycles'] || edge.attributes['path_cycles'] || edge.attributes['count']
@@ -1132,13 +1132,13 @@ class AitImport
                 exit_successor = nil
 
 		loop do
-                  source.block.successors.each { |s|
+                  source.block.successors.each do |s|
                     if source.block.exitedge_source?(s)
                       die("More than one exit edge from a block within a loop. This makes it" +
                           "impossible (for us) to determine correct edge frequencies") if exit_successor
                       exit_successor = s
                     end
-                  }
+                  end
 		  break if exit_successor
 
 		  # If we did not simplify the CFG, the exit edge might leave from a successor of the block.
@@ -1166,13 +1166,13 @@ class AitImport
                 (edge_freq[pml_edge] ||= Hash.new(0))[context] += attr_count
               end
             end
-          }
-        }
-      }
-    }
+          end
+        end
+      end
+    end
 
     # Now extract profile entries from the cost read from the aiT profile
-    ait_ins_cost.each { |cref, path_cycles|
+    ait_ins_cost.each do |cref, path_cycles|
       contrib_cycles = ait_ins_contrib[cref]
       context = cref.context
 
@@ -1182,12 +1182,12 @@ class AitImport
       # the outgoing edges..
       if cref.programpoint.kind_of?(Instruction)
         ins = cref.programpoint
-        ins.block.outgoing_edges.each { |pml_edge|
+        ins.block.outgoing_edges.each do |pml_edge|
           if ins.live_successor?(pml_edge.target)
             (edge_cycles[pml_edge] ||= Hash.new(0))[context] += path_cycles
             (edge_contrib[pml_edge] ||= Hash.new(0))[context] += contrib_cycles
           end
-        }
+        end
       else
         pml_edge = cref.programpoint
         assert("read_wcet_analysis_result: expecting Edge type") { pml_edge.kind_of?(Edge) }
@@ -1195,28 +1195,28 @@ class AitImport
         (edge_cycles[pml_edge] ||= Hash.new(0))[context]  += path_cycles
         (edge_contrib[pml_edge] ||= Hash.new(0))[context] += contrib_cycles
       end
-    }
+    end
 
-    debug(options,:ait) { |&msgs|
-      @function_count.each { |f,c|
+    debug(options,:ait) do |&msgs|
+      @function_count.each do |f,c|
         msgs.call "- function #{f}: #{@function_cost[f].to_f / c.to_f} * #{c}"
-      }
-    }
+      end
+    end
 
     # create profile entries
     profile_list = []
-    edge_cycles.each { |e,ctxs|
+    edge_cycles.each do |e,ctxs|
       debug(options,:ait) { "- edge #{e}" }
-      ctxs.each { |ctx,cycles|
+      ctxs.each do |ctx,cycles|
         ref = ContextRef.new(e, ctx)
         freq = edge_freq[e] ? edge_freq[e][ctx] : 0
         contrib = freq * cycles # edge_contrib[e][ctx]
-        debug(options,:ait) {
+        debug(options,:ait) do
           sprintf(" -- %s: %d * %d (%d)\n",ctx.to_s, cycles, freq, contrib)
-        }
+        end
         profile_list.push(ProfileEntry.new(ref, cycles, freq, contrib))
-      }
-    }
+      end
+    end
     profile_list
   end
 
@@ -1224,12 +1224,12 @@ class AitImport
   # XXX  investigate scope of hit/miss stats
   def read_cache_stats(wcet_elem, _analysis_entry)
     stats = {}
-    wcet_elem.each_element("wcet_results/wcet_cache_infos/wcet_cache_info") { |e|
+    wcet_elem.each_element("wcet_results/wcet_cache_infos/wcet_cache_info") do |e|
       # TODO: check: can there be cache results for anything else than the analysis entry?
       # routine = @routines[e.attributes['routine']]
       type = e.attributes['type']
       stats[type] = CacheStats.new(e.attributes['hits'].to_i, e.attributes['misses'].to_i)
-    }
+    end
     stats
   end
 
@@ -1243,41 +1243,41 @@ class AitImport
     # read routines (but only if they are actually used later on)
     if options.import_block_timings || options.ait_import_addresses
       read_routines(analysis_task_elem)
-      debug(options,:ait) { |&msgs|
+      debug(options,:ait) do |&msgs|
 	@routines.each do |id, r|
 	  msgs.call("Routine #{id}: #{r}")
 	end
-      }
+      end
     end
 
     # read value analysis results
     read_contexts(analysis_task_elem.get_elements("value_analysis/contexts").first)
     if options.ait_import_addresses
-      read_value_analysis_results(analysis_task_elem).each { |valuefact|
+      read_value_analysis_results(analysis_task_elem).each do |valuefact|
         pml.valuefacts.add(valuefact)
-      }
+      end
     end
 
-    read_stack_cache_traces(analysis_task_elem) { |ctx,sf,bytes|
+    read_stack_cache_traces(analysis_task_elem) do |ctx,sf,bytes|
       # bytes might be an interval e.g. "0..32"
       debug(options, :sca) { "#{ctx}: #{sf} = #{bytes} bytes" unless bytes == "0" }
-    }
+    end
 
     # read wcet analysis results
     wcet_elem = analysis_task_elem.get_elements("wcet_analysis").first
     if options.import_block_timing
       timing_list = []
-      read_wcet_analysis_results(wcet_elem, analysis_entry).each { |pe|
+      read_wcet_analysis_results(wcet_elem, analysis_entry).each do |pe|
         timing_list.push(pe)
-      }
+      end
       timing_entry.profile = Profile.new(timing_list)
     end
 
     # read cache statistics
-    read_cache_stats(wcet_elem, analysis_entry).each { |t,v|
+    read_cache_stats(wcet_elem, analysis_entry).each do |t,v|
       timing_entry.attributes['cache-max-hits-' + t] = v.hits unless v.empty?
       timing_entry.attributes['cache-max-misses-' + t] = v.misses unless v.empty?
-    }
+    end
 
     statistics("AIT","imported WCET results" => 1) if options.stats
     pml.timing.add(timing_entry)

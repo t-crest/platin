@@ -145,23 +145,23 @@ class IndexedConstraint
 
   def to_s(use_indices=false)
     lhs, rhs = Hash.new(0), Hash.new(0)
-    (@lhs.to_a + [[0,-@rhs]]).each { |v,c|
+    (@lhs.to_a + [[0,-@rhs]]).each do |v,c|
       if c > 0
         lhs[v] += c
       else
         rhs[v] -= c
       end
-    }
-    [lhs.to_a, rhs.to_a].map { |ts|
-      ts.map { |v,c|
+    end
+    [lhs.to_a, rhs.to_a].map do |ts|
+      ts.map do |v,c|
         if v == 0
           (c == 0) ? nil : c
         else
           vname = use_indices ? v.to_s : @ilp.var_by_index(v).to_s
           (c == 1) ? vname : "#{c} #{vname}"
         end
-      }.compact.join(" + ")
-    }.map { |s| s.empty? ? "0" : s }.join(@op == "equal" ? " = " : " <= ")
+      end.compact.join(" + ")
+    end.map { |s| s.empty? ? "0" : s }.join(@op == "equal" ? " = " : " <= ")
   end
 end
 
@@ -265,13 +265,13 @@ class ILP
   # op        .. "equal" or "less-equal"
   # const_rhs .. integer
   def add_constraint(terms_lhs,op,const_rhs,name,tag)
-    assert("Markers should not appear in ILP") {
+    assert("Markers should not appear in ILP") do
       ! terms_lhs.any? { |v,c| v.kind_of?(Marker) }
-    }
+    end
     terms_indexed = Hash.new(0)
-    terms_lhs.each { |v,c|
+    terms_lhs.each do |v,c|
       terms_indexed[index(v)] += c
-    }
+    end
     c = add_indexed_constraint(terms_indexed,op,const_rhs,name,Set.new([tag]))
     debug(options, :ilp) { "Adding constraint: #{terms_lhs} #{op} #{const_rhs} ==> #{c}" }
     c
@@ -317,26 +317,26 @@ class ILP
     end
     @eps = 1.0
     cycles,freq = self.solve_max
-    unbounded = freq.map { |v,k|
+    unbounded = freq.map do |v,k|
       (k >= BIGM - 1.0) ? v : nil
-    }.compact
+    end.compact
     unbounded_functions, unbounded_loops = Set.new, Set.new
-    unbounded.each { |v|
+    unbounded.each do |v|
       next unless v.kind_of?(IPETEdge) && v.source.kind_of?(Block)
       unbounded_functions.add(v.source.function) if v.source == v.source.function.blocks.first
-    }
-    unbounded.each { |v|
+    end
+    unbounded.each do |v|
       next unless v.kind_of?(IPETEdge) && v.source.kind_of?(Block)
       unbounded_loops.add(v.source) if ! unbounded_functions.include?(v.source.function) && v.source.loopheader?
-    }
+    end
     if unbounded_functions.empty? && unbounded_loops.empty?
       warn("ILP: Unbounded variables: #{unbounded.join(", ")}")
     else
       warn("ILP: Unbounded functions: #{unbounded_functions.to_a.join(", ")}") unless unbounded_functions.empty?
       warn("ILP: Unbounded loops: #{unbounded_loops.to_a.join(", ")}") unless unbounded_loops.empty?
-      unbounded_loops.each { |l|
+      unbounded_loops.each do |l|
         warn("Unbounded hint [#{l}]: #{l.src_hint}") unless l.src_hint.empty?
-      }
+      end
     end
     @do_diagnose = true
     [unbounded, freq]
@@ -350,7 +350,7 @@ class ILP
     variables.each do |v|
       add_constraint([[v,1]],"less-equal",BIGM,"__debug_upper_bound_v#{index(v)}",:debug)
     end
-    old_constraints.each { |constr|
+    old_constraints.each do |constr|
       n = constr.name
       next if n =~ /__positive_/
       # only relax flow facts, assuming structural constraints are correct
@@ -365,7 +365,7 @@ class ILP
         end
       end
       add_indexed_constraint(constr.lhs,constr.op,constr.rhs,"__slack_#{n}",Set.new([:slack]))
-    }
+    end
     @eps = 1.0
     # @constraints.each do |c|
     #   puts "Slacked constraint #{n}: #{c}"

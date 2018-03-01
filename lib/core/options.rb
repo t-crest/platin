@@ -56,15 +56,15 @@ module PML
 
     # tool can have input PML option
     def reads_pml
-      self.on("-i", "--input FILE", "PML input files (can be specified multiple times)") { |f|
+      self.on("-i", "--input FILE", "PML input files (can be specified multiple times)") do |f|
         (options.input ||= []).push(f)
-      }
-      self.on("--qualify-machinecode", "Qualifies machinecodenames by the filename") { |v|
+      end
+      self.on("--qualify-machinecode", "Qualifies machinecodenames by the filename") do |v|
         options.qualify_machinecode = v
-      }
-      self.on("--link", "Link duplicate symbols on pmlfile level") { |v|
+      end
+      self.on("--link", "Link duplicate symbols on pmlfile level") do |v|
         options.run_linker = v
-      }
+      end
     end
 
     # tool writes PML file (if output is specified)
@@ -75,13 +75,13 @@ module PML
     # tool writes report (stdout or machinereadble)
     def writes_report
       self.on("--report [FILE]", "generate report") { |f| options.report = f || "-" }
-      self.on("--append-report [KEYVALUELIST]", "append to existing report") { |kvlist|
+      self.on("--append-report [KEYVALUELIST]", "append to existing report") do |kvlist|
         options.report_append = if kvlist
           Hash[kvlist.split(/,/).map { |s| s.split(/=/)}]
         else
           {}
         end
-      }
+      end
     end
 
     # tool calculates flowfacts
@@ -100,44 +100,44 @@ module PML
 
     # import WCET of basic blocks
     def import_block_timing
-      self.on("--[no-]import-block-timing", "import timing and WCET frequency of basic blocks (=true)") { |b|
+      self.on("--[no-]import-block-timing", "import timing and WCET frequency of basic blocks (=true)") do |b|
         options.import_block_timing = b
-      }
+      end
       add_check { |options| options.import_block_timing = true if options.import_block_timing.nil? }
     end
 
     # tool uses call strings and allows the user to specify a custom length
     def callstring_length
-      self.on("--callstring-length INTEGER", "default callstring length used in recorders (=0)") { |cl|
+      self.on("--callstring-length INTEGER", "default callstring length used in recorders (=0)") do |cl|
         options.callstring_length = cl.to_i
-      }
-      add_check { |options|
+      end
+      add_check do |options|
         options.callstring_length = 0 unless options.callstring_length
-      }
+      end
     end
 
     # XXX: we need to think about this again
     # user should specify selection of flow facts
     def flow_fact_selection
-      self.on("--flow-fact-input SOURCE,..", "flow fact sets to use (=all)") { |srcs|
+      self.on("--flow-fact-input SOURCE,..", "flow fact sets to use (=all)") do |srcs|
         options.flow_fact_srcs = srcs.split(/\s*,\s*/)
-      }
-      self.on("--flow-fact-selection PROFILE,...", "flow fact filter (=all,minimal,local,rt-support-{all,local})") { |ty|
+      end
+      self.on("--flow-fact-selection PROFILE,...", "flow fact filter (=all,minimal,local,rt-support-{all,local})") do |ty|
         options.flow_fact_selection = ty
-      }
-      self.on("--use-relation-graph", "use bitcode flowfacts via relation graph") {
+      end
+      self.on("--use-relation-graph", "use bitcode flowfacts via relation graph") do
         options.use_relation_graph = true
-      }
-      add_check { |options|
+      end
+      add_check do |options|
         options.flow_fact_selection = "all" unless options.flow_fact_selection
         options.flow_fact_srcs = "all" unless options.flow_fact_srcs
-      }
+      end
     end
 
     def accept_corrected_rgs
-      self.on("--accept-corrected-rgs", "Accect corrected relation graphs for flow fact transformation") {
+      self.on("--accept-corrected-rgs", "Accect corrected relation graphs for flow fact transformation") do
         options.accept_corrected_rgs = true
-      }
+      end
     end
 
     # ELF binaries
@@ -154,37 +154,37 @@ module PML
 
     # Analysis entry
     def analysis_entry(set_default = true)
-      self.on("-e", "--analysis-entry FUNCTION", "name/label of function to analyse (=main)") { |f|
+      self.on("-e", "--analysis-entry FUNCTION", "name/label of function to analyse (=main)") do |f|
         options.analysis_entry = f
-      }
+      end
       add_check { |options| options.analysis_entry = "main" unless options.analysis_entry or not set_default }
     end
 
     def model_file
-      self.on("--modelfile FILE", "Peaches program file describing the current model") { |modelfile|
+      self.on("--modelfile FILE", "Peaches program file describing the current model") do |modelfile|
         options.modelfile = modelfile
-      }
+      end
     end
 
     def stack_cache_analysis
-      self.on("--use-sca-graph", "use SCA graph for stack-cache analysis") {
+      self.on("--use-sca-graph", "use SCA graph for stack-cache analysis") do
           options.use_sca_graph = true
-      }
+      end
     end
 
     def target_callret_costs
-      self.on("--[no-]target-call-return-costs", "Account for call and/or return miss costs for the target call. Beware, simulation and analysis can count costs differently.") { |b|
+      self.on("--[no-]target-call-return-costs", "Account for call and/or return miss costs for the target call. Beware, simulation and analysis can count costs differently.") do |b|
         options.target_callret_costs = b
-      }
+      end
     end
 
     # Run argument checks
     def check!(arg_range = nil)
       if arg_range.kind_of?(Array)
         die_usage "Wrong number of positional arguments" unless arg_range.length == ARGV.length
-        arg_range.zip(ARGV).each { |option, arg|
+        arg_range.zip(ARGV).each do |option, arg|
           self.options.send("#{option}=".to_sym, arg)
-        }
+        end
       elsif arg_range.kind_of?(Range)
         die_usage "Wrong number of positional arguments" unless arg_range.cover?(ARGV)
       end
@@ -202,10 +202,10 @@ module PML
       opts.separator("")
       opts.on("--stats", "print statistics") { options.stats = true }
       opts.on("--verbose", "verbose output") { options.verbose = true }
-      opts.on("--debug [TYPE]", Array, "debug output (trace,ilp,ipet,costs,wca,ait,sweet,visualize,=all)") { |d|
+      opts.on("--debug [TYPE]", Array, "debug output (trace,ilp,ipet,costs,wca,ait,sweet,visualize,=all)") do |d|
         options.debug_type = d ? d.map{ |s| s.to_sym } : [:all]
-      }
-      opts.on_tail("-h", "--help [TOPIC]", "Show help / help on topic (#{opts.help_topics.join(", ")})") { |topic|
+      end
+      opts.on_tail("-h", "--help [TOPIC]", "Show help / help on topic (#{opts.help_topics.join(", ")})") do |topic|
         if topic.nil?
           $stderr.puts opts
         elsif ! opts.has_help_topic(topic)
@@ -214,7 +214,7 @@ module PML
           opts.show_help_topic(topic, $stderr)
         end
         exit 0
-      }
+      end
     end
     parser.parse!
     parser.check!(arg_range)

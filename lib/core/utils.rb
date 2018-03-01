@@ -80,9 +80,9 @@ module PML
     end
 
     def tsort_each_child(node)
-      node.successors.each { |succnode|
+      node.successors.each do |succnode|
         yield succnode if @nodeset.include?(succnode) && ! @excluded_edge_targets.include?(succnode)
-      }
+      end
     end
   end
 
@@ -100,18 +100,18 @@ module PML
     topo = []
     worklist = WorkList.new([entry])
     vpcount = Hash.new(0)
-    worklist.process { |node|
+    worklist.process do |node|
       topo.push(node)
       succs = graph_trait ? graph_trait.successors(node) : node.successors
-      succs.each { |succ|
+      succs.each do |succ|
         vc = (vpcount[succ] += 1)
         preds = graph_trait ? graph_trait.predecessors(succ) : succ.predecessors
         if vc == preds.length
           vpcount.delete(succ)
           worklist.enqueue(succ)
         end
-      }
-    }
+      end
+    end
     assert("topological_order: not all nodes marked") { vpcount.empty? }
     topo
   end
@@ -170,9 +170,9 @@ module PML
       else ; die "Cannot open stdout in mode #{mode}"
       end
     else
-      File.open(path,mode) { |fh|
+      File.open(path,mode) do |fh|
         yield fh
-      }
+      end
     end
   end
 
@@ -242,9 +242,9 @@ module PML
     msgs = []
     r = block.call { |m| msgs.push(m) }
     msgs.push(r) if msgs.empty?
-    msgs.compact.each { |msg|
+    msgs.compact.each do |msg|
       $stderr.puts(format_msg("DEBUG",msg))
-    }
+    end
   end
 
   class DebugIO
@@ -274,11 +274,11 @@ module PML
   end
 
   def statistics(mod,vs,align=47)
-    vs.each { |k,v|
+    vs.each do |k,v|
       key = "#{mod}: #{k}".ljust(align)
       msg = "#{key} #{v}"
       $stderr.puts(format_msg("STAT",msg))
-    }
+    end
   end
 
   def format_msg(tag,msg,_align=-1)
@@ -296,10 +296,10 @@ class String
   # Inspired by ActiveSupport's strip_heredoc.
   def strip_heredoc
     first_indent = 0
-    self.sub(/\A(\s*)/) {
+    self.sub(/\A(\s*)/) do
       first_indent = $1.length
       $2
-    }.gsub!(/^[ \t]{0,#{first_indent}}/,'')
+    end.gsub!(/^[ \t]{0,#{first_indent}}/,'')
   end
 end
 
