@@ -444,7 +444,7 @@ class WcetTool
     config = pml.analysis_configurations.by_name('default')
 
     options.analysis_entry = config.analysis_entry if config && (not options.analysis_entry)
-    if not options.analysis_entry
+    unless options.analysis_entry
       warn("Analysis entry not specified, falling back to 'main'.") if config
       options.analysis_entry = "main"
     end

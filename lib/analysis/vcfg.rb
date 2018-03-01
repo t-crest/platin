@@ -270,7 +270,7 @@ private
       if block.successors.empty?
         # Either return or stuck node (should never be emitted by the compiler)
         # SH: could be a tail call to a noreturn function; check if node has a call
-        if !has_return
+        unless has_return
           # warn("Block with empty successors but without return information - adding exit edge")
           current_node.add_successor(@exit)
         end
@@ -504,7 +504,7 @@ class ExitNode < CfgNode
       scope_entry_context = location.context.scope_context
 
       # handle program exit
-      next if !return_context
+      next unless return_context
 
       # record scope exit
       cfmodel.record_scope_exit(vcfg.entry, scope_entry_context, location)

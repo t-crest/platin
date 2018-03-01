@@ -64,8 +64,8 @@ class BooleanToken < ListToken
   end
 
   def coerce(arg)
-    return true if !TRUE.grep(arg).empty?
-    return false if !FALSE.grep(arg).empty?
+    return true unless TRUE.grep(arg).empty?
+    return false unless FALSE.grep(arg).empty?
     raise ArgumentError, "Not a boolean option #{arg}"
   end
 end
@@ -650,7 +650,7 @@ class EditCommand < ModelFactCommand
         break if failed.nil?
 
         # Check whether the user wants to fix their error
-        break if !ask_retry(failed)
+        break unless ask_retry(failed)
       end
 
       file.close
@@ -888,7 +888,7 @@ class GetCommand < Command
 
     while segments.length > 0
       key = segments.shift.to_sym
-      if !element.to_h.has_key?(key)
+      unless element.to_h.has_key?(key)
         pp element[key]
         raise ArgumentError, "No such key: #{key}"
       end
@@ -936,7 +936,7 @@ class SetCommand < Command
 
     while segments.length > 0
       key = segments.shift.to_sym
-      raise ArgumentError, "No such key: #{key}" if !element.to_h.has_key?(key)
+      raise ArgumentError, "No such key: #{key}" unless element.to_h.has_key?(key)
       if segments.length == 0
         case op
         when '='
@@ -1114,7 +1114,7 @@ class Dispatcher
       # Extend only once
       break if valid || sanity > 1;
     end
-    raise ArgumentError, "Failed to extend input" if !valid
+    raise ArgumentError, "Failed to extend input" unless valid
     args
   end
 

@@ -224,7 +224,7 @@ class FlowGraphVisualizer < Visualizer
         t = block_timing.map do |origin,profile|
           [origin, find_vedge_timing(profile, node, s).select{ |e| e.wcetfreq > 0 }]
         end.select{ |o,p| not p.empty? }
-        if not t.empty?
+        unless t.empty?
           # TODO: visualize criticality < 1
           options["color"] = "#ff0000"
           options["penwidth"] = 2

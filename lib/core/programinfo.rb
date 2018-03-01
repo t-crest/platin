@@ -363,7 +363,7 @@ module PML
 
         # When the guardexpression is false, then this path is infeasible
         guardexpr = Peaches::evaluate_expression(model.context, expr, :boolean)
-        if !guardexpr then
+        unless guardexpr then
           # FlowFact.block_frequency(scoperef, blockref, freq, attrs)
           fact = FlowFact.block_frequency(fun, ppref.programpoint, [SEInt.new(0)], attributes)
           fact.origin = 'model.bc'

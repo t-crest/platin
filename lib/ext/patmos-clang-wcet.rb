@@ -23,7 +23,7 @@ end
 
 def run(cmd)
   $stderr.puts "[patmos-clang-wcet] #{cmd}"
-  exit 1 if !system(cmd)
+  exit 1 unless system(cmd)
 end
 
 usage("") unless ARGV.length > 0
@@ -82,8 +82,8 @@ if !options.flow_facts
 elsif !File.exist?(options.flow_facts)
   usage("Configuration file #{options.flow_facts} does not exist.")
 end
-usage("Option -o <binary> missing.") if !options.outfile
-options.pmloutput = options.outfile + ".pml" if !options.pmloutput
+usage("Option -o <binary> missing.") unless options.outfile
+options.pmloutput = options.outfile + ".pml" unless options.pmloutput
 
 platin_derived_options = ""
 platin_derived_options += " --outdir #{File.dirname(options.outfile).inspect}" if options.save_temps

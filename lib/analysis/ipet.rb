@@ -481,7 +481,7 @@ class IPETBuilder
     # machinecode variables + cost
     @mc_model.each_edge(mf_function) do |edge|
       @ilp.add_variable(edge, :machinecode)
-      if not @options.ignore_instruction_timing
+      unless @options.ignore_instruction_timing
         cost = cost_block.call(edge)
         @ilp.add_cost(edge, cost)
       end
@@ -543,7 +543,7 @@ class IPETBuilder
         @ilp.add_variable(ipet_edge, :gcfg)
 
         # Every GCFG Edge is also a flow between two machine blocks
-        if not @options.ignore_instruction_timing
+        unless @options.ignore_instruction_timing
           source_block = ipet_edge.source.abb.get_region(:dst).exit_node
           if ipet_edge.target == :exit
             target_block = :exit
@@ -626,7 +626,7 @@ class IPETBuilder
 
     @mc_model.each_intra_abb_edge(abb) do |ipet_edge|
       @ilp.add_variable(ipet_edge)
-      if not @options.ignore_instruction_timing
+      unless @options.ignore_instruction_timing
         cost = cost_block.call(ipet_edge)
         @ilp.add_cost(ipet_edge, cost)
       end
@@ -752,7 +752,7 @@ private
     ff.lhs.each do |term|
         if term.programpoint.kind_of?(Marker)
           factor = term.factor
-          if !@markers[term.programpoint.name]
+          unless @markers[term.programpoint.name]
             raise Exception, "No instructions corresponding to marker #{term.programpoint.name.inspect}"
           end
           @markers[term.programpoint.name].each do |instruction|

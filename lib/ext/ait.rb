@@ -462,7 +462,7 @@ class AISExporter
 
     # we only export either (a) local flowfacts (b) flowfacts in the scope of the analysis entry
     type = :unsupported
-    if !scope.programpoint.kind_of?(Function)
+    unless scope.programpoint.kind_of?(Function)
       warn("aiT: linear constraint not in function scope (unsupported): #{ff}")
       return false
     end
@@ -564,7 +564,7 @@ class AISExporter
     assert("AisExport#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") do
       vf.programpoint.kind_of?(Instruction)
     end
-    if !vf.ppref.context.empty?
+    unless vf.ppref.context.empty?
       warn("AisExport#export_valuefact: cannot export context-sensitive program point")
       return false
     end

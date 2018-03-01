@@ -167,7 +167,7 @@ class VariableElimination
           break
         end
       end
-      elimvar = elim_vids.first if !elimvar
+      elimvar = elim_vids.first unless elimvar
 
       # "Eliminating #{var_by_index(elimvar)}: #{eq_constraints[elimvar].size}/#{bound_constraints[elimvar].size}"
 
@@ -682,7 +682,7 @@ class SymbolicBoundTransformation
     scope_ref_mapped =
       if loopblock
         mapped_loopblock = blockmap[loopblock]
-        if !mapped_loopblock.loopheader?
+        unless mapped_loopblock.loopheader?
           debug(options, :transform) do
             "SymbolicBoundTransformation: not a loop header mapping: #{loopblock} -> #{mapped_loopblock}"
           end
@@ -709,7 +709,7 @@ class SymbolicBoundTransformation
         end
         mf = rg.get_function(rg_target_level)
         argument = mf.arguments.by_name(n)
-        if !argument
+        unless argument
           warn("No function argument #{n} for function #{mf.label}")
           return nil
         end

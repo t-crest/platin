@@ -449,7 +449,7 @@ end
 class ASTExpr < ASTNode
   def self.assert_full_eval(node, context, types)
     val = node.evaluate(context)
-    raise "Expression #{node} is not of a terminal value type: #{val}" if !val.is_a?(ASTValueLiteral)
+    raise "Expression #{node} is not of a terminal value type: #{val}" unless val.is_a?(ASTValueLiteral)
 
     typecheck = types.map do |type|
       match = false
@@ -464,7 +464,7 @@ class ASTExpr < ASTNode
       match
     end.inject(false) { |x,y| x || y }
 
-    raise PeachesTypeError, "Expression #{node.class.name}:#{node} is no instance of #{types}" if !typecheck
+    raise PeachesTypeError, "Expression #{node.class.name}:#{node} is no instance of #{types}" unless typecheck
 
     val
   end

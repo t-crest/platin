@@ -112,7 +112,7 @@ class WCA
             slot_end = branch_index
             instr = src.instructions[slot_end + 1]
             while slots > 0 || (instr && instr.bundled?)
-              slots = slots - 1 if !(instr && instr.bundled?)
+              slots = slots - 1 unless (instr && instr.bundled?)
               slot_end = slot_end + 1
               instr = src.instructions[slot_end + 1]
             end

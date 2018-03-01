@@ -58,7 +58,7 @@ class RelationGraphValidation
         ix_src,ix_dst = ix_src + 1, ix_dst + 1
       end
     end
-    raise Exception, "Progress trace validation failed: #{errors.inspect}" if !errors.empty?
+    raise Exception, "Progress trace validation failed: #{errors.inspect}" unless errors.empty?
     statistics("CFRG-VALIDATION",
                "progress trace length (src)" => pt1.trace.length,
                "progress trace length (dst)" => pt2.trace.length) if @options.stats

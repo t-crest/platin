@@ -301,7 +301,7 @@ class DataFlowAnalysis
 
   def add_node(b, node, last, first_node, targets = [], pred_nodes = nil)
     node.predecessors.push(last) if last
-    first_node[b] = node if not last
+    first_node[b] = node unless last
     @nodes.push(node)
     targets.each do |s|
       pred_nodes[s] ||= []

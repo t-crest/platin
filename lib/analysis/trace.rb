@@ -38,7 +38,7 @@ class MachineTraceMonitor < TraceMonitor
     super()
     @pml, @options = pml, options
     @program_entry = @pml.machine_functions.by_label(options.trace_entry)
-    if not @program_entry
+    unless @program_entry
       die("Trace Analysis: Could not find trace entry function '#{options.trace_entry}' " +
           "in PML file. Make sure it is serialized by patmos-clang.")
     end
@@ -118,7 +118,7 @@ class MachineTraceMonitor < TraceMonitor
         if fallthrough_instruction && pc == fallthrough_instruction.address
           # debug(@options, :trace) { "Predicated return at #{fallthrough_instruction}" }
         else
-          if !handle_return(*pending_return)
+          unless handle_return(*pending_return)
             # Finished
             @finished = true
             trace_count += 1
@@ -203,7 +203,7 @@ class MachineTraceMonitor < TraceMonitor
         # debug(@options, :trace) { "Scheduling return at #{r}" }
       end
     end
-    if !@finished
+    unless @finished
       warn("Trace Analysis: did not observe return from program entry #{@program_entry}")
       publish(:stop, @cycles)
     end
@@ -291,7 +291,7 @@ class MachineTraceMonitor < TraceMonitor
           add_watch(@wp_return_instr,instruction.address,instruction) if instruction.returns?
           # trigger call-instruction event at call instructions
           # CAVEAT: delay slots and predicated calls
-          add_watch(@wp_call_instr,instruction.address,instruction) if !instruction.callees.empty?
+          add_watch(@wp_call_instr,instruction.address,instruction) unless instruction.callees.empty?
           abs_instr_index += 1
         end
       end
@@ -445,7 +445,7 @@ class RecorderScheduler
   def activate(type, spec_id, scope_entity, scope_context, spec, cycles)
     key = [type, spec_id, scope_entity, scope_context]
     recorder = @recorder_map[key]
-    if !recorder
+    unless recorder
       rid = @recorder_map.size
       assert("Global recorder must not have a context.") { type != :global || scope_context == nil }
       @recorder_map[key] = recorder = case type
@@ -739,7 +739,7 @@ class ProgressTraceRecorder
   # follow relation graph, emit progress nodes
   def block(bb, _)
     return unless @rg
-    if !@node
+    unless @node
       first_node = @rg.nodes.first
       assert("at_entry == at entry RG node") do
         first_node.type == :entry

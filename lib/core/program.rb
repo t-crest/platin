@@ -59,7 +59,7 @@ module PML
     end
 
     def instruction_by_address(addr)
-      if !@instruction_by_address
+      unless @instruction_by_address
         @instruction_by_address = {}
         each { |f| f.instructions.each { |i| @instruction_by_address[i.address] = i } }
       end
@@ -528,7 +528,7 @@ module PML
     # block predecessors (not ready at initialization time)
     def add_predecessor(block)
       assert("Very Bad") { function.blocks.by_name(block.name) }
-      if not data['predecessors'].include?(block.name)
+      unless data['predecessors'].include?(block.name)
         data['predecessors'].push(block.name)
         # Undo Caching
         @predecessors = nil
@@ -542,7 +542,7 @@ module PML
 
     # block successors (not ready at initialization time)
     def add_successor(block)
-      if not data['successors'].include?(block.name)
+      unless data['successors'].include?(block.name)
         data['successors'].push(block.name)
         # Undo Caching
         @successors = nil

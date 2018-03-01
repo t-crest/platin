@@ -96,7 +96,7 @@ class OneOneCheck
           found = true if ssid == dsid
         end
 
-        return false if !found
+        return false unless found
       end
     end
 
@@ -120,7 +120,7 @@ class OneOneCheck
         is11 = is_one_one(rg)
         puts "[OneOneCheck] #{target}: #{is11}"
 
-        if !is11
+        unless is11
           file = File.join(outdir, target + ".rg.non11" + suffix)
           rgv = RGVisualizer.new(options)
           rgv.generate(rgv.visualize(rg),file)

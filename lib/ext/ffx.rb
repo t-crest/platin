@@ -361,7 +361,7 @@ class F4Exporter
     assert("F4Exporter#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") do
       vf.programpoint.kind_of?(Instruction)
     end
-    if !vf.ppref.context.empty?
+    unless vf.ppref.context.empty?
       warn("F4Exporter#export_valuefact: cannot export context-sensitive program point")
       return false
     end
@@ -539,7 +539,7 @@ class FFXExporter
     assert("F4Exporter#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") do
       vf.programpoint.kind_of?(Instruction)
     end
-    if !vf.ppref.context.empty?
+    unless vf.ppref.context.empty?
       warn("F4Exporter#export_valuefact: cannot export context-sensitive program point")
       return false
     end
