@@ -311,7 +311,7 @@ class F4Exporter
       if scope_bound = ff.get_loop_bound
         scope,bound = scope_bound
         next if options.ff_disable_export.include?('loop-bounds')
-        next if ! bound.constant? && options.ff_disable_export.include?('symbolic-loop-bounds')
+        next if !bound.constant? && options.ff_disable_export.include?('symbolic-loop-bounds')
         (loop_bounds[scope] ||= []).push([bound,ff])
       else
         supported = export_flowfact(ff)
@@ -327,7 +327,7 @@ class F4Exporter
   def export_flowfact(ff)
     assert("export_flowfact: loop bounds need to be exported separately") { ff.get_loop_bound.nil? }
 
-    if (! ff.local?) && ff.scope.function != @entry
+    if (!ff.local?) && ff.scope.function != @entry
       warn("F4: non-local flow fact in scope #{ff.scope} not supported")
       false
 
@@ -356,7 +356,7 @@ class F4Exporter
   # export value facts
   def export_valuefact(vf)
     assert("F4Exporter#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") { vf.programpoint.kind_of?(Instruction) }
-    if ! vf.ppref.context.empty?
+    if !vf.ppref.context.empty?
       warn("F4Exporter#export_valuefact: cannot export context-sensitive program point")
       return false
     end
@@ -486,7 +486,7 @@ class FFXExporter
       if scope_bound = ff.get_loop_bound
         scope,bound = scope_bound
         next if options.ff_disable_export.include?('loop-bounds')
-        next if ! bound.constant? && options.ff_disable_export.include?('symbolic-loop-bounds')
+        next if !bound.constant? && options.ff_disable_export.include?('symbolic-loop-bounds')
         (loop_bounds[scope] ||= []).push([bound,ff])
       else
         supported = export_flowfact(ff)
@@ -502,7 +502,7 @@ class FFXExporter
   def export_flowfact(ff)
     assert("export_flowfact: loop bounds need to be exported separately") { ff.get_loop_bound.nil? }
 
-    if (! ff.local?) && ff.scope.function != @entry
+    if (!ff.local?) && ff.scope.function != @entry
       warn("F4: non-local flow fact in scope #{ff.scope} not supported")
       false
 
@@ -531,7 +531,7 @@ class FFXExporter
   # export value facts
   def export_valuefact(vf)
     assert("F4Exporter#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") { vf.programpoint.kind_of?(Instruction) }
-    if ! vf.ppref.context.empty?
+    if !vf.ppref.context.empty?
       warn("F4Exporter#export_valuefact: cannot export context-sensitive program point")
       return false
     end

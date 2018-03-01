@@ -88,7 +88,7 @@ class AnalyzeTraceTool
 
     # if we have a global recorder, add timing extracted from trace
     global_recorders = @main_recorder.global_recorders
-    if ! global_recorders.empty?
+    if !global_recorders.empty?
       global = global_recorders.first
       outpml.timing.add(TimingEntry.new(global.scope,global.results.cycles.max,nil,fact_context))
     end
@@ -170,7 +170,7 @@ class AnalyzeTraceTool
   def self.run(pml,options)
     needs_options(options, :analysis_entry, :trace_entry, :binary_file, :recorder_spec)
     entry = pml.machine_functions.by_label(options.analysis_entry, true)
-    die("Analysis entry (ELF label #{options.analysis_entry}) not found") if ! entry
+    die("Analysis entry (ELF label #{options.analysis_entry}) not found") if !entry
 
     unless entry.blocks.first.address
       warn("No addresses in PML file, trying to extract from ELF file")

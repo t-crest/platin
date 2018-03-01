@@ -22,7 +22,7 @@ end
 
 def run(cmd)
   $stderr.puts "[patmos-clang-wcet] #{cmd}"
-  exit 1 if ! system(cmd)
+  exit 1 if !system(cmd)
 end
 
 usage("") unless ARGV.length > 0
@@ -71,18 +71,18 @@ ARGV.each_with_index do |arg,ix|
     options.debug = true
   end
 end
-if ! options.target_config
+if !options.target_config
   $stderr.puts("Warning: using default target configuration")
-elsif ! File.exist?(options.target_config)
+elsif !File.exist?(options.target_config)
   usage("Configuration file #{options.target_config} does not exist.")
 end
-if ! options.flow_facts
+if !options.flow_facts
   $stderr.puts("Warning: using default analysis target / no external flow facts")
-elsif ! File.exist?(options.flow_facts)
+elsif !File.exist?(options.flow_facts)
   usage("Configuration file #{options.flow_facts} does not exist.")
 end
-usage("Option -o <binary> missing.") if ! options.outfile
-options.pmloutput = options.outfile + ".pml" if ! options.pmloutput
+usage("Option -o <binary> missing.") if !options.outfile
+options.pmloutput = options.outfile + ".pml" if !options.pmloutput
 
 platin_derived_options = ""
 platin_derived_options += " --outdir #{File.dirname(options.outfile).inspect}" if options.save_temps

@@ -23,7 +23,7 @@ module PML
     end
 
     def register_help_topic(topic, &printer)
-      assert("OptionParser: duplicate help topic") { ! @help_topics[topic] }
+      assert("OptionParser: duplicate help topic") { !@help_topics[topic] }
       @help_topics[topic] = printer
     end
 
@@ -32,7 +32,7 @@ module PML
     end
 
     def has_help_topic(topic)
-      ! @help_topics[topic].nil?
+      !@help_topics[topic].nil?
     end
 
     def show_help_topic(topic,io=$stderr)
@@ -208,7 +208,7 @@ module PML
       opts.on_tail("-h", "--help [TOPIC]", "Show help / help on topic (#{opts.help_topics.join(", ")})") do |topic|
         if topic.nil?
           $stderr.puts opts
-        elsif ! opts.has_help_topic(topic)
+        elsif !opts.has_help_topic(topic)
           $stderr.puts("Unknown help topic '#{topic}' (available: #{opts.help_topics.inspect})\n\n#{opts}")
         else
           opts.show_help_topic(topic, $stderr)

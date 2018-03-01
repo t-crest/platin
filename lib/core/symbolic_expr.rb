@@ -216,7 +216,7 @@ class SEBinary < SymbolicExpression
     args = args.map do |arg|
       if arg.kind_of?(Integer) then SEInt.new(arg) else arg end
     end
-    args = args.select { |e| e.constant? } + args.select { |e| ! e.constant? } if SEBinary.commutative?(op)
+    args = args.select { |e| e.constant? } + args.select { |e| !e.constant? } if SEBinary.commutative?(op)
     fst = args.shift
     raise Exception.new("SEbinary#fold: no arguments") unless fst
     args.inject(fst) do |a,b|
@@ -229,7 +229,7 @@ class SEBinary < SymbolicExpression
   def self.collect_fold(op, *args)
     assert("SEBinary#collect_fold: #{op} is not commutative") { SEBinary.commutative?(op) }
     todo, done = args, []
-    while ! todo.empty?
+    while !todo.empty?
       expr = todo.pop
       if expr.kind_of?(SEBinary) && expr.op == op
         todo.push(expr.a)
@@ -376,7 +376,7 @@ class SEAffineRec < SymbolicExpression
   #          where x1,...,xn,xi is the maximum trip count of L1,...,Ln,Li
   def loop_bound_sum(outer_loop_bound)
     x = outer_loop_bound
-    if ! @b.constant? || @b.to_i == 0
+    if !@b.constant? || @b.to_i == 0
       raise Exception.new("SEAffineRec#loop_bound_sum: not possible to calculate total bound for" +
                           "non-constant/zero #{@b}::#{@b.class} in #{self}")
     end
@@ -473,7 +473,7 @@ private
         a  = ps.shift
         op = ps.shift
         stack.push([a,op])
-        raise Exception.new("SymbolicExpressionParser: mixed ops without parenthesis") unless ! last_op || op == last_op
+        raise Exception.new("SymbolicExpressionParser: mixed ops without parenthesis") unless !last_op || op == last_op
         last_op = op
       end
       expr = ps.first

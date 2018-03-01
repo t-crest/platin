@@ -89,7 +89,7 @@ class LpSolveILP < ILP
   def add_linear_constraints(lp)
     @constraints.each do |constr|
       v =  lp.add_constraintex(cleanup_name(constr.name), constr.lhs.to_a, lpsolve_op(constr.op), constr.rhs)
-      if ! v
+      if !v
         dump($stderr)
         die("constraintex #{constr} failed with return value #{v.inspect}")
       end

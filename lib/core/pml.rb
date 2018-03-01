@@ -447,7 +447,7 @@ class PMLDoc
   def deep_data_clone
     cloned_data = @data.dup
     worklist = [cloned_data]
-    while ! worklist.empty?
+    while !worklist.empty?
       d = worklist.pop
       if d.kind_of?(Hash)
         d.each do |k,v|
@@ -507,7 +507,7 @@ class PMLDoc
               elem
             end
             (merged_doc[k] ||= []).concat(v)
-          elsif ! merged_doc[k]
+          elsif !merged_doc[k]
             merged_doc[k] = doc[k]
           elsif merged_doc[k] != doc[k]
             die "Mismatch in non-list attribute #{k}: #{merged_doc[k]} and #{doc[k]}"

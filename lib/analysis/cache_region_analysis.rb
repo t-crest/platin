@@ -816,7 +816,7 @@ class InstructionCacheAnalysis
     else
       same_cache_line_as_prev = true
     end
-    if ! same_cache_line_as_prev || i.may_return_to?
+    if !same_cache_line_as_prev || i.may_return_to?
       get_aligned_addresses(i.address, last_byte).map do |addr|
         LoadInstruction.new(i, CacheLine.new(addr, i.function))
       end

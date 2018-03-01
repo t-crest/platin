@@ -118,7 +118,7 @@ class ApxExportTool
     opts.ait_report_prefix(mandatory)
 
     opts.add_check do |options|
-      die_usage "No apx file specified." if mandatory && ! options.apx_file
+      die_usage "No apx file specified." if mandatory && !options.apx_file
       if options.apx_file
         die_usage "Option --binary  is mandatory when generating apx file" unless options.binary_file
         die_usage "Option --ait-report-prefix is mandatory when generating apx file" unless options.ait_report_prefix

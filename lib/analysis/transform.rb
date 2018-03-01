@@ -76,7 +76,7 @@ class RefSet
     sz = cref.num_elim_vars
     list = (@store[sz] ||= Array.new)
     list.push(cref)
-    @minsz = sz if ! @minsz || sz < @minsz
+    @minsz = sz if !@minsz || sz < @minsz
   end
 
   def empty?
@@ -142,7 +142,7 @@ class VariableElimination
     @ilp.constraints.each do |constr|
       cref = ConstraintRef.new(known_constraints.size, constr, elim_vids)
       known_constraints[constr] = cref
-      if constr.lhs.all? { |v,c| ! elim_vids.include?(v) }
+      if constr.lhs.all? { |v,c| !elim_vids.include?(v) }
         unaffected.add(cref)
       else
         dict = (constr.op == "equal") ? eq_constraints : bound_constraints
@@ -155,9 +155,9 @@ class VariableElimination
     end
 
     # eliminate all variables
-    while ! elim_vids.empty?
+    while !elim_vids.empty?
       elimvar, elimeq = nil, nil
-      while ! elim_eqs.empty?
+      while !elim_eqs.empty?
         tmpeq = elim_eqs.pop
         if tmpeq.status == :active
           elimeq = tmpeq
@@ -165,7 +165,7 @@ class VariableElimination
           break
         end
       end
-      elimvar = elim_vids.first if ! elimvar
+      elimvar = elim_vids.first if !elimvar
 
       # "Eliminating #{var_by_index(elimvar)}: #{eq_constraints[elimvar].size}/#{bound_constraints[elimvar].size}"
 
@@ -192,7 +192,7 @@ class VariableElimination
             neweq = constraint_substitution(elimvar, elimeq.constraint, subst_constr.constraint)
 
             # create new constraint reference, if necessary
-            if neweq && ! known_constraints[neweq]
+            if neweq && !known_constraints[neweq]
               cref = known_constraints[neweq] = ConstraintRef.new(known_constraints.size, neweq, elim_vids)
               cref.elim_vars.each do |v|
                 dict[v].add(cref)
@@ -222,7 +222,7 @@ class VariableElimination
           u.each do |u_constr|
             @elim_steps += 1
             newconstr = transitive_constraint(elimvar, l_constr.constraint, u_constr.constraint)
-            if newconstr && ! known_constraints[newconstr]
+            if newconstr && !known_constraints[newconstr]
               cref = known_constraints[newconstr] = ConstraintRef.new(known_constraints.size, newconstr, elim_vids)
               cref.elim_vars.each do |v|
                 bound_constraints[v].add(cref)
@@ -328,11 +328,11 @@ class FlowFactTransformation
     flowfacts.each do |ff|
       if ff.symbolic_bound?
         copy.push(ff)
-      elsif options.transform_eliminate_edges && ff.references_edges? && ! ff.get_calltargets
+      elsif options.transform_eliminate_edges && ff.references_edges? && !ff.get_calltargets
         simplify.push(ff)
       elsif options.transform_eliminate_edges && ff.references_empty_block?
         simplify.push(ff)
-      elsif options.transform_eliminate_edges && ! ff.loop_bound? && ff.loop_scope?
+      elsif options.transform_eliminate_edges && !ff.loop_bound? && ff.loop_scope?
         # replace loop scope by function scope
         simplify.push(ff)
       else
@@ -429,7 +429,7 @@ class FlowFactTransformation
 
         # If direction up/down, eliminate all vars but dst/src
         elim_set = ilp.variables.select do |var|
-          ilp.vartype[var] != target_level.to_sym || ! var.kind_of?(IPETEdge) || ! var.cfg_edge?
+          ilp.vartype[var] != target_level.to_sym || !var.kind_of?(IPETEdge) || !var.cfg_edge?
         end
         ve = VariableElimination.new(ilp, options)
         new_constraints = ve.eliminate_set(elim_set)
@@ -491,7 +491,7 @@ private
     ipet = IPETBuilder.new(pml,builder_opts,ilp)
 
     # Build IPET (no cost) and add flow facts
-    ffs = flowfacts.select { |ff| ! ff.symbolic_bound? }
+    ffs = flowfacts.select { |ff| !ff.symbolic_bound? }
     ipet.build(entry, ffs, mbb_variables: true) { |edge| 0 }
     ipet
   end
@@ -514,7 +514,7 @@ private
       next if constr.lhs.all? { |_,coeff| coeff <= 0 } && constr.op == "less-equal" && constr.rhs == 0
 
       # Simplify: edges->block if possible (lossless; see eliminate_edges for potentially lossy transformation)
-      unless lhs.any? { |var,_| ! var.kind_of?(IPETEdge) }
+      unless lhs.any? { |var,_| !var.kind_of?(IPETEdge) }
         # (1) get all referenced outgoing blocks
         out_blocks = {}
         lhs.each { |edge,coeff| out_blocks[edge.source] = 0 }
@@ -546,7 +546,7 @@ private
                  ctx = Context.from_list([CallContextEntry.new(v.source)])
                  ContextRef.new(v.target, ctx)
                else
-                 assert("FlowFactTransformation: relation graph edge not eliminated") { ! v.relation_graph_edge? }
+                 assert("FlowFactTransformation: relation graph edge not eliminated") { !v.relation_graph_edge? }
                  raise Exception.new("Bad IPETEdge: #{v}")
                end
              else
@@ -639,13 +639,13 @@ class SymbolicBoundTransformation
     if ff.context_sensitive?
       debug(options, :transform) { "Cannot transform context-sensitive symbolic flow fact" }
       return nil
-    elsif ! ff.local?
+    elsif !ff.local?
       debug(options, :transform) { "Cannot transform non-local symbolic flow fact" }
       return nil
-    elsif non_block_ref = ff.lhs.find { |t| ! t.programpoint.kind_of?(Block) }
+    elsif non_block_ref = ff.lhs.find { |t| !t.programpoint.kind_of?(Block) }
       debug(options, :transform) { "Cannot transform symbolic flow fact referencing edges: #{non_block_ref}" }
       return nil
-    elsif ! pml.relation_graphs.has_named?(function.name, rg_src_level)
+    elsif !pml.relation_graphs.has_named?(function.name, rg_src_level)
       debug(options, :transform) { "Cannot transform symbolic flow fact without relation graph" }
       return nil
     end
@@ -675,7 +675,7 @@ class SymbolicBoundTransformation
     scope_ref_mapped =
       if loopblock
         mapped_loopblock = blockmap[loopblock]
-        if ! mapped_loopblock.loopheader?
+        if !mapped_loopblock.loopheader?
           debug(options, :transform) { "SymbolicBoundTransformation: not a loop header mapping: #{loopblock} -> #{mapped_loopblock}" }
           # Note: The frequency of the header of the loop nb is member of
           # provides an upper bound to the frequency of nb
@@ -700,7 +700,7 @@ class SymbolicBoundTransformation
         end
         mf = rg.get_function(rg_target_level)
         argument = mf.arguments.by_name(n)
-        if ! argument
+        if !argument
           warn("No function argument #{n} for function #{mf.label}")
           return nil
         end

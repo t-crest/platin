@@ -364,7 +364,7 @@ class PersistenceAnalysis
 
   def get_check_conflict
     Proc.new do |tagset|
-      ! @analysis.cache_properties.conflict_free?(tagset)
+      !@analysis.cache_properties.conflict_free?(tagset)
     end
   end
 

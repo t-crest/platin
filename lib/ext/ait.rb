@@ -128,7 +128,7 @@ end
 class SEBinary
   def to_ais
     left,right = self.a, self.b
-    left, right = right, left if SEBinary.commutative?(op) && left.constant? && ! right.constant?
+    left, right = right, left if SEBinary.commutative?(op) && left.constant? && !right.constant?
     lexpr, rexpr = [left,right].map { |v| v.to_ais }
     # simplify (x * -1) to (-x)
     return "-(#{lexpr})" if right.constant? && right.constant == -1 && op == '*'
@@ -455,7 +455,7 @@ class AISExporter
 
     # we only export either (a) local flowfacts (b) flowfacts in the scope of the analysis entry
     type = :unsupported
-    if ! scope.programpoint.kind_of?(Function)
+    if !scope.programpoint.kind_of?(Function)
       warn("aiT: linear constraint not in function scope (unsupported): #{ff}")
       return false
     end
@@ -506,7 +506,7 @@ class AISExporter
       if scope_bound = ff.get_loop_bound
         scope,bound = scope_bound
         next if options.ais_disable_export.include?('loop-bounds')
-        next if ! bound.constant? && options.ais_disable_export.include?('symbolic-loop-bounds')
+        next if !bound.constant? && options.ais_disable_export.include?('symbolic-loop-bounds')
         (loop_bounds[scope] ||= []).push([bound,ff])
       else
         supported = export_flowfact(ff)
@@ -526,7 +526,7 @@ class AISExporter
   def export_flowfact(ff)
     assert("export_flowfact: loop bounds need to be exported separately") { ff.get_loop_bound.nil? }
 
-    if (! ff.local?) && ff.scope.function != @entry
+    if (!ff.local?) && ff.scope.function != @entry
       warn("aiT: non-local flow fact in scope #{ff.scope} not supported")
       false
 
@@ -555,7 +555,7 @@ class AISExporter
   # export value facts
   def export_valuefact(vf)
     assert("AisExport#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") { vf.programpoint.kind_of?(Instruction) }
-    if ! vf.ppref.context.empty?
+    if !vf.ppref.context.empty?
       warn("AisExport#export_valuefact: cannot export context-sensitive program point")
       return false
     end
@@ -1073,7 +1073,7 @@ class AitImport
             target = @blocks[edge.attributes['target_block']]
 
             # check if the target of this edge is in the same block as the source of the edge
-            is_intrablock_target = ! target.nil? && target.index > 0 && ! loop_nodes[target_block_id]
+            is_intrablock_target = !target.nil? && target.index > 0 && !loop_nodes[target_block_id]
             is_intrablock_target = true if call_nodes[target_block_id]
 
             # get the target block (if any), handling the case of a loop entry
@@ -1128,7 +1128,7 @@ class AitImport
 
               # handle the case where the target is an end-of-loop node, and we need to add the frequency
               # to the unique out-of-loop successor of the source. If it does not exist, we give up
-              if ! target_block && @is_loopblock[target_block_id]
+              if !target_block && @is_loopblock[target_block_id]
                 exit_successor = nil
 
                 loop do

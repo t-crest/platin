@@ -178,7 +178,7 @@ class ILP
     @vartype = {}
     @eliminated = Hash.new(false)
     @constraints = Set.new
-    @do_diagnose = ! options.disable_ipet_diagnosis
+    @do_diagnose = !options.disable_ipet_diagnosis
     reset_cost
   end
 
@@ -242,7 +242,7 @@ class ILP
 
   # add a new variable, if necessary
   def has_variable?(v)
-    ! @indexmap[v].nil?
+    !@indexmap[v].nil?
   end
 
   # add a new variable
@@ -266,7 +266,7 @@ class ILP
   # const_rhs .. integer
   def add_constraint(terms_lhs,op,const_rhs,name,tag)
     assert("Markers should not appear in ILP") do
-      ! terms_lhs.any? { |v,c| v.kind_of?(Marker) }
+      !terms_lhs.any? { |v,c| v.kind_of?(Marker) }
     end
     terms_indexed = Hash.new(0)
     terms_lhs.each do |v,c|
@@ -327,7 +327,7 @@ class ILP
     end
     unbounded.each do |v|
       next unless v.kind_of?(IPETEdge) && v.source.kind_of?(Block)
-      unbounded_loops.add(v.source) if ! unbounded_functions.include?(v.source.function) && v.source.loopheader?
+      unbounded_loops.add(v.source) if !unbounded_functions.include?(v.source.function) && v.source.loopheader?
     end
     if unbounded_functions.empty? && unbounded_loops.empty?
       warn("ILP: Unbounded variables: #{unbounded.join(", ")}")

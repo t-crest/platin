@@ -1057,7 +1057,7 @@ class Dispatcher
     if    args.length == 0
       return
     # Check if an command exists
-    elsif ! @commands.has_key?(args[0])
+    elsif !@commands.has_key?(args[0])
       STDERR.puts("No subcommand #{args[0]} registered")
       return
     end

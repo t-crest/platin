@@ -59,7 +59,7 @@ module PML
     end
 
     def instruction_by_address(addr)
-      if ! @instruction_by_address
+      if !@instruction_by_address
         @instruction_by_address = {}
         self.each { |f| f.instructions.each { |i| @instruction_by_address[i.address] = i } }
       end
@@ -117,7 +117,7 @@ module PML
       bname = data['block']
       lname = data['loop']
       iname = data['instruction']
-      is_edge = ! data['edgesource'].nil?
+      is_edge = !data['edgesource'].nil?
       if lname || bname
         block = function.blocks.by_name(lname || bname)
         assert("ProgramPoint.from_pml: no such block: #{lname || bname}") do
@@ -222,7 +222,7 @@ module PML
   class Marker < ProgramPoint
     attr_reader :name
     def initialize(name, data = nil)
-      assert("Marker#new: name must not be nil") { ! name.nil? }
+      assert("Marker#new: name must not be nil") { !name.nil? }
       @name = name
       @qname = "@#{@name}"
       set_yaml_repr(data)
@@ -294,7 +294,7 @@ module PML
     attr_reader :name, :blocks
     def initialize(function, data)
       blocknames = data['blocks']
-      assert("subfunction: empty block list") { ! blocknames.empty? }
+      assert("subfunction: empty block list") { !blocknames.empty? }
       @name = data['name']
       @qname = "SF:#{function}/#{name}"
       @function = function
@@ -612,7 +612,7 @@ module PML
     # true if this block may return from the function
     def may_return?
       @returnsites ||= instructions.list.select { |i| i.returns? }
-      ! @returnsites.empty? || must_return?
+      !@returnsites.empty? || must_return?
     end
 
     def must_return?
@@ -621,7 +621,7 @@ module PML
 
     # whether this block has a call instruction
     def calls?
-      ! callsites.empty?
+      !callsites.empty?
     end
 
     # list of callsites in this block
@@ -724,7 +724,7 @@ module PML
 
     # whether this instruction includes a call
     def calls?
-      ! callees.empty?
+      !callees.empty?
     end
 
     # the corresponding return instruction, if this is a call
@@ -767,7 +767,7 @@ module PML
 
     # whether this instruction isa branch
     def branches?
-      ! branch_targets.empty?
+      !branch_targets.empty?
     end
 
     # branch targets
@@ -882,7 +882,7 @@ module PML
     # @name@ on level @level@
     #
     def has_named?(name, level)
-      ! @named[level][name].nil?
+      !@named[level][name].nil?
     end
 
     # get relation graph by function's name on the specified level
@@ -1009,10 +1009,10 @@ private
     end
 
     def successors_matching(block, level)
-      assert("successors_matching: nil argument") { ! block.nil? }
+      assert("successors_matching: nil argument") { !block.nil? }
       successors(level).select do |b|
         succblock = b.get_block(level)
-        ! succblock.nil? && succblock == block
+        !succblock.nil? && succblock == block
       end
     end
 

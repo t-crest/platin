@@ -50,7 +50,7 @@ module PML
     # process queue until empty
     #
     def process
-      while ! @todo.empty?
+      while !@todo.empty?
         item = @todo.pop
         @enqueued.delete(item)
         yield item
@@ -81,7 +81,7 @@ module PML
 
     def tsort_each_child(node)
       node.successors.each do |succnode|
-        yield succnode if @nodeset.include?(succnode) && ! @excluded_edge_targets.include?(succnode)
+        yield succnode if @nodeset.include?(succnode) && !@excluded_edge_targets.include?(succnode)
       end
     end
   end

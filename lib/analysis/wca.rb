@@ -99,20 +99,20 @@ class WCA
           src.instructions.each_with_index do |ins,ix|
             if ins.returns? && (dst == :exit || edge.level == :gcfg)
               branch_index = ix # last instruction that returns
-            elsif ! ins.branch_targets.empty? && ins.branch_targets.include?(dst)
+            elsif !ins.branch_targets.empty? && ins.branch_targets.include?(dst)
               branch_index = ix # last instruction that branches to the target
-            elsif ! ins.branch_targets.empty? && edge.level == :gcfg && dst != :exit
+            elsif !ins.branch_targets.empty? && edge.level == :gcfg && dst != :exit
               branch_index = ix
             end
           end
-          if ! branch_index
+          if !branch_index
             src.instructions
           else
             slots = src.instructions[branch_index].delay_slots
             slot_end = branch_index
             instr = src.instructions[slot_end + 1]
             while slots > 0 || (instr && instr.bundled?)
-              slots = slots - 1 if ! (instr && instr.bundled?)
+              slots = slots - 1 if !(instr && instr.bundled?)
               slot_end = slot_end + 1
               instr = src.instructions[slot_end + 1]
             end

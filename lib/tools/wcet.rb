@@ -260,7 +260,7 @@ class WcetTool
     wcet_cycles = timing.cycles
     round, found_new_edge = 0, true
     while true
-      info("Criticality Iteration #{round += 1}: #{cycles} (blockmode=#{! missing_blocks.nil?})")
+      info("Criticality Iteration #{round += 1}: #{cycles} (blockmode=#{!missing_blocks.nil?})")
       if cycles < 0
         if missing_blocks
           missing_blocks = nil

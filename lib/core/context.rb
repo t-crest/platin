@@ -18,7 +18,7 @@ class BoundedStack
 
   def self.create(stack)
     bs = @@repository[stack]
-    bs = @@repository[stack] = BoundedStack.new(stack) if ! bs
+    bs = @@repository[stack] = BoundedStack.new(stack) if !bs
     bs
   end
 
@@ -351,7 +351,7 @@ class LoopContextEntry < ContextEntry
   def ==(other)
     return false if other.nil?
     return false unless other.kind_of?(LoopContextEntry)
-    if ! other.callsite.nil?
+    if !other.callsite.nil?
       return false unless callsite && callsite == other.callsite
     else
       return false unless callsite.nil?

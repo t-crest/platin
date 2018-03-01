@@ -23,9 +23,9 @@ module PML
     def classify(ff)
       c = OpenStruct.new
       # context-independent loop bound
-      c.is_loop_bound = ! ff.get_loop_bound.nil?
+      c.is_loop_bound = !ff.get_loop_bound.nil?
       # context-independent block infeasibility
-      c.is_infeasible = ! ff.get_block_infeasible.empty?
+      c.is_infeasible = !ff.get_block_infeasible.empty?
       # context-independent calltarget restriction
       (_,cs,_) = ff.get_calltargets
       c.is_indirect_calltarget = cs && cs.programpoint.unresolved_call?
@@ -119,9 +119,9 @@ module PML
         # if ! ff_levels.include?(ff.level)
         #  false
         # skip if source is not included
-        if ff_srcs != "all" && ! ff_srcs.include?(ff.origin)
+        if ff_srcs != "all" && !ff_srcs.include?(ff.origin)
           false
-        elsif ! classifier.included?(ff, ff_selection)
+        elsif !classifier.included?(ff, ff_selection)
           false
         # elsif exclude_symbolic && ! ff.rhs.constant?
         #  false
@@ -361,7 +361,7 @@ module PML
 
         # When the guardexpression is false, then this path is infeasible
         guardexpr = Peaches::evaluate_expression(model.context, expr, :boolean)
-        if ! guardexpr then
+        if !guardexpr then
           # FlowFact.block_frequency(scoperef, blockref, freq, attrs)
           fact = FlowFact.block_frequency(fun, ppref.programpoint, [SEInt.new(0)], attributes)
           fact.origin = 'model.bc'
@@ -477,7 +477,7 @@ module PML
 
     # whether this flow fact has a symbolic constant (not fully supported)
     def symbolic_bound?
-      ! @rhs.constant?
+      !@rhs.constant?
     end
 
     # string representation of the flow fact
@@ -566,7 +566,7 @@ module PML
     end
 
     def loop_bound?
-      ! get_loop_bound.nil?
+      !get_loop_bound.nil?
     end
 
     def loop_scope?
@@ -574,8 +574,8 @@ module PML
     end
 
     def context_sensitive?
-      return true if lhs.any? { |term| ! term.context.empty? }
-      return ! scope.context.empty?
+      return true if lhs.any? { |term| !term.context.empty? }
+      return !scope.context.empty?
     end
 
     def references_empty_block?

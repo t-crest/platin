@@ -90,7 +90,7 @@ private
 
   def generate_code
     @io.puts @preamble
-    while ! @worklist.empty?
+    while !@worklist.empty?
       generate_klass(@worklist.pop)
     end
     @io.puts <<-EOF.indent_doc(MODULE_INDENT)
@@ -138,7 +138,7 @@ private
         # :attr_reader: #{field}
         #
       EOF
-      if ! field_klass
+      if !field_klass
         @io.puts(field_doc.indent_doc(METHOD_INDENT))
         @io.puts("# * YAML key: +#{k}+".indent_doc(METHOD_INDENT))
         @io.puts("# * Type: <tt>#{yaml_type_descr(v)}</tt>".indent_doc(METHOD_INDENT))
@@ -196,7 +196,7 @@ private
       doc_lines.push("##{indent}")
       no_split = ( rest =~ /^\s*[\-\*]/ ) # do not split enumerations
       rest.scan(/\S+/) do |w|
-        doc_lines.push("##{indent}") if doc_lines.last.length > 80 - w.length && ! no_split
+        doc_lines.push("##{indent}") if doc_lines.last.length > 80 - w.length && !no_split
         doc_lines.last << ' ' << w
       end
     end

@@ -186,14 +186,14 @@ module PML
 
     def lookup(dict,key,name,error_if_missing=true)
       v = dict[key]
-      if ! v && error_if_missing
+      if !v && error_if_missing
         raise Exception.new("#{self.class}#by_#{name}: No object with key '#{key}' in #{dict.inspect}")
       end
       v
     end
     private
     def add_lookup(dict,key,val,name,opts={})
-      return if ! key && opts[:ignore_if_missing]
+      return if !key && opts[:ignore_if_missing]
       if dict[key]
         raise Exception.new("#{self.class}#by_#{name}: Duplicate object with key #{key}: #{val} and #{dict[key]}")
       end

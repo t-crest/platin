@@ -116,7 +116,7 @@ class OSXExportTool
     opts.otawa_platform_file(mandatory)
 
     opts.add_check do |options|
-      die_usage "No OTAWA platform description file specified." if mandatory && ! options.otawa_platform_file
+      die_usage "No OTAWA platform description file specified." if mandatory && !options.otawa_platform_file
     end
   end
 

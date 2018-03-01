@@ -264,7 +264,7 @@ private
     @visited = {}
     @entry_node = add_node(FunctionNode.new(entry_function, Context.empty))
     @worklist = [@entry_node]
-    while ! @worklist.empty?
+    while !@worklist.empty?
       fn = @worklist.pop
       next if @visited[fn]
       build_function(fn)
@@ -280,7 +280,7 @@ private
     # feasible blocks in the function
     function_blocks = node.function.blocks.select do |b|
       # if block is infeasible, ignore it
-      ! @refinement.infeasible_block?(b, node.context)
+      !@refinement.infeasible_block?(b, node.context)
     end
     # build SCCs
     build_regions(node, function_blocks)
@@ -290,7 +290,7 @@ private
   # Build a region of SCCs
   #
   def build_regions(function_node, blocks)
-    assert("Function should have feasible blocks: #{function_node}") { ! blocks.empty? }
+    assert("Function should have feasible blocks: #{function_node}") { !blocks.empty? }
     @blockslices = []
 
     # process all loops

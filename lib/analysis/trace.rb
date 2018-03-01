@@ -117,7 +117,7 @@ class MachineTraceMonitor < TraceMonitor
         if fallthrough_instruction && pc == fallthrough_instruction.address
           # debug(@options, :trace) { "Predicated return at #{fallthrough_instruction}" }
         else
-          if ! handle_return(*pending_return)
+          if !handle_return(*pending_return)
             # Finished
             @finished = true
             trace_count += 1
@@ -167,7 +167,7 @@ class MachineTraceMonitor < TraceMonitor
         # They are rare (only with -O0), so we tolerate some work. An empty block
         # is published only if it is a successor of the last block
         @empty_blocks[b.address].each do |b0|
-          if ! @last_block || @last_block.successors.include?(b0)
+          if !@last_block || @last_block.successors.include?(b0)
             while b0.instructions.size == 0
               debug(@options,:trace) { "Publishing empty block #{b0} (<-#{@last_block})" }
               publish(:block, b0, @cycles)
@@ -200,7 +200,7 @@ class MachineTraceMonitor < TraceMonitor
         # debug(@options, :trace) { "Scheduling return at #{r}" }
       end
     end
-    if ! @finished
+    if !@finished
       warn("Trace Analysis: did not observe return from program entry #{@program_entry}")
       publish(:stop, @cycles)
     end
@@ -246,7 +246,7 @@ class MachineTraceMonitor < TraceMonitor
       publish(:ret, r, @callstack[-1], @cycles, stall_cycles)
     end
     return nil if r.function == @program_entry # intended program exit
-    assert("Callstack empty at return (inconsistent callstack)") { ! @callstack.empty? }
+    assert("Callstack empty at return (inconsistent callstack)") { !@callstack.empty? }
     c = @callstack.pop
     @last_block = c.block
     @loopstack = c.block.loops.reverse
@@ -288,7 +288,7 @@ class MachineTraceMonitor < TraceMonitor
           add_watch(@wp_return_instr,instruction.address,instruction) if instruction.returns?
           # trigger call-instruction event at call instructions
           # CAVEAT: delay slots and predicated calls
-          add_watch(@wp_call_instr,instruction.address,instruction) if ! instruction.callees.empty?
+          add_watch(@wp_call_instr,instruction.address,instruction) if !instruction.callees.empty?
           abs_instr_index += 1
         end
       end
@@ -296,7 +296,7 @@ class MachineTraceMonitor < TraceMonitor
   end
 
   def add_watch(dict, addr, data)
-    if ! addr
+    if !addr
       warn ("No address for #{data.inspect[0..60]}")
     elsif dict[addr]
       raise Exception.new("Duplicate watchpoint at address #{addr.inspect}: #{data} already set to #{dict[addr]}")
@@ -441,7 +441,7 @@ class RecorderScheduler
   def activate(type, spec_id, scope_entity, scope_context, spec, cycles)
     key = [type, spec_id, scope_entity, scope_context]
     recorder = @recorder_map[key]
-    if ! recorder
+    if !recorder
       rid = @recorder_map.size
       assert("Global recorder must not have a context.") { type != :global || scope_context == nil }
       @recorder_map[key] = recorder = case type
@@ -519,7 +519,7 @@ class FunctionRecorder
   end
 
   def global?
-    ! @context
+    !@context
   end
 
   def type
@@ -602,7 +602,7 @@ class FunctionRecorder
 
   def dump(io=$stdout)
     header = "Observations for #{self}\n  function: #{@function}"
-    header += "\n  context: #{@context}" if @context && ! @context.empty?
+    header += "\n  context: #{@context}" if @context && !@context.empty?
     results.dump(io, header)
   end
 private
@@ -672,7 +672,7 @@ class FrequencyRecord
       end
     else
       @current_record.each do |bref,count|
-        if ! @blockfreqs.include?(bref)
+        if !@blockfreqs.include?(bref)
           @blockfreqs[bref] = 0 .. count
         else
           @blockfreqs[bref] = merge_ranges(count, @blockfreqs[bref])
@@ -733,7 +733,7 @@ class ProgressTraceRecorder
   # follow relation graph, emit progress nodes
   def block(bb, _)
     return unless @rg
-    if ! @node
+    if !@node
       first_node = @rg.nodes.first
       assert("at_entry == at entry RG node") do
         first_node.type == :entry

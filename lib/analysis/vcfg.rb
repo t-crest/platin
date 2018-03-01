@@ -124,7 +124,7 @@ class ControlFlowModel
   def matching_scope_exits(scope_node, scope_context_entry)
     # puts "Match scope exits:"
     # puts " scope node: #{scope_node}"
-    if ! @scope_exits[scope_node] || ! @scope_exits[scope_node][scope_context_entry]
+    if !@scope_exits[scope_node] || !@scope_exits[scope_node][scope_context_entry]
       # puts " No exits recorded"
       return []
     end
@@ -269,11 +269,11 @@ private
       if block.successors.empty?
         # Either return or stuck node (should never be emitted by the compiler)
         # SH: could be a tail call to a noreturn function; check if node has a call
-        if ! has_return
+        if !has_return
           # warn("Block with empty successors but without return information - adding exit edge")
           current_node.add_successor(@exit)
         end
-      elsif ! has_branchtarget
+      elsif !has_branchtarget
         # Either no branch information available or no branches in the block
         # warn("No branch-target information available") if block.successors.size != 1
         block.successors.each do |b|
@@ -503,7 +503,7 @@ class ExitNode < CfgNode
       scope_entry_context = location.context.scope_context
 
       # handle program exit
-      next if ! return_context
+      next if !return_context
 
       # record scope exit
       cfmodel.record_scope_exit(vcfg.entry, scope_entry_context, location)
@@ -628,7 +628,7 @@ class Interpreter
     initial_loc = Location.new(@cfmodel, initial_node, @ctx_manager.initial)
     @in[initial_loc] = start_value
     @queue = [initial_loc]
-    while ! @queue.empty?
+    while !@queue.empty?
       @steps += 1
       loc = @queue.pop
       inval = @in[loc]

@@ -257,7 +257,7 @@ module SWEET
         block = function.blocks.by_name(blockname)
         instruction = block.instructions[(insindex || 0).to_i]
         # call: start of function
-        if block == function.blocks.first && ! insindex
+        if block == function.blocks.first && !insindex
           publish(:function, function, lastins, @executed_instructions)
         elsif block != lastins.block && instruction.name != 0
           publish(:ret, lastins, instruction, @executed_instructions)

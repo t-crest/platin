@@ -62,7 +62,7 @@ class ControlFlowRefinement
   def infeasible_block?(block, context = Context.empty)
     dict = @infeasible[block]
     return false unless dict
-    dict[Context.empty] || (! context.empty? && dict[context])
+    dict[Context.empty] || (!context.empty? && dict[context])
   end
 
   # returns the set of possible calltargets for +callsite+ in +context+
@@ -105,7 +105,7 @@ private
   def set_infeasible(block_ref)
     block, ctx = block_ref.programpoint, block_ref.context
     worklist = [block]
-    while ! worklist.empty?
+    while !worklist.empty?
       block = worklist.pop
       add_refinement(ContextRef.new(block, ctx), true, @infeasible) { |oldval, _| true }
       block.successors.each do |bsucc|
@@ -431,7 +431,7 @@ class IPETBuilder
       mf_function.callsites.each do |cs|
         next if @mc_model.infeasible?(cs.block)
         @mc_model.calltargets(cs).each do |f|
-          assert("calltargets(cs) is nil") { ! f.nil? }
+          assert("calltargets(cs) is nil") { !f.nil? }
           succs.add(f)
         end
       end
@@ -442,7 +442,7 @@ class IPETBuilder
   # Build basic IPET structure.
   # yields basic blocks, so the caller can compute their cost
   def build(entry, flowfacts, opts = { mbb_variables: false }, &cost_block)
-    assert("IPETBuilder#build called twice") { ! @entry }
+    assert("IPETBuilder#build called twice") { !@entry }
     @entry = entry
     @markers = {}
     @call_edges = []
@@ -584,7 +584,7 @@ class IPETBuilder
       bb.callsites.each do |cs|
         next if @mc_model.infeasible?(cs.block)
         @mc_model.calltargets(cs).each do |f|
-          assert("calltargets(cs) is nil") { ! f.nil? }
+          assert("calltargets(cs) is nil") { !f.nil? }
           funcs = get_functions_reachable_from_function(f)
           abb_mfs += get_functions_reachable_from_function(f)
         end
@@ -752,7 +752,7 @@ private
     ff.lhs.each do |term|
         if term.programpoint.kind_of?(Marker)
           factor = term.factor
-          if ! @markers[term.programpoint.name]
+          if !@markers[term.programpoint.name]
             raise Exception.new("No instructions corresponding to marker #{term.programpoint.name.inspect}")
           end
           @markers[term.programpoint.name].each do |instruction|
