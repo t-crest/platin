@@ -288,22 +288,22 @@ end
 #
 class OptionParser
     def alfllc_command
-      self.on("--alf-llc FILE", "path to alf-llc (=alf-llc)") { |f| options.alf_llc = f }
-      self.add_check do |options|
+      on("--alf-llc FILE", "path to alf-llc (=alf-llc)") { |f| options.alf_llc = f }
+      add_check do |options|
         options.alf_llc ||= "alf-llc"
       end
     end
 
     def sweet_command
-      self.on("--sweet-command FILE", "path to sweet (=sweet)") { |f| options.sweet = f }
-      self.add_check do |options|
+      on("--sweet-command FILE", "path to sweet (=sweet)") { |f| options.sweet = f }
+      add_check do |options|
         options.sweet   ||= "sweet"
       end
     end
 
     def bitcode_file(mandatory=Proc.new { |options| false })
-      self.on("--bitcode FILE", "linked bitcode file") { |f| options.bitcode_file = f }
-      self.add_check do |options|
+      on("--bitcode FILE", "linked bitcode file") { |f| options.bitcode_file = f }
+      add_check do |options|
         if mandatory.call(options)
           die_usage "Specifying a bitcode file (--bitcode) is mandatory" unless options.bitcode_file
         end
@@ -311,8 +311,8 @@ class OptionParser
     end
 
     def alf_file(mandatory=Proc.new { |options| false })
-      self.on("--alf FILE", "ALF program model file") { |f| options.alf_file = f }
-      self.add_check do |options|
+      on("--alf FILE", "ALF program model file") { |f| options.alf_file = f }
+      add_check do |options|
         if mandatory.call(options)
           die_usage "Specifying an ALF file is mandatory for SWEET analysis" unless options.alf_file
         end
@@ -320,14 +320,14 @@ class OptionParser
     end
 
     def sweet_options
-      self.on("--sweet-ignore-volatiles", "treat volatile memory areas as ordinary ones") do |f|
+      on("--sweet-ignore-volatiles", "treat volatile memory areas as ordinary ones") do |f|
         options.sweet_ignore_volatiles = true
       end
     end
 
     def sweet_flowfact_file(mandatory=Proc.new { |options| true })
-      self.on("--sweet-flowfacts FILE.ff", "SWEET flowfact file") { |f| options.sweet_flowfact_file = f }
-      self.add_check do |options|
+      on("--sweet-flowfacts FILE.ff", "SWEET flowfact file") { |f| options.sweet_flowfact_file = f }
+      add_check do |options|
         if mandatory.call(options)
           die_usage "Specifying SWEET flowfact file is mandatory" unless options.sweet_flowfact_file
         end
@@ -335,8 +335,8 @@ class OptionParser
     end
 
     def sweet_trace_file(mandatory = Proc.new { |options| true })
-      self.on("--sweet-trace FILE.tf", "SWEET trace file") { |f| options.sweet_trace_file = f }
-      self.add_check do |options|
+      on("--sweet-trace FILE.tf", "SWEET trace file") { |f| options.sweet_trace_file = f }
+      add_check do |options|
         if mandatory && mandatory.call(options)
           die_usage "Specifying SWEET trace file is mandatory" unless options.sweet_trace_file
         end

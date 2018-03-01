@@ -384,10 +384,10 @@ class PMLDoc
   # used if some modifications to the PML database should not become permanent
   # saves the specified sections before yielding, and restores them afterwards
   def with_temporary_sections(temporary_sections = [:flowfacts, :valuefacts, :timing])
-    backup = temporary_sections.map { |s| self.send(s) }
+    backup = temporary_sections.map { |s| send(s) }
     begin
       temporary_sections.map do |s|
-        instance_variable_set("@#{s}", Marshal.load(Marshal.dump(self.send(s))))
+        instance_variable_set("@#{s}", Marshal.load(Marshal.dump(send(s))))
       end
       r = yield
     ensure

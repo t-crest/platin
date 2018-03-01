@@ -113,7 +113,7 @@ module PML
 
     # avoid recursive calls when printing an object
     # subclasses should override to_s/inspect if needed
-    def to_s; @qname || "#<#{self.class}:#{self.object_id}>"; end
+    def to_s; @qname || "#<#{self.class}:#{object_id}>"; end
 
     def inspect; to_s; end
 

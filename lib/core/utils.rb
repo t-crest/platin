@@ -296,7 +296,7 @@ class String
   # Inspired by ActiveSupport's strip_heredoc.
   def strip_heredoc
     first_indent = 0
-    self.sub(/\A(\s*)/) do
+    sub(/\A(\s*)/) do
       first_indent = $1.length
       $2
     end.gsub!(/^[ \t]{0,#{first_indent}}/,'')
@@ -315,7 +315,7 @@ end
 # Development helpers
 class Hash
   def dump(_io=$DEFAULT_OUTPUT)
-    self.each do |k,v|
+    each do |k,v|
       puts "#{k.to_s.ljust(24)} #{v}"
     end
   end

@@ -17,8 +17,8 @@ module PML
 # option extensions for f4/ffx
 class OptionParser
   def ff_file(mandatory=true)
-    self.on("--ff FILE", "Path to F4/FFX file") { |f| options.ff_file = f }
-    self.add_check { |options| die_usage "Option --ff is mandatory" unless options.ff_file } if mandatory
+    on("--ff FILE", "Path to F4/FFX file") { |f| options.ff_file = f }
+    add_check { |options| die_usage "Option --ff is mandatory" unless options.ff_file } if mandatory
   end
 end
 
@@ -60,7 +60,7 @@ end
 class ValueRange
   # Either the symbol this range references (double quoted), or a numeric range
   def to_f4
-    if s = self.symbol
+    if s = symbol
       dquote(s)
     else
       raise Exception.new("#{self.class}#to_f4: no translation available")
@@ -90,9 +90,9 @@ class SymbolicExpression
 end
 
 class SEInt
-  def to_f4; self.to_s; end
+  def to_f4; to_s; end
 
-  def to_ffx; self.to_s; end
+  def to_ffx; to_s; end
 end
 
 # Variables always reference arguments of functions
@@ -145,9 +145,9 @@ end
 
 class Function
   def f4_ref
-    if self.label && !EXPORT_ADDR
-      dquote(self.label)
-    elsif self.address
+    if label && !EXPORT_ADDR
+      dquote(label)
+    elsif address
       "0x#{address.to_s(16)}"
     else
       raise F4UnsupportedProgramPoint.new(self, "neither address nor label available (forgot 'platin extract-symbols'?)")
@@ -179,7 +179,7 @@ end
 class Instruction
   def f4_ref(_opts = {})
     if address && block.label && !EXPORT_ADDR
-      "#{block.f4_ref} + #{self.address - block.address}"
+      "#{block.f4_ref} + #{address - block.address}"
     elsif address
       "0x#{address.to_s(16)}"
     else

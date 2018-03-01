@@ -44,7 +44,7 @@ class LiftedType
   def lub(rhs)
     return self if rhs.bot?
     return rhs  if rhs.top?
-    LiftedType.new(@op.call(self.value,rhs.value),@op)
+    LiftedType.new(@op.call(value,rhs.value),@op)
   end
 
   def top?; false; end

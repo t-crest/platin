@@ -135,7 +135,7 @@ class LoadInstruction
   end
 
   def inspect
-    sprintf("#<LoadInstruction:0x%8x %s>",self.object_id, self.to_s)
+    sprintf("#<LoadInstruction:0x%8x %s>",object_id, to_s)
   end
 end
 
@@ -609,7 +609,7 @@ class ConflictAnalysis
         end
       else
         # analyze conflict scope
-        self.analyze_conflict_scope(node, set)
+        analyze_conflict_scope(node, set)
       end
     end
   end

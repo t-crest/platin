@@ -95,8 +95,8 @@ class PersistenceDataFlowAnalysis
     end
 
     def ==(other)
-      return (self.equal?(ZERO)) if other.equal?(ZERO)
-      return (self.equal?(TOP)) if other.equal?(TOP)
+      return (equal?(ZERO)) if other.equal?(ZERO)
+      return (equal?(TOP)) if other.equal?(TOP)
       return @set == other.set
     end
   end
@@ -399,7 +399,7 @@ class PersistenceAnalysis
           @analysis.add_scope_for_tag(node, tag) if node == scopegraph.root
         else
           # analyze conflict scope
-          self.analyze_conflict_scope(node, tag)
+          analyze_conflict_scope(node, tag)
         end
       end
     end

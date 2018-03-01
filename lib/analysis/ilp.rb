@@ -316,7 +316,7 @@ class ILP
       add_constraint([[v,1]],"less-equal",BIGM,"__debug_upper_bound_v#{index(v)}",:debug)
     end
     @eps = 1.0
-    cycles,freq = self.solve_max
+    cycles,freq = solve_max
     unbounded = freq.map do |v,k|
       (k >= BIGM - 1.0) ? v : nil
     end.compact
@@ -370,7 +370,7 @@ class ILP
     # @constraints.each do |c|
     #   puts "Slacked constraint #{n}: #{c}"
     # end
-    cycles,freq = self.solve_max
+    cycles,freq = solve_max
     freq.each do |v,k|
       $stderr.puts "SLACK: #{v.to_s.ljust(40)} #{k.to_s.rjust(8)}" if v.to_s =~ /__slack/ && k != 0
     end

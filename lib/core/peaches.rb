@@ -96,7 +96,7 @@ class Context
     end
     list << entry
 
-    puts self.to_s() + "\n" if DEBUG
+    puts to_s() + "\n" if DEBUG
   end
 
   def lookup(label, index = :last)
@@ -151,7 +151,7 @@ class ASTNode
   end
 
   def inspect
-    self.to_s
+    to_s
   end
 
   def to_bool
@@ -217,7 +217,7 @@ class ASTDecl < ASTNode
     end
 
     e = ASTScope.new(scopeupdates, @expr)
-    self.new(@ident, @params.drop(scopeupdates.length), e)
+    new(@ident, @params.drop(scopeupdates.length), e)
   end
 end
 

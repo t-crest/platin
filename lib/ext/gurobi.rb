@@ -33,7 +33,7 @@ class GurobiILP < ILP
     lp.close
 
     # solve
-    debug(options, :ilp) { self.dump(DebugIO.new) }
+    debug(options, :ilp) { dump(DebugIO.new) }
     start = Time.now
     err, errmsg = solve_lp(lp_name, sol_name, ilp_name)
     @solvertime += (Time.now - start)

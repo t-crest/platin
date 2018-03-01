@@ -250,7 +250,7 @@ module PML
 
     def to_set
       set = Set.new
-      self.each do |mf|
+      each do |mf|
         set.add(mf)
       end
       set

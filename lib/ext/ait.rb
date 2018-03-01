@@ -13,24 +13,24 @@ module PML
 # option extensions for aiT
 class OptionParser
   def apx_file(mandatory=true)
-    self.on("-a", "--apx FILE", "APX file for a3") { |f| options.apx_file = f }
-    self.add_check { |options| die_usage "Option --apx is mandatory" unless options.apx_file } if mandatory
+    on("-a", "--apx FILE", "APX file for a3") { |f| options.apx_file = f }
+    add_check { |options| die_usage "Option --apx is mandatory" unless options.apx_file } if mandatory
   end
 
   def ais_file(mandatory=true)
-    self.on("--ais FILE", "Path to AIS file") { |f| options.ais_file = f }
-    self.add_check { |options| die_usage "Option --ais is mandatory" unless options.ais_file } if mandatory
+    on("--ais FILE", "Path to AIS file") { |f| options.ais_file = f }
+    add_check { |options| die_usage "Option --ais is mandatory" unless options.ais_file } if mandatory
   end
 
   def ait_report_prefix(mandatory=true)
-    self.on("--ait-report-prefix PREFIX", "Path prefix for aiT's report and XML results") do
+    on("--ait-report-prefix PREFIX", "Path prefix for aiT's report and XML results") do
       |f| options.ait_report_prefix = f
     end
-    self.add_check { |options| die_usage "Option --ait-report-prefix is mandatory" unless options.ait_report_prefix } if mandatory
+    add_check { |options| die_usage "Option --ait-report-prefix is mandatory" unless options.ait_report_prefix } if mandatory
   end
 
   def ait_icache_mode()
-    self.on("--ait-icache-mode MODE", "aiT instruction cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do
+    on("--ait-icache-mode MODE", "aiT instruction cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do
       |f| options.ait_icache_mode = case f
               when "normal" then "Normal"
               when "always-miss" then "Always miss"
@@ -43,7 +43,7 @@ class OptionParser
   end
 
   def ait_dcache_mode()
-    self.on("--ait-dcache-mode MODE", "aiT data cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do
+    on("--ait-dcache-mode MODE", "aiT data cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do
       |f| options.ait_dcache_mode = case f
               when "normal" then "Normal"
               when "always-miss" then "Always miss"
@@ -57,7 +57,7 @@ class OptionParser
 
   def ait_sca_type()
     # disable aiT's internal SC analysis (using a workaround) or enable different analysis methods using AIS annotations
-    self.on("--ait-sca-type TYPE", "(internal(default)|anno-ptr|none)") do |t|
+    on("--ait-sca-type TYPE", "(internal(default)|anno-ptr|none)") do |t|
       options.ait_sca_type = case t
             when "internal" then nil # do nothing, the default
             when "none" # deactivate aiT's internal analysis
@@ -95,7 +95,7 @@ end
 class ValueRange
   # Either the symbol this range references (double quoted), or a numeric range
   def to_ais
-    if s = self.symbol
+    if s = symbol
       dquote(s)
     else
       self.class.range_to_ais(range)
@@ -117,7 +117,7 @@ class SymbolicExpression
 end
 
 class SEInt
-  def to_ais; self.to_s; end
+  def to_ais; to_s; end
 end
 
 # Variables always reference arguments of functions
@@ -127,7 +127,7 @@ end
 
 class SEBinary
   def to_ais
-    left,right = self.a, self.b
+    left,right = a, b
     left, right = right, left if SEBinary.commutative?(op) && left.constant? && !right.constant?
     lexpr, rexpr = [left,right].map { |v| v.to_ais }
     # simplify (x * -1) to (-x)
@@ -157,9 +157,9 @@ end
 
 class Function
   def ais_ref
-    if self.label
-      dquote(self.label)
-    elsif self.address
+    if label
+      dquote(label)
+    elsif address
       "0x#{address.to_s(16)}"
     else
       raise AISUnsupportedProgramPoint.new(self, "neither address nor label available (forgot 'platin extract-symbols'?)")
@@ -183,7 +183,7 @@ end
 class Instruction
   def ais_ref(opts = {})
     if address && block.label
-      "#{block.ais_ref} #{opts[:ais2] ? "->" : "+"} #{self.address - block.address} byte"
+      "#{block.ais_ref} #{opts[:ais2] ? "->" : "+"} #{address - block.address} byte"
     elsif opts[:branch_index]
       assert("FIXME ais2 counts instructions from 0.") { opts[:ais2] == nil }
       "#{block.ais_ref} + #{opts[:branch_index]} branches"

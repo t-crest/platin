@@ -436,7 +436,7 @@ class RegionGraph
     end
 
     def dup_node
-      copy = self.dup
+      copy = dup
       copy.reset_edges!
       copy
     end
@@ -544,7 +544,7 @@ class RegionGraph
   def action_graph
     arg = RegionGraph.new(@scopegraph, @name)
     entry_node, exit_node = {}, {}
-    self.nodes.each do |n|
+    nodes.each do |n|
       current_node = arg.add_node(n.dup_node)
       entry_node[n] = current_node
       if current_node.kind_of?(BlockSliceNode)
@@ -559,7 +559,7 @@ class RegionGraph
       end
       exit_node[n] = current_node
     end
-    self.nodes.each do |n|
+    nodes.each do |n|
       n.successors.each do |succ|
         exit_node[n].add_successor(entry_node[succ])
       end
@@ -719,7 +719,7 @@ class ScopeGraph
   # get callgraph (scopegraph restricted to FunctionNodes) for scopegraph
   def callgraph
     nodes, edges = Set.new, []
-    worklist = WorkList.new([ [self.root, self.root] ])
+    worklist = WorkList.new([ [root, root] ])
     worklist.process do |node, function_node|
       assert("ScopeGraph#callgraph: function_node of wrong type") { function_node.kind_of?(FunctionNode) }
       nodes.add(node) if node.kind_of?(FunctionNode)

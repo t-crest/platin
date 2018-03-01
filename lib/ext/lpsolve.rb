@@ -40,7 +40,7 @@ class LpSolveILP < ILP
     lp.write_lp(options.write_lp) if options.write_lp
     lp.set_verbose(0)
 
-    debug(options, :ilp) { self.dump(DebugIO.new) }
+    debug(options, :ilp) { dump(DebugIO.new) }
     start = Time.now
     r = lp.solve
     @solvertime += (Time.now - start)

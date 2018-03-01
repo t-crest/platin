@@ -61,7 +61,7 @@ module PML
     def instruction_by_address(addr)
       if !@instruction_by_address
         @instruction_by_address = {}
-        self.each { |f| f.instructions.each { |i| @instruction_by_address[i.address] = i } }
+        each { |f| f.instructions.each { |i| @instruction_by_address[i.address] = i } }
       end
       @instruction_by_address[addr]
     end
@@ -466,7 +466,7 @@ module PML
 
       loopnames = data['loops'] || []
       @loopnest = loopnames.length
-      @is_loopheader = loopnames.first == self.name
+      @is_loopheader = loopnames.first == name
       @instructions = InstructionList.new(self, data['instructions'] || [])
     end
 
@@ -503,7 +503,7 @@ module PML
       # if the source is in the same loop, our loops are a suffix of theirs
       # as loop nests form a tree, the suffices are equal if there first element is
       source_loop_index = source.loopnest - loopnest
-      source.loops[source_loop_index] == self.loop
+      source.loops[source_loop_index] == loop
     end
 
     # returns true if a CFG edge from this block to the given target is an exit edge
@@ -568,7 +568,7 @@ module PML
         successors.each do |s|
           ss << edge_to(s)
         end
-        ss << edge_to(nil) if self.may_return?
+        ss << edge_to(nil) if may_return?
       end
     end
 
@@ -603,7 +603,7 @@ module PML
       return (@has_preheader = false) unless loopheader?
       preheaders = []
       predecessors.each do |pred|
-        next if self.backedge_target?(pred)
+        next if backedge_target?(pred)
         preheaders.push(pred)
       end
       @has_preheader = (preheaders.length == 1)
@@ -652,7 +652,7 @@ module PML
 
     # reference to the loop represented by the block (needs to be the header of a reducible loop)
     def loop
-      assert("Block#loop: not a loop header") { self.loopheader? }
+      assert("Block#loop: not a loop header") { loopheader? }
       return @loop if @loop
       @loop = Loop.new(self)
     end
@@ -730,7 +730,7 @@ module PML
     # the corresponding return instruction, if this is a call
     def call_return_instruction
       assert("call_return_instruction: not a call") { calls? }
-      r_pre_index = index + self.delay_slots
+      r_pre_index = index + delay_slots
       block.instructions[r_pre_index].next
     end
 
@@ -1194,12 +1194,12 @@ private
 
     ### MOCKUP like Block
     def edge_to(target)
-      Edge.new(self.abb.get_region(:dst).exit_node, target.abb.get_region(:dst).entry_node)
+      Edge.new(abb.get_region(:dst).exit_node, target.abb.get_region(:dst).entry_node)
     end
 
     # edge to the function exit
     def edge_to_exit
-      Edge.new(self.abb.get_region(:dst).exit_node, nil)
+      Edge.new(abb.get_region(:dst).exit_node, nil)
     end
 
     protected

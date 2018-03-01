@@ -57,7 +57,7 @@ class Model
   def self.from_file(filename)
     prog    = File.read(filename)
     context = Peaches::build_context(prog)
-    self.new(context)
+    new(context)
   end
 
   def evaluate(pml, modelfacts)

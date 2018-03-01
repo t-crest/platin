@@ -13,15 +13,15 @@ module PML
 # option extensions for ffx
 class OptionParser
   def otawa_platform_file(mandatory=true)
-    self.on("--otawa-platform-file FILE", "Platform description file for OTAWA") { |f| options.otawa_platform_file = f }
-    self.add_check { |options| die_usage "Option --otawa-platform-file is mandatory" unless options.otawa_platform_file } if mandatory
+    on("--otawa-platform-file FILE", "Platform description file for OTAWA") { |f| options.otawa_platform_file = f }
+    add_check { |options| die_usage "Option --otawa-platform-file is mandatory" unless options.otawa_platform_file } if mandatory
   end
 
   def otawa_report_file(mandatory=true)
-    self.on("--otawa-report-file FILE", "Filename for OTAWA's result file") do
+    on("--otawa-report-file FILE", "Filename for OTAWA's result file") do
       |f| options.otawa_report_file = f
     end
-    self.add_check { |options| die_usage "Option --otawa-report-file is mandatory" unless options.otawa_report_file } if mandatory
+    add_check { |options| die_usage "Option --otawa-report-file is mandatory" unless options.otawa_report_file } if mandatory
   end
 end
 

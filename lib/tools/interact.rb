@@ -750,10 +750,10 @@ class DiffCommand < Command
     end
 
     def <=>(other)
-      res = self.diff <=> other.diff
+      res = diff <=> other.diff
       return res if res != 0
-      return res if self.op == other.op
-      return -1 if self.op == :-
+      return res if op == other.op
+      return -1 if op == :-
       return 1
     end
   end
