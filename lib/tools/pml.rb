@@ -153,7 +153,7 @@ class PMLTool
 
   def PMLTool.run(pml,options)
     tool = PMLTool.new(pml, options)
-    if(options.validate)
+    if (options.validate)
       tool.validate
     end
     tool.print_markers if options.print_markers
@@ -161,7 +161,7 @@ class PMLTool
     tool.print_valuefacts if options.print_valuefacts
     tool.print_timings(options.print_profiles) if options.print_timings || options.print_profiles
 
-    if(options.stats)
+    if (options.stats)
       stats = {}
       stats['machine code functions'] = pml.machine_functions.length
       stats['machine code blocks'] = pml.machine_functions.map { |mf| mf.blocks.length}.inject(0,:+)

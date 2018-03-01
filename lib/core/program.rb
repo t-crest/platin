@@ -46,7 +46,7 @@ module PML
         callees = []
         f.callsites.each { |cs|
           cs.callees.each { |n|
-            if(f = by_label_or_name(n,false))
+            if (f = by_label_or_name(n,false))
               callees.push(f)
             else
               unresolved.add(cs)
@@ -352,7 +352,7 @@ module PML
       @labelkey = opts[:labelkey]
       @blocks = BlockList.new(self, data['blocks'])
       @blocks.each do |block|
-        if(block.loopheader?)
+        if (block.loopheader?)
           @loops.push(block.loop)
         end
       end

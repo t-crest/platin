@@ -732,7 +732,7 @@ class ScopeGraph
       assert("ScopeGraph#callgraph: function_node of wrong type") { function_node.kind_of?(FunctionNode) }
       nodes.add(node) if node.kind_of?(FunctionNode)
       node.successors.each { |successor_node|
-        if(successor_node.kind_of?(FunctionNode))
+        if (successor_node.kind_of?(FunctionNode))
           edges.push([function_node,successor_node,node])
           worklist.enqueue([successor_node, successor_node])
         else

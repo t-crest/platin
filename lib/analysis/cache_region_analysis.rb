@@ -473,7 +473,7 @@ class ConflictFreeRegionFormation
     # NOTE: ruby tsort is recursive, and does not work for large graphs :(
     # therefore, we use our own, efficient implementation
     topological_sort(@rg.entry_node).each { |node|
-      if(pred_region = expandable?(node))
+      if (pred_region = expandable?(node))
         join_regions(pred_region, node)
       else
         new_region(node)

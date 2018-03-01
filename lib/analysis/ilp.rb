@@ -99,7 +99,7 @@ class IndexedConstraint
     return unless @tauto.nil?
     @lhs.delete_if { |v,c| c == 0 }
     @tauto, @inconsistent = false, false
-    if(@lhs.empty?)
+    if (@lhs.empty?)
       if @rhs == 0
         @tauto = true
       elsif @rhs >= 0 && @op == "less-equal"

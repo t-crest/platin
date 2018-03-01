@@ -164,7 +164,7 @@ module PML
 
   def file_open(path,mode="r")
     internal_error "file_open: nil" unless path
-    if(path == "-")
+    if (path == "-")
       case mode
       when "r" ; yield $stdin
       when "w" ; yield $stdout

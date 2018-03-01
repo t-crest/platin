@@ -708,7 +708,7 @@ class AIS2Helper
   end
 
   def close_n (n)
-    while(n > 0 && s = close)
+    while (n > 0 && s = close)
       n -= 1
     end
   end
@@ -944,7 +944,7 @@ class AitImport
               sprintf("- %s 0x%08x..0x%08x (%d bytes), mod=0x%x rem=0x%x\n",
                       se.attributes['type'],min,max,max - min,mod || -1,rem || -1)
             } if unpredictable
-            if(max < min)
+            if (max < min)
               # aiT uses a wraparound domain in the new versions
               # see:
               #    Signedness-Agnostic Program Analysis
@@ -961,7 +961,7 @@ class AitImport
               # we go for the unsigned one for addresses.
 
               # if min < max+width, the information is not really useful
-              if(min < max + var_width)
+              if (min < max + var_width)
                 values.push(ValueRange.new(0,2**var_bitwidth - 1,nil))
               else
                 values.push(ValueRange.new(0,max,nil))

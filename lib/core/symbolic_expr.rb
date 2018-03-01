@@ -437,7 +437,7 @@ class SymbolicExpressionParser
   end
 
   def SymbolicExpressionParser.parse(expr_spec)
-    return SEInt.new(expr_spec) if(expr_spec.kind_of?(Integer))
+    return SEInt.new(expr_spec) if (expr_spec.kind_of?(Integer))
     p = SymbolicExpressionParser.new.parser
     begin
       p.parse!(expr_spec)
@@ -473,7 +473,7 @@ private
     paren(lazy {expr}.join(arithop)).map { |ps|
       stack = []
       last_op = nil
-      while(ps.length > 1)
+      while (ps.length > 1)
         a  = ps.shift
         op = ps.shift
         stack.push([a,op])

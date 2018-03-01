@@ -132,7 +132,7 @@ class TransformTool
   def TransformTool.run(pml,options)
     needs_options(options,:flow_fact_selection,:flow_fact_srcs,:transform_action,:analysis_entry, :flow_fact_output)
 
-    if(options.validate)
+    if (options.validate)
       RelationGraphValidationTool.run(pml,options)
     end
 

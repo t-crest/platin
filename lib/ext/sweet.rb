@@ -102,7 +102,7 @@ module SWEET
           "#{coeff} * #{v}"
         end
       }.join(" + ")
-      s << " + #{const}" if(@const != 0)
+      s << " + #{const}" if (@const != 0)
       s
     end
   end
@@ -117,12 +117,12 @@ module SWEET
       @rhs     = rhs.const - lhs.const
       @vector  = Vector.subtract!(lhs.vec, rhs.vec)
       @op      = op
-      if(op == '<')
+      if (op == '<')
         @op, @rhs = "<=", @rhs + 1
-      elsif(op == '>')
+      elsif (op == '>')
         @op, @rhs = '>=', @rhs - 1
       end
-      if(op == ">=")
+      if (op == ">=")
         @op, @vector, @rhs = '<=', -@rhs, Vector.negate(@vector)
       end
     end
@@ -193,7 +193,7 @@ module SWEET
 
     def quantifier
       range   = seq_(int,'..'.r,int).map { |lb,_,ub| [lb,ub] }
-      foreach = paren(range.maybe,'<','>').map { |p| if(p.empty?) then :foreach else p.first end }
+      foreach = paren(range.maybe,'<','>').map { |p| if (p.empty?) then :foreach else p.first end }
       total   =  ( symbol('[') << symbol(']') ).map { :total }
       quantifier = foreach | total
     end
@@ -203,9 +203,9 @@ module SWEET
         sum = Vector.new
         sum.add(*p)
         ps.each_slice(2) do |(op, (coeff,var))|
-          if(op == '-')
+          if (op == '-')
             sum.add(-coeff,var)
-          elsif(op == '+')
+          elsif (op == '+')
             sum.add(coeff,var)
           else
             raise Exception.new("Bad addop: #{op}")

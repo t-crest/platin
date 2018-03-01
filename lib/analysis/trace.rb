@@ -168,7 +168,7 @@ class MachineTraceMonitor < TraceMonitor
         # is published only if it is a successor of the last block
         @empty_blocks[b.address].each { |b0|
           if ! @last_block || @last_block.successors.include?(b0)
-            while(b0.instructions.size == 0)
+            while (b0.instructions.size == 0)
               debug(@options,:trace) { "Publishing empty block #{b0} (<-#{@last_block})" }
               publish(:block, b0, @cycles)
               assert("Empty block may only have one successor") { b0.successors.size == 1}
@@ -245,7 +245,7 @@ class MachineTraceMonitor < TraceMonitor
     else
       publish(:ret, r, @callstack[-1], @cycles, stall_cycles)
     end
-    return nil if(r.function == @program_entry) # intended program exit
+    return nil if (r.function == @program_entry) # intended program exit
     assert("Callstack empty at return (inconsistent callstack)") { ! @callstack.empty? }
     c = @callstack.pop
     @last_block = c.block
