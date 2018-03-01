@@ -37,7 +37,7 @@ class AlfTool
       cmd.push("-alf-memory-areas=#{areas}")
     end
     cmd.push(options.bitcode_file)
-    $stderr.puts("Executing #{cmd.join(" ")}") if options.verbose
+    warn("Executing #{cmd.join(" ")}") if options.verbose
     die "#{options.alf_llc} failed with exit status #{$CHILD_STATUS}" unless safe_system(*cmd)
   end
 
@@ -103,7 +103,7 @@ class SweetAnalyzeTool
     raise MissingToolException, "sweet not found" unless which(options.sweet)
     cmd = ([options.sweet] + i_args + do_args + ae_args + ff_args)
     version, commands, parsed = nil, [], []
-    $stderr.puts("Executing #{cmd.join(" ")}") if options.verbose
+    warn("Executing #{cmd.join(" ")}") if options.verbose
     IO.popen(cmd + [err: [:child,:out]]) do |sweet_io|
       while l = sweet_io.gets
         if l =~ /SWEET version (.*)/

@@ -207,9 +207,9 @@ module PML
       end
       opts.on_tail("-h", "--help [TOPIC]", "Show help / help on topic (#{opts.help_topics.join(", ")})") do |topic|
         if topic.nil?
-          $stderr.puts opts
+          warn opts
         elsif !opts.has_help_topic(topic)
-          $stderr.puts("Unknown help topic '#{topic}' (available: #{opts.help_topics.inspect})\n\n#{opts}")
+          warn("Unknown help topic '#{topic}' (available: #{opts.help_topics.inspect})\n\n#{opts}")
         else
           opts.show_help_topic(topic, $stderr)
         end

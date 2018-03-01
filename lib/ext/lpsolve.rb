@@ -9,10 +9,10 @@ begin
   require 'rubygems'
   require "lpsolve"
 rescue Exception => details
-  $stderr.puts "Failed to load library lpsolve"
-  $stderr.puts "  ==> aptitude install liblpsolve55-dev [Debian/Ubuntu]"
-  $stderr.puts "  ==> llvm/tools/platin/install.sh -i INSTALL_DIR [installs gems again]"
-  $stderr.puts "Failed to load required ruby libraries: #{details}"
+  warn "Failed to load library lpsolve"
+  warn "  ==> aptitude install liblpsolve55-dev [Debian/Ubuntu]"
+  warn "  ==> llvm/tools/platin/install.sh -i INSTALL_DIR [installs gems again]"
+  warn "Failed to load required ruby libraries: #{details}"
   exit 1
 end
 

@@ -179,7 +179,7 @@ class WcetTool
     begin
       wcet_analysis_ait(srcs) unless options.disable_ait
     rescue Exception => ex
-      $stderr.puts ex.backtrace
+      warn ex.backtrace
       # don't fall back to internal WCET analysis if disabled explicitly
       return if options.enable_wca == false
       warn("a3 WCET analysis failed: #{ex}. Trying platin WCET analysis.")

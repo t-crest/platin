@@ -342,7 +342,7 @@ class ILP
   end
 
   def diagnose_infeasible(problem, _freqmap)
-    $stderr.puts "#{problem} PROBLEM - starting diagnosis"
+    warn "#{problem} PROBLEM - starting diagnosis"
     @do_diagnose = false
     old_constraints, slackvars = @constraints, []
     reset_constraints
@@ -371,9 +371,9 @@ class ILP
     # end
     cycles,freq = solve_max
     freq.each do |v,k|
-      $stderr.puts "SLACK: #{v.to_s.ljust(40)} #{k.to_s.rjust(8)}" if v.to_s =~ /__slack/ && k != 0
+      warn "SLACK: #{v.to_s.ljust(40)} #{k.to_s.rjust(8)}" if v.to_s =~ /__slack/ && k != 0
     end
-    $stderr.puts "Finished diagnosis with objective #{cycles}"
+    warn "Finished diagnosis with objective #{cycles}"
     @do_diagnose = true
   end
 end

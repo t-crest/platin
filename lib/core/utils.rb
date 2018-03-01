@@ -185,7 +185,7 @@ module PML
         next unless pid
         begin
           Process.kill("TERM",pid)
-          $stderr.puts("Terminated spawned child with PID #{pid}")
+          warn("Terminated spawned child with PID #{pid}")
         rescue SystemCallError
           # killed in the meantime
         end
@@ -204,7 +204,7 @@ module PML
   def assert(msg)
     unless yield
       pnt = Thread.current.backtrace[1]
-      $stderr.puts "#{$PROGRAM_NAME}: Assertion failed in #{pnt}: #{msg}"
+      warn "#{$PROGRAM_NAME}: Assertion failed in #{pnt}: #{msg}"
       puts "    " + Thread.current.backtrace[1..-1].join("\n    ")
           raise Exception, "Assertion Error"
     end
@@ -216,14 +216,14 @@ module PML
 
   def die(msg)
     pos = Thread.current.backtrace[1]
-    $stderr.puts(format_msg("FATAL","At #{pos}"))
-    $stderr.puts(format_msg("FATAL",msg))
+    warn(format_msg("FATAL","At #{pos}"))
+    warn(format_msg("FATAL",msg))
     # $stderr.puts Thread.current.backtrace
         raise Exception, "I desire to die"
   end
 
   def die_usage(msg)
-    $stderr.puts(format_msg("USAGE","#{msg}. Try --help"))
+    warn(format_msg("USAGE","#{msg}. Try --help"))
     exit 1
   end
 
@@ -243,7 +243,7 @@ module PML
     r = block.call { |m| msgs.push(m) }
     msgs.push(r) if msgs.empty?
     msgs.compact.each do |msg|
-      $stderr.puts(format_msg("DEBUG",msg))
+      warn(format_msg("DEBUG",msg))
     end
   end
 
@@ -258,7 +258,7 @@ module PML
   end
 
   def warn(msg)
-    $stderr.puts(format_msg("WARNING",msg))
+    warn(format_msg("WARNING",msg))
   end
 
   def warn_once(msg,detail = nil)
@@ -270,14 +270,14 @@ module PML
   end
 
   def info(msg)
-    $stderr.puts(format_msg("INFO",msg))
+    warn(format_msg("INFO",msg))
   end
 
   def statistics(mod,vs,align = 47)
     vs.each do |k,v|
       key = "#{mod}: #{k}".ljust(align)
       msg = "#{key} #{v}"
-      $stderr.puts(format_msg("STAT",msg))
+      warn(format_msg("STAT",msg))
     end
   end
 

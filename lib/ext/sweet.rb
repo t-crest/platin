@@ -10,9 +10,9 @@ begin
   require 'rsec'
   include Rsec::Helpers
 rescue Exception => details
-  $stderr.puts "Failed to load library rsec"
-  $stderr.puts "  ==> gem1.9.1 install rsec"
-  $stderr.puts "Failed to load required ruby libraries"
+  warn "Failed to load library rsec"
+  warn "  ==> gem1.9.1 install rsec"
+  warn "Failed to load required ruby libraries"
   exit 1
 end
 
