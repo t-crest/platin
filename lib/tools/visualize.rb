@@ -623,7 +623,7 @@ class HtmlIndexPages
     end
   end
 
-  private
+private
 
   def link(target,type)
     "#{target}.#{type}.html"

@@ -29,7 +29,7 @@ class M5SimulatorTrace
     end
   end
 
-  private
+private
 
   def parse(line)
     return nil unless line

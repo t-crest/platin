@@ -125,7 +125,7 @@ class ExtractSymbols
     @pml
   end
 
-  private
+private
 
   RE_OBJDUMP_LABEL = %r{
     ( #{RE_HEX}{8} ) # address

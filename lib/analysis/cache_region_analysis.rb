@@ -517,7 +517,7 @@ class ConflictFreeRegionFormation
     end
   end
 
-  private
+private
 
   def expandable?(node)
     return nil if node.kind_of?(RegionGraph::RecNode)

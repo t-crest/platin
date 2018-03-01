@@ -63,7 +63,7 @@ class LpSolveILP < ILP
     [obj.round, freqmap, unbounded]
   end
 
-  private
+private
 
   # Remove characters from constraint names that are not allowed in an .lp file
   def cleanup_name(name)

@@ -755,7 +755,7 @@ class APXExporter
     REXML::Formatters::Transitive.new(2, false).write(doc, @outfile)
   end
 
-  private
+private
 
   def add_element(parent, name)
     el = REXML::Element.new(name, parent)

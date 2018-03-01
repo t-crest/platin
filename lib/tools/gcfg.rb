@@ -98,7 +98,7 @@ class GCFGTool
     end
   end
 
-  private
+private
 
   def copy_basic_blocks(gcfg_node, rg_graph, bitcode_function, machine_function)
     abb = gcfg_node.abb

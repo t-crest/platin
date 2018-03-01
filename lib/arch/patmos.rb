@@ -63,7 +63,7 @@ class SimulatorTrace
     end
   end
 
-  private
+private
 
   def build_wp_file
     if @options.outdir
@@ -128,7 +128,7 @@ class ExtractSymbols
         " exited with status #{$CHILD_STATUS.exitstatus}" unless $CHILD_STATUS.success?
   end
 
-  private
+private
 
   def self.build_instruction(addr, _cond, size, instr, args)
     ret = { 'address' => addr, 'size' => size, 'source' => 'objdump', 'opcode' => instr }

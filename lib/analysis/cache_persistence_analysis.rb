@@ -250,7 +250,7 @@ class PersistenceDataFlowAnalysis
       final_state.dump(io)
     end
 
-    private
+  private
 
     #
     # for each node in the region graph

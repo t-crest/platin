@@ -927,7 +927,7 @@ module PML
       lookup(@basic_block_index[level], bb, "#{level}-block", false) || []
     end
 
-private
+  private
 
     def build_relation_index
       @basic_block_index = { src: {}, dst: {} }
@@ -1204,7 +1204,7 @@ private
       Edge.new(abb.get_region(:dst).exit_node, nil)
     end
 
-    protected
+  protected
 
     def add_predecessor(node)
       @predecessors.push(node)

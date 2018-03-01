@@ -216,7 +216,7 @@ class MachineTraceMonitor < TraceMonitor
     publish(:eof)
   end
 
-  private
+private
 
   def handle_loopheader(b)
     if b.loopheader?

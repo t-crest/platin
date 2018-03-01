@@ -116,7 +116,7 @@ module PML
 
     def inspect; to_s; end
 
-    private
+  private
 
     def to_pml
       # return cached YAML representation, if available
@@ -191,7 +191,7 @@ module PML
       v
     end
 
-    private
+  private
 
     def add_lookup(dict,key,val,name,opts = {})
       return if !key && opts[:ignore_if_missing]
