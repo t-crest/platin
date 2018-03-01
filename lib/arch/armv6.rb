@@ -194,7 +194,7 @@ class Architecture < PML::Architecture
       2
 
     # branchcond
-    # although branchcond is documented as 2 
+    # although branchcond is documented as 2
     # in the documentation on zero wait states, it is set to 1
     # since it is the result of the NEO model with enabled caches
     when 'tBcc'

@@ -220,27 +220,27 @@ class MemoryConfig < PMLObject
     @size = value
     data['size'] = value
   end
-  
+
   def transfer_size=(value)
     @transfer_size = value
     data['transfer-size'] = value
   end
-  
+
   def read_latency=(value)
     @read_latency = value
     data['read-latency'] = value
   end
-  
+
   def read_transfer_time=(value)
     @read_transfer_time = value
     data['read-transfer-time'] = value
   end
-  
+
   def write_latency=(value)
     @write_latency = value
     data['write-latency'] = value
   end
-  
+
   def write_transfer_time=(value)
     @write_transfer_time = value
     data['write-transfer-time'] = value
@@ -374,7 +374,7 @@ class CacheConfig < PMLObject
       attribute_pair['value'] = value
     else
       # Ensure that @attributes and data['attributes'] are linked
-      # Note: If we would remove all attributes, data['attributes'] 
+      # Note: If we would remove all attributes, data['attributes']
       #       should be removed again.
       data['attributes'] = @attributes
       @attributes.push( { 'key' => key, 'value' => value } )
@@ -544,7 +544,7 @@ class MemoryArea < PMLObject
       attribute_pair['value'] = value
     else
       # Ensure that @attributes and data['attributes'] are linked
-      # Note: If we would remove all attributes, data['attributes'] 
+      # Note: If we would remove all attributes, data['attributes']
       #       should be removed again.
       data['attributes'] = @attributes
       @attributes.push( { 'key' => key, 'value' => value } )

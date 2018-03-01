@@ -41,7 +41,7 @@ class PMLConfigTool
 
     # TODO: Some (if not all) of the options here may be specific to an architecture. There are several ways to handle this
     #      - Let pml.arch define and check the options. This requires that at least the --target option is already
-    #        parsed or the PML file is loaded, so that pml.arch is available. Problem: how do we handle 
+    #        parsed or the PML file is loaded, so that pml.arch is available. Problem: how do we handle
     #        unknown options in the first pass?
     #      - Add all options to the option parser, but only include them in the help text and check them
     #        when an architecture is given, i.e. with 'pml-config --target patmos --help'. Problem: different
@@ -72,7 +72,7 @@ class PMLConfigTool
     opts.on("--psize SIZE", "Maximum request burst size (page burst size) of the global memory in bytes") { |b|
       opts.options.memory_burst_size = parse_size(b)
     }
-    
+
     opts.on("-d", "--dcsize SIZE", "Data cache size in bytes") { |s|
       opts.options.data_cache_size = parse_size(s)
     }
@@ -108,7 +108,7 @@ class PMLConfigTool
       die("Too many values for --set-area-attr #{a}") if a.length > 3
       (opts.options.set_area_attrs||=[]).push(a)
     }
-    
+
     opts.on("--update-heap-syms [SIZE,NUM]", Array, "Recalculate heap-end and stack-top attribute values for the new memory size assuming NUM stacks of size SIZE (defaults to 32k,16.") { |a|
       a=[] if a.nil?
       die("Too many values for --update-heap-syms #{a}") if a.length > 2
@@ -124,7 +124,7 @@ class PMLConfigTool
       die("Option --target is mandatory if no input PML is specified") unless options.triple or options.input
     end
   end
-  
+
   def PMLConfigTool.update_memories(arch, options)
     # TODO: set name of memory to configure, enable configuration of multiple memories?
 
@@ -137,7 +137,7 @@ class PMLConfigTool
     end
 
     # NOTE When we change the size of the memory, we might want to change the
-    #      address range of the memory areas using the memory as well.. We 
+    #      address range of the memory areas using the memory as well.. We
     #      could let the pml.arch check function worry about that though (once
     #      it is implemented)
 
@@ -163,7 +163,7 @@ class PMLConfigTool
       entry = list.by_name(name)
       # Cache/area must exist by now for us to attach attributes
       next unless entry
-      # Clean up value 
+      # Clean up value
       if value.nil?
 	value = true
       elsif /^\d+$/ =~ value
@@ -174,7 +174,7 @@ class PMLConfigTool
       entry.set_attribute(key, value)
     } if attrs
   end
-  
+
   def PMLConfigTool.update_attributes(arch, options)
     set_attributes(arch.config.caches,       options.set_cache_attrs)
     set_attributes(arch.config.memory_areas, options.set_area_attrs )
@@ -187,7 +187,7 @@ class PMLConfigTool
 
     # We can handle the main memory ourselves
     update_memories(arch, options)
-    
+
     # For caches and memory-areas, we need to ask pml.arch, this is too platform specific..
     arch.update_cache_config(options)
 
@@ -227,7 +227,7 @@ if __FILE__ == $0
     data = {}
     # TODO: Get the default format from somewhere? a constant? read from pml.yml?
     # TODO For now, we use 'pml-0.1' to be compatible with patmos-llc, otherwise
-    #      we get a value mismatch error from platin merge_streams when mixing 
+    #      we get a value mismatch error from platin merge_streams when mixing
     #      generated .pml files from pml-config and patmos-llc.
     data['format'] = "pml-0.1"
     data['triple'] = options.triple

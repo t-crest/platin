@@ -69,7 +69,7 @@ class AnalyzeTraceTool
     end
     # # Console Output
     # if ! @options.output
-    #   $stdout.puts "=== Summary of '#{@options.analysis_entry}' observed during " + 
+    #   $stdout.puts "=== Summary of '#{@options.analysis_entry}' observed during " +
     #                "execution of '#{@options.trace_entry}' ==="
     #   loops_by_fun = Hash.new
     #   @loops.results.each { |loop, r| (loops_by_fun[loop.function]||=[]).push([loop,r]) }

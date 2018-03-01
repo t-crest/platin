@@ -28,7 +28,7 @@ class OptionParser
   end
   def ait_icache_mode()
     self.on("--ait-icache-mode MODE", "aiT instruction cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") {
-      |f| options.ait_icache_mode = case f 
+      |f| options.ait_icache_mode = case f
               when "normal" then "Normal"
 	      when "always-miss" then "Always miss"
 	      when "always-hit" then "Always hit"
@@ -40,7 +40,7 @@ class OptionParser
   end
   def ait_dcache_mode()
     self.on("--ait-dcache-mode MODE", "aiT data cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") {
-      |f| options.ait_dcache_mode = case f 
+      |f| options.ait_dcache_mode = case f
               when "normal" then "Normal"
 	      when "always-miss" then "Always miss"
 	      when "always-hit" then "Always hit"
@@ -1143,7 +1143,7 @@ class AitImport
                   }
 		  break if exit_successor
 
-		  # If we did not simplify the CFG, the exit edge might leave from a successor of the block. 
+		  # If we did not simplify the CFG, the exit edge might leave from a successor of the block.
                   # Hence check if there is a single successor block with a single predecessor, continue the exit search
                   # from there.
 		  if source.block.successors.length == 1 && source.block.successors.first.predecessors.length == 1
@@ -1241,7 +1241,7 @@ class AitImport
 
     ait_report_file = options.ait_report_prefix + ".#{options.analysis_entry}" + ".xml"
     analysis_task_elem = REXML::Document.new(File.read(ait_report_file)).get_elements("a3/wcet_analysis_task").first
-    
+
     # read routines (but only if they are actually used later on)
     if options.import_block_timings || options.ait_import_addresses
       read_routines(analysis_task_elem)

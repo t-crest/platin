@@ -71,7 +71,7 @@ class CacheAnalysis
   def summarize(options, freqs, cost, report)
     total_cycles = 0
     ica_results, sca_results = Hash.new(0), Hash.new(0)
-    
+
     puts "Method cache contribution:" if @mca and options.verbose
     ica_results = @mca.summarize(options, freqs, cost) if @mca
 
@@ -90,7 +90,7 @@ class CacheAnalysis
 	total_cycles += v if k == "cache-max-cycles"
       } if r
     }
-    
+
     report.attributes['cache-max-cycles'] = total_cycles
   end
 end
@@ -174,7 +174,7 @@ class CacheAnalysisBase
     }
     { "cache-max-cycles" => cycles, "cache-min-hits" => hits, "cache-max-misses" => misses,
       "cache-max-stores" => stores, "cache-max-bypass" => bypasses,
-      "cache-known-address" => known, "cache-unknown-address" => unknown 
+      "cache-known-address" => known, "cache-unknown-address" => unknown
     }.select { |k,v| v > 0 or %w[cache-max-cycles cache-max-misses cache-min-hits].include?(k) }.map { |k,v| [k,v.to_i] }
   end
 end
@@ -182,7 +182,7 @@ end
 #
 # A simple cache analysis driver implementation that does not check
 # for conflicts, it just adds all the costs to the IPET.
-# 
+#
 class AlwaysMissCacheAnalysis < CacheAnalysisBase
 
   attr_reader :pml, :options, :cache_properties
@@ -194,7 +194,7 @@ class AlwaysMissCacheAnalysis < CacheAnalysisBase
   # extend IPET with load costs
   def extend_ipet(scopegraph, ipet_builder)
 
-    # all memory edges 
+    # all memory edges
     @all_load_edges = []
 
     # iterate over all instructions in the call graph
@@ -204,7 +204,7 @@ class AlwaysMissCacheAnalysis < CacheAnalysisBase
 
       n.function.blocks.each { |block|
         block.instructions.each { |i|
-	 
+
 	  load_instructions = @cache_properties.load_instructions(i)
 	  next unless load_instructions
 
@@ -273,7 +273,7 @@ class CacheRegionAnalysis < CacheAnalysisBase
     # cache tags per scope
     @all_tags = {}
 
-    # all memory edges 
+    # all memory edges
     @all_load_edges = []
 
     # run scope-based analysis
@@ -703,7 +703,7 @@ class MethodCacheAnalysis
     # TODO Do not skip the load instruction for recursive target function calls.
     #      This requires us to detect if we are in a region node for the root function of the scope graph.
     #      At the moment, recursive functions are not supported anyway though.
-    if i.index == 0 && sf.entry == i.block && 
+    if i.index == 0 && sf.entry == i.block &&
        (i.block != @entry_function.entry_block || @options.target_callret_costs)
        [LoadInstruction.new(i, sf)]
     # Load subfunction when returning into the subfunction after a call site.
@@ -836,12 +836,12 @@ end
 
 class DataCacheLine
   include QNameObject
-  
+
   attr_reader :address, :function, :memmode, :memtype
   def initialize(address, function, memmode, memtype)
     @address, @function, @memmode, @memtype = address, function, memmode, memtype
     # TODO: For now the cache analysis does not support that the same cache line (equal qname) appears in
-    #      multiple sets, since it tries to add a new variable to the ILP per set. 
+    #      multiple sets, since it tries to add a new variable to the ILP per set.
     #      As a workaround we need to ensure that an (unknown) cache line in different sets has different names.
     if not address
       @qname = "CacheLine: unknown"
@@ -926,7 +926,7 @@ end
 
 #
 # Data access analysis for setups without a data-cache
-# 
+#
 class NoDataCacheAnalysis < DataCacheAnalysisBase
 
   attr_reader :always_hit
@@ -949,7 +949,7 @@ class NoDataCacheAnalysis < DataCacheAnalysisBase
     # Bypass always misses
     return false if line.bypass?
     # All other (including stores) hit in an ideal cache
-    return true  if @always_hit == :all 
+    return true  if @always_hit == :all
     # Otherwise all loads hit if we use an always-hit analysis
     @always_hit == :cached and not line.uncached?
   end
@@ -972,7 +972,7 @@ class NoDataCacheAnalysis < DataCacheAnalysisBase
   end
 end
 
-# 
+#
 # Data-cache analysis plugin for scope based cache analysis
 #
 class DataCacheAnalysis < DataCacheAnalysisBase
@@ -983,7 +983,7 @@ class DataCacheAnalysis < DataCacheAnalysisBase
     super(memory, pml, options)
     @cache = cache
     @line_size = cache.line_size
-    @offset_bits = Math.log2(@line_size).to_i 
+    @offset_bits = Math.log2(@line_size).to_i
   end
 
   def sets
@@ -1024,7 +1024,7 @@ class DataCacheAnalysis < DataCacheAnalysisBase
   def conflict_free?(cache_lines)
     return false if @options.wca_minimal_cache
     return true  if @options.wca_ideal_cache
-    
+
     # Check if any set entry is an uncached acccess
     # We could also check for set-id, if we would get it here
     cache_lines.each { |cache_line|
@@ -1033,9 +1033,9 @@ class DataCacheAnalysis < DataCacheAnalysisBase
       # We need to be conservative here if we do not know the address exactly,
       # because we do not know *how many* times this access is performed in this scope, and
       # each access might be a *different* unknown access.
-      # TODO we could be less conservative here if we do not know the address but know that it will 
+      # TODO we could be less conservative here if we do not know the address but know that it will
       #      always be the same value (eg a symbol), or if this access is (only) outside any loop within its
-      #      conflict scope. We need to distinguish different unknowm accesses for that, i.e. the cacheline 
+      #      conflict scope. We need to distinguish different unknowm accesses for that, i.e. the cacheline
       #      tag (qname) must be different for constant and truly unknown accesses.
       return false unless cache_line.known?
     }

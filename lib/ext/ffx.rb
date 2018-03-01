@@ -282,7 +282,7 @@ class F4Exporter
                  "global loop header bound (source: #{ff.origin})")
       else
 	warn("F4: symbolic loop bound #{bound} not supported")
-        @stats_skipped_flowfacts += 1 
+        @stats_skipped_flowfacts += 1
       end
     }
   end

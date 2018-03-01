@@ -105,7 +105,7 @@ class OSXExporter
 
     add_element(banks, "bank") { |bank|
       bank << rexml_str("name", "RAM")
-      
+
       bank << rexml_bool("cached", true) if area.cache
     }
   end
@@ -197,7 +197,7 @@ class OtawaImporter
   def run
     analysis_entry  = pml.machine_functions.by_label(options.analysis_entry, true)
 
-    # TODO: Implement .. 
+    # TODO: Implement ..
 
 
   end

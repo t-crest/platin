@@ -225,7 +225,7 @@ class PersistenceDataFlowAnalysis
 
     def dump(io = $stdout)
       io.puts "Persistence Info for #{@scope_node} (set #{@set})"
-      io.puts " - Active Tags: #{active_tags}"      
+      io.puts " - Active Tags: #{active_tags}"
       io.puts " - Local Persistence"
       active_tags.each { |t|
         io.puts "  -- #{t}: #{locally_persistent?(t)}"
@@ -337,7 +337,7 @@ class PersistenceDataFlowAnalysis
 end
 
 class PersistenceAnalysis
- 
+
   attr_reader :options
 
   def initialize(cache_analysis, options)
@@ -374,7 +374,7 @@ class PersistenceAnalysis
     @persistent = {}
     @conflict_free = {}
     scopegraph.bottom_up.each { |node|
-      get_all_tags(node, set).each { |tag, load_instructions|        
+      get_all_tags(node, set).each { |tag, load_instructions|
         if persistent?(node, tag)
           # if the tag is persistent in the node, just mark it (unless it is the root)
           debug(options, :cache) { "Persistent in Scope: #{tag} in #{node}" }
@@ -393,10 +393,10 @@ class PersistenceAnalysis
   # decide whether a tag is potentiall accessed in a scope
   #
   def accessed?(node, tag)
-    all_tags = @analysis.get_all_tags(node,@analysis.cache_properties.set_of(tag)).keys        
+    all_tags = @analysis.get_all_tags(node,@analysis.cache_properties.set_of(tag)).keys
     all_tags.include?(tag)
   end
-    
+
   #
   # decide whether a tag is persistent in a scope
   #

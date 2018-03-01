@@ -93,7 +93,7 @@ class OneOneCheck
       (node['src-successors']||[]).each do |ssid|
         found = false
         (node['dst-successors']||[]).each do |dsid|
-          found = true if ssid == dsid 
+          found = true if ssid == dsid
         end
 
         return false if !found

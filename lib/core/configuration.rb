@@ -45,7 +45,7 @@ class ToolConfig < PMLObject
     ToolConfig.new(data['name'],data['configuration'],data['options'], data)
   end
   def to_pml
-    { 'name' => @name, 'configuration' => @configuration, 
+    { 'name' => @name, 'configuration' => @configuration,
       'options' => @options }.delete_if { |k,v| v.nil? }
   end
 end

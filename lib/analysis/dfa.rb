@@ -69,7 +69,7 @@ class DFASetOperator < LiftedDFAOperator
   attr_reader :operator, :less
   # Less must take two states A and B and return true if A <= B
   def initialize(operator, less)
-    @operator = operator 
+    @operator = operator
     @less = less
   end
   def init ; Set.new ; end
@@ -87,7 +87,7 @@ class DFASetOperator < LiftedDFAOperator
 end
 
 class DataFlowAnalysis
-  
+
   class Node
     # Determines the order in the worklist
     attr_accessor :order
@@ -164,7 +164,7 @@ class DataFlowAnalysis
     step_count = 0
     while not worklist.empty?
       node = worklist.pop
-      
+
       ins  = operator.join( node.predecessors.map{|p|p.outs} )
       outs = operator.transfer( node, ins )
       changed = operator.changed?( node.outs, outs )
@@ -188,7 +188,7 @@ class DataFlowAnalysis
     @exit_nodes = []
     @entry_node = EntryNode.new
     @nodes = [@entry_node]
-    
+
     pred_nodes = {}
     first_node = {}
 
@@ -221,9 +221,9 @@ class DataFlowAnalysis
       end
       add_node(b, node, last, first_node, targets, pred_nodes)
     }
-    
+
     # Add edges between blocks
-    pred_nodes.each { |b,preds| 
+    pred_nodes.each { |b,preds|
       first_node[b].predecessors = preds
     }
     # Add entry edge
@@ -233,7 +233,7 @@ class DataFlowAnalysis
     @nodes.each { |n|
       n.predecessors.each { |pred| pred.successors.push(n) }
     }
-    
+
     if @reverse
       # TODO: need to reverse entry and exit as well!
       nodes.each { |n|
@@ -276,7 +276,7 @@ class DataFlowAnalysis
 
   def dump(worklist, step)
     puts "DFA Step #{step}, Worklist size #{worklist.length}:"
-    @nodes.each { |node| 
+    @nodes.each { |node|
       puts "  #{worklist.include?(node)?'*':' '}#{node.exit? ? 'T':' '} ##{node.order} #{node.bundle}: #{node.outs}"
     }
     puts
