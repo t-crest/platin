@@ -111,7 +111,7 @@ class ApxExportTool
     opts.ait_sca_type
   end
 
-  def self.add_options(opts, mandatory=true)
+  def self.add_options(opts, mandatory = true)
     opts.analysis_entry
 
     opts.apx_file(mandatory)

@@ -36,7 +36,7 @@ module PML
       !@help_topics[topic].nil?
     end
 
-    def show_help_topic(topic,io=$stderr)
+    def show_help_topic(topic,io = $stderr)
       assert("OptionParser: non-existant help topic #{topic}") { @help_topics[topic] }
       @help_topics[topic].call(io)
     end

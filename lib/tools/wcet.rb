@@ -432,7 +432,7 @@ class WcetTool
     opts.ait_report_prefix = File.join(outdir, "#{basename}.ait") unless !overwrite && opts.ait_report_prefix
   end
 
-  def self.run(pml,options, model=nil)
+  def self.run(pml,options, model = nil)
     needs_options(:input)
 
     # Get analysis configurations from PML

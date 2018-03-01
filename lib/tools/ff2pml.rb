@@ -13,7 +13,7 @@ class SweetImportTool
   def self.add_config_options(opts)
   end
 
-  def self.add_options(opts,exclude=[])
+  def self.add_options(opts,exclude = [])
     SweetImportTool.add_config_options(opts)
     opts.generates_flowfacts
     opts.sweet_flowfact_file unless exclude.include?(:sweet_flowfact_file)

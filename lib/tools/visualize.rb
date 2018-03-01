@@ -160,7 +160,7 @@ class FlowGraphVisualizer < Visualizer
     end
   end
 
-  def visualize_vcfg(function, arch, timing=nil)
+  def visualize_vcfg(function, arch, timing = nil)
     g = GraphViz.new( :G, type: :digraph )
     g.node[:shape] = "rectangle"
     vcfg = VCFG.new(function, arch)

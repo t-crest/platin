@@ -101,7 +101,7 @@ end
 class LoadInstruction
   include QNameObject
   attr_reader :insref, :tag, :store, :bypass
-  def initialize(insref, tag, store=false, bypass=false)
+  def initialize(insref, tag, store = false, bypass = false)
     @insref, @tag, @store, @bypass = insref, tag, store, bypass
     @qname = "#{@tag.qname}@#{insref.qname}"
   end

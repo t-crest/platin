@@ -111,7 +111,7 @@ class SEInt < SymbolicExpression
 
   def to_s; @num.to_s; end
 
-  def eval(_,_lenv=nil);     @num; end
+  def eval(_,_lenv = nil);     @num; end
 
   def resolve_loops(_lenv); self; end
 
@@ -281,7 +281,7 @@ class SEAffineRec < SymbolicExpression
 
   attr_reader :loopheader
 
-  def initialize(a,b,loopheader,flags='')
+  def initialize(a,b,loopheader,flags = '')
     @a, @b, @loopheader, @flags = a, b, loopheader, flags
   end
 
@@ -485,7 +485,7 @@ private
     end
   end
 
-  def paren(p,left='(',right=')')
+  def paren(p,left = '(',right = ')')
     left.r >> p << right.r
   end
 

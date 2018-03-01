@@ -141,7 +141,7 @@ class ContextTree
     @root.empty?
   end
 
-  def dump(io=$stdout,level = 0)
+  def dump(io = $stdout,level = 0)
     @root.dump(io,level)
   end
 end
@@ -168,7 +168,7 @@ class ContextNode
     end
   end
 
-  def dump(io=$stdout, level = 0)
+  def dump(io = $stdout, level = 0)
     io.puts " " * (level * 2) + "NODE VALUE #{@value.to_s}" if @value
     @children.each do |key,node|
       io.puts " " * (level * 2 + 1) + key.to_s
@@ -254,7 +254,7 @@ end
 class LoopContextEntry < ContextEntry
   attr_reader :callsite,:loop,:offset,:step
 
-  def initialize(loop,step=1,offset=0,callsite=nil,data=nil)
+  def initialize(loop,step = 1,offset = 0,callsite = nil,data = nil)
     assert("Loop context: no loop given (#{loop})") { loop.kind_of?(Block) }
     @loop, @step, @offset, @callsite = loop,step,offset,callsite
     @callsite = nil if @loop.has_preheader? # no interesting information
@@ -374,7 +374,7 @@ end
 # Context
 class Context < PMLObject
   attr_reader :callstring
-  def initialize(callstring, data=nil)
+  def initialize(callstring, data = nil)
     assert("Context: expecting BoundedStack") do
       callstring.kind_of?(BoundedStack)
     end

@@ -79,7 +79,7 @@ class ControlFlowRefinement
     sets.inject { |a,b| a.intersection(b) }
   end
 
-  def dump(io=$stderr)
+  def dump(io = $stderr)
     io.puts "INFEASIBLE"
     io.puts
     @infeasible.each do |ref,val|
@@ -333,7 +333,7 @@ class IPETModel
     block_frequency(function.blocks.first, factor)
   end
 
-  def block_frequency(block, factor=1)
+  def block_frequency(block, factor = 1)
     if block.successors.empty? # return exit edge
       [[IPETEdge.new(block,:exit,level),factor]]
     else
@@ -345,14 +345,14 @@ class IPETModel
     [[IPETEdge.new(edge.source, edge.target ? edge.target : :exit, level), factor ]]
   end
 
-  def sum_incoming(block, factor=1)
+  def sum_incoming(block, factor = 1)
     return @sum_incoming_override[block].map { |e| [e, factor] } if @sum_incoming_override[block]
     block.predecessors.map do |pred|
       [IPETEdge.new(pred,block,level), factor]
     end
   end
 
-  def sum_outgoing(block, factor=1)
+  def sum_outgoing(block, factor = 1)
     return @sum_outgoing_override[block].map { |e| [e, factor] } if @sum_outgoing_override[block]
 
     block.successors.map do |succ|
@@ -360,7 +360,7 @@ class IPETModel
     end
   end
 
-  def sum_loop_entry(loop, factor=1)
+  def sum_loop_entry(loop, factor = 1)
     sum_incoming(loop.loopheader,factor).reject do |edge,factor|
       edge.backedge?
     end

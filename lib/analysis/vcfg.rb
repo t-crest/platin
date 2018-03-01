@@ -652,13 +652,13 @@ class Interpreter
     by_node
   end
 
-  def stats(io=$stdout)
+  def stats(io = $stdout)
     io.puts "Nodes: #{@cfmodel.vcfgs.values.map { |cfg| cfg.nodes.length }.inject(0,:+)}"
     io.puts "Locations: #{@in.keys.size}"
     io.puts "Steps: #{steps}"
   end
 
-  def dump(io=$stdout)
+  def dump(io = $stdout)
     inputs_by_node.each do |node,ctxs|
       io.puts " NODE: #{node}#{" #{node.block}" if node.respond_to?(:block)}"
       ctxs.each do |ctx,val|

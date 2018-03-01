@@ -407,7 +407,7 @@ class PMLDoc
             flowfacts.length,valuefacts.length,modelfacts.length,timing.length,global_cfgs.length)
   end
 
-  def dump_to_file(filename, write_config=false)
+  def dump_to_file(filename, write_config = false)
     if filename.nil? || filename == '-'
       dump($DEFAULT_OUTPUT, write_config)
     else
@@ -417,7 +417,7 @@ class PMLDoc
     end
   end
 
-  def dump(io, write_config=false)
+  def dump(io, write_config = false)
     @data["bitcode-functions"] = @bitcode_functions.to_pml
     @data["machine-functions"] = @machine_functions.to_pml
     @data["relation-graphs"]   = @relation_graphs.to_pml

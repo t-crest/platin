@@ -13,17 +13,17 @@ module PML
 # option extensions for aiT
 class OptionParser
   # rubocop:disable Metrics/LineLength
-  def apx_file(mandatory=true)
+  def apx_file(mandatory = true)
     on("-a", "--apx FILE", "APX file for a3") { |f| options.apx_file = f }
     add_check { |options| die_usage "Option --apx is mandatory" unless options.apx_file } if mandatory
   end
 
-  def ais_file(mandatory=true)
+  def ais_file(mandatory = true)
     on("--ais FILE", "Path to AIS file") { |f| options.ais_file = f }
     add_check { |options| die_usage "Option --ais is mandatory" unless options.ais_file } if mandatory
   end
 
-  def ait_report_prefix(mandatory=true)
+  def ait_report_prefix(mandatory = true)
     on("--ait-report-prefix PREFIX", "Path prefix for aiT's report and XML results") do
       |f| options.ait_report_prefix = f
     end
@@ -329,7 +329,7 @@ class AISExporter
     end
   end
 
-  def gen_fact(ais_instr, descr, derived_from=nil)
+  def gen_fact(ais_instr, descr, derived_from = nil)
     @stats_generated_facts += 1
     @outfile.puts(ais_instr + ";" + " # " + descr)
     debug(@options,:ait) do

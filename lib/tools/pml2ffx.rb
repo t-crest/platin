@@ -56,7 +56,7 @@ class FFXExportTool
     end
   end
 
-  def self.add_options(opts, mandatory=true)
+  def self.add_options(opts, mandatory = true)
     FFXExportTool.add_config_options(opts)
     opts.ff_file(mandatory)
     opts.flow_fact_selection
@@ -113,7 +113,7 @@ class OSXExportTool
   def self.add_config_options(opts)
   end
 
-  def self.add_options(opts, mandatory=true)
+  def self.add_options(opts, mandatory = true)
     opts.analysis_entry
 
     opts.otawa_platform_file(mandatory)

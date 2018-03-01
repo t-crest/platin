@@ -190,7 +190,7 @@ class PersistenceDataFlowAnalysis
       self
     end
 
-    def dump(io=$stdout)
+    def dump(io = $stdout)
       @active_tags.each do |t|
         io.printf("  -- %5s: no=%s,in=%s,out=%s\n",t,@no_map[t].to_s, @in_map[t].to_s, @out_map[t].to_s)
       end

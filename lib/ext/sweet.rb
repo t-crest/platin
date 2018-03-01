@@ -50,7 +50,7 @@ module SWEET
   # Context
   class Context
     attr_reader :f,:stmt
-    def initialize(func,stmt=nil)
+    def initialize(func,stmt = nil)
       @f,@stmt = func,stmt
     end
 
@@ -158,7 +158,7 @@ module SWEET
       FlowFact.new(*as)
     end
 
-    def paren(p,left='(',right=')')
+    def paren(p,left = '(',right = ')')
       left.r >> p << right.r
     end
 
@@ -301,7 +301,7 @@ class OptionParser
       end
     end
 
-    def bitcode_file(mandatory=Proc.new { |options| false })
+    def bitcode_file(mandatory = Proc.new { |options| false })
       on("--bitcode FILE", "linked bitcode file") { |f| options.bitcode_file = f }
       add_check do |options|
         if mandatory.call(options)
@@ -310,7 +310,7 @@ class OptionParser
       end
     end
 
-    def alf_file(mandatory=Proc.new { |options| false })
+    def alf_file(mandatory = Proc.new { |options| false })
       on("--alf FILE", "ALF program model file") { |f| options.alf_file = f }
       add_check do |options|
         if mandatory.call(options)
@@ -325,7 +325,7 @@ class OptionParser
       end
     end
 
-    def sweet_flowfact_file(mandatory=Proc.new { |options| true })
+    def sweet_flowfact_file(mandatory = Proc.new { |options| true })
       on("--sweet-flowfacts FILE.ff", "SWEET flowfact file") { |f| options.sweet_flowfact_file = f }
       add_check do |options|
         if mandatory.call(options)

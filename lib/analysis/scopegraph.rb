@@ -627,7 +627,7 @@ class RegionGraph
     add_node(ExitNode.new)
   end
 
-  def dump(_io=$stdout)
+  def dump(_io = $stdout)
     puts "Dumping RegionGraph with #{@nodes.length} nodes"
     @nodes.each do |n|
       puts "- #{n}"
@@ -697,7 +697,7 @@ class CallGraph < PMLObject
     @nodes = []
   end
 
-  def dump(io=$stdout)
+  def dump(io = $stdout)
     io.puts "Callgraph"
     @nodes.each do |n|
       io.puts " Node #{n}"

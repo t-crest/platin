@@ -312,7 +312,7 @@ end
 
 # Recorder which just dumps event to the given stream
 class VerboseRecorder
-  def initialize(out=$DEFAULT_OUTPUT)
+  def initialize(out = $DEFAULT_OUTPUT)
     @out = out
   end
 
@@ -337,7 +337,7 @@ class RecorderSpecification
     @entity_types, @entity_context, @calllimit = entity_types, entity_context, calllimit
   end
 
-  def self.help(out=$stderr)
+  def self.help(out = $stderr)
     out.puts("== Trace Recorder Specification ==")
     out.puts("")
     out.puts("spec              := <spec-item>,...")
@@ -606,7 +606,7 @@ class FunctionRecorder
     results.name
   end
 
-  def dump(io=$stdout)
+  def dump(io = $stdout)
     header = "Observations for #{self}\n  function: #{@function}"
     header += "\n  context: #{@context}" if @context && !@context.empty?
     results.dump(io, header)
@@ -691,7 +691,7 @@ class FrequencyRecord
     @current_record, @current_loops = nil, nil
   end
 
-  def dump(io=$DEFAULT_OUTPUT, header=nil)
+  def dump(io = $DEFAULT_OUTPUT, header = nil)
     (io.puts "No records";return) unless @blockfreqs
     io.puts "---"
     io.puts header if header

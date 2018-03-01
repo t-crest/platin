@@ -37,7 +37,7 @@ end
 # Invariant: gcd(lhs.map(:second) + [rhs]) == 1
 class IndexedConstraint
   attr_reader :name, :lhs, :op, :rhs, :key, :hash, :tags
-  def initialize(ilp, lhs, op, rhs, name, tags=[])
+  def initialize(ilp, lhs, op, rhs, name, tags = [])
     @ilp = ilp
     @name, @lhs, @op, @rhs = name, lhs, op, rhs
     @tags = tags
@@ -143,7 +143,7 @@ class IndexedConstraint
     "Constraint#<#{lhs.inspect},#{@op.inspect},#{rhs.inspect}>"
   end
 
-  def to_s(use_indices=false)
+  def to_s(use_indices = false)
     lhs, rhs = Hash.new(0), Hash.new(0)
     (@lhs.to_a + [[0,-@rhs]]).each do |v,c|
       if c > 0
@@ -193,7 +193,7 @@ class ILP
   end
 
   # print ILP
-  def dump(io=$stderr)
+  def dump(io = $stderr)
     io.puts("max " + costs.map { |v,c| "#{c} #{v}" }.join(" + "))
     @indexmap.each do |v,ix|
       next if @eliminated[ix]
@@ -246,7 +246,7 @@ class ILP
   end
 
   # add a new variable
-  def add_variable(v, vartype= :machinecode)
+  def add_variable(v, vartype = :machinecode)
     raise Exception, "Duplicate variable: #{v}" if @indexmap[v]
     assert("ILP#add_variable: type is not a symbol") { vartype.kind_of?(Symbol) }
     debug(@options, :ilp) { "Adding variable #{v} :: #{vartype.inspect}" }

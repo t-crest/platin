@@ -95,7 +95,7 @@ class RefSet
     v
   end
 
-  def dump(io=$stdout)
+  def dump(io = $stdout)
     io.puts "RefSet"
     @store.each do |sz,vs|
       io.puts " #{sz} variables to eliminate:"

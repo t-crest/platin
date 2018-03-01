@@ -16,7 +16,7 @@ module PML
 
 # option extensions for f4/ffx
 class OptionParser
-  def ff_file(mandatory=true)
+  def ff_file(mandatory = true)
     on("--ff FILE", "Path to F4/FFX file") { |f| options.ff_file = f }
     add_check { |options| die_usage "Option --ff is mandatory" unless options.ff_file } if mandatory
   end
@@ -227,7 +227,7 @@ class F4Exporter
     @stats_generated_facts, @stats_skipped_flowfacts = 0, 0
   end
 
-  def gen_fact(f4_fact, descr, derived_from=nil)
+  def gen_fact(f4_fact, descr, derived_from = nil)
     @stats_generated_facts += 1
     @outfile.puts(f4_fact + ";" + " // " + descr)
     debug(@options,:ffx) do

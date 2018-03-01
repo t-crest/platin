@@ -790,7 +790,7 @@ module PML
     end
 
     # mark this is instruction as return point
-    def set_return_site(may_return_to=true)
+    def set_return_site(may_return_to = true)
       @may_return_to = may_return_to
     end
 
@@ -1087,7 +1087,7 @@ private
     class RegionContainer
       attr_accessor :entry_node, :exit_node, :nodes
 
-      def initialize(entry_node=nil, exit_node=nil)
+      def initialize(entry_node = nil, exit_node = nil)
         if entry_node
           @entry_node, @exit_node = entry_node, exit_node
           @nodes = @entry_node.reachable_till(@exit_node).to_a

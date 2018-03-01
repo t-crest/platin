@@ -47,7 +47,7 @@ end
 
 class PMLMatchModify
   attr_reader :path, :action
-  def initialize(path, options, action=nil)
+  def initialize(path, options, action = nil)
     @path, @options = path, options
     if action == nil || action.is_a?(Symbol)
       @action = action

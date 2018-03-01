@@ -19,7 +19,7 @@ module PML
     (num + denom - 1) / denom
   end
 
-  def merge_ranges(r1,r2=nil)
+  def merge_ranges(r1,r2 = nil)
     assert("first argument is nil") { r1 }
     r1 = Range.new(r1,r1) unless r1.kind_of?(Range)
     return r1 unless r2
@@ -160,7 +160,7 @@ module PML
     end
   end
 
-  def file_open(path,mode="r")
+  def file_open(path,mode = "r")
     internal_error "file_open: nil" unless path
     if path == "-"
       case mode
@@ -248,7 +248,7 @@ module PML
   end
 
   class DebugIO
-    def initialize(io=$stderr)
+    def initialize(io = $stderr)
       @io = io
     end
 
@@ -261,7 +261,7 @@ module PML
     $stderr.puts(format_msg("WARNING",msg))
   end
 
-  def warn_once(msg,detail=nil)
+  def warn_once(msg,detail = nil)
     $warn_once ||= {}
     return if $warn_once[msg]
     detail = ": #{detail}" if detail
@@ -273,7 +273,7 @@ module PML
     $stderr.puts(format_msg("INFO",msg))
   end
 
-  def statistics(mod,vs,align=47)
+  def statistics(mod,vs,align = 47)
     vs.each do |k,v|
       key = "#{mod}: #{k}".ljust(align)
       msg = "#{key} #{v}"
@@ -281,7 +281,7 @@ module PML
     end
   end
 
-  def format_msg(tag,msg,_align=-1)
+  def format_msg(tag,msg,_align = -1)
     "[platin] #{tag}: #{msg}"
   end
 
@@ -314,7 +314,7 @@ end
 
 # Development helpers
 class Hash
-  def dump(_io=$DEFAULT_OUTPUT)
+  def dump(_io = $DEFAULT_OUTPUT)
     each do |k,v|
       puts "#{k.to_s.ljust(24)} #{v}"
     end

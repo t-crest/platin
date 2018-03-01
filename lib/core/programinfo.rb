@@ -149,7 +149,7 @@ module PML
       by_level
     end
 
-    def dump_stats(pml, io=$stderr)
+    def dump_stats(pml, io = $stderr)
       io.puts "Flow-Facts, classified"
       stats(pml).each do |level,by_group|
         io.puts " #{level.to_s.ljust(39)} #{by_group[:cnt]}"
@@ -175,7 +175,7 @@ module PML
   # Immutable
   class Term < PMLObject
     attr_reader :factor, :ppref
-    def initialize(pp,factor,data=nil)
+    def initialize(pp,factor,data = nil)
       pp = ContextRef.new(pp, Context.empty) if pp.kind_of?(ProgramPoint)
       assert("Term#initialize: pp not a programpoint reference") { pp.kind_of?(ContextRef) }
       assert("Term#initialize: not a context-sensitive reference: #{pp} :: #{pp.class}") { pp.kind_of?(ContextRef) }
@@ -244,7 +244,7 @@ module PML
       assert("Unimplemented") { false }
     end
 
-    def dump_stats(_pml, _io=$stderr)
+    def dump_stats(_pml, _io = $stderr)
       assert("Unimplemented") { false }
     end
 
@@ -673,7 +673,7 @@ module PML
 
   class ValueRange < PMLObject
     attr_reader :symbol, :min, :max
-    def initialize(min, max, symbol, data =nil)
+    def initialize(min, max, symbol, data = nil)
       @min, @max, @symbol = min, max, symbol
       set_yaml_repr(data)
       raise Exception, "Bad ValueRange: #{self}" unless @min <= @max if @min
