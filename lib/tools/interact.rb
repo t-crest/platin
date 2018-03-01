@@ -993,11 +993,11 @@ class Dispatcher
     @commands[name] = command
   end
 
-  def get_commands()
+  def get_commands
     @commands.keys.sort
   end
 
-  def get_commands_map()
+  def get_commands_map
     @commands
   end
 

@@ -64,7 +64,7 @@ class PlainCallGraphVisualizer < Visualizer
     @entry, @functions, @mc_model = entry, functions, mcmodel
   end
 
-  def visualize_callgraph()
+  def visualize_callgraph
     g = digraph("Callgraph for #{@entry}")
     nodes, nids = {}, {}
     @functions.each_with_index { |n,i| nids[n] = i }

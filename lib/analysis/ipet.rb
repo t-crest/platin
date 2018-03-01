@@ -520,7 +520,7 @@ class IPETBuilder
     end
   end
 
-  def add_global_call_constraints()
+  def add_global_call_constraints
     @mf_function_callers.each do |f,ces|
       @mc_model.add_function_constraint(f, ces)
     end

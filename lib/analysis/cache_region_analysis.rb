@@ -1069,7 +1069,7 @@ class StackCacheAnalysis
     end
   end
 
-  def analyze_nonscope()
+  def analyze_nonscope
     @fill_blocks, @spill_blocks = Hash.new(0), Hash.new(0)
     @pml.machine_functions.each do |f|
       f.instructions.each do |i|

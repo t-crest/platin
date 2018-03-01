@@ -70,17 +70,17 @@ class Context
 
   DEBUG = false
 
-  def initialize()
+  def initialize
     @level     = 0
     @bindings  = {}
     @callstack = []
   end
 
-  def enter_scope()
+  def enter_scope
     @level += 1
   end
 
-  def leave_scope()
+  def leave_scope
     @level -= 1
 
     @bindings.each do |k,v|
@@ -112,7 +112,7 @@ class Context
     entry.val
   end
 
-  def to_s()
+  def to_s
     s = "Context(level = #{@level})\n"
     @bindings.each do |key, val|
       s += "  #{key} = #{val}\n"
@@ -130,7 +130,7 @@ class Context
     enter_scope
   end
 
-  def pop_call()
+  def pop_call
     leave_scope
     raise "pop_call: Callstack is empty" if @callstack.empty?
     _, decl = @callstack.pop()

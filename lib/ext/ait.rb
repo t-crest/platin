@@ -30,7 +30,7 @@ class OptionParser
     add_check { |options| die_usage "Option --ait-report-prefix is mandatory" unless options.ait_report_prefix } if mandatory
   end
 
-  def ait_icache_mode()
+  def ait_icache_mode
     on("--ait-icache-mode MODE", "aiT instruction cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do
       |f| options.ait_icache_mode = case f
               when "normal" then "Normal"
@@ -43,7 +43,7 @@ class OptionParser
     end
   end
 
-  def ait_dcache_mode()
+  def ait_dcache_mode
     on("--ait-dcache-mode MODE", "aiT data cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do
       |f| options.ait_dcache_mode = case f
               when "normal" then "Normal"
@@ -56,7 +56,7 @@ class OptionParser
     end
   end
 
-  def ait_sca_type()
+  def ait_sca_type
     # disable aiT's internal SC analysis (using a workaround) or enable different analysis methods using AIS annotations
     on("--ait-sca-type TYPE", "(internal(default)|anno-ptr|none)") do |t|
       options.ait_sca_type = case t
