@@ -9,8 +9,10 @@ Requirements
 
 * ruby 1.9 or newer (mandatory)
     - Ubuntu 12.10
-      sudo aptitue install ruby1.9.1, ruby1.9.1-dev
-    - gems will be installed automatically if necessary (rsec, ruby-graphviz, lpsolve)
+      sudo aptitude install ruby1.9.1, ruby1.9.1-dev
+    - install the lpsolve library
+      sudo aptitude install liblpsolve55-dev
+    - run `bundle install` to install the required gems (rsec, ruby-graphviz, lpsolve)
 
 
 Basic Usage

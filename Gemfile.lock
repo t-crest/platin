@@ -7,8 +7,16 @@ GIT
 GEM
   remote: https://rubygems.org/
   specs:
+    byebug (10.0.0)
+    coderay (1.1.2)
     kwalify (0.7.2)
-    rake (12.3.0)
+    method_source (0.9.0)
+    pry (0.11.3)
+      coderay (~> 1.1.0)
+      method_source (~> 0.9.0)
+    pry-byebug (3.6.0)
+      byebug (~> 10.0)
+      pry (~> 0.10)
     rsec (0.4.2)
     ruby-graphviz (1.2.3)
 
@@ -18,7 +26,7 @@ PLATFORMS
 DEPENDENCIES
   kwalify
   lpsolve!
-  rake
+  pry-byebug
   rsec
   ruby-graphviz
 
