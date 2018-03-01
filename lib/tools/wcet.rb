@@ -360,8 +360,8 @@ class WcetTool
       trace_cycles = te.cycles if te.origin == "trace"
       wcet_cycles = [wcet_cycles,te.cycles].compact.min if te.origin != "trace"
       combined_cycles += case te.origin
-          when "aiT"    then te.cycles
-          when "platin" then te.attributes['cache-cycles-instr'] || 0
+                         when "aiT"    then te.cycles
+                         when "platin" then te.attributes['cache-cycles-instr'] || 0
           else 0
       end
       dict = { 'analysis-entry' => options.analysis_entry,

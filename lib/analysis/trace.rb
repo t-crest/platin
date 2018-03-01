@@ -449,11 +449,11 @@ class RecorderScheduler
       rid = @recorder_map.size
       assert("Global recorder must not have a context.") { type != :global || scope_context == nil }
       @recorder_map[key] = recorder = case type
-                                   when :global
-                                     FunctionRecorder.new(self, rid, scope_entity, scope_context, spec, @options)
-                                   when :function
-                                     FunctionRecorder.new(self, rid, scope_entity, scope_context, spec, @options)
-                                   end
+                                      when :global
+                                        FunctionRecorder.new(self, rid, scope_entity, scope_context, spec, @options)
+                                      when :function
+                                        FunctionRecorder.new(self, rid, scope_entity, scope_context, spec, @options)
+                                      end
     end
     @active[recorder.rid] = recorder
     recorder.start(scope_entity, cycles)

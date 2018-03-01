@@ -33,11 +33,11 @@ class OptionParser
   def ait_icache_mode
     on("--ait-icache-mode MODE", "aiT instruction cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do
       |f| options.ait_icache_mode = case f
-              when "normal" then "Normal"
-              when "always-miss" then "Always miss"
-              when "always-hit" then "Always hit"
-              when "miss-if-unknown" then "Miss if unknown"
-              when "hit-if-unknown" then "Hit if unknown"
+                                    when "normal" then "Normal"
+                                    when "always-miss" then "Always miss"
+                                    when "always-hit" then "Always hit"
+                                    when "miss-if-unknown" then "Miss if unknown"
+                                    when "hit-if-unknown" then "Hit if unknown"
               else f
           end
     end
@@ -46,11 +46,11 @@ class OptionParser
   def ait_dcache_mode
     on("--ait-dcache-mode MODE", "aiT data cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do
       |f| options.ait_dcache_mode = case f
-              when "normal" then "Normal"
-              when "always-miss" then "Always miss"
-              when "always-hit" then "Always hit"
-              when "miss-if-unknown" then "Miss if unknown"
-              when "hit-if-unknown" then "Hit if unknown"
+                                    when "normal" then "Normal"
+                                    when "always-miss" then "Always miss"
+                                    when "always-hit" then "Always hit"
+                                    when "miss-if-unknown" then "Miss if unknown"
+                                    when "hit-if-unknown" then "Hit if unknown"
               else f
           end
     end
@@ -60,16 +60,16 @@ class OptionParser
     # disable aiT's internal SC analysis (using a workaround) or enable different analysis methods using AIS annotations
     on("--ait-sca-type TYPE", "(internal(default)|anno-ptr|none)") do |t|
       options.ait_sca_type = case t
-            when "internal" then nil # do nothing, the default
-            when "none" # deactivate aiT's internal analysis
-              options.ait_disable_internal_sc = true
-              nil
-            when "anno-ptr" # deactivate aiT's internal analysis, do analysis by tracking SC pointers
-              options.ait_disable_internal_sc = true
-              :anno_ptr
-            else
-              die_usage("unknown TYPE: #{t}")
-            end
+                             when "internal" then nil # do nothing, the default
+                             when "none" # deactivate aiT's internal analysis
+                               options.ait_disable_internal_sc = true
+                               nil
+                             when "anno-ptr" # deactivate aiT's internal analysis, do analysis by tracking SC pointers
+                               options.ait_disable_internal_sc = true
+                               :anno_ptr
+                            else
+                               die_usage("unknown TYPE: #{t}")
+                            end
     end
   end
   # rubocop:enable Metrics/LineLength

@@ -515,13 +515,14 @@ class ModelFactCommand < Command
     pml['program-point'] = pp.to_pml_ref
     pml['level'] = pp.function.level
     pml['origin'] = case pml['level']
-    when 'bitcode'
-      'platina.bc'
-    when 'machinecode'
-      'platina'
-    else
-      raise ArgumentError, "ProgramPoint #{pp} has level #{pml['level']}, which is unsupported"
-    end
+                    when 'bitcode'
+                      'platina.bc'
+                    when 'machinecode'
+                      'platina'
+                    else
+                      raise ArgumentError, "ProgramPoint #{pp} has level #{pml['level']}, " \
+                                           "which is unsupported"
+                    end
 
     pml['type']        = type
     pml['expression']  = expr
