@@ -39,7 +39,7 @@ class MachineTraceMonitor < TraceMonitor
     @pml, @options = pml, options
     @program_entry = @pml.machine_functions.by_label(options.trace_entry)
     unless @program_entry
-      die("Trace Analysis: Could not find trace entry function '#{options.trace_entry}' " +
+      die("Trace Analysis: Could not find trace entry function '#{options.trace_entry}' " \
           "in PML file. Make sure it is serialized by patmos-clang.")
     end
     @start = @program_entry.blocks.first.address
@@ -353,7 +353,7 @@ class RecorderSpecification
     out.puts("")
     out.puts("Example: g:lc/1  ==> loop bounds and call targets in global scope using callstring length 1")
     out.puts("         g:b/0   ==> block frequencies in global scope (context insensitive)")
-    out.puts("         f:b     ==> local block frequencies for every executed function " +
+    out.puts("         f:b     ==> local block frequencies for every executed function " \
              "(default callstring/virtual inlining)")
     out.puts("         f/2:b/1 ==> block frequencies for every executed function (distinguished by callstrings")
     out.puts("                     of length 2), virtually inlining directly called functions")
@@ -752,7 +752,7 @@ class ProgressTraceRecorder
     end
     # find matching successor progress node
     succs = @node.successors_matching(bb, @rg_level)
-    assert("progress trace: no (unique) successor (but #{succs.length}) at #{@node}, " +
+    assert("progress trace: no (unique) successor (but #{succs.length}) at #{@node}, " \
            "following #{@node.get_block(@rg_level)}->#{bb} (level #{@rg_level})") do
       succs.length == 1
     end

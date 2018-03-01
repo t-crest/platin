@@ -399,8 +399,8 @@ class PMLDoc
   end
 
   def to_s
-    sprintf("PMLDoc{bitcode-functions: |%d|, machine-functions: |%d|" +
-            ", flowfacts: |%s|, valuefacts: |%d|, modelfacts: |%d|" +
+    sprintf("PMLDoc{bitcode-functions: |%d|, machine-functions: |%d|" \
+            ", flowfacts: |%s|, valuefacts: |%d|, modelfacts: |%d|" \
             ", timings: |%d|, gcfgs:|%d|",
             bitcode_functions.length, machine_functions.length,
             flowfacts.length,valuefacts.length,modelfacts.length,timing.length,global_cfgs.length)

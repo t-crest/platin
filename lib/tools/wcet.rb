@@ -77,7 +77,7 @@ class WcetTool
     # Comment out for transformed GCFG
     prepare_pml
     unless pml.analysis_entry(options)
-      die("Analysis entry '#{options.analysis_entry}' not found (check for typos, " +
+      die("Analysis entry '#{options.analysis_entry}' not found (check for typos, " \
           "inlined functions or code not reachable from program entry)")
     end
     options.use_trace_facts = true if options.compare_trace_facts
@@ -109,7 +109,7 @@ class WcetTool
   def prepare_pml
     # Sanity check and address extraction
     rgs = pml.relation_graphs.list.select { |rg| rg.data['status'] != 'valid' && rg.src.name != "abort" }
-    warn("Problematic Relation Graphs: " +
+    warn("Problematic Relation Graphs: " \
          "#{rgs.map { |rg| "#{rg.qname} / #{rg.data['status']}" }.join(", ")}") unless rgs.empty?
 
     # Extract Symbols
@@ -504,7 +504,7 @@ class WcetTool
     opts.alf_file(Proc.new { false })
     opts.sweet_options
     opts.sweet_flowfact_file(Proc.new { false })
-    opts.on("--check [FACTOR]", "check that analyzed WCET is higher than MOET " +
+    opts.on("--check [FACTOR]", "check that analyzed WCET is higher than MOET " \
             "[and less than MOET * FACTOR]") do |factor|
       opts.options.runcheck = true
       opts.options.runcheck_factor = factor.to_f

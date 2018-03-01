@@ -45,7 +45,7 @@ class ExtractSymbols
         end
       end
     end
-    die "The objdump command '#{@options.objdump}' exited " +
+    die "The objdump command '#{@options.objdump}' exited " \
         "with status #{$CHILD_STATUS.exitstatus}" unless $CHILD_STATUS.success?
 
     # Run platform-specific extractor, if available
@@ -70,7 +70,7 @@ class ExtractSymbols
           if @instruction_addresses.empty?
             die("There is no symbol for basic block #{block.label} (function: #{function.label}) in the binary")
           else
-            die("There is no symbol for #{block.label}, and no instruction " +
+            die("There is no symbol for #{block.label}, and no instruction " \
                 "addresses for function #{function.label} are available")
           end
         elsif ins_addr = @instruction_addresses[function.label][ins_index]

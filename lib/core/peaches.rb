@@ -376,7 +376,7 @@ class ASTCall < ASTNode
 
     # Error handling
     if @decl.params.length < args.length
-      raise PeachesArgumentError, "Argument number mismatch for #{self}:" +
+      raise PeachesArgumentError, "Argument number mismatch for #{self}:" \
         "expected #{@decl.params.length}, got #{args.length}"
     end
 

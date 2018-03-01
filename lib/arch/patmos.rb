@@ -122,7 +122,7 @@ class ExtractSymbols
         end
       end
     end
-    die "The objdump command '#{options.objdump}'" +
+    die "The objdump command '#{options.objdump}'" \
         " exited with status #{$CHILD_STATUS.exitstatus}" unless $CHILD_STATUS.success?
   end
   private
@@ -472,7 +472,7 @@ class Architecture < PML::Architecture
         elsif cache.policy && cache.policy.downcase == 'fifo'
           "fifo#{cache.associativity}"
         else
-          warn("Patmos simulator configuration: the only supported cache replacement " +
+          warn("Patmos simulator configuration: the only supported cache replacement " \
                "policies with associativity >= 1 are LRU and FIFO")
           "no"
         end
@@ -500,7 +500,7 @@ class Architecture < PML::Architecture
       if data_area.memory.ideal?
         # FIXME: This is incorrect for bypasses, but simulator does
         # not support different timings based on access type yet.
-        warn("Bypass data loads and data stores are configured to be single cycle, but this " +
+        warn("Bypass data loads and data stores are configured to be single cycle, but this " \
              "is not supported by pasim at the moment.")
         opts.push("--dckind")
         opts.push("ideal")

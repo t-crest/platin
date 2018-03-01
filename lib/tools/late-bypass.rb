@@ -52,7 +52,7 @@ class LateBypassTool
     # as they can be contained more than once (multiple contexts),
     # create a set
     addresses = valuefacts.map do |vf|
-      die("Cannot obtain address for instruction " +
+      die("Cannot obtain address for instruction " \
           "(forgot 'platin extract-symbols'?)") unless vf.programpoint.address
       assert("Wrong read instruction") { vf.programpoint.memmode == "load" }
       vf.programpoint.memtype = "memory" # rewrite memory type in pml

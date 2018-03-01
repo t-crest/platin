@@ -147,7 +147,7 @@ class Function
     elsif address
       "0x#{address.to_s(16)}"
     else
-      raise F4UnsupportedProgramPoint.new(self, "neither address nor label " +
+      raise F4UnsupportedProgramPoint.new(self, "neither address nor label " \
                                                 "available (forgot 'platin extract-symbols'?)")
     end
   end
@@ -165,7 +165,7 @@ class Block
     elsif address
       "0x#{address.to_s(16)}"
     else
-      raise F4UnsupportedProgramPoint.new(self, "neither address nor label " +
+      raise F4UnsupportedProgramPoint.new(self, "neither address nor label " \
                                                 "available (forgot 'platin extract-symbols'?)")
     end
   end
@@ -182,7 +182,7 @@ class Instruction
     elsif address
       "0x#{address.to_s(16)}"
     else
-      raise F4UnsupportedProgramPoint.new(self, "neither address nor symbolic offset " +
+      raise F4UnsupportedProgramPoint.new(self, "neither address nor symbolic offset " \
                                                 "available (forgot 'platin extract-symbols'?)")
     end
   end

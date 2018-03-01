@@ -311,7 +311,7 @@ class DataFlowAnalysis
   def dump(worklist, step)
     puts "DFA Step #{step}, Worklist size #{worklist.length}:"
     @nodes.each do |node|
-      puts "  #{worklist.include?(node) ? '*' : ' '}#{node.exit? ? 'T' : ' '} " +
+      puts "  #{worklist.include?(node) ? '*' : ' '}#{node.exit? ? 'T' : ' '} " \
            "##{node.order} #{node.bundle}: #{node.outs}"
     end
     puts

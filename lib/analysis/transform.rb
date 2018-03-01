@@ -443,7 +443,7 @@ class FlowFactTransformation
           # because this is not supported by any of the WCET analyses
           r = ff.local? || ff.scope.function == target_analysis_entry
           unless r
-            debug(options, :transform) do "Skipping unsupported flow fact scope of transformed flow fact #{ff}: " +
+            debug(options, :transform) do "Skipping unsupported flow fact scope of transformed flow fact #{ff}: " \
                  "(function: #{ff.scope.function}, local: #{ff.local?})" end
           end
           puts "Transformed flowfact #{ff}" if options.verbose
@@ -560,7 +560,7 @@ private
       end
       termlist = TermList.new(terms)
       debug(options, :transform) do
-        "Adding transformed constraint #{name} #{constr.tags.to_a}: #{constr} -> in #{scope} :" +
+        "Adding transformed constraint #{name} #{constr.tags.to_a}: #{constr} -> in #{scope} :" \
         "#{termlist} #{constr.op} #{rhs}"
       end
       ff = FlowFact.new(scope, termlist, constr.op, rhs, attrs.dup)
@@ -753,7 +753,7 @@ class SymbolicBoundTransformation
       while parent_loops.first != referenced_loop
         ind_bound = loop_bounds[parent_loops.shift.loopheader]
         debug(options,:transform) do
-          "A loop different from the parent loop is referenced in a CHR " +
+          "A loop different from the parent loop is referenced in a CHR " \
             "- multiplying sum by indepent bound #{ind_bound}"
         end
         sum = ind_bound * sum

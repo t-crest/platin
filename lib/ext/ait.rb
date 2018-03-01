@@ -162,7 +162,7 @@ class Function
     elsif address
       "0x#{address.to_s(16)}"
     else
-      raise AISUnsupportedProgramPoint.new(self, "neither address nor label available " +
+      raise AISUnsupportedProgramPoint.new(self, "neither address nor label available " \
                                                  "(forgot 'platin extract-symbols'?)")
     end
   end
@@ -176,7 +176,7 @@ class Block
     elsif address
       "0x#{address.to_s(16)}"
     else
-      raise AISUnsupportedProgramPoint.new(self, "neither address nor label available " +
+      raise AISUnsupportedProgramPoint.new(self, "neither address nor label available " \
                                                  "(forgot 'platin extract-symbols'?)")
     end
   end
@@ -192,7 +192,7 @@ class Instruction
     elsif address
       "0x#{address.to_s(16)}"
     else
-      raise AISUnsupportedProgramPoint.new(self, "neither address nor symbolic offset available " +
+      raise AISUnsupportedProgramPoint.new(self, "neither address nor symbolic offset available " \
                                                  "(forgot 'platin extract-symbols'?)")
       # FIXME: we first have to check whether our idea of instruction counting and aiT's match
       # "#{block.ais_ref} + #{self.index} instructions"
@@ -253,11 +253,11 @@ class AISExporter
       case cache.name
       when 'data-cache'
         if (cache.policy == "lru") || (cache.policy == "fifo")
-          gen_fact("cache data size=#{cache.size}, associativity=#{cache.associativity}, " +
+          gen_fact("cache data size=#{cache.size}, associativity=#{cache.associativity}, " \
                    "line-size=#{cache.line_size},policy=#{cache.policy.upcase}, may=chaos",
                    "PML machine configuration")
         elsif cache.policy == "dm"
-          gen_fact("cache data size=#{cache.size}, associativity=1, line-size=#{cache.line_size}," +
+          gen_fact("cache data size=#{cache.size}, associativity=1, line-size=#{cache.line_size}," \
                    "policy=LRU, may=chaos", "PML machine configuration")
         elsif cache.policy == "ideal"
           # TODO: We can only configure an ideal cache by making the data memory zero-cycle accesses, which makes
@@ -268,20 +268,20 @@ class AISExporter
           warn("aiT: unsupported data-cache policy #{cache.policy}, skipping data cache configuration")
         end
       when 'instruction-cache'
-        gen_fact("cache code size=#{cache.size}, associativity=#{cache.associativity}, line-size=#{cache.line_size}," +
+        gen_fact("cache code size=#{cache.size}, associativity=#{cache.associativity}, line-size=#{cache.line_size}," \
                  "policy=#{cache.policy.upcase}, may=chaos", "PML machine configuration")
       when 'method-cache' # new in aiT version >= 205838
         gen_fact("global method_cache_block_size=#{cache.block_size}","PML machine configuration")
         mcache_policy, mcache_assoc = cache.policy.upcase, cache.associativity
         max_mcache_assoc = MAX_METHODCACHE_ASSOCIATIVITY[mcache_policy.upcase]
         if mcache_assoc > max_mcache_assoc
-          warn("aiT: method cache with policy #{mcache_policy} does not support associativity > #{max_mcache_assoc}" +
+          warn("aiT: method cache with policy #{mcache_policy} does not support associativity > #{max_mcache_assoc}" \
                " (assuming associativity #{max_mcache_assoc})")
           mcache_assoc = max_mcache_assoc
         end
         line_size = 4 # template by absint
         cache_size = line_size * mcache_assoc
-        gen_fact("cache code size=#{cache_size}, associativity=#{mcache_assoc}, line-size=#{line_size}," +
+        gen_fact("cache code size=#{cache_size}, associativity=#{mcache_assoc}, line-size=#{line_size}," \
                  "policy=#{cache.policy.upcase}, may=chaos", "PML machine configuration")
       when 'stack-cache'
         # always enabled (new in aiT version >= 205838)
@@ -320,7 +320,7 @@ class AISExporter
       address_range = area.address_range
       address_range ||= ValueRange.new(0,0xFFFFFFFF,nil)
       transfer_bitsize = area.memory.transfer_size * 8
-      gen_fact("area #{address_range.to_ais} features \"port_width\" = #{transfer_bitsize}" +
+      gen_fact("area #{address_range.to_ais} features \"port_width\" = #{transfer_bitsize}" \
                " and access #{properties.join(", ")}", "PML machine configuration")
     end
   end
@@ -565,7 +565,7 @@ class AISExporter
       return false
     end
     rangelist = vf.values.map { |v| v.to_ais }.join(", ")
-    gen_fact("instruction #{vf.programpoint.ais_ref}" +
+    gen_fact("instruction #{vf.programpoint.ais_ref}" \
              " accesses #{rangelist}",
              "Memory address (source: #{vf.origin})", vf)
   end
@@ -825,7 +825,7 @@ class AitImport
       end
       if elem.attributes['loop']
         routine.loop = routine.instruction.block
-        die("loop #{routine.loop} with id #{elem.attributes['id']} in " +
+        die("loop #{routine.loop} with id #{elem.attributes['id']} in " \
             "loop routine #{routine.instruction} is not a loop header") unless routine.loop.loopheader?
       else
         routine.function = routine.instruction.function
@@ -1140,7 +1140,7 @@ class AitImport
                 loop do
                   source.block.successors.each do |s|
                     if source.block.exitedge_source?(s)
-                      die("More than one exit edge from a block within a loop. This makes it" +
+                      die("More than one exit edge from a block within a loop. This makes it" \
                           "impossible (for us) to determine correct edge frequencies") if exit_successor
                       exit_successor = s
                     end

@@ -169,7 +169,7 @@ class CacheAnalysisBase
     unknown = 0
     @all_load_edges.each do |me|
       li = me.load_instruction
-      puts "  cache load edge #{me}: #{freqs[me] || '??'} / #{freqs[me.edgeref] || '??'} " +
+      puts "  cache load edge #{me}: #{freqs[me] || '??'} / #{freqs[me.edgeref] || '??'} " \
            "(#{cost[me]} cyc)" if options.verbose
       cycles += cost[me] || 0
       # count store and bypass separately

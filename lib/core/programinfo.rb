@@ -417,7 +417,7 @@ module PML
         #                                   -- Mr Bunnsy has an adventure
       when "callee"
         assert("callee operates on machinecode level") { level == 'machinecode' }
-        assert("callee targets call instructions" + \
+        assert("callee targets call instructions" \
                ", no unresolved call found for #{ppref} in #{self}") \
               do    ppref.kind_of?(ContextRef) \
                 && ppref.respond_to?("programpoint") \
@@ -741,7 +741,7 @@ module PML
     # string representation of the value fact
     def to_s
       vs = values.map { |vr| vr.to_s }.join(", ")
-      "#<ValueFact #{attributes.map { |k,v| "#{k}=#{v}" }.join(",")}, " +
+      "#<ValueFact #{attributes.map { |k,v| "#{k}=#{v}" }.join(",")}, " \
         "at #{ppref}: #{variable}#{"[width=#{width}]" if width} \\in {#{vs}}>"
     end
   end

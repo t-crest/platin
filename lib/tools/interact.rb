@@ -662,7 +662,7 @@ class EditCommand < ModelFactCommand
         editor = get_edit_command('platinmodel') + [opts.modelfile]
         system *editor
       else
-        STDERR.puts "Cannot find or read file '#{opts.modelfile}'. " +
+        STDERR.puts "Cannot find or read file '#{opts.modelfile}'. " \
                     "Please update 'opts.modelfile' accordingly"
       end
     else

@@ -48,7 +48,7 @@ class ToolConfigTool
     when 'ait'
       AISExporter.new(pml,$stdout,options).export_header
     else
-      die("platin tool configuration: Unknown tool specified: #{options.tool}" +
+      die("platin tool configuration: Unknown tool specified: #{options.tool}" \
           " (#{$available_tools.join(", ")})")
     end
   end

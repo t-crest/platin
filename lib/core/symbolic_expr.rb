@@ -375,7 +375,7 @@ class SEAffineRec < SymbolicExpression
   def loop_bound_sum(outer_loop_bound)
     x = outer_loop_bound
     if !@b.constant? || @b.to_i == 0
-      raise Exception, "SEAffineRec#loop_bound_sum: not possible to calculate total bound for" +
+      raise Exception, "SEAffineRec#loop_bound_sum: not possible to calculate total bound for" \
                           "non-constant/zero #{@b}::#{@b.class} in #{self}"
     end
     if @b.to_i > 0
