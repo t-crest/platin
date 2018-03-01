@@ -265,7 +265,7 @@ class ASTLiteral < ASTNode
   end
 
   def to_s
-    "#{@value}"
+    @value.to_s
   end
 
   def visit(visitor)
@@ -317,7 +317,7 @@ class ASTIdentifier < ASTNode
   end
 
   def to_s
-    "#{@label}"
+    @label.to_s
   end
 
   def visit(visitor)

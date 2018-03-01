@@ -418,7 +418,7 @@ class SEUnknown < SymbolicExpression
     @str = str
   end
 
-  def to_s; "#{@str}"; end
+  def to_s; @str.to_s; end
 
   def map_names(); self; end
 end

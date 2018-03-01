@@ -607,7 +607,7 @@ class AISExporter
     sz = sc_cache.size
 
     ais2 = AIS2Helper.new(@outfile)
-    ais2.scope("routine", "#{@entry.ais_ref}")
+    ais2.scope("routine", (@entry.ais_ref).to_s)
     ais2.enter("enter")
     ais2.put("user(\"sc_top\") = 0x5000000,")
     ais2.put("user(\"m_top\")  = 0x5000000;")
@@ -616,7 +616,7 @@ class AISExporter
     @sc.each do |instr,(type,n)|
       n_spill = "max(0, user(\"m_top\") - (user(\"sc_top\") - #{n}) - #{sz})"
       n_fill  = "max(0, #{n} - (user(\"m_top\") - user(\"sc_top\")))"
-      ais2.scope("instruction", "#{instr.ais_ref(ais2: true)}")
+      ais2.scope("instruction", (instr.ais_ref(ais2: true)).to_s)
       case type
       when :reserve
         ais2.enter("enter")

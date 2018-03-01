@@ -22,7 +22,7 @@ class Visualizer
   attr_reader :options
   def generate(g,outfile)
     debug(options, :visualize) { "Generating #{outfile}" }
-    g.output(options.graphviz_format.to_sym => "#{outfile}")
+    g.output(options.graphviz_format.to_sym => outfile.to_s)
     info("#{outfile} ok") if options.verbose
   end
 
@@ -186,7 +186,7 @@ class FlowGraphVisualizer < Visualizer
         instr = block.instructions[node.first_index]
         addr = instr ? instr.address : block.address
         label += sprintf("0x%x: ",addr) if addr
-        label += "#{block.name}"
+        label += (block.name).to_s
         label << "(#{block.mapsto})" if block.mapsto
         label << " [#{node.first_index}..#{node.last_index}]"
         if @options.show_instructions
@@ -279,7 +279,7 @@ class FlowGraphVisualizer < Visualizer
     nodes = {}
     function.blocks.each do |block|
       bid = block.name
-      label = "#{block.name}"
+      label = (block.name).to_s
       label << " (#{block.mapsto})" if block.mapsto
 #      label << " L#{block.loops.map {|b| b.loopheader.name}.join(",")}" unless block.loops.empty?
       label << " |#{block.instructions.length}|"

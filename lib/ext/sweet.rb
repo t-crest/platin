@@ -58,7 +58,7 @@ module SWEET
       if @stmt
         "(#{f}, #{stmt})"
       else
-        "#{f}"
+        (f).to_s
       end
     end
   end

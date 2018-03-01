@@ -24,7 +24,7 @@ class SimulatorTrace
   end
 
   def each
-    die("File '#{@elf}' (ELF) not found") unless File.exist?("#{@elf}")
+    die("File '#{@elf}' (ELF) not found") unless File.exist?(@elf.to_s)
     if @options.trace_file
       fh = $stdin
       begin
@@ -49,7 +49,7 @@ class SimulatorTrace
         pasim_options += " -I #{@options.sim_input}" if @options.sim_input
         cmd = "#{@options.pasim} #{arch.config_for_simulator.join(" ")} #{pasim_options} 2>&1 1>/dev/null"
         debug(@options, :patmos) { "Running pasim: #{cmd}" }
-        IO.popen("#{cmd}") do |io|
+        IO.popen(cmd.to_s) do |io|
           while item = parse(io.gets)
             yield item
             @stats_num_items += 1

@@ -148,7 +148,7 @@ module PML
       return cmd if File.executable? cmd
     end
     ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
-      binary = File.join(path, "#{cmd}")
+      binary = File.join(path, cmd.to_s)
       return binary if File.executable? binary
     end
     nil

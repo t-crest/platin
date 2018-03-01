@@ -24,7 +24,7 @@ class RGVisualizer
 
   def generate(g,outfile)
     debug(options, :visualize) { "Generating #{outfile}" }
-    g.output(options.graphviz_format.to_sym => "#{outfile}")
+    g.output(options.graphviz_format.to_sym => outfile.to_s)
     info("#{outfile} ok") if options.verbose
   end
 
