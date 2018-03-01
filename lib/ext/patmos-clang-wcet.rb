@@ -92,11 +92,11 @@ platin_derived_options += " #{options.platin_wcet_options}"
 
 outfile =
   if options.save_temps
-    Proc.new do |fname,ext|
+    proc do |fname,ext|
       fname + ext
     end
   else
-    Proc.new do |fname,ext|
+    proc do |fname,ext|
       Tempfile.new([fname,ext]).path
     end
   end

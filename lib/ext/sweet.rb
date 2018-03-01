@@ -298,7 +298,7 @@ class OptionParser
     end
   end
 
-  def bitcode_file(mandatory = Proc.new { |options| false })
+  def bitcode_file(mandatory = proc { |options| false })
     on("--bitcode FILE", "linked bitcode file") { |f| options.bitcode_file = f }
     add_check do |options|
       if mandatory.call(options)
@@ -307,7 +307,7 @@ class OptionParser
     end
   end
 
-  def alf_file(mandatory = Proc.new { |options| false })
+  def alf_file(mandatory = proc { |options| false })
     on("--alf FILE", "ALF program model file") { |f| options.alf_file = f }
     add_check do |options|
       if mandatory.call(options)
@@ -322,7 +322,7 @@ class OptionParser
     end
   end
 
-  def sweet_flowfact_file(mandatory = Proc.new { |options| true })
+  def sweet_flowfact_file(mandatory = proc { |options| true })
     on("--sweet-flowfacts FILE.ff", "SWEET flowfact file") { |f| options.sweet_flowfact_file = f }
     add_check do |options|
       if mandatory.call(options)
@@ -331,7 +331,7 @@ class OptionParser
     end
   end
 
-  def sweet_trace_file(mandatory = Proc.new { |options| true })
+  def sweet_trace_file(mandatory = proc { |options| true })
     on("--sweet-trace FILE.tf", "SWEET trace file") { |f| options.sweet_trace_file = f }
     add_check do |options|
       if mandatory && mandatory.call(options)

@@ -120,7 +120,7 @@ class PersistenceDataFlowAnalysis
     def out(t); @out_map[t] || TagSet::ZERO; end
 
     def new_tag_set(t, initial_set = nil)
-      t_metric = Proc.new do |set|
+      t_metric = proc do |set|
         @check_conflict.call(set + Set[t])
         # info("Conflicting?(#{t} -> #{set.to_a})=#{r}")
       end
@@ -360,7 +360,7 @@ class PersistenceAnalysis
   end
 
   def get_check_conflict
-    Proc.new do |tagset|
+    proc do |tagset|
       !@analysis.cache_properties.conflict_free?(tagset)
     end
   end

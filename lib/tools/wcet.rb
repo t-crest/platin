@@ -499,11 +499,11 @@ class WcetTool
     opts.on("--enable-sweet", "run SWEET bitcode analyzer") { |d| opts.options.enable_sweet = true }
     opts.on("--visualize-ilp", "display an graphical representation of the geneated ILP") { opts.options.visualize_ilp = true }
     # rubocop:enable Metrics/LineLength
-    use_sweet = Proc.new { |options| options.enable_sweet }
+    use_sweet = proc { |options| options.enable_sweet }
     opts.bitcode_file(use_sweet)
-    opts.alf_file(Proc.new { false })
+    opts.alf_file(proc { false })
     opts.sweet_options
-    opts.sweet_flowfact_file(Proc.new { false })
+    opts.sweet_flowfact_file(proc { false })
     opts.on("--check [FACTOR]", "check that analyzed WCET is higher than MOET " \
             "[and less than MOET * FACTOR]") do |factor|
       opts.options.runcheck = true
