@@ -80,7 +80,7 @@ class IndexedConstraint
     invalidate!
   end
   def add(v,c)
-    set(v,c+@lhs[v])
+    set(v,c + @lhs[v])
   end
   def invalidate!
     @key, @hash, @gcd, @tauto, @inconsistent = nil, nil, nil, nil,nil
@@ -128,7 +128,7 @@ class IndexedConstraint
   end
   def to_s(use_indices=false)
     lhs, rhs = Hash.new(0), Hash.new(0)
-    (@lhs.to_a+[[0,-@rhs]]).each { |v,c|
+    (@lhs.to_a + [[0,-@rhs]]).each { |v,c|
       if c > 0
         lhs[v] += c
       else
@@ -138,7 +138,7 @@ class IndexedConstraint
     [lhs.to_a, rhs.to_a].map { |ts|
       ts.map { |v,c|
         if v == 0
-          (c==0) ? nil : c
+          (c == 0) ? nil : c
         else
           vname = use_indices ? v.to_s : @ilp.var_by_index(v).to_s
           (c == 1) ? vname : "#{c} #{vname}"
@@ -193,7 +193,7 @@ class ILP
   end
   # variable by index
   def var_by_index(ix)
-    @variables[ix-1]
+    @variables[ix - 1]
   end
   # set cost of all variables to 0
   def reset_cost
@@ -265,7 +265,7 @@ class ILP
 
   # conceptually private; friend VariableElimination needs access
   def create_indexed_constraint(terms_indexed, op, const_rhs, name, tags)
-    terms_indexed.default=0
+    terms_indexed.default = 0
     constr = IndexedConstraint.new(self, terms_indexed, op, const_rhs, name, tags)
     return nil if constr.tautology?
     raise InconsistentConstraintException.new("Inconsistent constraint #{name}: #{constr}") if constr.inconsistent?
@@ -279,8 +279,8 @@ class ILP
     constr
   end
 
-  SLACK=10000000
-  BIGM= 10000000
+  SLACK = 10000000
+  BIGM = 10000000
   def diagnose_unbounded(problem, freqmap)
     debug(options, :ilp) { "#{problem} PROBLEM - starting diagnosis" }
     @do_diagnose = false

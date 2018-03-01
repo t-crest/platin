@@ -51,7 +51,7 @@ module PML
     # tool can have input PML option
     def reads_pml
       self.on("-i", "--input FILE", "PML input files (can be specified multiple times)") { |f|
-        (options.input||=[]).push(f)
+        (options.input ||= []).push(f)
       }
       self.on("--qualify-machinecode", "Qualifies machinecodenames by the filename") { |v|
         options.qualify_machinecode = v

@@ -16,12 +16,12 @@ module PML
 
   def div_ceil(num, denom)
     raise Exception.new("div_ceil: negative numerator or denominator") unless num >= 0 && denom > 0
-    (num+denom-1) / denom
+    (num + denom - 1) / denom
   end
 
   def merge_ranges(r1,r2=nil)
     assert("first argument is nil") { r1 }
-    r1=Range.new(r1,r1) unless r1.kind_of?(Range)
+    r1 = Range.new(r1,r1) unless r1.kind_of?(Range)
     return r1 unless r2
     [r1.min,r2.min].min .. [r1.max,r2.max].max
   end
@@ -162,7 +162,7 @@ module PML
 
   def file_open(path,mode="r")
     internal_error "file_open: nil" unless path
-    if(path=="-")
+    if(path == "-")
       case mode
       when "r" ; yield $stdin
       when "w" ; yield $stdout
@@ -205,7 +205,7 @@ module PML
     unless yield
       pnt = Thread.current.backtrace[1]
       $stderr.puts ("#{$0}: Assertion failed in #{pnt}: #{msg}")
-      puts "    "+Thread.current.backtrace[1..-1].join("\n    ")
+      puts "    " + Thread.current.backtrace[1..-1].join("\n    ")
 	  raise Exception, "Assertion Error"
     end
   end
@@ -238,7 +238,7 @@ module PML
   #  debug(@options,'ipet') { |&msgs| constraints.each { |c| msgs.call("Constraint: #{c}") } }
   #
   def debug(options, *type, &block)
-    return unless (options.debug_type||[]).any?{ |t| t == :all || type.include?(t) }
+    return unless (options.debug_type || []).any?{ |t| t == :all || type.include?(t) }
     msgs = []
     r = block.call { |m| msgs.push(m) }
     msgs.push(r) if msgs.empty?
@@ -264,8 +264,8 @@ module PML
     $warn_once ||= {}
     return if $warn_once[msg]
     detail = ": #{detail}" if detail
-    warn(msg+detail.to_s)
-    $warn_once[msg]=true
+    warn(msg + detail.to_s)
+    $warn_once[msg] = true
   end
 
   def info(msg)

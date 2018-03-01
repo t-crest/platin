@@ -269,7 +269,7 @@ class DataFlowAnalysis
     first_node[b] = node if not last
     @nodes.push(node)
     targets.each { |s|
-      pred_nodes[s]||=[]
+      pred_nodes[s] ||= []
       pred_nodes[s].push(node)
     }
   end
@@ -277,7 +277,7 @@ class DataFlowAnalysis
   def dump(worklist, step)
     puts "DFA Step #{step}, Worklist size #{worklist.length}:"
     @nodes.each { |node|
-      puts "  #{worklist.include?(node)?'*':' '}#{node.exit? ? 'T':' '} ##{node.order} #{node.bundle}: #{node.outs}"
+      puts "  #{worklist.include?(node) ? '*' : ' '}#{node.exit? ? 'T' : ' '} ##{node.order} #{node.bundle}: #{node.outs}"
     }
     puts
   end

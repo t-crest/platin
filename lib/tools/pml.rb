@@ -78,11 +78,11 @@ class PMLTool
       if total_cycles != accum_cycles
         warn("Timing entry #{te}: cycles in profile sum up to #{accum_cycles}, which is different to WCET #{total_cycles}")
       elsif total_cycles < simple_cycles
-        info("Timing entry #{te}: weighted sum of block WCETs is #{simple_cycles} "+
+        info("Timing entry #{te}: weighted sum of block WCETs is #{simple_cycles} " +
              "(factor: #{simple_cycles.to_f / total_cycles})")
       end
       if simple_cycles < accum_cycles
-        warn("Timing entry #{te}: weighted sum of block WCETs #{simple_cycles} in profile is less than "+
+        warn("Timing entry #{te}: weighted sum of block WCETs #{simple_cycles} in profile is less than " +
              "sum of cummulative WCETs #{accum_cycles}")
       end
     }
@@ -93,7 +93,7 @@ class PMLTool
     pml.bitcode_functions.each { |f|
         f.blocks.each { |bb|
             bb.instructions.each { |i|
-                (bbs[i.marker]||=Hash.new(0))[bb] += 1 if i.marker
+                (bbs[i.marker] ||= Hash.new(0))[bb] += 1 if i.marker
             }
         }
     }
@@ -188,7 +188,7 @@ class PMLTool
   def PMLTool.add_options(opts)
     PMLTool.add_config_options(opts)
     opts.writes_pml # output option => merge
-    opts.on("--validate", "validate PML file") { opts.options.validate=true }
+    opts.on("--validate", "validate PML file") { opts.options.validate = true }
     opts.on("--print-markers", "print markers in PML file") { opts.options.print_markers = true }
     opts.on("--print-flowfacts", "print flowfacts in PML file") { opts.options.print_flowfacts = true }
     opts.on("--print-valuefacts", "print valuefacts in PML file") { opts.options.print_valuefacts = true }
@@ -202,7 +202,7 @@ class PMLTool
 end
 
 if __FILE__ == $0
-  synopsis="Validate, inspect and/or merge PML documents"
+  synopsis = "Validate, inspect and/or merge PML documents"
   options, args = PML::optparse([], "", synopsis) do |opts|
     opts.needs_pml
     PMLTool.add_options(opts)

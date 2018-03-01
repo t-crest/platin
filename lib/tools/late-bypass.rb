@@ -53,7 +53,7 @@ class LateBypassTool
     # as they can be contained more than once (multiple contexts),
     # create a set
     addresses = valuefacts.map { |vf|
-      die("Cannot obtain address for instruction "+
+      die("Cannot obtain address for instruction " +
           "(forgot 'platin extract-symbols'?)") unless vf.programpoint.address
       assert("Wrong read instruction") { vf.programpoint.memmode == "load" }
       vf.programpoint.memtype = "memory" # rewrite memory type in pml
@@ -85,7 +85,7 @@ end
 
 
 if __FILE__ == $0
-SYNOPSIS=<<EOF if __FILE__ == $0
+SYNOPSIS = <<EOF if __FILE__ == $0
 Rewrite load from unknown memory access addresses to bypass-cache loads.
 EOF
   options, args = PML::optparse([:binary_file], "binary.elf", SYNOPSIS) do |opts|

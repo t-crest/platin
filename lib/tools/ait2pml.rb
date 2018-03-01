@@ -69,7 +69,7 @@ class AitAnalyzeTool
 end
 
 if __FILE__ == $0
-SYNOPSIS=<<EOF if __FILE__ == $0
+SYNOPSIS = <<EOF if __FILE__ == $0
 Add aiT analysis results to the PML database.
 EOF
   options, args = PML::optparse([], "", SYNOPSIS) do |opts|

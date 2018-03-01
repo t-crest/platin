@@ -74,7 +74,7 @@ module PML
     # customized constructor
     def initialize(function, data)
       @list = data.map { |b| Block.new(function, b) }
-      @list.each_with_index { |block,ix| block.layout_successor=@list[ix+1] }
+      @list.each_with_index { |block,ix| block.layout_successor = @list[ix + 1] }
       set_yaml_repr(data)
       build_index
     end
@@ -120,7 +120,7 @@ module PML
       is_edge = ! data['edgesource'].nil?
       if (lname || bname)
         block = function.blocks.by_name(lname || bname)
-        assert("ProgramPoint.from_pml: no such block: #{lname||bname}") {
+        assert("ProgramPoint.from_pml: no such block: #{lname || bname}") {
           block
         }
         if iname
@@ -341,7 +341,7 @@ module PML
       @subfunctions = SubFunctionList.new(self, data['subfunctions'] || [])
     end
     def [](k)
-      assert("Function: do not access blocks/loops directly") { k!='blocks'&&k!='loops'}
+      assert("Function: do not access blocks/loops directly") { k != 'blocks' && k != 'loops'}
       data[k]
     end
     def mapsto
@@ -372,7 +372,7 @@ module PML
     end
     def add_subfunction(subfunc_data)
       # This is a ugly hack that is here, because the PML abstraction is not clean
-      data['subfunctions'] = (data['subfunctions']||[]).push(subfunc_data)
+      data['subfunctions'] = (data['subfunctions'] || []).push(subfunc_data)
       @subfunctions.add(SubFunction.new(self, subfunc_data))
     end
 
@@ -445,7 +445,7 @@ module PML
 
     def instructions=(instruction_list)
       data['instructions'] = instruction_list.data
-      @instructions= instruction_list
+      @instructions = instruction_list
     end
 
     # Returns a list of instruction bundles (array of instructions per bundle)
@@ -461,7 +461,7 @@ module PML
     # loops (not ready at initialization time)
     def loops
       return @loops if @loops
-      @loops = (data['loops']||[]).map { |l| function.blocks.by_name(l).loop }
+      @loops = (data['loops'] || []).map { |l| function.blocks.by_name(l).loop }
     end
 
     # returns true if a CFG edge from the given source node to this block is a back edge
@@ -504,7 +504,7 @@ module PML
 
     def predecessors
       return @predecessors if @predecessors
-      @predecessors = (data['predecessors']||[]).map { |s| function.blocks.by_name(s) }.uniq.freeze
+      @predecessors = (data['predecessors'] || []).map { |s| function.blocks.by_name(s) }.uniq.freeze
     end
 
     # block successors (not ready at initialization time)
@@ -518,7 +518,7 @@ module PML
 
     def successors
       return @successors if @successors
-      @successors = (data['successors']||[]).map { |s| function.blocks.by_name(s) }.uniq.freeze
+      @successors = (data['successors'] || []).map { |s| function.blocks.by_name(s) }.uniq.freeze
     end
 
     # edge to the given target block (reference)
@@ -543,7 +543,7 @@ module PML
 
     # set the block directly succeeding this one in the binary layout
     def layout_successor=(block)
-      @layout_successor=block
+      @layout_successor = block
     end
 
     # return a successor which is (might) be reached via fallthrough
@@ -742,7 +742,7 @@ module PML
     # branch targets
     def branch_targets
       return @branch_targets if @branch_targets
-      @branch_targets = (data['branch-targets']||[]).map { |s| function.blocks.by_name(s) }.uniq.freeze
+      @branch_targets = (data['branch-targets'] || []).map { |s| function.blocks.by_name(s) }.uniq.freeze
     end
 
     # whether this instruction returns
@@ -803,7 +803,7 @@ module PML
       ix = index
       while i = block.instructions[ix]
         return true if i.branch_targets.include?(target)
-        ix+=1
+        ix += 1
       end
       return true if block.fallthrough_successor == target
       return false
@@ -821,7 +821,7 @@ module PML
 
     # the next instruction in the instruction list, or the first instruction of the only successor block
     def next
-      block.instructions[index+1] || (block.next ? block.next.instructions.first : nil)
+      block.instructions[index + 1] || (block.next ? block.next.instructions.first : nil)
     end
 
     # size of this instruction (binary level)
@@ -987,7 +987,7 @@ private
 
     def successors(level)
       return @successors[level] if @successors[level]
-      @successors[level] = (data["#{level}-successors"]||[]).map { |succ|
+      @successors[level] = (data["#{level}-successors"] || []).map { |succ|
         @rg.nodes.by_name(succ)
       }.uniq
       @successors[level]

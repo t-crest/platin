@@ -289,7 +289,7 @@ class VariableElimination
     rhs = u_coeff * l_constr.rhs - l_coeff * u_constr.rhs
 
     assert("Variable #{e_var} not eliminated as it should be") { terms[e_var] == 0 }
-    t_constr = @ilp.create_indexed_constraint(terms, l_constr.op, rhs, l_constr.name+"<>"+u_constr.name, l_constr.tags + u_constr.tags)
+    t_constr = @ilp.create_indexed_constraint(terms, l_constr.op, rhs, l_constr.name + "<>" + u_constr.name, l_constr.tags + u_constr.tags)
     t_constr
   end
 
@@ -434,7 +434,7 @@ class FlowFactTransformation
           # because this is not supported by any of the WCET analyses
           r = ff.local? || ff.scope.function == target_analysis_entry
           unless r
-            debug(options, :transform) { "Skipping unsupported flow fact scope of transformed flow fact #{ff}: "+
+            debug(options, :transform) { "Skipping unsupported flow fact scope of transformed flow fact #{ff}: " +
                  "(function: #{ff.scope.function}, local: #{ff.local?})" }
           end
           puts "Transformed flowfact #{ff}" if options.verbose
@@ -579,7 +579,7 @@ class SymbolicBoundTransformation
       next if ff.context_sensitive?
       s,b = ff.get_loop_bound
       next unless s
-      (ffs[s.programpoint.function]||=[]).push(ff)
+      (ffs[s.programpoint.function] ||= []).push(ff)
     }
 
 

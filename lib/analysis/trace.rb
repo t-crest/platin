@@ -269,7 +269,7 @@ class MachineTraceMonitor < TraceMonitor
 
         # blocks that consist of labels only (used in some benchmarks for flow facts)
         if block.empty?
-          (@empty_blocks[block.address]||=[]).push(block)
+          (@empty_blocks[block.address] ||= []).push(block)
           next
         end
 
@@ -624,7 +624,7 @@ class FrequencyRecord
   end
   # add callee as possible target for ContextRef callsite_ref.
   def call(callsite_ref,callee)
-    (@calltargets[callsite_ref]||=Set.new).add(callee) if @current_record && callsite_ref
+    (@calltargets[callsite_ref] ||= Set.new).add(callee) if @current_record && callsite_ref
   end
   def stop(cycles)
     die "Recorder: stop without start: #{@name}" unless @current_record
@@ -708,7 +708,7 @@ class ProgressTraceRecorder
     end
     # find matching successor progress node
     succs = @node.successors_matching(bb, @rg_level)
-    assert("progress trace: no (unique) successor (but #{succs.length}) at #{@node}, "+
+    assert("progress trace: no (unique) successor (but #{succs.length}) at #{@node}, " +
            "following #{@node.get_block(@rg_level)}->#{bb} (level #{@rg_level})") {
       succs.length == 1
     }

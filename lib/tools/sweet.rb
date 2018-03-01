@@ -124,7 +124,7 @@ class SweetAnalyzeTool
 end
 
 if __FILE__ == $0
-SYNOPSIS=<<EOF if __FILE__ == $0
+SYNOPSIS = <<EOF if __FILE__ == $0
 Run the Swedish Execution Time Analysis tool (SWEET)
 EOF
   options, args = PML::optparse([], "", SYNOPSIS) do |opts|

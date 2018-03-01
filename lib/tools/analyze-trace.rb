@@ -128,7 +128,7 @@ class AnalyzeTraceTool
 
   # The default recorder record loop bounds, infeasibles and calltargets globally, and
   # intraprocedural block frequencies
-  DEFAULT_RECORDER_SPEC="g:lic,f:b/0"
+  DEFAULT_RECORDER_SPEC = "g:lic,f:b/0"
 
   def AnalyzeTraceTool.add_config_options(opts)
     Architecture.simulator_options(opts)
@@ -189,7 +189,7 @@ class AnalyzeTraceTool
 end
 
 if __FILE__ == $0
-SYNOPSIS=<<EOF
+SYNOPSIS = <<EOF
 Run simulator (patmos: pasim --debug-fmt trace), record execution frequencies
 of instructions and generate flow facts. Also records indirect call targets.
 EOF

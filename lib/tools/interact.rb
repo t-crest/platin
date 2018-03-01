@@ -500,7 +500,7 @@ class VisualizeCommand < Command
       server = VisualisationServer::Server.new( \
                           :callgraph, \
                           { \
-                            :data    => data  \
+                            :data => data  \
                           }, \
                           :BindAddress => opts.server_bind_addr, \
                           :Port => opts.server_port \
@@ -1209,7 +1209,7 @@ class InteractTool
 end
 
 if __FILE__ == $0
-  synopsis=<<EOF
+  synopsis = <<EOF
   platin interactive console
 EOF
 
@@ -1241,7 +1241,7 @@ EOF
   REPLContext.instance.pml                = PMLDoc.from_files(options.input, options)
   REPLContext.instance.options            = options
   # Cheating: otherwise we cannot set a nonexistant modelfile
-  REPLContext.instance.options.modelfile  ||= ""
+  REPLContext.instance.options.modelfile ||= ""
   # For diff command
   REPLContext.instance.initial_modelfacts = REPLContext.instance.pml.modelfacts.to_set
 

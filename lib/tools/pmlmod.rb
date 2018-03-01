@@ -12,7 +12,7 @@ class PMLPath
 
     # predicate(s) for selection
     @predicates = []
-    while str=~ /^\/(?<p>\*|\[.+?\])/
+    while str =~ /^\/(?<p>\*|\[.+?\])/
       @predicates.push(parse_predicate($1))
       str = $'
     end
@@ -43,7 +43,7 @@ end
 class PMLMatchModify
   attr_reader :path, :action
   def initialize(path, options, action=nil)
-    @path, @options  = path, options
+    @path, @options = path, options
     if action == nil || action.is_a?(Symbol)
       @action = action
     else
@@ -160,7 +160,7 @@ class PMLModTool
   end
 end
 
-SYNOPSIS=<<EOF
+SYNOPSIS = <<EOF
 Programmatically modify PML documents.
 EOF
 

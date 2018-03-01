@@ -97,7 +97,7 @@ class EstimateSpill
 end
 
 if __FILE__ == $0
-SYNOPSIS=<<EOF if __FILE__ == $0
+SYNOPSIS = <<EOF if __FILE__ == $0
 Estimate the number of spill instructions per function
 EOF
   options, args = PML::optparse([],"", SYNOPSIS) do |opts|

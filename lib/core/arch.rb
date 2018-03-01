@@ -262,7 +262,7 @@ class MemoryConfig < PMLObject
 
   # delay for an (not necessarily aligned) read request
   def read_delay(start_address, size)
-    start_padding = start_address & (alignment-1)
+    start_padding = start_address & (alignment - 1)
     read_delay_aligned(start_padding + size)
   end
 
@@ -280,7 +280,7 @@ class MemoryConfig < PMLObject
 
   # delay for an (not necessarily aligned write_request)
   def write_delay(start_address, size)
-    start_padding = start_address & (alignment-1)
+    start_padding = start_address & (alignment - 1)
     write_delay_aligned(start_padding + size)
   end
 
@@ -387,7 +387,7 @@ class CacheConfig < PMLObject
   end
 
   def bytes_to_blocks(bytes)
-    (bytes+block_size-1) / block_size
+    (bytes + block_size - 1) / block_size
   end
 
   ##

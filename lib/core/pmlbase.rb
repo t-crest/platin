@@ -10,7 +10,7 @@ require 'core/utils'
 module PML
 
   # FIXME: move the utility stuff to a file on its own
-  RE_HEX=/[0-9A-Fa-f]/
+  RE_HEX = /[0-9A-Fa-f]/
 
   # Mixin for entities which are identified by a qualified name (qname), and use this
   # identifier for comparison and hashing
@@ -27,7 +27,7 @@ module PML
     def eql?(other); self == other ; end
     def hash
       return @hash if @hash
-      @hash=qname.hash
+      @hash = qname.hash
     end
     def <=>(other)
       qname <=> other.qname

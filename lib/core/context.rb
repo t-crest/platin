@@ -34,7 +34,7 @@ class BoundedStack
   end
   def push(elem, maxlength)
     return if maxlength == 0
-    return BoundedStack.create([elem]) if maxlength==1
+    return BoundedStack.create([elem]) if maxlength == 1
     if stack.length < maxlength
       BoundedStack.create(stack + [elem])
     else
@@ -43,7 +43,7 @@ class BoundedStack
   end
   def prefix(length)
     return BoundedStack.create([]) unless length > 0
-    BoundedStack.create(stack.dup[0..(length-1)])
+    BoundedStack.create(stack.dup[0..(length - 1)])
   end
   def pop
     newstack = stack.dup
@@ -149,10 +149,10 @@ class ContextNode
     end
   end
   def dump(io=$stdout, level = 0)
-    io.puts " "*(level*2) + "NODE VALUE #{@value.to_s}" if @value
+    io.puts " " * (level * 2) + "NODE VALUE #{@value.to_s}" if @value
     @children.each { |key,node|
-      io.puts " "*(level*2 + 1) + key.to_s
-      node.dump(io, level+1)
+      io.puts " " * (level * 2 + 1) + key.to_s
+      node.dump(io, level + 1)
     }
   end
 end
@@ -262,10 +262,10 @@ class LoopContextEntry < ContextEntry
     if step != 0
       assert("LoopContextEntry: step #{step} does not match unroll factor #{unroll}") { step == unroll }
       assert("LoopContextEntry: offset #{offset} to small for peel factor #{peel}")   { offset >= peel }
-      [peel + (offset - peel)%unroll, unroll]
+      [peel + (offset - peel) % unroll, unroll]
     else
       if offset >= peel
-        [peel + (offset-peel)%unroll, unroll]
+        [peel + (offset - peel) % unroll, unroll]
       else
         [offset, 0]
       end
@@ -277,7 +277,7 @@ class LoopContextEntry < ContextEntry
   # compute next iterations (offset+step*k + 1)
   # Assumes the expression is normalized
   def with_increment(peel,unroll)
-    o,s = check_and_normalize(@offset+1,@step,peel,unroll)
+    o,s = check_and_normalize(@offset + 1,@step,peel,unroll)
     LoopContextEntry.new(@loop,s,o,@callsite)
   end
 
@@ -290,8 +290,8 @@ class LoopContextEntry < ContextEntry
     if o == 0 # implies @step == 0
       []
     elsif o == peel
-      [ LoopContextEntry.new(@loop,0,peel-1,@callsite),
-        LoopContextEntry.new(@loop,unroll,peel+unroll-1,@callsite) ]
+      [ LoopContextEntry.new(@loop,0,peel - 1,@callsite),
+        LoopContextEntry.new(@loop,unroll,peel + unroll - 1,@callsite) ]
     else
       o2, s2 = check_and_normalize(@offset - 1, @step, peel, unroll)
       [ LoopContextEntry.new(@loop, s2, o2, @callsite) ]
@@ -565,7 +565,7 @@ if __FILE__ == $0
       @ctxm2 = ContextManager.new(2,1,2)
     end
     def sd_instructions(num)
-      (0..num-1).map { |ix| { 'index' => ix } }
+      (0..num - 1).map { |ix| { 'index' => ix } }
     end
     def sd_function(name)
       b0 = { 'name' => 0, 'instructions' => sd_instructions(6) }

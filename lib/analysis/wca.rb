@@ -32,9 +32,9 @@ class WCA
     if entry_label.start_with?("GCFG:")
       gcfg_entry = @pml.analysis_entry(@options)
       machine_entry = gcfg_entry.abb.get_region(:dst).entry_node
-      entry = {'gcfg'=> gcfg_entry,
-               'machinecode'=>gcfg_entry,
-               'bitcode'=>gcfg_entry,
+      entry = {'gcfg' => gcfg_entry,
+               'machinecode' => gcfg_entry,
+               'bitcode' => gcfg_entry,
               }
       @options.gcfg_analysis = true
     else
@@ -110,13 +110,13 @@ class WCA
           else
             slots = src.instructions[branch_index].delay_slots
             slot_end = branch_index
-            instr = src.instructions[slot_end+1]
+            instr = src.instructions[slot_end + 1]
             while slots > 0 || (instr && instr.bundled?)
               if ! (instr && instr.bundled?)
                 slots = slots - 1
               end
               slot_end = slot_end + 1
-              instr = src.instructions[slot_end+1]
+              instr = src.instructions[slot_end + 1]
             end
             src.instructions[0..slot_end]
           end
@@ -207,7 +207,7 @@ class WCA
           ref = ContextRef.new(v.edgeref, Context.empty)
         end
         edgecosts[ref] += edgecost
-        totalcosts[ref] += edgecost*freq
+        totalcosts[ref] += edgecost * freq
       end
     }
     edgecosts.each { |ref, edgecost|

@@ -11,7 +11,7 @@ include PML
 # FIXME: it might happen that calls are moved to other nodes
 # This is not a problem for our model, but validation fails (ndes)
 class RelationGraphValidation
-  SHOW_ERROR_TRACE=3
+  SHOW_ERROR_TRACE = 3
   def initialize(pml, options)
     @pml, @options = pml, options
   end
@@ -22,39 +22,39 @@ class RelationGraphValidation
     ix_src, ix_dst = 0,0
     while ix_src < tsrc.length && ix_dst < tdst.length
       while is_machine_only_node(tdst[ix_dst],tsrc[ix_src])
-        ix_dst+=1
+        ix_dst += 1
         if ix_dst == tdst.length
           raise Exception.new("RelationGraphValidation failed: ran out of MC entries at #{tsrc[ix1]}")
         end
       end
       p1, p2 = tsrc[ix_src], tdst[ix_dst]
-      if p1!= p2
+      if p1 != p2
         if SHOW_ERROR_TRACE > 0
           info("Progress Trace Validation Mismatch: #{p1} vs #{p2}")
           info("Trace to SRC:")
           (-SHOW_ERROR_TRACE..SHOW_ERROR_TRACE).each do |off|
-            is,id = [ [0,ix_src+off].max, tsrc.length - 1].min, [ [0,ix_dst+off].max, tdst.length - 1 ].min
+            is,id = [ [0,ix_src + off].max, tsrc.length - 1].min, [ [0,ix_dst + off].max, tdst.length - 1 ].min
             pt1.internal_preds[is].each { |n|
               $stderr.puts "        #{n}"
             }
             pt2.internal_preds[id].each { |n|
-              $stderr.puts "        #{" "*30} #{n}"
+              $stderr.puts "        #{" " * 30} #{n}"
             }
             $stderr.puts "    #{off.to_s.rjust(3)} #{tsrc[is].to_s.ljust(30)} #{tdst[id]}"
           end
         end
         # If we have an off by one error, we try to continue, collecting the errors
-        if (p1 == tdst[ix_dst+1])
+        if (p1 == tdst[ix_dst + 1])
           errors.push([p1,p2])
-          ix_dst+=1
-        elsif (tsrc[ix_src+1] == p2)
+          ix_dst += 1
+        elsif (tsrc[ix_src + 1] == p2)
           errors.push([p1,p2])
-          ix_src+=1
+          ix_src += 1
         else
           raise Exception.new("Progress trace validation failed: #{p1} != #{p2}")
         end
       else
-        ix_src,ix_dst = ix_src+1, ix_dst+1
+        ix_src,ix_dst = ix_src + 1, ix_dst + 1
       end
     end
     if ! errors.empty?
@@ -100,7 +100,7 @@ class RelationGraphValidationTool
 end
 
 class TransformTool
-  TRANSFORM_ACTIONS=%w{up down copy}
+  TRANSFORM_ACTIONS = %w{up down copy}
 
   def TransformTool.add_options(opts)
     opts.analysis_entry
@@ -172,7 +172,7 @@ class TransformTool
 end
 
 if __FILE__ == $0
-SYNOPSIS=<<EOF
+SYNOPSIS = <<EOF
 Transforms flow facts from IR level to machine code level or simplify set of flow facts
 EOF
   options, args = PML::optparse(0, "", SYNOPSIS) do |opts|

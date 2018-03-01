@@ -359,21 +359,21 @@ class SEAffineRec < SymbolicExpression
   def loop_bound_sum(outer_loop_bound)
     x = outer_loop_bound
     if ! @b.constant? || @b.to_i == 0
-      raise Exception.new("SEAffineRec#loop_bound_sum: not possible to calculate total bound for"+
+      raise Exception.new("SEAffineRec#loop_bound_sum: not possible to calculate total bound for" +
                           "non-constant/zero #{@b}::#{@b.class} in #{self}")
     end
     if @b.to_i > 0
       lb = @b.add(-@a,-1).sdiv(@b).smax(0)
-      p1 = (x-lb).smax(0) * @a
-      q1 = x * (x-1).smax(0)
-      q2 = lb * (lb-1)
-      p2 = (q1-q2).smax(0).sdiv(2) * @b
-      p1+p2
+      p1 = (x - lb).smax(0) * @a
+      q1 = x * (x - 1).smax(0)
+      q2 = lb * (lb - 1)
+      p2 = (q1 - q2).smax(0).sdiv(2) * @b
+      p1 + p2
     elsif @b.to_i < 0
       ub = @a.add(-@b,-1).sdiv(-@b).add(1)
       ev = ub.smin(x).smax(0)
       p1 = ev * @a
-      p2 = (ev * (ev-1)).sdiv(2) * @b
+      p2 = (ev * (ev - 1)).sdiv(2) * @b
       p1 + p2
     end
   end
@@ -435,7 +435,7 @@ private
     }
     flags = paren(flag,'<','>')
     loop = paren(loopname,'<','>')
-    seq(spec,flags *(0..5),loop).map { |s,f,l|
+    seq(spec,flags * (0..5),loop).map { |s,f,l|
       a,b = s
       SEAffineRec.new(a,b,l,f)
     }
@@ -445,7 +445,7 @@ private
     paren(lazy {expr}.join(arithop)).map { |ps|
       stack = []
       last_op = nil
-      while(ps.length>1)
+      while(ps.length > 1)
         a  = ps.shift
         op = ps.shift
         stack.push([a,op])

@@ -68,7 +68,7 @@ class WcaTool
 end
 
 if __FILE__ == $0
-SYNOPSIS=<<EOF if __FILE__ == $0
+SYNOPSIS = <<EOF if __FILE__ == $0
 Calculate WCET using lp_solve and a simple timing model
 EOF
   options, args = PML::optparse(0, "", SYNOPSIS) do |opts|

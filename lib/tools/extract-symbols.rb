@@ -18,14 +18,14 @@ class ExtractSymbols
 
   end
   def add_symbol(label,address)
-    @text_symbols[label]=address
+    @text_symbols[label] = address
     @stats_address_count += 1
   end
   def add_instruction_address(label,index,address)
-    (@instruction_addresses[label]||={})[index]=address
+    (@instruction_addresses[label] ||= {})[index] = address
   end
   def add_instruction(label,address, data)
-    (@instructions[label]||={})[address] = data
+    (@instructions[label] ||= {})[address] = data
   end
   def analyze
     elf = @options.binary_file
@@ -78,7 +78,7 @@ class ExtractSymbols
         block.instructions.each do |instruction|
           # This might be necessary for von-Neumann architectures
           # (e.g., for ARMs BR_JTm instruction, where PML does not provide a size)
-          if ins_addr = (@instruction_addresses[function.label]||{})[ins_index]
+          if ins_addr = (@instruction_addresses[function.label] || {})[ins_index]
             warn("Heuristic found wrong address: #{instruction}: #{addr}, not #{ins_addr}") if addr != ins_addr
             addr = ins_addr
           elsif instruction.size == 0
@@ -153,7 +153,7 @@ class ExtractSymbolsTool
 end
 
 if __FILE__ == $0
-  SYNOPSIS=<<EOF
+  SYNOPSIS = <<EOF
 Extract Symbol Addresses from ELF file. It is possible to specify the same file
 for input and output; as long as the ELF file does not change, this is an
 idempotent transformation.

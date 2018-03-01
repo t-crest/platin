@@ -42,7 +42,7 @@ class AitTool
 end
 
 # number of overestimated cycles always tolerated
-CHECK_OVERESTIMATION_TOLERANCE=10
+CHECK_OVERESTIMATION_TOLERANCE = 10
 
 #
 # WCET Analysis command line tool
@@ -67,7 +67,7 @@ class WcetTool
       t1 = Time.now
       yield
       t2 = Time.now
-      info("Finished #{descr.ljust(35)} in #{((t2-t1)*1000).to_i} ms")
+      info("Finished #{descr.ljust(35)} in #{((t2 - t1) * 1000).to_i} ms")
     end
   end
 
@@ -226,7 +226,7 @@ class WcetTool
         # criticality analysis
         compute_criticalities(opts) { |pml,tmp_opts,src,round|
           simplify_flowfacts([src], tmp_opts)
-          tmp_opts.flow_fact_srcs.push(src+".simplified")
+          tmp_opts.flow_fact_srcs.push(src + ".simplified")
           configure_ait_files(tmp_opts, File.dirname(options.ait_report_prefix), "criticality", true)
           AitTool.run(pml,tmp_opts)
         } if opts.compute_criticalities
@@ -259,7 +259,7 @@ class WcetTool
     wcet_cycles = timing.cycles
     round, found_new_edge = 0, true
     while true
-      info("Criticality Iteration #{round+=1}: #{cycles} (blockmode=#{! missing_blocks.nil?})")
+      info("Criticality Iteration #{round += 1}: #{cycles} (blockmode=#{! missing_blocks.nil?})")
       if cycles < 0
         if missing_blocks
           missing_blocks = nil
@@ -411,9 +411,9 @@ class WcetTool
       configure_ait_files(options, outdir, mod, false) unless options.disable_ait
 
       if options.enable_sweet
-        options.alf_file = File.join(outdir, mod+".alf") unless options.alf_file
-        options.sweet_flowfact_file = File.join(outdir, mod+".ff") unless options.sweet_flowfact_file
-        options.sweet_trace_file = File.join(outdir, mod+".tf") unless options.sweet_trace_file
+        options.alf_file = File.join(outdir, mod + ".alf") unless options.alf_file
+        options.sweet_flowfact_file = File.join(outdir, mod + ".ff") unless options.sweet_flowfact_file
+        options.sweet_trace_file = File.join(outdir, mod + ".tf") unless options.sweet_trace_file
       end
       run_analysis
     ensure
@@ -507,7 +507,7 @@ class WcetTool
 end
 
 if __FILE__ == $0
-  synopsis=<<EOF
+  synopsis = <<EOF
 platin WCET tool
 EOF
   options, args = PML::optparse([], "", synopsis) do |opts|

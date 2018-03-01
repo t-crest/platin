@@ -25,7 +25,7 @@ class InspectTool
       t1 = Time.now
       yield
       t2 = Time.now
-      info("Finished #{descr.ljust(35)} in #{((t2-t1)*1000).to_i} ms")
+      info("Finished #{descr.ljust(35)} in #{((t2 - t1) * 1000).to_i} ms")
     end
   end
 
@@ -46,7 +46,7 @@ class InspectTool
       fun.loops.each do |loop|
         next if unbounded and ffmap[loop.loopheader]
         io.puts "=== #{level} loop #{loop.to_s} ==="
-        (ffmap[loop.loopheader]||[]).each { |ff|
+        (ffmap[loop.loopheader] || []).each { |ff|
           io.puts "bounded by #{ff.to_s}"
         }
       end
@@ -58,7 +58,7 @@ class InspectTool
     @pml.flowfacts.each do |ff|
       s, b, rhs = ff.get_block_frequency_bound
       next if b.nil?
-      (ffmap[b.programpoint.block]||=[]).push(ff)
+      (ffmap[b.programpoint.block] ||= []).push(ff)
     end
 
     print_loops(@pml.bitcode_functions, "bitcode", ffmap, unbounded, io)
@@ -81,7 +81,7 @@ class InspectTool
 end
 
 if __FILE__ == $0
-  synopsis="Inspect the program structure and flow/value facts"
+  synopsis = "Inspect the program structure and flow/value facts"
   options, args = PML::optparse([], "", synopsis) do |opts|
     opts.needs_pml
     InspectTool.add_options(opts)

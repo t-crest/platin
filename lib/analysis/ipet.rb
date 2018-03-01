@@ -149,7 +149,7 @@ class IPETEdge
   attr_reader :qname,:source,:target, :level
   def initialize(edge_source, edge_target, level)
     @source,@target,@level = edge_source, edge_target, level.to_sym
-    arrow = {:bitcode => "~>", :machinecode => "->", :gcfg=>"+>"}[@level]
+    arrow = {:bitcode => "~>", :machinecode => "->", :gcfg => "+>"}[@level]
     @qname = "#{@source.qname}#{arrow}#{:exit == @target ? 'exit' : @target.qname}"
   end
   def backedge?
@@ -179,7 +179,7 @@ class IPETEdge
     source.kind_of?(RelationNode) || target.kind_of?(RelationNode)
   end
   def to_s
-    arrow = {:bitcode => "~>", :machinecode => "->", :gcfg=>"+>"}[@level]
+    arrow = {:bitcode => "~>", :machinecode => "->", :gcfg => "+>"}[@level]
     "#{@source}#{arrow}#{:exit == @target ? 'exit' : @target}"
   end
   def inspect
@@ -222,19 +222,19 @@ class IPETModel
       ts.to_a.each { |pp, c|
         case pp
         when Instruction
-          block_frequency(pp.block, c*sgn).each { |k,v| terms[k]+=v }
+          block_frequency(pp.block, c * sgn).each { |k,v| terms[k] += v }
         when Block
-          block_frequency(pp, c*sgn).each { |k,v| terms[k]+=v }
+          block_frequency(pp, c * sgn).each { |k,v| terms[k] += v }
         when Edge
-          edge_frequency(pp, c*sgn).each { |k,v| terms[k] += v }
+          edge_frequency(pp, c * sgn).each { |k,v| terms[k] += v }
         when Function
-          function_frequency(pp, c*sgn).each { |k,v| terms[k] += v}
+          function_frequency(pp, c * sgn).each { |k,v| terms[k] += v}
         when Loop
-          sum_loop_entry(pp,c*sgn).each { |k,v| terms[k] += v }
+          sum_loop_entry(pp,c * sgn).each { |k,v| terms[k] += v }
         when Integer
-          rhs_const += pp*(-sgn)
+          rhs_const += pp * (-sgn)
         else
-          terms[pp] += c*sgn
+          terms[pp] += c * sgn
         end
       }
     }
@@ -654,7 +654,7 @@ class IPETBuilder
       next if bb == :exit
       incoming = e[:in].map {|x| [x, 1]}
       outgoing = e[:out].map {|x| [x, -1]}
-      ilp.add_constraint(incoming+outgoing, "equal", 0,
+      ilp.add_constraint(incoming + outgoing, "equal", 0,
                        "abb_flux_#{bb.qname}", :structural)
 
       # Override the incoming and outgoing frequencies
@@ -713,7 +713,7 @@ class IPETBuilder
       raise Exception.new("IPETBuilder#add_flowfact: Unknown scope type: #{scope.programpoint.class}")
     end
     begin
-      name = "ff_#{@ffcount+=1}"
+      name = "ff_#{@ffcount += 1}"
       ilp.add_constraint(lhs, ff.op, 0, name, tag)
       name
     rescue UnknownVariableException => detail
@@ -755,7 +755,7 @@ private
     bitcode_function.blocks.each { |bb|
         bb.instructions.each { |i|
             if i.marker
-              (@markers[i.marker]||=[]).push(i)
+              (@markers[i.marker] ||= []).push(i)
             end
         }
     }
@@ -802,7 +802,7 @@ private
 
       assert("Bad RG: #{edge}") { source_block && target_block }
       # (3),(4)
-      (rg_edges_of_edge[rg_level][IPETEdge.new(source_block,target_block,edge.level)] ||=[]).push(edge)
+      (rg_edges_of_edge[rg_level][IPETEdge.new(source_block,target_block,edge.level)] ||= []).push(edge)
       # (5)
       if edge.source.type == :entry || edge.source.type == :progress
         rg_progress_edges[edge.source] ||= { :src => [], :dst => [] }

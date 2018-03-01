@@ -52,13 +52,13 @@ ARGV.each_with_index { |arg,ix|
   elsif arg =~ /^-mpatmos-enable-bypass-from-pml$/
     initial_args.push(arg)
   elsif arg =~ /--platin-wcet-options=(.*)$/
-    options.platin_wcet_options=$1
+    options.platin_wcet_options = $1
   elsif arg =~ /-mserialize=(.*)$/
     options.pmloutput = $1
   else
     args.push(arg)
   end
-  if ix > 0 && ARGV[ix-1] == '-o'
+  if ix > 0 && ARGV[ix - 1] == '-o'
     options.outfile = arg
   elsif arg == "-save-temps"
     options.save_temps = true
@@ -98,7 +98,7 @@ platin_derived_options += " #{options.platin_wcet_options}"
 outfile =
   if options.save_temps
     Proc.new { |fname,ext|
-      fname+ext
+      fname + ext
     }
   else
     Proc.new { |fname,ext|

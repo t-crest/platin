@@ -237,7 +237,7 @@ class Server
         to   = code.length - 1
         out  = code.join("\n")
       else
-        from = [0, realline - realrange-1].max
+        from = [0, realline - realrange - 1].max
         to   = [code.length - 1, realline + realrange].min
         out = code[from, to - from].join("\n")
       end
@@ -249,7 +249,7 @@ class Server
 
   class SourceViewServlet < SourceServlet
     def do_GET(req, resp)
-      file  = req.query["file"]
+      file = req.query["file"]
       if file
         realfile = resolve_file(@srcroot, file)
       end

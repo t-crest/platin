@@ -48,10 +48,10 @@ class RGVisualizer
     end
     rg['nodes'].each do |node|
       bid = node['name']
-      (node['src-successors']||[]).each do |sid|
+      (node['src-successors'] || []).each do |sid|
         g.add_edges(nodes[bid],nodes[sid])
       end
-      (node['dst-successors']||[]).each do |sid|
+      (node['dst-successors'] || []).each do |sid|
         g.add_edges(nodes[bid],nodes[sid], :style => 'dotted')
       end
     end
@@ -83,16 +83,16 @@ class OneOneCheck
     rg['nodes'].each do |node|
       bid = node['name']
 
-      srcsucc = node['src-successors']||[]
-      dstsucc = node['dst-successors']||[]
+      srcsucc = node['src-successors'] || []
+      dstsucc = node['dst-successors'] || []
 
       # if the number of successors does not match, we're not having a 1:1 mapping
       # this might be the case for if-conversions etc.
       return false if srcsucc.count != dstsucc.count
 
-      (node['src-successors']||[]).each do |ssid|
+      (node['src-successors'] || []).each do |ssid|
         found = false
-        (node['dst-successors']||[]).each do |dsid|
+        (node['dst-successors'] || []).each do |dsid|
           found = true if ssid == dsid
         end
 
@@ -142,7 +142,7 @@ class OneOneCheck
 end
 
 if __FILE__ == $0
-SYNOPSIS=<<EOF if __FILE__ == $0
+SYNOPSIS = <<EOF if __FILE__ == $0
 Check if the control-flow relation graph is a 1:1 mapping between bc and mc
 EOF
   options, args = PML::optparse([],"", SYNOPSIS) do |opts|

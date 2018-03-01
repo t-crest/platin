@@ -7,9 +7,9 @@
 module ARMv7m
 
 class ExtractSymbols
-  OP_CONSTPOOL=121
-  OP_IMPLICIT_DEF=8
-  OPCODE_NAMES={233=>/mov/}
+  OP_CONSTPOOL = 121
+  OP_IMPLICIT_DEF = 8
+  OPCODE_NAMES = {233 => /mov/}
   def ExtractSymbols.run(cmd,extractor,pml,options)
     r = IO.popen("#{cmd} -d --no-show-raw-insn '#{options.binary_file}'") do |io|
       current_label, current_ix, current_function = nil, 0, nil
@@ -44,13 +44,13 @@ class ExtractSymbols
           end
           # SANITY CHECK (end)
 
-          current_ix+=1
+          current_ix += 1
         end
       end
     end
     die "The objdump command '#{cmd}' exited with status #{$?.exitstatus}" unless $?.success?
   end
-  RE_HEX=/[0-9A-Fa-f]/
+  RE_HEX = /[0-9A-Fa-f]/
   RE_FUNCTION_LABEL = %r{ ^
     ( #{RE_HEX}{8} ) \s # address
     <([^>]+)>:          # label
@@ -71,7 +71,7 @@ class Architecture < PML::Architecture
   end
   def Architecture.default_config
   # TODO: FIXME dummy values
-    memories = PML::MemoryConfigList.new([PML::MemoryConfig.new('main',2*1024*1024,16,0,21,0,21)])
+    memories = PML::MemoryConfigList.new([PML::MemoryConfig.new('main',2 * 1024 * 1024,16,0,21,0,21)])
     caches = PML::CacheConfigList.new([Architecture.default_instr_cache('method-cache'),
                                   PML::CacheConfig.new('stack-cache','stack-cache','block',nil,4,2048),
                                   PML::CacheConfig.new('data-cache','set-associative','dm',nil,16,2048) ])
@@ -114,7 +114,7 @@ class Architecture < PML::Architecture
 
 
 # found out through reading register on hardware:
-FLASH_WAIT_CYCLES=3
+FLASH_WAIT_CYCLES = 3
 #
 # FLASH_WAIT_CYCLES=15 # the actual worst case
 
@@ -155,8 +155,8 @@ FLASH_WAIT_CYCLES=3
   end
 
 
-NUM_REGISTERS=10
-PIPELINE_REFILL=3
+NUM_REGISTERS = 10
+PIPELINE_REFILL = 3
   def cycle_cost(instr)
     case instr.opcode
     # addsub

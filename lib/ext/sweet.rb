@@ -94,7 +94,7 @@ module SWEET
           "#{coeff} * #{v}"
         end
       }.join(" + ")
-      s << " + #{const}" if(@const!=0)
+      s << " + #{const}" if(@const != 0)
       s
     end
   end
@@ -110,9 +110,9 @@ module SWEET
       @vector  = Vector.subtract!(lhs.vec, rhs.vec)
       @op      = op
       if(op == '<')
-        @op, @rhs = "<=", @rhs+1
+        @op, @rhs = "<=", @rhs + 1
       elsif(op == '>')
-        @op, @rhs = '>=', @rhs-1
+        @op, @rhs = '>=', @rhs - 1
       end
       if(op == ">=")
         @op, @vector, @rhs = '<=', -@rhs, Vector.negate(@vector)
@@ -186,9 +186,9 @@ module SWEET
         sum = Vector.new
         sum.add(*p)
         ps.each_slice(2) do |(op, (coeff,var))|
-          if(op=='-')
+          if(op == '-')
             sum.add(-coeff,var)
-          elsif(op=='+')
+          elsif(op == '+')
             sum.add(coeff,var)
           else
             raise Exception.new("Bad addop: #{op}")
@@ -209,7 +209,7 @@ module SWEET
     end
     def parser
       ff = seq_(callstring, context, quantifier, constraint, skip: sym(':')) << ";".r
-      ff_comment = seq_(ff,sym('%%')>>/\w{4}/.r).map { |((cs,ctx,quant,constr),type)|
+      ff_comment = seq_(ff,sym('%%') >> /\w{4}/.r).map { |((cs,ctx,quant,constr),type)|
         FlowFact.new(type,cs,ctx,quant,constr)
       }
     end

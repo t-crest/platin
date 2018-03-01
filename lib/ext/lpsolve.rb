@@ -19,7 +19,7 @@ end
 # Simple interface to lp_solve
 class LpSolveILP < ILP
   # Tolarable floating point error in objective
-  EPS=0.0001
+  EPS = 0.0001
   def initialize(options = nil)
     super(options)
     @eps = EPS
@@ -55,7 +55,7 @@ class LpSolveILP < ILP
       unbounded, freqmap = diagnose_unbounded(lp_solve_error_msg(r), freqmap) if @do_diagnose
     end
     raise ILPSolverException.new(lp_solve_error(r), obj.round, freqmap, unbounded) unless r == 0
-    if (obj-obj.round.to_f).abs > @eps
+    if (obj - obj.round.to_f).abs > @eps
       raise Exception.new("Untolerable floating point inaccuracy > #{EPS} in objective #{obj}")
     end
 

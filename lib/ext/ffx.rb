@@ -220,7 +220,7 @@ class F4Exporter
 
   def gen_fact(f4_fact, descr, derived_from=nil)
     @stats_generated_facts += 1
-    @outfile.puts(f4_fact+";" +" // "+descr)
+    @outfile.puts(f4_fact + ";" + " // " + descr)
     debug(@options,:ffx) {
       s = " derived from #{derived_from}" if derived_from
       "Wrote F4 instruction: #{f4_fact}#{s}"
@@ -306,7 +306,7 @@ class F4Exporter
         scope,bound = scope_bound
         next if options.ff_disable_export.include?('loop-bounds')
         next if ! bound.constant? && options.ff_disable_export.include?('symbolic-loop-bounds')
-        (loop_bounds[scope]||=[]).push([bound,ff])
+        (loop_bounds[scope] ||= []).push([bound,ff])
       else
         supported = export_flowfact(ff)
         @stats_skipped_flowfacts += 1 unless supported
@@ -481,7 +481,7 @@ class FFXExporter
         scope,bound = scope_bound
         next if options.ff_disable_export.include?('loop-bounds')
         next if ! bound.constant? && options.ff_disable_export.include?('symbolic-loop-bounds')
-        (loop_bounds[scope]||=[]).push([bound,ff])
+        (loop_bounds[scope] ||= []).push([bound,ff])
       else
         supported = export_flowfact(ff)
         @stats_skipped_flowfacts += 1 unless supported

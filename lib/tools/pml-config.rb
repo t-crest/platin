@@ -101,19 +101,19 @@ class PMLConfigTool
     opts.on("--set-cache-attr CACHE,NAME,VALUE", Array, "Set an attribute with a given value to the given named cache (can be specified multiple times)") { |a|
       die("Missing attribute name in --set-cache-attr #{a}") if a.length < 2
       die("Too many values for --set-cache-attr #{a}") if a.length > 3
-      (opts.options.set_cache_attrs||=[]).push(a)
+      (opts.options.set_cache_attrs ||= []).push(a)
     }
     opts.on("--set-area-attr AREA,NAME,VALUE", Array, "Set an attribute with a given value to the given memory area (can be specified multiple times)") { |a|
       die("Missing attribute name in --set-area-attr #{a}") if a.length < 2
       die("Too many values for --set-area-attr #{a}") if a.length > 3
-      (opts.options.set_area_attrs||=[]).push(a)
+      (opts.options.set_area_attrs ||= []).push(a)
     }
 
     opts.on("--update-heap-syms [SIZE,NUM]", Array, "Recalculate heap-end and stack-top attribute values for the new memory size assuming NUM stacks of size SIZE (defaults to 32k,16.") { |a|
-      a=[] if a.nil?
+      a = [] if a.nil?
       die("Too many values for --update-heap-syms #{a}") if a.length > 2
-      a[0]||="32k"
-      a[1]||="16"
+      a[0] ||= "32k"
+      a[1] ||= "16"
       opts.options.update_heap_syms = { :stack_size => parse_size(a[0]), :num_stacks => a[1].to_i }
     }
 
@@ -209,7 +209,7 @@ class PMLConfigTool
 end
 
 if __FILE__ == $0
-  synopsis=<<-EOF
+  synopsis = <<-EOF
     Create or modify a PML machine configuration. If no input configuration is given, a
     default configuation is generated.
   EOF

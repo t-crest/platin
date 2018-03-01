@@ -71,7 +71,7 @@ class ControlFlowModel
   # get location object (unique)
   #
   def location(node, ctx)
-    (@locations[node]||={})[ctx]||=Location.new(self, node,ctx)
+    (@locations[node] ||= {})[ctx] ||= Location.new(self, node,ctx)
   end
 
 
@@ -190,7 +190,7 @@ class VCFG
     function.blocks.each do |succblock|
       succnode = @blockstart[succblock]
       assert("No node matching block #{succblock}") { succnode }
-      (block_predecessors[succblock]||[]).each do |prednode|
+      (block_predecessors[succblock] || []).each do |prednode|
         predblock = prednode.block
         # if successors is in a different loop then predecessor, we need to insert loop exit nodes
         if predblock.loopnest > 0 && succblock.loops.first != predblock.loops.first
@@ -303,7 +303,7 @@ private
 
     # current index now points at the bundle for the last delay slot
     # find the last instruction in this bundle
-    while (current_index+1) < block.instructions.length && block.instructions[current_index+1].bundled?
+    while (current_index + 1) < block.instructions.length && block.instructions[current_index + 1].bundled?
       current_index += 1
     end
     current_node.last_index = current_index
@@ -572,7 +572,7 @@ class Location
   def eql?(other); self == other ; end
   def hash
     return @hash if @hash
-    @hash=@node.hash ^ @context.hash
+    @hash = @node.hash ^ @context.hash
   end
   def <=>(other)
     hash <=> other.hash
@@ -601,7 +601,7 @@ class Interpreter
       @steps += 1
       loc = @queue.pop
       inval = @in[loc]
-      outval  = @semantics.transfer_value(loc.node, inval)
+      outval = @semantics.transfer_value(loc.node, inval)
       loc.successors.each { |loc|
         if change = @semantics.merge(@in[loc],outval)
           @in[loc] = change[1]
@@ -615,8 +615,8 @@ class Interpreter
   end
 
   def inputs_by_node
-    by_node= {}
-    @in.each { |loc,value| (by_node[loc.node] ||={})[loc.context] = value }
+    by_node = {}
+    @in.each { |loc,value| (by_node[loc.node] ||= {})[loc.context] = value }
     by_node
   end
 
@@ -638,8 +638,8 @@ class Interpreter
 end
 
 # Top / Bottom
-TOP=:top
-BOTTOM=:bottom
+TOP = :top
+BOTTOM = :bottom
 
 # reachability semantics (trivial)
 class ReachabilitySemantics

@@ -31,13 +31,13 @@ class SweetImportTool
         ff_pml = converter.to_pml(ff)
         if set[ff_pml]
           reasons["duplicate"] += 1
-          skipped+=1
+          skipped += 1
         else
           set[ff_pml] = true
           pml.flowfacts.add(ff_pml)
           added += 1
         end
-      rescue UnsupportedFlowFactException=>detail
+      rescue UnsupportedFlowFactException => detail
         reasons[detail.to_s] += 1
         skipped += 1
       end
@@ -51,7 +51,7 @@ end
 
 
 if __FILE__ == $0
-SYNOPSIS=<<EOF if __FILE__ == $0
+SYNOPSIS = <<EOF if __FILE__ == $0
 Translate SWEET flow facts (format FF) to PML flow facts
 EOF
   options, args = PML::optparse([:sweet_flowfact_file], "file.ff", SYNOPSIS) do |opts|

@@ -11,7 +11,7 @@ module ARM
 # yields [program_counter, cycles] pairs
 #
 class M5SimulatorTrace
-  TIME_PER_TICK=500
+  TIME_PER_TICK = 500
 
   attr_reader :stats_num_items
   def initialize(elf, options)
@@ -32,14 +32,14 @@ class M5SimulatorTrace
     return nil unless line
     time,event,pc,rest = line.split(/\s*:\s*/,4)
     return nil unless event =~ /system\.cpu/
-    [ Integer(pc), time.to_i/TIME_PER_TICK, @stats_num_items ]
+    [ Integer(pc), time.to_i / TIME_PER_TICK, @stats_num_items ]
   end
 end
 
 class ExtractSymbols
-  OP_CONSTPOOL=121
-  OP_IMPLICIT_DEF=8
-  OPCODE_NAMES={233=>/mov/}
+  OP_CONSTPOOL = 121
+  OP_IMPLICIT_DEF = 8
+  OPCODE_NAMES = {233 => /mov/}
   def ExtractSymbols.run(cmd,extractor,pml,options)
     r = IO.popen("#{cmd} -d --no-show-raw-insn '#{options.binary_file}'") do |io|
       current_label, current_ix, current_function = nil, 0, nil
@@ -74,13 +74,13 @@ class ExtractSymbols
           end
           # SANITY CHECK (end)
 
-          current_ix+=1
+          current_ix += 1
         end
       end
     end
     die "The objdump command '#{cmd}' exited with status #{$?.exitstatus}" unless $?.success?
   end
-  RE_HEX=/[0-9A-Fa-f]/
+  RE_HEX = /[0-9A-Fa-f]/
   RE_FUNCTION_LABEL = %r{ ^
     ( #{RE_HEX}{8} ) \s # address
     <([^>]+)>:          # label
@@ -108,7 +108,7 @@ class Architecture < PML::Architecture
     M5SimulatorTrace.new(options.binary_file, self, options)
   end
   def extract_symbols(extractor, pml, options)
-    prefix="arm-#{@triple[2]}-#{@triple[3]}"
+    prefix = "arm-#{@triple[2]}-#{@triple[3]}"
     cmd = "#{prefix}-objdump"
     ExtractSymbols.run(cmd, extractor, pml, options)
   end

@@ -120,7 +120,7 @@ class FlowGraphVisualizer < Visualizer
 	  edge = e.reference.programpoint
 	  # We only keep edge profiles here
 	  next unless edge.kind_of?(Edge)
-	  profile[edge.source]||=[]
+	  profile[edge.source] ||= []
 	  profile[edge.source].push(e)
 	}
 	[t.origin, profile]
@@ -134,7 +134,7 @@ class FlowGraphVisualizer < Visualizer
   end
   def find_vnode_timing(profile, node)
     if node.block
-      profile[node.block]||[]
+      profile[node.block] || []
     else
       find_vedge_timing(profile, node.predecessors, node.successors)
     end
@@ -145,11 +145,11 @@ class FlowGraphVisualizer < Visualizer
     if start == targets and not [*succ].any? { |s| s.kind_of?(CfgNode) and s.block_start? }
       [*node].map { |n| find_vnode_timing(profile, n) }.flatten
     elsif succ.kind_of?(ExitNode)
-      start.map{ |b| profile[b]||[] }.flatten.select { |t|
+      start.map{ |b| profile[b] || [] }.flatten.select { |t|
         t.reference.programpoint.exitedge?
       }
     else
-      start.map{ |b| profile[b]||[] }.flatten.select { |t|
+      start.map{ |b| profile[b] || [] }.flatten.select { |t|
 	targets.include?( t.reference.programpoint.target )
       }
     end
@@ -318,10 +318,10 @@ class RelationGraphVisualizer < Visualizer
     end
     rg['nodes'].each do |node|
       bid = node['name']
-      (node['src-successors']||[]).each do |sid|
+      (node['src-successors'] || []).each do |sid|
         g.add_edges(nodes[bid],nodes[sid])
       end
-      (node['dst-successors']||[]).each do |sid|
+      (node['dst-successors'] || []).each do |sid|
         g.add_edges(nodes[bid],nodes[sid], :style => 'dotted')
       end
     end
@@ -640,7 +640,7 @@ class HtmlIndexPages
   def type_index(selected_target, selected_type, io)
     io.puts("<div>")
     @targets[selected_target].each do |type,image|
-      style = if type==selected_type then "background-color: lightblue;" else "" end
+      style = if type == selected_type then "background-color: lightblue;" else "" end
       io.puts("<span style=\"#{style}\"><a href=\"#{link(selected_target,type)}\">#{type}</a></span>")
     end
     io.puts("</div>")
@@ -649,7 +649,7 @@ class HtmlIndexPages
     io.puts("<div>")
     @targets.each do |target,images|
       type, image = images.find { |type,image| type == selected_type } || images.to_a.first
-      style = if target==selected_target then "background-color: lightblue;" else "" end
+      style = if target == selected_target then "background-color: lightblue;" else "" end
       io.puts("<span style=\"#{style}\"><a href=\"#{link(target,type)}\">#{target}</a></span>")
     end
     io.puts("</div>")
@@ -736,7 +736,7 @@ class VisualizeTool
       # Visualize relation graph
       begin
         rgv = RelationGraphVisualizer.new(options)
-        rg = pml.data['relation-graphs'].find { |f| f['src']['function'] ==target or f['dst']['function'] == target }
+        rg = pml.data['relation-graphs'].find { |f| f['src']['function'] == target or f['dst']['function'] == target }
         raise Exception.new("Relation Graph not found") unless rg
         file = File.join(outdir, target + ".rg" + suffix)
         rgv.generate(rgv.visualize(rg),file)
@@ -774,7 +774,7 @@ end
 
 
 if __FILE__ == $0
-SYNOPSIS=<<EOF if __FILE__ == $0
+SYNOPSIS = <<EOF if __FILE__ == $0
 Visualize bitcode and machine code CFGS, and the control-flow relation
 graph of the specified set of functions
 EOF

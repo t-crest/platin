@@ -31,7 +31,7 @@ class ToolConfigTool
       opts.push("-mserialize=#{options.output.to_s}") if options.output
       opts.push("-mserialize-roots=#{roots.join(",")}") unless roots.empty?
       tc = pml.tool_configurations.by_name('clang')
-      opts.concat( tc.options||[] ) if tc
+      opts.concat( tc.options || [] ) if tc
       # TODO: add all analysis_configation tool options for analysis 'default'
       puts opts.map { |opt| escape(opt) }.join(" ")
     when 'pasim'
@@ -41,13 +41,13 @@ class ToolConfigTool
         unless pml.arch.instance_of?(Patmos::Architecture)
       opts = pml.arch.config_for_simulator
       tc = pml.tool_configurations.by_name(options.tool)
-      opts.concat( tc.options||[] ) if tc
+      opts.concat( tc.options || [] ) if tc
       # TODO: add all analysis_configation tool options for analysis 'default'
       puts opts.map { |opt| escape(opt) }.join(" ")
     when 'ait'
       AISExporter.new(pml,$stdout,options).export_header
     else
-      die("platin tool configuration: Unknown tool specified: #{options.tool}"+
+      die("platin tool configuration: Unknown tool specified: #{options.tool}" +
           " (#{$available_tools.join(", ")})")
     end
   end
@@ -67,7 +67,7 @@ class ToolConfigTool
 end
 
 if __FILE__ == $0
-  synopsis=<<-EOF
+  synopsis = <<-EOF
     Configure external tools to use the correct hardware (timing) model.
     Similar to pkg-config, this tool writes the arguments to be passed to $stdout. It uses
     architecture specific implementations, and is typically used like this:

@@ -14,19 +14,19 @@ class GCFGTool
   def transform_gcfg(gcfg, address)
     # Frist we add some functions and containers for our data
     ## Bitcode Function
-    data = {'name'=> gcfg.name, 'level'=>'bitcode',
-            'blocks'=> [], 'address'=> address}
+    data = {'name' => gcfg.name, 'level' => 'bitcode',
+            'blocks' => [], 'address' => address}
     bitcode_function = @pml_out.bitcode_functions.add_function(data)
 
     ## Machine Code Function
-    data = {'name'=> address, 'mapsto'=> gcfg.name,
-            'level'=>'machinecode', 'blocks'=> [], 'address'=> 0}
+    data = {'name' => address, 'mapsto' => gcfg.name,
+            'level' => 'machinecode', 'blocks' => [], 'address' => 0}
     machine_function = @pml_out.machine_functions.add_function(data)
 
     # Relationship Graph Container
-    data = {'src'=> {'level'=>'bitcode', 'function' => bitcode_function.name},
-            'dst'=> {'level'=>'machinecode', 'function' => machine_function.name},
-           'nodes'=> [], 'status'=>'valid'}
+    data = {'src' => {'level' => 'bitcode', 'function' => bitcode_function.name},
+            'dst' => {'level' => 'machinecode', 'function' => machine_function.name},
+           'nodes' => [], 'status' => 'valid'}
     rg = RelationGraph.new(data, @pml_out.bitcode_functions, @pml_out.machine_functions)
     @pml_out.relation_graphs.add(rg)
 
@@ -38,7 +38,7 @@ class GCFGTool
       mapping[gcfg_node] = [rg_region, bc_region, mc_region]
     }
 
-    exit_node = rg.add_node(RelationNode.new(rg, {'name'=> 'RG_exit', 'type' => 'exit'}))
+    exit_node = rg.add_node(RelationNode.new(rg, {'name' => 'RG_exit', 'type' => 'exit'}))
     # Connect Regions according to the GCFG Edges
     mapping.each { |source, value|
       src_rg, src_bc, src_mc = value
@@ -77,9 +77,9 @@ class GCFGTool
 
     # Now we have to identify and copy all functions that are called
     bc_funcs = Set.new(bitcode_function.instructions\
-                        .collect_concat { |instr| instr.callees||[] })
+                        .collect_concat { |instr| instr.callees || [] })
     mc_funcs = Set.new(machine_function.instructions\
-                        .collect_concat { |instr| instr.callees||[] })
+                        .collect_concat { |instr| instr.callees || [] })
     bc_funcs.each { |func|
       func = @pml_in.bitcode_functions.by_name(func)
       @pml_out.bitcode_functions.add_function(func.data.dup)
@@ -186,7 +186,7 @@ class GCFGTool
 end
 
 if __FILE__ == $0
-  SYNOPSIS=<<EOF if __FILE__ == $0
+  SYNOPSIS = <<EOF if __FILE__ == $0
 Transform Program according to the global control flow graph
 EOF
   options, args = PML::optparse([],"", SYNOPSIS) do |opts|

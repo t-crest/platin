@@ -318,13 +318,13 @@ private
     # correctness check
     slice_groups = @blockslices.group_by { |bs| bs.first.block }
     blocks.each { |b|
-      current=-1
+      current = -1
       slice_groups[b] ||= [] # empty blocks
       slice_groups[b].each { |bs|
-        assert("Block slices not complete: #{b}") { bs.first.index == current+1 }
+        assert("Block slices not complete: #{b}") { bs.first.index == current + 1 }
         current = bs.last.index
       }
-      assert("Block slices not complete: #{b}") { current+1 == b.instructions.length }
+      assert("Block slices not complete: #{b}") { current + 1 == b.instructions.length }
     }
   end
 
@@ -466,7 +466,7 @@ class RegionGraph
   class BlockSliceNode < Node
     attr_reader :block, :first, :last
     def initialize(block, first, last)
-      super(block.qname+"[#{first}..#{last}]")
+      super(block.qname + "[#{first}..#{last}]")
       @block = block
       @first, @last = first, last
     end
@@ -654,7 +654,7 @@ class CallGraph < PMLObject
     attr_reader :successors_with_callsite
     def initialize(function, context)
       @function, @context = function, context
-      @qname= "CGNode:#{function.qname}#{context.qname}"
+      @qname = "CGNode:#{function.qname}#{context.qname}"
       @successors_with_callsite = []
     end
     def add_callsite(callsite, targets)

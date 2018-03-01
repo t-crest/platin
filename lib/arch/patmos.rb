@@ -44,14 +44,14 @@ class SimulatorTrace
       begin
 	wpfile = build_wp_file
         needs_options(@options, :pasim)
-        pasim_options="--debug=0 --debug-fmt=trace -b #{@elf} --wpfile=#{wpfile.path}"
-	pasim_options+=" -I #{@options.sim_input}" if @options.sim_input
+        pasim_options = "--debug=0 --debug-fmt=trace -b #{@elf} --wpfile=#{wpfile.path}"
+	pasim_options += " -I #{@options.sim_input}" if @options.sim_input
         cmd = "#{@options.pasim} #{arch.config_for_simulator.join(" ")} #{pasim_options} 2>&1 1>/dev/null"
         debug(@options, :patmos) { "Running pasim: #{cmd}" }
         IO.popen("#{cmd}") do |io|
-          while item=parse(io.gets)
+          while item = parse(io.gets)
             yield item
-            @stats_num_items+=1
+            @stats_num_items += 1
           end
         end
       ensure
@@ -145,8 +145,8 @@ class ExtractSymbols
       ret
     when "sws", "swm", "swl", "swc", "lwl", "lwm", "lwc"
       ret['opcode'] = instr.upcase
-      ret['memode'] = {"s"=> "store", "l"=>"load"}[instr[0]]
-      ret['memtype'] = {"l"=> "local", "m"=>"memory", "s"=>"stack", "c"=>"cache"}[instr[2]]
+      ret['memode'] = {"s" => "store", "l" => "load"}[instr[0]]
+      ret['memtype'] = {"l" => "local", "m" => "memory", "s" => "stack", "c" => "cache"}[instr[2]]
       ret
     when "ret", "retnd", "xret"
       ret['opcode'] = instr.upcase
@@ -168,7 +168,7 @@ class ExtractSymbols
       ret
     end
   end
-  RE_HEX=/[0-9A-Fa-f]/
+  RE_HEX = /[0-9A-Fa-f]/
   RE_FUNCTION_LABEL = %r{ ^
     ([^.: ][^: ]*):             # label
   }x
@@ -204,7 +204,7 @@ class Architecture < PML::Architecture
     end
   end
   def Architecture.default_config
-    memories = PML::MemoryConfigList.new([PML::MemoryConfig.new('main',2*1024*1024,16,0,21,0,21)])
+    memories = PML::MemoryConfigList.new([PML::MemoryConfig.new('main',2 * 1024 * 1024,16,0,21,0,21)])
     caches = PML::CacheConfigList.new([Architecture.default_instr_cache('method-cache'),
                                   PML::CacheConfig.new('stack-cache','stack-cache','block',nil,4,2048),
                                   PML::CacheConfig.new('data-cache','set-associative','dm',nil,16,2048) ])
@@ -474,7 +474,7 @@ class Architecture < PML::Architecture
         elsif cache.policy && cache.policy.downcase == 'fifo'
           "fifo#{cache.associativity}"
         else
-          warn("Patmos simulator configuration: the only supported cache replacement "+
+          warn("Patmos simulator configuration: the only supported cache replacement " +
                "policies with associativity >= 1 are LRU and FIFO")
 	  "no"
         end
@@ -502,7 +502,7 @@ class Architecture < PML::Architecture
       if data_area.memory.ideal?
         # FIXME: This is incorrect for bypasses, but simulator does
 	# not support different timings based on access type yet.
-	warn("Bypass data loads and data stores are configured to be single cycle, but this "+
+	warn("Bypass data loads and data stores are configured to be single cycle, but this " +
 	     "is not supported by pasim at the moment.")
         opts.push("--dckind")
         opts.push("ideal")

@@ -186,7 +186,7 @@ end
 class Instruction
   def ais_ref(opts = {})
     if address && block.label
-      "#{block.ais_ref} #{opts[:ais2] ? "->":"+"} #{self.address - block.address} byte"
+      "#{block.ais_ref} #{opts[:ais2] ? "->" : "+"} #{self.address - block.address} byte"
     elsif opts[:branch_index]
       assert("FIXME ais2 counts instructions from 0.") { opts[:ais2] == nil }
       "#{block.ais_ref} + #{opts[:branch_index]} branches"
@@ -258,10 +258,10 @@ class AISExporter
       case cache.name
       when 'data-cache'
         if cache.policy == "lru" or cache.policy == "fifo"
-          gen_fact("cache data size=#{cache.size}, associativity=#{cache.associativity}, line-size=#{cache.line_size},"+
+          gen_fact("cache data size=#{cache.size}, associativity=#{cache.associativity}, line-size=#{cache.line_size}," +
                    "policy=#{cache.policy.upcase}, may=chaos", "PML machine configuration")
         elsif cache.policy == "dm"
-          gen_fact("cache data size=#{cache.size}, associativity=1, line-size=#{cache.line_size},"+
+          gen_fact("cache data size=#{cache.size}, associativity=1, line-size=#{cache.line_size}," +
                    "policy=LRU, may=chaos", "PML machine configuration")
 	elsif cache.policy == "ideal"
 	  # TODO: We can only configure an ideal cache by making the data memory zero-cycle accesses, which makes
@@ -272,20 +272,20 @@ class AISExporter
 	  warn("aiT: unsupported data-cache policy #{cache.policy}, skipping data cache configuration")
 	end
       when 'instruction-cache'
-        gen_fact("cache code size=#{cache.size}, associativity=#{cache.associativity}, line-size=#{cache.line_size},"+
+        gen_fact("cache code size=#{cache.size}, associativity=#{cache.associativity}, line-size=#{cache.line_size}," +
                  "policy=#{cache.policy.upcase}, may=chaos", "PML machine configuration")
       when 'method-cache' # new in aiT version >= 205838
         gen_fact("global method_cache_block_size=#{cache.block_size}","PML machine configuration")
         mcache_policy, mcache_assoc = cache.policy.upcase, cache.associativity
         max_mcache_assoc = MAX_METHODCACHE_ASSOCIATIVITY[mcache_policy.upcase]
         if mcache_assoc > max_mcache_assoc
-          warn("aiT: method cache with policy #{mcache_policy} does not support associativity > #{max_mcache_assoc}"+
+          warn("aiT: method cache with policy #{mcache_policy} does not support associativity > #{max_mcache_assoc}" +
                " (assuming associativity #{max_mcache_assoc})")
           mcache_assoc = max_mcache_assoc
         end
         line_size = 4 # template by absint
         cache_size = line_size * mcache_assoc
-        gen_fact("cache code size=#{cache_size}, associativity=#{mcache_assoc}, line-size=#{line_size},"+
+        gen_fact("cache code size=#{cache_size}, associativity=#{mcache_assoc}, line-size=#{line_size}," +
                  "policy=#{cache.policy.upcase}, may=chaos", "PML machine configuration")
       when 'stack-cache'
         # always enabled (new in aiT version >= 205838)
@@ -334,7 +334,7 @@ class AISExporter
 
   def gen_fact(ais_instr, descr, derived_from=nil)
     @stats_generated_facts += 1
-    @outfile.puts(ais_instr+";" +" # "+descr)
+    @outfile.puts(ais_instr + ";" + " # " + descr)
     debug(@options,:ait) {
       s = " derived from #{derived_from}" if derived_from
       "Wrote AIS instruction: #{ais_instr}#{s}"
@@ -519,7 +519,7 @@ class AISExporter
         scope,bound = scope_bound
         next if options.ais_disable_export.include?('loop-bounds')
         next if ! bound.constant? && options.ais_disable_export.include?('symbolic-loop-bounds')
-        (loop_bounds[scope]||=[]).push([bound,ff])
+        (loop_bounds[scope] ||= []).push([bound,ff])
       else
         supported = export_flowfact(ff)
         @stats_skipped_flowfacts += 1 unless supported
@@ -717,9 +717,9 @@ class APXExporter
     # There is probably a better way to do this .. e.g., use a template file.
     report  = report_prefix + ".txt"
     results = report_prefix + ".xml"
-    report_analysis= report_prefix + ".#{analysis_entry}.xml"
-    xmlns_url='http://www.absint.com/apx'
-    xmlns="xmlns=\"#{xmlns_url}\""
+    report_analysis = report_prefix + ".#{analysis_entry}.xml"
+    xmlns_url = 'http://www.absint.com/apx'
+    xmlns = "xmlns=\"#{xmlns_url}\""
 
     doc = REXML::Document.new "<!DOCTYPE APX><project></project>"
     project = doc.root
@@ -926,7 +926,7 @@ class AitImport
             end
             debug(options,:ait) {
               sprintf("- %s 0x%08x..0x%08x (%d bytes), mod=0x%x rem=0x%x\n",
-                      se.attributes['type'],min,max,max-min,mod || -1,rem || -1)
+                      se.attributes['type'],min,max,max - min,mod || -1,rem || -1)
             } if unpredictable
             if(max < min)
               # aiT uses a wraparound domain in the new versions
@@ -945,11 +945,11 @@ class AitImport
               # we go for the unsigned one for addresses.
 
               # if min < max+width, the information is not really useful
-              if(min < max+var_width)
-                values.push(ValueRange.new(0,2**var_bitwidth-1,nil))
+              if(min < max + var_width)
+                values.push(ValueRange.new(0,2**var_bitwidth - 1,nil))
               else
                 values.push(ValueRange.new(0,max,nil))
-                values.push(ValueRange.new(min,2**var_bitwidth-1,nil))
+                values.push(ValueRange.new(min,2**var_bitwidth - 1,nil))
               end
             else
               values.push(ValueRange.new(min,max,nil))
@@ -1165,7 +1165,7 @@ class AitImport
               # if the edge is on the worst-case path, increase WCET frequency
               if attr_count > 0
                 debug(options, :ait) { "Adding frequency to intraprocedural edge #{pml_edge}: #{attr_count} (#{edge})" }
-                (edge_freq[pml_edge]||=Hash.new(0))[context] += attr_count
+                (edge_freq[pml_edge] ||= Hash.new(0))[context] += attr_count
               end
             end
           }
@@ -1186,16 +1186,16 @@ class AitImport
         ins = cref.programpoint
         ins.block.outgoing_edges.each { |pml_edge|
           if ins.live_successor?(pml_edge.target)
-            (edge_cycles[pml_edge]||=Hash.new(0))[context] += path_cycles
-            (edge_contrib[pml_edge]||=Hash.new(0))[context] += contrib_cycles
+            (edge_cycles[pml_edge] ||= Hash.new(0))[context] += path_cycles
+            (edge_contrib[pml_edge] ||= Hash.new(0))[context] += contrib_cycles
           end
         }
       else
         pml_edge = cref.programpoint
         assert("read_wcet_analysis_result: expecting Edge type") { pml_edge.kind_of?(Edge) }
 
-        (edge_cycles[pml_edge]||=Hash.new(0))[context]  += path_cycles
-        (edge_contrib[pml_edge]||=Hash.new(0))[context] += contrib_cycles
+        (edge_cycles[pml_edge] ||= Hash.new(0))[context]  += path_cycles
+        (edge_contrib[pml_edge] ||= Hash.new(0))[context] += contrib_cycles
       end
     }
 

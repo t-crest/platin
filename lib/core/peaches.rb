@@ -181,7 +181,7 @@ class ASTDecl < ASTNode
     @ident  = ident
     @params = params
     @params ||= []
-    @expr   = expr
+    @expr = expr
   end
 
   def evaluate(context)

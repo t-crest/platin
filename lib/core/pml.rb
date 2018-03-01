@@ -407,7 +407,7 @@ class PMLDoc
   end
 
   def to_s
-    sprintf("PMLDoc{bitcode-functions: |%d|, machine-functions: |%d|"+
+    sprintf("PMLDoc{bitcode-functions: |%d|, machine-functions: |%d|" +
             ", flowfacts: |%s|, valuefacts: |%d|, modelfacts: |%d|" +
             ", timings: |%d|, gcfgs:|%d|",
             bitcode_functions.length, machine_functions.length,
@@ -518,7 +518,7 @@ class PMLDoc
               end
               elem
             }
-            (merged_doc[k]||=[]).concat(v)
+            (merged_doc[k] ||= []).concat(v)
           elsif(! merged_doc[k])
             merged_doc[k] = doc[k]
           elsif(merged_doc[k] != doc[k])
