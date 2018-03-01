@@ -90,7 +90,7 @@ private
 
   def generate_code
     @io.puts @preamble
-    while !@worklist.empty?
+    until @worklist.empty?
       generate_klass(@worklist.pop)
     end
     @io.puts <<-EOF.indent_doc(MODULE_INDENT)

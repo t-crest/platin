@@ -262,7 +262,7 @@ private
     @visited = {}
     @entry_node = add_node(FunctionNode.new(entry_function, Context.empty))
     @worklist = [@entry_node]
-    while !@worklist.empty?
+    until @worklist.empty?
       fn = @worklist.pop
       next if @visited[fn]
       build_function(fn)

@@ -105,7 +105,7 @@ private
   def set_infeasible(block_ref)
     block, ctx = block_ref.programpoint, block_ref.context
     worklist = [block]
-    while !worklist.empty?
+    until worklist.empty?
       block = worklist.pop
       add_refinement(ContextRef.new(block, ctx), true, @infeasible) { |oldval, _| true }
       block.successors.each do |bsucc|

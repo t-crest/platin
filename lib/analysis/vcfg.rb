@@ -629,7 +629,7 @@ class Interpreter
     initial_loc = Location.new(@cfmodel, initial_node, @ctx_manager.initial)
     @in[initial_loc] = start_value
     @queue = [initial_loc]
-    while !@queue.empty?
+    until @queue.empty?
       @steps += 1
       loc = @queue.pop
       inval = @in[loc]

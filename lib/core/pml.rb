@@ -447,7 +447,7 @@ class PMLDoc
   def deep_data_clone
     cloned_data = @data.dup
     worklist = [cloned_data]
-    while !worklist.empty?
+    until worklist.empty?
       d = worklist.pop
       if d.kind_of?(Hash)
         d.each do |k,v|

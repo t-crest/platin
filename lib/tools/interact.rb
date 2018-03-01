@@ -884,7 +884,7 @@ class GetCommand < Command
     segments = args[0].split(/\./)
     element  = REPLContext.instance.options
 
-    while !segments.empty?
+    until segments.empty?
       key = segments.shift.to_sym
       unless element.to_h.key?(key)
         pp element[key]
@@ -932,7 +932,7 @@ class SetCommand < Command
 
     element  = REPLContext.instance.options
 
-    while !segments.empty?
+    until segments.empty?
       key = segments.shift.to_sym
       raise ArgumentError, "No such key: #{key}" unless element.to_h.key?(key)
       if segments.empty?

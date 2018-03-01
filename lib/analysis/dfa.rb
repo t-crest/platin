@@ -195,7 +195,7 @@ class DataFlowAnalysis
 
     # Run worklist algorithm
     step_count = 0
-    while !worklist.empty?
+    until worklist.empty?
       node = worklist.pop
 
       ins  = operator.join(node.predecessors.map { |p|p.outs })

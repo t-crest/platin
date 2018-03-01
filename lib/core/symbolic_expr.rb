@@ -228,7 +228,7 @@ class SEBinary < SymbolicExpression
   def self.collect_fold(op, *args)
     assert("SEBinary#collect_fold: #{op} is not commutative") { SEBinary.commutative?(op) }
     todo, done = args, []
-    while !todo.empty?
+    until todo.empty?
       expr = todo.pop
       if expr.kind_of?(SEBinary) && expr.op == op
         todo.push(expr.a)
@@ -476,7 +476,7 @@ private
         last_op = op
       end
       expr = ps.first
-      while !stack.empty?
+      until stack.empty?
         a,op = stack.pop
         expr = SEBinary.create(op,a,expr)
       end

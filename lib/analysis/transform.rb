@@ -155,9 +155,9 @@ class VariableElimination
     end
 
     # eliminate all variables
-    while !elim_vids.empty?
+    until elim_vids.empty?
       elimvar, elimeq = nil, nil
-      while !elim_eqs.empty?
+      until elim_eqs.empty?
         tmpeq = elim_eqs.pop
         if tmpeq.status == :active
           elimeq = tmpeq

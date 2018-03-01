@@ -50,7 +50,7 @@ module PML
     # process queue until empty
     #
     def process
-      while !@todo.empty?
+      until @todo.empty?
         item = @todo.pop
         @enqueued.delete(item)
         yield item
@@ -126,7 +126,7 @@ module PML
     else
       todo = [entry]
     end
-    while !todo.empty?
+    until todo.empty?
       item = todo.pop
       next if reachable.include?(item)
       reachable.add(item)
