@@ -379,12 +379,12 @@ class WcetTool
                       'cycles' => combined_cycles
                     } )
     end
-    if options.runcheck and not trace_cycles.nil?
+    if options.runcheck && (not trace_cycles.nil?)
       die("wcet check: No timing for simulator trace") unless trace_cycles > 0
-      die("wcet check: No WCET results") unless wcet_cycles and wcet_cycles > 0
+      die("wcet check: No WCET results") unless wcet_cycles && (wcet_cycles > 0)
       pml.timing.each do |te|
         next if te.origin == "trace"
-        next if te.origin != "combined" and options.combine_wca
+        next if (te.origin != "combined") && options.combine_wca
         next unless te.cycles >= 0
         # TODO: remember the trace_cycles per analysis-entry, check depending on analysis-entry
         if te.cycles < trace_cycles
@@ -443,7 +443,7 @@ class WcetTool
     # extraction or trace analysis).
     config = pml.analysis_configurations.by_name('default')
 
-    options.analysis_entry = config.analysis_entry if config and not options.analysis_entry
+    options.analysis_entry = config.analysis_entry if config && (not options.analysis_entry)
     if not options.analysis_entry
       warn("Analysis entry not specified, falling back to 'main'.") if config
       options.analysis_entry = "main"
@@ -527,17 +527,17 @@ EOF
     options.enable_wca = true
     options.combine_wca = false
   end
-  if options.combine_wca and options.disable_ait
+  if options.combine_wca && options.disable_ait
     warn("Use of a3 has been disabled, combined WCET analysis is not available")
     options.combine_wca = false
     options.enable_wca = true
   end
-  if options.combine_wca and options.compute_criticalities
+  if options.combine_wca && options.compute_criticalities
     # We could still do it using aiT, but it would be rather imprecise
     die("Computing criticalities is not possible in combined-WCA mode")
   end
 
-  die("Visualizing ILPs requires the additional --outdir parameter") if options.visualize_ilp and options.outdir == nil
+  die("Visualizing ILPs requires the additional --outdir parameter") if options.visualize_ilp && (options.outdir == nil)
 
   updated_pml = WcetTool.run(PMLDoc.from_files(options.input, options), options)
   updated_pml.dump_to_file(options.output) if options.output

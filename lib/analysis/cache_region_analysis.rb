@@ -24,14 +24,14 @@ class CacheAnalysis
 
   def analyze(entry_function, ipet_builder)
     @scope_graph = nil # reset, entry_function might have changed
-    if mc = @pml.arch.method_cache and not @options.disable_ica
+    if (mc = @pml.arch.method_cache) && (not @options.disable_ica)
       @mca = CacheRegionAnalysis.new(MethodCacheAnalysis.new(mc, entry_function, @pml, @options), @pml, @options)
       @mca.extend_ipet(scope_graph(entry_function), ipet_builder)
-    elsif ic = @pml.arch.instruction_cache and not @options.disable_ica
+    elsif (ic = @pml.arch.instruction_cache) && (not @options.disable_ica)
       @ica = CacheRegionAnalysis.new(InstructionCacheAnalysis.new(ic, @pml, @options), @pml, @options)
       @ica.extend_ipet(scope_graph(entry_function), ipet_builder)
     end
-    if sc = @pml.arch.stack_cache and not @options.disable_sca
+    if (sc = @pml.arch.stack_cache) && (not @options.disable_sca)
       if @options.use_sca_graph
         @sca = StackCacheAnalysisGraphBased.new(sc, @pml, @options)
       else
@@ -40,7 +40,7 @@ class CacheAnalysis
       @sca.analyze_nonscope()
       @sca.extend_ipet(ipet_builder)
     end
-    if dm = @pml.arch.data_memory and not dm.ideal? and not @options.disable_dca
+    if (dm = @pml.arch.data_memory) && (not dm.ideal?) && (not @options.disable_dca)
       # Note: We also run the data cache analysis if there is no data-cache configured, since we
       #       also add the costs for uncached loads and stores here!
       # Note: @options.disable_dca disables *all* data memory access costs and assumes *0* costs.
@@ -60,7 +60,7 @@ class CacheAnalysis
       always_hit = :cached if @options.dca_analysis_type == 'always-hit'
       # An ideal D$ always hits on both loads *and* stores.
       always_hit = :all    if dc && dc.ideal?
-      if not dc or always_hit or @options.dca_analysis_type == 'always-miss'
+      if (not dc) || always_hit || (@options.dca_analysis_type == 'always-miss')
         @dca = AlwaysMissCacheAnalysis.new(NoDataCacheAnalysis.new(dm, always_hit, @pml, @options), @pml, @options)
       else
         @dca = CacheRegionAnalysis.new(DataCacheAnalysis.new(dm, dc, @pml, @options), @pml, @options)
@@ -73,16 +73,16 @@ class CacheAnalysis
     total_cycles = 0
     ica_results, sca_results = Hash.new(0), Hash.new(0)
 
-    puts "Method cache contribution:" if @mca and options.verbose
+    puts "Method cache contribution:" if @mca && options.verbose
     ica_results = @mca.summarize(options, freqs, cost) if @mca
 
-    puts "Instruction cache contribution:" if @ica and options.verbose
+    puts "Instruction cache contribution:" if @ica && options.verbose
     ica_results = @ica.summarize(options, freqs, cost) if @ica
 
-    puts "Stack cache contribution:" if @sca and options.verbose
+    puts "Stack cache contribution:" if @sca && options.verbose
     sca_results = @sca.summarize(options, freqs, cost) if @sca
 
-    puts "Data cache contribution:" if @dca and options.verbose
+    puts "Data cache contribution:" if @dca && options.verbose
     dca_results = @dca.summarize(options, freqs, cost) if @dca
 
     { "instr" => ica_results, "stack" => sca_results, "data" => dca_results }.each do |type,r|
@@ -120,13 +120,13 @@ class LoadInstruction
 
   # True if the accessed address is known precisely
   def known?
-    return false unless tag and tag.respond_to?(:known?)
+    return false unless tag && tag.respond_to?(:known?)
     tag.known?
   end
 
   # True if the address is not known at all (no range or symbol)
   def unknown?
-    return false unless tag and tag.respond_to?(:unknown?)
+    return false unless tag && tag.respond_to?(:unknown?)
     tag.unknown?
   end
 
@@ -174,8 +174,8 @@ class CacheAnalysisBase
            "(#{cost[me]} cyc)" if options.verbose
       cycles += cost[me] || 0
       # count store and bypass separately
-      misses += freqs[me] || 0 unless li.bypass? or li.store?
-      hits += (freqs[me.edgeref] || 0) - (freqs[me] || 0) unless li.bypass? or li.store?
+      misses += freqs[me] || 0 unless li.bypass? || li.store?
+      hits += (freqs[me.edgeref] || 0) - (freqs[me] || 0) unless li.bypass? || li.store?
       # TODO: depending on the cache, we might count stores as hits+misses too..
       stores += freqs[me] || 0 if li.store?
       bypasses += freqs[me] || 0 if li.bypass?
@@ -186,7 +186,7 @@ class CacheAnalysisBase
     { "cache-max-cycles" => cycles, "cache-min-hits" => hits, "cache-max-misses" => misses,
       "cache-max-stores" => stores, "cache-max-bypass" => bypasses,
       "cache-known-address" => known, "cache-unknown-address" => unknown
-    }.select { |k,v| v > 0 or %w[cache-max-cycles cache-max-misses cache-min-hits].include?(k) }.map do |k,v|
+    }.select { |k,v| (v > 0) || %w[cache-max-cycles cache-max-misses cache-min-hits].include?(k) }.map do |k,v|
       [k,v.to_i]
     end
   end
@@ -888,7 +888,7 @@ class DataCacheLine
   end
 
   def uncached?
-    bypass? or store?
+    bypass? || store?
   end
 
   def to_s
@@ -973,11 +973,11 @@ class NoDataCacheAnalysis < DataCacheAnalysisBase
     # All other (including stores) hit in an ideal cache
     return true  if @always_hit == :all
     # Otherwise all loads hit if we use an always-hit analysis
-    @always_hit == :cached and not line.uncached?
+    (@always_hit == :cached) && (not line.uncached?)
   end
 
   def load_instructions(i)
-    if i.memmode == 'load' or i.memmode == 'store'
+    if (i.memmode == 'load') || (i.memmode == 'store')
       return [] if not @pml.arch.data_cache_access?(i)
       line = DataCacheLine.new(nil, i.function, i.memmode, i.memtype)
       # Skip data-cache loads in case we are in always-hit mode..
@@ -1033,7 +1033,7 @@ class DataCacheAnalysis < DataCacheAnalysisBase
   end
 
   def load_instructions(i)
-    if i.memmode == 'load' or i.memmode == 'store'
+    if (i.memmode == 'load') || (i.memmode == 'store')
       # TODO: try to determine address (range) of access
       return [] if not @pml.arch.data_cache_access?(i)
       line = DataCacheLine.new(nil, i.function, i.memmode, i.memtype)
@@ -1231,7 +1231,7 @@ class StackCacheAnalysisGraphBased < StackCacheAnalysis
     cycles = 0
     misses = 0
     @spills.values.flat_map { |i| i }.each do |v|
-      puts "  sc spill #{v}: #{freqs[v]} (#{cost[v]} cyc)" if freqs[v] and freqs[v] > 0 if options.verbose
+      puts "  sc spill #{v}: #{freqs[v]} (#{cost[v]} cyc)" if freqs[v] && (freqs[v] > 0) if options.verbose
       cycles += cost[v] || 0
       misses += freqs[v] || 0
     end

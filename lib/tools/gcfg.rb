@@ -168,7 +168,7 @@ class GCFGTool
       end
 
       # Make all inner nodes progress nodes for now
-      data['type'] = 'progress' if factory == RelationNode and ['exit', 'entry'].include?(data['type'])
+      data['type'] = 'progress' if (factory == RelationNode) && ['exit', 'entry'].include?(data['type'])
 
       bb = function.add_node(factory.new(function, data))
 

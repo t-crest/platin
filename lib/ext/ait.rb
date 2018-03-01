@@ -255,7 +255,7 @@ class AISExporter
     @pml.arch.config.caches.each do |cache|
       case cache.name
       when 'data-cache'
-        if cache.policy == "lru" or cache.policy == "fifo"
+        if (cache.policy == "lru") || (cache.policy == "fifo")
           gen_fact("cache data size=#{cache.size}, associativity=#{cache.associativity}, " +
                    "line-size=#{cache.line_size},policy=#{cache.policy.upcase}, may=chaos",
                    "PML machine configuration")
@@ -296,7 +296,7 @@ class AISExporter
     # work around aiT internal analysis by providing a 0-latency memory range for the stack cache accesses
     if @options.ait_disable_internal_sc
       @pml.arch.config.memory_areas.each do |area|
-        if area.type == 'data' and area.address_range.max > 0xFFFF8000
+        if (area.type == 'data') && (area.address_range.max > 0xFFFF8000)
           ar = area.address_range
           area.address_range = ValueRange.new(ar.min,0xFFFF7FFF,ar.symbol)
         end

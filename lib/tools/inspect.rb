@@ -44,7 +44,7 @@ class InspectTool
   def print_loops(functions, level, ffmap, unbounded, io)
     functions.each do |fun|
       fun.loops.each do |loop|
-        next if unbounded and ffmap[loop.loopheader]
+        next if unbounded && ffmap[loop.loopheader]
         io.puts "=== #{level} loop #{loop.to_s} ==="
         (ffmap[loop.loopheader] || []).each do |ff|
           io.puts "bounded by #{ff.to_s}"

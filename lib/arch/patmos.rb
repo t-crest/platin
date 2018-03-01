@@ -77,7 +77,7 @@ class SimulatorTrace
   end
 
   def parse(line)
-    return nil unless line and not line.chomp.empty?
+    return nil unless line && (not line.chomp.empty?)
     pc, cyc, instr = line.split(' ',3)
     begin
       [ Integer("0x#{pc}"), Integer(cyc), Integer(instr) ]
@@ -104,7 +104,7 @@ class ExtractSymbols
           cond, instr, args = $3, $4, $5
           size = opcode.length / 2
 
-          if last_addr and (addr != last_addr + last_size)
+          if last_addr && (addr != last_addr + last_size)
               die ("Cannot parse objdump. Last address (#{last_addr} #{addr}).")
           end
 
@@ -117,7 +117,7 @@ class ExtractSymbols
           end
         else
           assert("objdump parsing failed: #{line}") do
-            line[0] == "." or line == "\n" or /Disassembly of section/ =~ line
+            (line[0] == ".") || (line == "\n") || /Disassembly of section/ =~ line
           end
         end
       end
@@ -253,7 +253,7 @@ class Architecture < PML::Architecture
 
   def method_cache
     mc = @config.caches.by_name('method-cache')
-    return nil if mc.nil? or mc.type == 'none'
+    return nil if mc.nil? || (mc.type == 'none')
     mc
   end
 
@@ -284,7 +284,7 @@ class Architecture < PML::Architecture
 
   def stack_cache
     sc = @config.caches.by_name('stack-cache')
-    return nil if sc.nil? or sc.type == 'none'
+    return nil if sc.nil? || (sc.type == 'none')
     sc
   end
 
@@ -292,13 +292,13 @@ class Architecture < PML::Architecture
     # TODO: check if this is consistent with what is configured in the
     #      data memory-area (but check only once!)
     dc = @config.caches.by_name('data-cache')
-    return nil if dc.nil? or dc.type == 'none'
+    return nil if dc.nil? || (dc.type == 'none')
     dc
   end
 
   def instruction_cache
     ic = @config.caches.by_name('instruction-cache')
-    return nil if ic.nil? or ic.type == 'none'
+    return nil if ic.nil? || (ic.type == 'none')
     ic
   end
 
@@ -563,13 +563,13 @@ class Architecture < PML::Architecture
   def update_cache_config(options)
 
    # Update data cache
-    if options.data_cache_size or options.data_cache_policy
+    if options.data_cache_size || options.data_cache_policy
       dc_policy = options.data_cache_policy[:policy] if options.data_cache_policy
       dc_assoc  = options.data_cache_policy[:assoc]  if options.data_cache_policy
       # We are not using self.data_cache here because it would return
       # null if the type is set to 'none', even if the entry exists.
       dc = @config.caches.by_name('data-cache')
-      if dc.nil? and (dc_policy != "no")
+      if dc.nil? && (dc_policy != "no")
         dc = self.class.default_config.caches.by_name('data-cache')
         @config.caches.add(dc)
       end
@@ -580,7 +580,7 @@ class Architecture < PML::Architecture
         # partly because it is easier to implement.
         dc.type = 'set-associative' if dc_policy
         dc.type = 'none' if dc_policy == 'no'
-        dc.policy = dc_policy if dc_policy and dc_policy != 'no'
+        dc.policy = dc_policy if dc_policy && (dc_policy != 'no')
         # Set the associativiy whenever we set a policy
         dc.associativity = dc_assoc if dc_policy
 
@@ -591,11 +591,11 @@ class Architecture < PML::Architecture
     end
 
    # Update stack cache
-    if options.stack_cache_size or options.stack_cache_type
+    if options.stack_cache_size || options.stack_cache_type
       # We are not using self.stack_cache here because it would return
       # null if the type is set to 'none', even if the entry exists.
       sc = @config.caches.by_name('stack-cache')
-      if dc.nil? and options.stack_cache_type != 'no'
+      if dc.nil? && (options.stack_cache_type != 'no')
         sc = self.class.default_config.caches.by_name('stack-cache')
         @config.caches.add(sc)
       end
@@ -603,13 +603,13 @@ class Architecture < PML::Architecture
         sc.size = options.stack_cache_size if options.stack_cache_size
         sc.type = 'stack-cache' if options.stack_cache_type
         sc.type = 'none' if options.stack_cache_type == 'no'
-        sc.policy = options.stack_cache_type if options.stack_cache_type and options.stack_cache_type != 'no'
+        sc.policy = options.stack_cache_type if options.stack_cache_type && (options.stack_cache_type != 'no')
       end
     end
 
    # Update instruction cache / method cache
-    if options.instr_cache_kind or options.instr_cache_size or
-        options.instr_cache_policy or options.instr_cache_line_size
+    if options.instr_cache_kind || options.instr_cache_size ||
+        options.instr_cache_policy || options.instr_cache_line_size
 
       ic_policy = options.instr_cache_policy[:policy] if options.instr_cache_policy
       ic_assoc  = options.instr_cache_policy[:assoc]  if options.instr_cache_policy
@@ -622,7 +622,7 @@ class Architecture < PML::Architecture
       end
       # Get or create the active cache
       ic = @config.caches.by_name(ic_key)
-      if ic.nil? and ic_policy != 'no'
+      if ic.nil? && (ic_policy != 'no')
         ic = self.class.default_instr_cache(ic_key)
         @config.caches.add(ic)
       end
@@ -638,7 +638,7 @@ class Architecture < PML::Architecture
         # partly because it is easier to implement.
         ic.type = (ic_key == 'method-cache' ? 'method-cache' : 'set-associative') if ic_policy
         ic.type = 'none' if ic_policy == 'no'
-        ic.policy = ic_policy if ic_policy and ic_policy != 'no'
+        ic.policy = ic_policy if ic_policy && (ic_policy != 'no')
         # Set the associativiy whenever we set a policy
         ic.associativity = ic_assoc if ic_policy
 

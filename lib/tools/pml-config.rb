@@ -131,7 +131,7 @@ class PMLConfigTool
     # TODO Add options to modify tool-configurations and analysis-configurations.
 
     opts.add_check do |options|
-      die("Option --target is mandatory if no input PML is specified") unless options.triple or options.input
+      die("Option --target is mandatory if no input PML is specified") unless options.triple || options.input
     end
   end
 
@@ -230,7 +230,7 @@ if __FILE__ == $PROGRAM_NAME
   end
   if options.input
     pml = PMLDoc.from_files(options.input, options)
-    if options.triple and options.triple != pml.data['triple']
+    if options.triple && (options.triple != pml.data['triple'])
       die("PML triple #{pml.data['triple']} does not match option --target #{options.triple}")
     end
   else

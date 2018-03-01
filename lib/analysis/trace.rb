@@ -365,14 +365,14 @@ class RecorderSpecification
       if recspec =~ SPEC_RE
         scopestr,scopectx,etypes,ectx,elimit = $1,$2,$3,$4,$5
         entity_types = etypes.scan(/./).map do |etype|
-          ENTITIES[etype] or die("RecorderSpecification '#{recspec}': Unknown entity type #{etype}")
+          ENTITIES[etype] || die("RecorderSpecification '#{recspec}': Unknown entity type #{etype}")
         end
         entity_context = ectx ? ectx.to_i : default_callstring_length
         scope_context = scopectx ? scopectx.to_i : default_callstring_length
         entity_call_limit = nil
         entity_call_limit = entity_context if scopestr == 'f' # intraprocedural
         spec = RecorderSpecification.new(entity_types, entity_context, entity_call_limit)
-        scope = SCOPES[scopestr] or die("Bad scope type #{scopestr}")
+        (scope = SCOPES[scopestr]) || die("Bad scope type #{scopestr}")
         recorders.push([scope,scope_context,spec])
       else
         die("Bad recorder Specfication '#{recspec}': does not match #{SPEC_RE}")
@@ -590,7 +590,7 @@ class FunctionRecorder
   def ret(_rsite, _csite, cycles, stall_cycles)
     if @callstack.length == 0
       # puts "#{self}: stopping at #{rsite}->#{csite}"
-      cycles -= stall_cycles if global? and not @options.target_callret_costs
+      cycles -= stall_cycles if global? && (not @options.target_callret_costs)
       results.stop(cycles)
       @scheduler.deactivate(self)
     else

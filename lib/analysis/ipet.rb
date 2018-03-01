@@ -153,7 +153,7 @@ class IPETEdge
   end
 
   def cfg_edge?
-    return true if source.kind_of?(GCFGNode) and (target == :exit || target.kind_of?(GCFGNode))
+    return true if source.kind_of?(GCFGNode) && (target == :exit || target.kind_of?(GCFGNode))
     return false unless source.kind_of?(Block)
     return false unless :exit == target || target.kind_of?(Block)
     true

@@ -147,7 +147,7 @@ class FlowGraphVisualizer < Visualizer
   def find_vedge_timing(profile, node, succ)
     start = Set.new( get_vblocks(node, :predecessors) )
     targets = Set.new( get_vblocks(succ, :successors) )
-    if start == targets and not [*succ].any? { |s| s.kind_of?(CfgNode) and s.block_start? }
+    if (start == targets) && (not [*succ].any? { |s| s.kind_of?(CfgNode) && s.block_start? })
       [*node].map { |n| find_vnode_timing(profile, n) }.flatten
     elsif succ.kind_of?(ExitNode)
       start.map{ |b| profile[b] || [] }.flatten.select do |t|
@@ -197,11 +197,11 @@ class FlowGraphVisualizer < Visualizer
         label += "LOOP #{node.action} #{node.loop.name}"
       end
       options = { label: label }
-      if node.block_start? and sf_headers.include?(node.block)
+      if node.block_start? && sf_headers.include?(node.block)
         # Mark subfunction headers
         options["fillcolor"] = "#ffffcc"
         options["style"] = "filled"
-      elsif not node.block or node.kind_of?(CallNode)
+      elsif (not node.block) || node.kind_of?(CallNode)
         options["style"] = "rounded"
       end
       if block_timing.any?{ |o,profile| find_vnode_timing(profile, node).any? { |e| e.wcetfreq > 0 } }
@@ -232,7 +232,7 @@ class FlowGraphVisualizer < Visualizer
           # These are edges from a block node to either a different block, a self loop,
           # or edges to virtual nodes (assuming the VCFG does not insert virtual nodes
           # within a block)
-          if node.block and ( node.block != s.block or s.block_start? )
+          if node.block && ( (node.block != s.block) || s.block_start? )
             options["label"] = ""
             t.each do |origin, profile|
               # TODO: We need a way to merge results from different contexts properly.
@@ -730,7 +730,7 @@ class VisualizeTool
       # Visualize relation graph
       begin
         rgv = RelationGraphVisualizer.new(options)
-        rg = pml.data['relation-graphs'].find { |f| f['src']['function'] == target or f['dst']['function'] == target }
+        rg = pml.data['relation-graphs'].find { |f| (f['src']['function'] == target) || (f['dst']['function'] == target) }
         raise Exception, "Relation Graph not found" unless rg
         file = File.join(outdir, target + ".rg" + suffix)
         rgv.generate(rgv.visualize(rg),file)

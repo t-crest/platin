@@ -1187,12 +1187,12 @@ EOF
     options.enable_wca = true
     options.combine_wca = false
   end
-  if options.combine_wca and options.disable_ait
+  if options.combine_wca && options.disable_ait
     warn("Use of a3 has been disabled, combined WCET analysis is not available")
     options.combine_wca = false
     options.enable_wca = true
   end
-  if options.combine_wca and options.compute_criticalities
+  if options.combine_wca && options.compute_criticalities
     # We could still do it using aiT, but it would be rather imprecise
     die("Computing criticalities is not possible in combined-WCA mode")
   end

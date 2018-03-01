@@ -158,7 +158,7 @@ module PML
       on("-e", "--analysis-entry FUNCTION", "name/label of function to analyse (=main)") do |f|
         options.analysis_entry = f
       end
-      add_check { |options| options.analysis_entry = "main" unless options.analysis_entry or not set_default }
+      add_check { |options| options.analysis_entry = "main" unless options.analysis_entry || (not set_default) }
     end
 
     def model_file

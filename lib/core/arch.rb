@@ -420,15 +420,15 @@ class CacheConfig < PMLObject
     set_yaml_repr(data)
     # Ensure that associativity is set correctly depending on the policy
     @associativity = 1 if @policy == 'dm'
-    @associativity = @size / @block_size if (not @associativity or @policy == 'ideal') and @block_size
+    @associativity = @size / @block_size if ((not @associativity) || (@policy == 'ideal')) && @block_size
     # Note: If data['attributes'] does not exist, @attributes is detached from data (and vice versa).
     #       We reattach it once we have some attributes.
     @attributes = data ? (data['attributes'] || []) : []
   end
 
   def fully_assoc?
-    return true if @associativity.nil? or @associativity.to_i == 0
-    return false if @block_size.nil? or @block_size == 0
+    return true if @associativity.nil? || (@associativity.to_i == 0)
+    return false if @block_size.nil? || (@block_size == 0)
     @associativity == @size / @block_size
   end
 
@@ -476,7 +476,7 @@ class CacheConfig < PMLObject
       "block-size" => block_size,
       "size" => size,
       "attributes" => attributes
-    }.delete_if { |k,v| v.nil? or v == [] }
+    }.delete_if { |k,v| v.nil? || (v == []) }
   end
 end # class CacheConfig
 
@@ -585,7 +585,7 @@ class MemoryArea < PMLObject
       "memory" => memory ? memory.name : nil,
       "address-range" => address_range.to_pml,
       "attributes" => attributes
-    }.delete_if { |k,v| v.nil? or v == [] }
+    }.delete_if { |k,v| v.nil? || (v == []) }
   end
 end # class MemoryArea
 

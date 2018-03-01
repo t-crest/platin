@@ -59,7 +59,7 @@ class IndexedConstraint
   # Check if this constraint has the form 'x <= c' or 'x >= c'
   def bound?
     normalize! if @inconsistent.nil?
-    return false if @op != 'less-equal' or @lhs.length != 1
+    return false if (@op != 'less-equal') || (@lhs.length != 1)
     v,c = @lhs.first
     c == -1 || c == 1
   end
@@ -67,7 +67,7 @@ class IndexedConstraint
   # Check if this constraint has the form '-x <= 0'
   def non_negative_bound?
     normalize! if @inconsistent.nil?
-    return false if @op != 'less-equal' or @lhs.length != 1 or @rhs != 0
+    return false if (@op != 'less-equal') || (@lhs.length != 1) || (@rhs != 0)
     v,c = @lhs.first
     c == -1
   end
@@ -206,7 +206,7 @@ class ILP
 
   # index of a variable
   def index(variable)
-    @indexmap[variable] or raise UnknownVariableException, "unknown variable: #{variable}"
+    @indexmap[variable] || raise(UnknownVariableException, "unknown variable: #{variable}")
   end
 
   # variable indices

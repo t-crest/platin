@@ -56,7 +56,7 @@ class LiftedType
   def dup; end
 
   def eq?(rhs)
-    return false if rhs == TOP or rhs == BOT
+    return false if (rhs == TOP) || (rhs == BOT)
     @value == rhs.value
   end
 end
@@ -192,7 +192,7 @@ class DataFlowAnalysis
     @entry_node.outs = operator.entry
 
     # Ensure that all nodes are transformed at least once
-    worklist.push(@nodes.select { |n| n.reachable? and not n.entry? } )
+    worklist.push(@nodes.select { |n| n.reachable? && (not n.entry?) } )
 
     # Run worklist algorithm
     step_count = 0
@@ -245,7 +245,7 @@ class DataFlowAnalysis
         node = Node.new
       else
         # Is this a return block or does the block have a sucessor outside the region?
-        if b.successors.empty? or targets.length < b.successors.length
+        if b.successors.empty? || (targets.length < b.successors.length)
           # Then we have an exit node
           node = ExitNode.new(bundles.last)
           @exit_nodes.push(node)

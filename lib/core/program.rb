@@ -957,7 +957,7 @@ private
     end
 
     def accept?(options)
-      status == 'valid' or (options.accept_corrected_rgs and status == 'corrected')
+      (status == 'valid') || (options.accept_corrected_rgs && (status == 'corrected'))
     end
 
     def get_function(level)
@@ -1076,7 +1076,7 @@ private
       @entry_block = @function.blocks.by_name(data['entry-block'])
       @exit_block  = @function.blocks.by_name(data['exit-block'])
       assert("Could not find ABB Entry/Exit Blocks #{data}") do
-        @entry_block != nil and @exit_block != nil
+        (@entry_block != nil) && (@exit_block != nil)
       end
       @regions = nil
     end
@@ -1105,14 +1105,14 @@ private
 
       # Validity Checking on the ABB
       assert("ABB is not well formed; Entry/Exit BB is not uniquly mappable (#{to_s}, #{entry_rg}, #{exit_rg})") do
-        entry_rg.length == 1 and exit_rg.length == 1
+        (entry_rg.length == 1) && (exit_rg.length == 1)
       end
 
       rg_region = RegionContainer.new(entry_rg[0], exit_rg[0])
 
       # Entry and Exit must be progress nodes (or similar)
       assert("ABB is not well formed; Entry/Exit nodes are of wrong type") do
-        [:progress, :entry, :exit].include?(rg_region.entry_node.type) and
+        [:progress, :entry, :exit].include?(rg_region.entry_node.type) &&
           [:progress, :entry, :exit].include?(rg_region.exit_node.type)
       end
 
@@ -1126,7 +1126,7 @@ private
         rg_nodes_lhs = Set.new rg_region.nodes.map{ |n| n.get_block(:src) }
         rg_nodes_rhs = Set.new rg_region.nodes.map{ |n| n.get_block(:dst) }
 
-        rg_nodes_lhs == Set.new(bitcode_region.nodes) and rg_nodes_rhs == Set.new(machine_region.nodes)
+        (rg_nodes_lhs == Set.new(bitcode_region.nodes)) && (rg_nodes_rhs == Set.new(machine_region.nodes))
       end
       @regions = {
         rg: rg_region,
