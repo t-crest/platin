@@ -190,7 +190,9 @@ module PML
       end
       v
     end
+
     private
+
     def add_lookup(dict,key,val,name,opts = {})
       return if !key && opts[:ignore_if_missing]
       if dict[key]

@@ -564,6 +564,7 @@ class FFXExporter
   end
 
   private
+
   def add_element(parent, name)
     el = REXML::Element.new(name, parent)
     yield el

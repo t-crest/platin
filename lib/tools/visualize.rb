@@ -25,7 +25,9 @@ class Visualizer
     g.output(options.graphviz_format.to_sym => "#{outfile}")
     info("#{outfile} ok") if options.verbose
   end
+
 protected
+
   def digraph(label)
     g = GraphViz.new(:G, type: :digraph)
     g.node[:shape] = "rectangle"
@@ -620,7 +622,9 @@ class HtmlIndexPages
       end
     end
   end
+
   private
+
   def link(target,type)
     "#{target}.#{type}.html"
   end

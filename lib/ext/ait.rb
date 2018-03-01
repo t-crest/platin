@@ -760,6 +760,7 @@ class APXExporter
   end
 
   private
+
   def add_element(parent, name)
     el = REXML::Element.new(name, parent)
     el.add_attributes('xmlns' => XMLNS_URL)

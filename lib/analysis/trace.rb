@@ -611,7 +611,9 @@ class FunctionRecorder
     header += "\n  context: #{@context}" if @context && !@context.empty?
     results.dump(io, header)
   end
+
 private
+
   def in_context(pp)
     ctx = Context.callstack_suffix(@callstack, @callstring_length)
     ContextRef.new(pp,ctx)
@@ -706,7 +708,9 @@ class FrequencyRecord
       io.puts "  Loop #{loop} in #{bound}"
     end
   end
+
 private
+
   def merge_loop_bound(key,bound)
     unless @loopbounds[key]
       @loopbounds[key] = bound..bound

@@ -300,6 +300,7 @@ class ILP
   end
 
   private
+
   def add_indexed_constraint(terms_indexed, op, constr_rhs, name, tags)
     constr = create_indexed_constraint(terms_indexed, op, constr_rhs, name, tags)
     @constraints.add(constr) if constr

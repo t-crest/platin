@@ -928,6 +928,7 @@ module PML
     end
 
 private
+
     def build_relation_index
       @basic_block_index = { src: {}, dst: {} }
       @list.each do |rgn|
@@ -1204,6 +1205,7 @@ private
     end
 
     protected
+
     def add_predecessor(node)
       @predecessors.push(node)
     end

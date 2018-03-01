@@ -62,7 +62,9 @@ class SimulatorTrace
       end
     end
   end
+
   private
+
   def build_wp_file
     if @options.outdir
       file = File.open(File.join(@options.outdir, 'watchpoints.txt'), 'w')
@@ -125,7 +127,9 @@ class ExtractSymbols
     die "The objdump command '#{options.objdump}'" \
         " exited with status #{$CHILD_STATUS.exitstatus}" unless $CHILD_STATUS.success?
   end
+
   private
+
   def self.build_instruction(addr, _cond, size, instr, args)
     ret = { 'address' => addr, 'size' => size, 'source' => 'objdump', 'opcode' => instr }
     reg_args = args.scan('$r').length

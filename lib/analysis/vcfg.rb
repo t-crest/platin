@@ -132,7 +132,9 @@ class ControlFlowModel
     # puts " matching scope exit locations: #{@scope_exits[scope_node][scope_context_entry].to_a.join(", ")}"
     @scope_exits[scope_node][scope_context_entry]
   end
+
 private
+
   #
   # Refine control-flow model using infeasible/calltarget flowfact information
   #
@@ -223,7 +225,9 @@ class VCFG
     assert("expecting block, not #{block.class}") { block.kind_of?(Block) }
     @blockstart[block]
   end
+
 private
+
   def build_basic_block_nodes(function, _arch)
     first_nodes = {}
     block_predecessors = {}

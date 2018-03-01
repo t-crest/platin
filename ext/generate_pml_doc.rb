@@ -80,6 +80,7 @@ class PMLGenerator
   end
 
 private
+
   MODULE_INDENT = 0
   KLASS_INDENT  = 2
   METHOD_INDENT = 4

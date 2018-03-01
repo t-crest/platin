@@ -251,6 +251,7 @@ class PersistenceDataFlowAnalysis
     end
 
     private
+
     #
     # for each node in the region graph
     #  - if it is an access node, check local persistence for the accessed tag

@@ -28,7 +28,9 @@ class M5SimulatorTrace
       end
     end
   end
+
   private
+
   def parse(line)
     return nil unless line
     time,event,pc,rest = line.split(/\s*:\s*/,4)

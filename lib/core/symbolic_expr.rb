@@ -442,6 +442,7 @@ class SymbolicExpressionParser
   end
 
 private
+
   def get_parser
     expr
   end

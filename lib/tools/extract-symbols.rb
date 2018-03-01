@@ -125,7 +125,9 @@ class ExtractSymbols
     @pml.text_symbols = @text_symbols
     @pml
   end
+
   private
+
   RE_OBJDUMP_LABEL = %r{
     ( #{RE_HEX}{8} ) # address
     . {9}            # .ignore

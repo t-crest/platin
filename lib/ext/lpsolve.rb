@@ -64,6 +64,7 @@ class LpSolveILP < ILP
   end
 
   private
+
   # Remove characters from constraint names that are not allowed in an .lp file
   def cleanup_name(name)
     name.gsub(/[@: \/()->]/, "_")
