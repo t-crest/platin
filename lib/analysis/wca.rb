@@ -27,7 +27,7 @@ class WCA
 
     # Builder and Analysis Entry
     ilp = GurobiILP.new(@options) if @options.use_gurobi
-    ilp = LpSolveILP.new(@options) unless ilp
+    ilp ||= LpSolveILP.new(@options)
 
     if entry_label.start_with?("GCFG:")
       gcfg_entry = @pml.analysis_entry(@options)

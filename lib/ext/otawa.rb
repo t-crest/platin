@@ -102,7 +102,7 @@ class OSXExporter
     tt_write_first_beat = area.memory.write_latency + area.memory.write_transfer_time
 
     address_range = area.address_range
-    address_range = ValueRange.new(0,0xFFFFFFFF,nil) unless address_range
+    address_range ||= ValueRange.new(0,0xFFFFFFFF,nil)
 
     add_element(banks, "bank") { |bank|
       bank << rexml_str("name", "RAM")

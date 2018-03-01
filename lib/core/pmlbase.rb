@@ -92,7 +92,7 @@ module PML
 
     def data
       # on-demand construction of the YAML representation
-      @data = to_pml unless @data
+      @data ||= to_pml
       @data
     end
 

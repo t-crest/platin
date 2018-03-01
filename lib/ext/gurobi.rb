@@ -20,7 +20,7 @@ class GurobiILP < ILP
   def solve_max
     # create LP problem (maximize)
     lp_name = options.write_lp
-    lp_name = File.join(options.outdir, "model.lp") unless lp_name
+    lp_name ||= File.join(options.outdir, "model.lp")
     sol_name = File.join(options.outdir, "model.sol")
     ilp_name = File.join(options.outdir, "model.ilp")
     lp = File.open(lp_name, "w")

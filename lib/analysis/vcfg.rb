@@ -55,9 +55,7 @@ class ControlFlowModel
   #
   def get_vcfg(f)
     vcfg = @vcfgs[f]
-    unless vcfg
-      vcfg = @vcfgs[f] = VCFG.new(f, @arch)
-    end
+    vcfg ||= @vcfgs[f] = VCFG.new(f, @arch)
     vcfg
   end
 

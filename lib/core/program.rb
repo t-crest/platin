@@ -615,7 +615,7 @@ module PML
 
     # true if this block may return from the function
     def may_return?
-      @returnsites = instructions.list.select { |i| i.returns? } unless @returnsites
+      @returnsites ||= instructions.list.select { |i| i.returns? }
       ! @returnsites.empty? || must_return?
     end
 

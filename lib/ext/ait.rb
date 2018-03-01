@@ -330,7 +330,7 @@ class AISExporter
         properties.push("#{kw} write time = #{tt_write_first_beat}")
       end
       address_range = area.address_range
-      address_range = ValueRange.new(0,0xFFFFFFFF,nil) unless address_range
+      address_range ||= ValueRange.new(0,0xFFFFFFFF,nil)
       transfer_bitsize = area.memory.transfer_size * 8
       gen_fact("area #{address_range.to_ais} features \"port_width\" = #{transfer_bitsize} and access #{properties.join(", ")}",
                "PML machine configuration")

@@ -401,7 +401,7 @@ class FlowFactTransformation
         end
 	next unless rs.include?(transform_entry)
       end
-      transform_entry = target_analysis_entry unless transform_entry
+      transform_entry ||= target_analysis_entry
       (flowfacts_by_entry[transform_entry] ||= []).push(ff)
     }
     selected_flowfacts = flowfacts_by_entry.values.flatten(1)

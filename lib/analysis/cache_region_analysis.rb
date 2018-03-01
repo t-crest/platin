@@ -18,7 +18,7 @@ class CacheAnalysis
   end
 
   def scope_graph(entry_function)
-    @scope_graph = ScopeGraph.new(entry_function, @refinement, @pml, @options) unless @scope_graph
+    @scope_graph ||= ScopeGraph.new(entry_function, @refinement, @pml, @options)
     @scope_graph
   end
 

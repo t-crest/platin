@@ -98,7 +98,7 @@ class Architecture < PML::Architecture
   attr_reader :triple, :config
   def initialize(triple, config)
     @triple, @config = triple, config
-    @config = self.class.default_config unless @config
+    @config ||= self.class.default_config
   end
 
   def Architecture.default_config
