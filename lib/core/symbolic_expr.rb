@@ -453,7 +453,7 @@ private
   end
 
   def rchain
-    spec = paren(seq(lazy{expr},sym(','),sym('+'),sym(','),lazy{expr}),'{','}').map do |a,_,_,_,b|
+    spec = paren(seq(lazy{ expr },sym(','),sym('+'),sym(','),lazy{ expr }),'{','}').map do |a,_,_,_,b|
       [a,b]
     end
     flags = paren(flag,'<','>')
@@ -466,7 +466,7 @@ private
 
   def composite_expr
     arithop = one_of_("+*") | sym('umax') | sym('smax') | sym('/u') | sym('/s')
-    paren(lazy {expr}.join(arithop)).map do |ps|
+    paren(lazy { expr }.join(arithop)).map do |ps|
       stack = []
       last_op = nil
       while ps.length > 1

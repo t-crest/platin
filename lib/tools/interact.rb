@@ -74,7 +74,7 @@ class TypeToken < ListToken
   TYPES = ['string', 'int', 'bool']
 
   def get_list
-    return TYPES + TYPES.map {|m| '[' + m + ']'}
+    return TYPES + TYPES.map { |m| '[' + m + ']' }
   end
 
   def coerce(input)
@@ -133,11 +133,11 @@ end
 
 class ProgramPointToken < ListToken
   def qnameblocks(pmllist)
-    pmllist.map {|f| f.blocks.list}.compact.flatten.map{|b| b.qname}.flatten
+    pmllist.map { |f| f.blocks.list }.compact.flatten.map{ |b| b.qname }.flatten
   end
 
   def qnameinstructions(pmllist)
-    pmllist.map {|f| f.blocks.list}.compact.flatten.map{|b| b.instructions.list}.compact.flatten.map{|i| i.qname}
+    pmllist.map { |f| f.blocks.list }.compact.flatten.map{ |b| b.instructions.list }.compact.flatten.map{ |i| i.qname }
   end
 
   def get_list
@@ -157,10 +157,10 @@ class ProgramPointToken < ListToken
 
   def coerce(qname)
     pp = nil
-    squelch {pp   = Block.from_qname(REPLContext.instance.pml.bitcode_functions, qname)}
-    squelch {pp ||= Block.from_qname(REPLContext.instance.pml.machine_functions, qname)}
-    squelch {pp ||= Instruction.from_qname(REPLContext.instance.pml.bitcode_functions, qname)}
-    squelch {pp ||= Instruction.from_qname(REPLContext.instance.pml.machine_functions, qname)}
+    squelch { pp   = Block.from_qname(REPLContext.instance.pml.bitcode_functions, qname) }
+    squelch { pp ||= Block.from_qname(REPLContext.instance.pml.machine_functions, qname) }
+    squelch { pp ||= Instruction.from_qname(REPLContext.instance.pml.bitcode_functions, qname) }
+    squelch { pp ||= Instruction.from_qname(REPLContext.instance.pml.machine_functions, qname) }
     raise ArgumentError, "Unknown programpoint: #{qname}" if pp.nil?
     return pp
   end
@@ -487,7 +487,7 @@ class VisualizeCommand < Command
                           :Port => opts.server_port \
       )
     else
-      assert("Unexpected visualisation type: :#{args[0]}") {false}
+      assert("Unexpected visualisation type: :#{args[0]}") { false }
     end
 
     puts "Starting server, use <Ctrl-C> to return to REPL"
@@ -579,7 +579,7 @@ class EditCommand < ModelFactCommand
   def ask_retry(failed)
     # Parsing failed: Ask if user wants to retry
     tokens = ['yes', 'abort']
-    Readline.completion_proc = proc {|s| tokens.grep(/^#{Regexp.escape(s)}/) }
+    Readline.completion_proc = proc { |s| tokens.grep(/^#{Regexp.escape(s)}/) }
     doretry = nil
 
     loop do
@@ -765,8 +765,8 @@ class DiffCommand < Command
     add = cur - old
     del = old - cur
 
-    add.map! {|mf| DiffEntry.new(:+, mf.to_source)}
-    del.map! {|mf| DiffEntry.new(:-, mf.to_source)}
+    add.map! { |mf| DiffEntry.new(:+, mf.to_source) }
+    del.map! { |mf| DiffEntry.new(:-, mf.to_source) }
 
     diffs = add.to_a + del.to_a
     diffs.sort!

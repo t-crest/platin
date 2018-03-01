@@ -101,7 +101,7 @@ class DFASetOperator < LiftedDFAOperator
   end
 
   def transfer(node, ins)
-    outs = ins.map {|i| @operator.transfer(node, i) }.to_set
+    outs = ins.map { |i| @operator.transfer(node, i) }.to_set
     merge(outs)
   end
 
@@ -192,14 +192,14 @@ class DataFlowAnalysis
     @entry_node.outs = operator.entry
 
     # Ensure that all nodes are transformed at least once
-    worklist.push(@nodes.select { |n| n.reachable? and not n.entry?} )
+    worklist.push(@nodes.select { |n| n.reachable? and not n.entry? } )
 
     # Run worklist algorithm
     step_count = 0
     while not worklist.empty?
       node = worklist.pop
 
-      ins  = operator.join( node.predecessors.map{|p|p.outs} )
+      ins  = operator.join( node.predecessors.map{ |p|p.outs } )
       outs = operator.transfer( node, ins )
       changed = operator.changed?( node.outs, outs )
 

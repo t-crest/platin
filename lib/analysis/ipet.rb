@@ -49,7 +49,7 @@ class ControlFlowRefinement
     return unless flowfact.globally_valid?(@entry)
     # add calltargets
     scope,cs,targets = flowfact.get_calltargets
-    add_calltargets(ContextRef.new(cs.instruction, scope.context), targets.map { |t| t.function}) if scope
+    add_calltargets(ContextRef.new(cs.instruction, scope.context), targets.map { |t| t.function }) if scope
     # set infeasible blocks
     infeasibleblocks = flowfact.get_block_infeasible
     infeasibleblocks.each do |scope,bref|
@@ -233,7 +233,7 @@ class IPETModel
         when Edge
           edge_frequency(pp, c * sgn).each { |k,v| terms[k] += v }
         when Function
-          function_frequency(pp, c * sgn).each { |k,v| terms[k] += v}
+          function_frequency(pp, c * sgn).each { |k,v| terms[k] += v }
         when Loop
           sum_loop_entry(pp,c * sgn).each { |k,v| terms[k] += v }
         when Integer
@@ -346,14 +346,14 @@ class IPETModel
   end
 
   def sum_incoming(block, factor=1)
-    return @sum_incoming_override[block].map {|e| [e, factor] } if @sum_incoming_override[block]
+    return @sum_incoming_override[block].map { |e| [e, factor] } if @sum_incoming_override[block]
     block.predecessors.map do |pred|
       [IPETEdge.new(pred,block,level), factor]
     end
   end
 
   def sum_outgoing(block, factor=1)
-    return @sum_outgoing_override[block].map {|e| [e, factor] } if @sum_outgoing_override[block]
+    return @sum_outgoing_override[block].map { |e| [e, factor] } if @sum_outgoing_override[block]
 
     block.successors.map do |succ|
       [IPETEdge.new(block,succ,level), factor]
@@ -533,7 +533,7 @@ class IPETBuilder
     # Super Structure: set of reachable ABBs
     abbs = Set.new
     # WITH BLOCK => Default value []
-    abb_outgoing_edge = Hash.new {|hsh, key| hsh[key] = [] }
+    abb_outgoing_edge = Hash.new { |hsh, key| hsh[key] = [] }
     reachable_set(entry['gcfg']) do |node|
       abb = node.abb
       abbs.add(abb)
@@ -638,8 +638,8 @@ class IPETBuilder
     edges[region.entry_node][:in] = outgoing_abb_flux
     edges.each do |bb, e|
       next if bb == :exit
-      incoming = e[:in].map {|x| [x, 1]}
-      outgoing = e[:out].map {|x| [x, -1]}
+      incoming = e[:in].map { |x| [x, 1] }
+      outgoing = e[:out].map { |x| [x, -1] }
       ilp.add_constraint(incoming + outgoing, "equal", 0,
                        "abb_flux_#{bb.qname}", :structural)
 

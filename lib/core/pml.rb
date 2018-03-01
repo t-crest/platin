@@ -340,7 +340,7 @@ class PMLDoc
         # In those cases, one of the symbols would be chosen (based on link
         # order), which we cannot know on pml level
         #  -> Die and let the user resolve it in accordance to the binary
-        strong_symbols = v.select {|s| s.is_external? }
+        strong_symbols = v.select { |s| s.is_external? }
         assert("Cannot link \"#{k}\" automatically: #{v}") { strong_symbols.length == 1 }
         r = strong_symbols[0]
       end

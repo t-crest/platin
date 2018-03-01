@@ -77,7 +77,7 @@ module PML
       self.on("--report [FILE]", "generate report") { |f| options.report = f || "-" }
       self.on("--append-report [KEYVALUELIST]", "append to existing report") do |kvlist|
         options.report_append = if kvlist
-          Hash[kvlist.split(/,/).map { |s| s.split(/=/)}]
+          Hash[kvlist.split(/,/).map { |s| s.split(/=/) }]
         else
           {}
         end

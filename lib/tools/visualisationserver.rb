@@ -379,7 +379,7 @@ end
 end # module
 
 if __FILE__ == $PROGRAM_NAME
-  assert ("Usage: #{$PROGRAM_NAME} srcroot artifactsdir") {ARGV.length == 2}
+  assert ("Usage: #{$PROGRAM_NAME} srcroot artifactsdir") { ARGV.length == 2 }
   server = Server.new(:ilp, \
                       { \
                           :srcroot => ARGV[0] \

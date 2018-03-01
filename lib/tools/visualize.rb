@@ -396,7 +396,7 @@ class ILPVisualisation < Visualizer
       return nil if src_hint.nil?
 
       file, _, line = src_hint.rpartition(':')
-      assert("Failed to parse src_hint #{src_hint}, expecting file:line") { file && line}
+      assert("Failed to parse src_hint #{src_hint}, expecting file:line") { file && line }
       hint = {
         :file => file,
         :line => line,
@@ -470,7 +470,7 @@ class ILPVisualisation < Visualizer
     node = @mapping[key]
     return node if node
 
-    assert("Not an IPETEdge"){edge.is_a?(IPETEdge)}
+    assert("Not an IPETEdge"){ edge.is_a?(IPETEdge) }
 
     src = add_node(edge.source)
     dst = add_node(edge.target)
@@ -537,7 +537,7 @@ class ILPVisualisation < Visualizer
       constraints << { :formula => c.to_s, :name => c.name }
       vals = []
       # If this assertion breaks: merge left and right side
-      assert ("We only deal with constant rhs") {c.rhs.is_a?(Fixnum)}
+      assert ("We only deal with constant rhs") { c.rhs.is_a?(Fixnum) }
       collect_variables(c).each do |v|
         next unless @mapping.has_key?(v)
         node = add_node(v)
@@ -578,7 +578,7 @@ class ILPVisualisation < Visualizer
     format = opts[:format]
     format ||= :svg
 
-    assert("Graph has to be drawn first drawn") {!@graph.nil?}
+    assert("Graph has to be drawn first drawn") { !@graph.nil? }
     @graph.output({format => String})
   end
 

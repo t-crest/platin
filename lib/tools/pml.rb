@@ -160,11 +160,11 @@ class PMLTool
     if options.stats
       stats = {}
       stats['machine code functions'] = pml.machine_functions.length
-      stats['machine code blocks'] = pml.machine_functions.map { |mf| mf.blocks.length}.inject(0,:+)
+      stats['machine code blocks'] = pml.machine_functions.map { |mf| mf.blocks.length }.inject(0,:+)
       stats['bitcode functions'] = pml.bitcode_functions.length
-      stats['bitcode blocks'] = pml.bitcode_functions.map { |b| b.blocks.length}.inject(0,:+)
+      stats['bitcode blocks'] = pml.bitcode_functions.map { |b| b.blocks.length }.inject(0,:+)
       stats['relation graphs'] = pml.relation_graphs.length
-      stats['relation graph nodes'] = pml.relation_graphs.map { |rg| rg.nodes.length}.inject(0,:+)
+      stats['relation graph nodes'] = pml.relation_graphs.map { |rg| rg.nodes.length }.inject(0,:+)
       stats['timing entries'] = pml.timing.length
       stats['valuefacts'] = pml.valuefacts.length
       stats['flowfacts'] = pml.flowfacts.length

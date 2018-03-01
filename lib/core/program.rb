@@ -362,7 +362,7 @@ module PML
     end
 
     def [](k)
-      assert("Function: do not access blocks/loops directly") { k != 'blocks' && k != 'loops'}
+      assert("Function: do not access blocks/loops directly") { k != 'blocks' && k != 'loops' }
       data[k]
     end
 
@@ -486,7 +486,7 @@ module PML
         idx = bundle
         bundle += 1 unless i.bundled?
         idx
-      end.map{|b| b[1]}
+      end.map{ |b| b[1] }
     end
 
     # loops (not ready at initialization time)
@@ -1121,8 +1121,8 @@ private
       end
 
       assert("ABB is not well formed; No Single-Entry/Single-Exit region all levels") do
-        rg_nodes_lhs = Set.new rg_region.nodes.map{|n| n.get_block(:src)}
-        rg_nodes_rhs = Set.new rg_region.nodes.map{|n| n.get_block(:dst)}
+        rg_nodes_lhs = Set.new rg_region.nodes.map{ |n| n.get_block(:src) }
+        rg_nodes_rhs = Set.new rg_region.nodes.map{ |n| n.get_block(:dst) }
 
         rg_nodes_lhs == Set.new(bitcode_region.nodes) and rg_nodes_rhs == Set.new(machine_region.nodes)
       end
@@ -1170,7 +1170,7 @@ private
     end
 
     def connect(nodes)
-      @successors = data['successors'].map {|i| nodes[i] }
+      @successors = data['successors'].map { |i| nodes[i] }
       data['successors'].each do |i|
         nodes[i].add_predecessor(self)
       end
@@ -1221,7 +1221,7 @@ private
       @blocks = ABBList.new(relation_graphs, data['blocks'])
       @nodes  = GCFGNodeList.new(@blocks, data['nodes'])
       # Find the Entry Edge into the system
-      entry_nodes = @nodes.select {|e| e.predecessors.length == 0 }
+      entry_nodes = @nodes.select { |e| e.predecessors.length == 0 }
       die("GCFG #{name} is not well formed, multiple entries") unless entry_nodes.length == 1
       @entry_node = entry_nodes[0]
     end

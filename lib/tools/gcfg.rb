@@ -109,7 +109,7 @@ class GCFGTool
     machine_region = abb.get_region(:dst)
 
     # Copy Blocks to new Functions
-    name_mapper = lambda {|name| "#{gcfg_node.qname}_#{name}" }
+    name_mapper = lambda { |name| "#{gcfg_node.qname}_#{name}" }
     new_bc_region = copy_region_to_function(name_mapper, bitcode_region, bitcode_function, Block)
     new_mc_region = copy_region_to_function(name_mapper, machine_region, machine_function, Block)
     new_rg_region = copy_region_to_function(name_mapper, rg_region, rg_graph, RelationNode)
@@ -117,8 +117,8 @@ class GCFGTool
     # Each Function for the Patmos architecture is divided into
     # different subfunctions, which are loaded into the function
     # cache, therefore, we look for all subfunctions our abb covers.
-    rg.get_function(:dst).subfunctions.select &(lambda {|subfunction|
-      blocks_included = subfunction.blocks.map {|block| machine_region.nodes.include? block }
+    rg.get_function(:dst).subfunctions.select &(lambda { |subfunction|
+      blocks_included = subfunction.blocks.map { |block| machine_region.nodes.include? block }
       if blocks_included.any?
         assert("If one block of a subfunction is included in the region, all subfunction blocks must be included") do
           blocks_included.all?
@@ -126,7 +126,7 @@ class GCFGTool
         # Copy and rename subfunction to machien_code function
         data = subfunction.data.dup
         data['name'] = name_mapper.(data['name'])
-        data['blocks'] = data['blocks'].map{|x| name_mapper.(x) }
+        data['blocks'] = data['blocks'].map{ |x| name_mapper.(x) }
         machine_function.add_subfunction(data)
       end
     })
@@ -137,7 +137,7 @@ class GCFGTool
   def copy_region_to_function(name_mapper, region, function, factory)
     # Copy Blocks to Bitcode Functions
     target_region = ABB::RegionContainer.new
-    blocks_within = Set.new region.nodes.map {|x| x.name}
+    blocks_within = Set.new region.nodes.map { |x| x.name }
     region.nodes.each do |bb_in|
       data = Marshal.load(Marshal.dump(bb_in.data))
       ['name', 'mapsto', 'src-block', 'dst-block'].each do |key|
@@ -147,8 +147,8 @@ class GCFGTool
       map_sequence = lambda { |seq|
         seq \
           # Select only labels that are within the current region
-          .select {|name| blocks_within.include? name} \
-          .map    {|name| name_mapper.(name) }
+          .select { |name| blocks_within.include? name } \
+          .map    { |name| name_mapper.(name) }
       }
 
       ['successors', 'predecessors', 'src-successors', 'dst-successors', 'loops'].each do |key|

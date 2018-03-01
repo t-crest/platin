@@ -50,7 +50,7 @@ class AisExportTool
   # return the list of exports (filter the ones given in the 'except' argument)
   def AisExportTool.get_exports_list(except = [])
     unknown = (Set[*except] - Set[*AIS_EXPORT_TYPES])
-    assert("unknown export(s): #{unknown.map {|e| e}.join(',')}") { unknown.empty? }
+    assert("unknown export(s): #{unknown.map { |e| e }.join(',')}") { unknown.empty? }
     return Set[*AIS_EXPORT_TYPES] - Set[*except]
   end
 

@@ -241,11 +241,11 @@ module PML
     end
 
     def stats(_pml)
-      assert("Unimplemented") {false}
+      assert("Unimplemented") { false }
     end
 
     def dump_stats(_pml, _io=$stderr)
-      assert("Unimplemented") {false}
+      assert("Unimplemented") { false }
     end
 
     def to_set
@@ -301,7 +301,7 @@ module PML
 
     # string representation of the value fact
     def to_s
-      "#<ModelFact #{attributes.map {|k,v| "#{k}=#{v}"}.join(",")}, #{type} at #{ppref}: #{expr}>"
+      "#<ModelFact #{attributes.map { |k,v| "#{k}=#{v}" }.join(",")}, #{type} at #{ppref}: #{expr}>"
     end
 
     # deep clone: clone flow fact, lhs and attributes
@@ -350,13 +350,13 @@ module PML
         # Ugly as hell, but use reflection to check for the :function attr
         # accessor
         assert("guards match on function scope, no function found #{ppref} in #{self}") \
-              { ppref.respond_to?(:function)}
+              { ppref.respond_to?(:function) }
         assert("guards set a blockfreq, no block found for #{ppref} in #{self}") \
               do    ppref.kind_of?(ContextRef) \
                 && ppref.respond_to?("programpoint") \
                 && ppref.programpoint.kind_of?(Block)
               end
-        assert("guard operate on bitcode level") { level == 'bitcode'}
+        assert("guard operate on bitcode level") { level == 'bitcode' }
         fun = ppref.function
 
         # When the guardexpression is false, then this path is infeasible
@@ -381,9 +381,9 @@ module PML
         #     type:            lbound
         #     expression:      '10'
 
-        assert("lbound operates on bitcode level") { level == 'bitcode'}
+        assert("lbound operates on bitcode level") { level == 'bitcode' }
         assert("lbounds match on function scope, no function found #{ppref} in #{self}") \
-              { ppref.respond_to?(:function)}
+              { ppref.respond_to?(:function) }
         assert("lbounds set a blockfreq, no block found for #{ppref} in #{self}") \
               do    ppref.kind_of?(ContextRef) \
                 && ppref.respond_to?("programpoint") \
@@ -415,7 +415,7 @@ module PML
         # Stoat's tea party. He was heading into the Dark Wood."
         #                                   -- Mr Bunnsy has an adventure
       when "callee"
-        assert("callee operates on machinecode level") { level == 'machinecode'}
+        assert("callee operates on machinecode level") { level == 'machinecode' }
         assert("callee targets call instructions" + \
                ", no unresolved call found for #{ppref} in #{self}") \
               do    ppref.kind_of?(ContextRef) \
@@ -426,10 +426,10 @@ module PML
 
         # XXX: use model-eval-foo here
         listfields = /\[(.*)\]/.match(expr)
-        assert("Not a list: #{expr}") {listfields != nil}
+        assert("Not a list: #{expr}") { listfields != nil }
         entries = listfields[1].split(",")
         # Remove whitespace
-        entries.map!{|entry| entry.strip}
+        entries.map!{ |entry| entry.strip }
 
         # If we have a qualified identifier, perform patmos-clang-style
         # namemangling (only for static identifiers)
@@ -442,7 +442,7 @@ module PML
         mutation = PMLMachineCalleeMutation.new(ppref.programpoint, entries)
         mutation
       else
-        assert("Cannot translate type #{@type} to a fact") {false}
+        assert("Cannot translate type #{@type} to a fact") { false }
       end
     end
   end
@@ -482,7 +482,7 @@ module PML
 
     # string representation of the flow fact
     def to_s
-      "#<FlowFact #{attributes.map {|k,v| "#{k}=#{v}"}.join(",")}, in #{scope}: #{lhs} #{op} #{rhs}>"
+      "#<FlowFact #{attributes.map { |k,v| "#{k}=#{v}" }.join(",")}, in #{scope}: #{lhs} #{op} #{rhs}>"
     end
 
     # deep clone: clone flow fact, lhs and attributes
@@ -738,7 +738,7 @@ module PML
     # string representation of the value fact
     def to_s
       vs = values.map { |vr| vr.to_s }.join(", ")
-      "#<ValueFact #{attributes.map {|k,v| "#{k}=#{v}"}.join(",")}, at #{ppref}: #{variable}#{"[width=#{width}]" if width} \\in {#{vs}}>"
+      "#<ValueFact #{attributes.map { |k,v| "#{k}=#{v}" }.join(",")}, at #{ppref}: #{variable}#{"[width=#{width}]" if width} \\in {#{vs}}>"
     end
 
   end
@@ -772,7 +772,7 @@ module PML
 
     def to_pml
       { 'reference' => reference.data, 'cycles' => cycles, 'wcet-frequency' => wcetfreq,
-        'criticality' => criticality, 'wcet-contribution' => wcet_contribution }.delete_if {|k,v| v.nil? }
+        'criticality' => criticality, 'wcet-contribution' => wcet_contribution }.delete_if { |k,v| v.nil? }
     end
 
     def to_s
@@ -816,7 +816,7 @@ module PML
     end
 
     def to_s
-      "#<TimingEntry #{attributes.map {|k,v| "#{k}=#{v}"}.join(",")}, in #{scope}: #{cycles} cycles>"
+      "#<TimingEntry #{attributes.map { |k,v| "#{k}=#{v}" }.join(",")}, in #{scope}: #{cycles} cycles>"
     end
   end
 

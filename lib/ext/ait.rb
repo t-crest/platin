@@ -584,7 +584,7 @@ class AISExporter
 
   def add_stack_cache_inst(type, ins, value)
     assert("cannot annotate stack cache instruction w/o instruction addresses") { ins.address }
-    assert("aiT: unknown stack cache annotation") {[:reserve, :free, :ensure].include? type}
+    assert("aiT: unknown stack cache annotation") { [:reserve, :free, :ensure].include? type }
     @sc[ins] = [type, value * 4]
   end
 

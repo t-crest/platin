@@ -65,17 +65,17 @@ class Model
     done = []
     @stack << done
 
-    facts = modelfacts.map {|fact| fact.to_fact(pml, self)}.compact
+    facts = modelfacts.map { |fact| fact.to_fact(pml, self) }.compact
 
-    facts.select{|f| f.kind_of?(FlowFact)}.each do |ff|
+    facts.select{ |f| f.kind_of?(FlowFact) }.each do |ff|
       pml.flowfacts.add(ff)
       done << ff
     end
-    facts.select{|f| f.kind_of?(ValueFact)}.each do |vf|
+    facts.select{ |f| f.kind_of?(ValueFact) }.each do |vf|
       pml.flowfacts.add(ff)
       done << vf
     end
-    facts.select{|f| f.kind_of?(PMLMutation)}.each do |mt|
+    facts.select{ |f| f.kind_of?(PMLMutation) }.each do |mt|
       mt.mutate(pml)
       done << mt
     end
@@ -90,7 +90,7 @@ class Model
   def repair(pml)
     facts = @stack.pop
 
-    assert ("Trying to repair a pml without undo information") {facts != nil}
+    assert ("Trying to repair a pml without undo information") { facts != nil }
 
     # We have to apply the undo steps in the inverse order of the "mutate"
     # operations, if two mutations target the same pieces of information, or we
@@ -99,7 +99,7 @@ class Model
     facts = facts.reverse
 
     # Valuefacts and Flowfacts are handled by "with_temporary_sections"
-    facts.select{|f| f.kind_of?(PMLMutation)}.each do |mt|
+    facts.select{ |f| f.kind_of?(PMLMutation) }.each do |mt|
       mt.repair(pml)
     end
   end

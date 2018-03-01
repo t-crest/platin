@@ -218,7 +218,7 @@ module PML
           self.new(data.map { |d| #{element_type}.from_pml(ctx,d) }, data)
         end
         def build_index
-          #{all_indices.map { |index| "@index_#{index} = {}"}.join("; ") }
+          #{all_indices.map { |index| "@index_#{index} = {}" }.join("; ") }
           @list.each { |item| add_index(item) }
         end
         private

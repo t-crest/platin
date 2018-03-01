@@ -106,7 +106,7 @@ class Context
     if index == :last
       entry = list.last
     else
-      list.each {|e| entry = e if e.level == index}
+      list.each { |e| entry = e if e.level == index }
     end
     raise PeachesBindingError.new "No binding for variable #{label} on level #{level}" if entry.nil?
     entry.val
@@ -345,7 +345,7 @@ class ASTScope < ASTNode
   end
 
   def to_s
-    "let (#{@bindings.map {|b| b.to_s}.join(',')}) in (#{@expr})"
+    "let (#{@bindings.map { |b| b.to_s }.join(',')}) in (#{@expr})"
   end
 
   def visit(visitor)
@@ -430,7 +430,7 @@ class ASTCall < ASTNode
   end
 
   def to_s
-    "#{self.class.name}#(#{@label} #{@args.map {|a| a.to_s}.join(' ')})"
+    "#{self.class.name}#(#{@label} #{@args.map { |a| a.to_s }.join(' ')})"
   end
 
   def visit(visitor)
@@ -462,7 +462,7 @@ class ASTExpr < ASTNode
         raise PeachesInternalError.new "Unknown type: #{type}"
       end
       match
-    end.inject(false) { |x,y| x || y}
+    end.inject(false) { |x,y| x || y }
 
     raise PeachesTypeError.new "Expression #{node.class.name}:#{node} is no instance of #{types}" if !typecheck
 
@@ -679,7 +679,7 @@ class Parser
     |num| ASTNumberLiteral.new (Integer(num))
   end
   # Magic here: negative lookahead to prohibit keyword/symbol ambiguity
-  IDENTIFIER = seq((''.r ^ lazy{KEYWORD}), symbol_(/[a-zA-Z]\w*/)) {|_,id| ASTIdentifier.new(id)}.expect('identifier')
+  IDENTIFIER = seq((''.r ^ lazy{ KEYWORD }), symbol_(/[a-zA-Z]\w*/)) { |_,id| ASTIdentifier.new(id) }.expect('identifier')
   IF         = word('if').expect 'keyword_if'
   THEN       = word('then').expect 'keyword_then'
   ELSE       = word('else').expect 'keyword_else'
@@ -688,7 +688,7 @@ class Parser
   MULT_OP    = symbol_(/[*\/%]/).fail 'multiplication operator'
   ADD_OP     = symbol_(/[\+]/).fail 'addition operator'
   SUB_OP     = symbol_(/[\-]/).fail 'subtraction operator'
-  BOOLEAN    = (symbol_('True') {|_| ASTBoolLiteral.new(true)} | symbol_('False') {|_| ASTBoolLiteral.new(false)}).fail 'boolean'
+  BOOLEAN    = (symbol_('True') { |_| ASTBoolLiteral.new(true) } | symbol_('False') { |_| ASTBoolLiteral.new(false) }).fail 'boolean'
   UNDEF      = symbol_('undefined')
   ERROR      = symbol_('error')
   KEYWORD    = IF | THEN | ELSE | BOOLEAN | UNDEF | ERROR
@@ -708,26 +708,26 @@ class Parser
 
   def arith_expr
     if @ARITH_EXPR.nil?
-      arith_expr = ( seq__(lazy{sub_term}, ADD_OP, lazy{arith_expr}) do |lhs, op, rhs|
+      arith_expr = ( seq__(lazy{ sub_term }, ADD_OP, lazy{ arith_expr }) do |lhs, op, rhs|
                         puts "arith_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
                       end \
-                   | lazy{sub_term} \
+                   | lazy{ sub_term } \
                    )
-      sub_term   = ( seq__(lazy{term}, SUB_OP, lazy{sub_term}) do |lhs, op, rhs|
+      sub_term   = ( seq__(lazy{ term }, SUB_OP, lazy{ sub_term }) do |lhs, op, rhs|
                         puts "arith_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
                       end \
-                   | lazy{term} \
+                   | lazy{ term } \
                    )
-      term       = ( seq__(lazy{factor}, MULT_OP, lazy{term}) do |lhs, op, rhs|
+      term       = ( seq__(lazy{ factor }, MULT_OP, lazy{ term }) do |lhs, op, rhs|
                         puts "term: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
                       end\
-                   | lazy{factor} \
+                   | lazy{ factor } \
                    )
       factor     = ( seq__('(', arith_expr, ')')[1] \
-                   | lazy{call} \
+                   | lazy{ call } \
                    | NUM \
                    )
       _ = factor   # Silence warning
@@ -739,22 +739,22 @@ class Parser
 
   def cond_expr
     if @COND_EXPR.nil?
-      cond_expr = ( seq__(lazy{ao_expr}, LOGIC_OP, lazy{cond_expr}) do |lhs, op, rhs|
+      cond_expr = ( seq__(lazy{ ao_expr }, LOGIC_OP, lazy{ cond_expr }) do |lhs, op, rhs|
                        puts "cond_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                        ASTLogicalOp.new(lhs, op, rhs)
                      end \
-                  | seq__(lazy{ao_expr}, CMP_OP, lazy{cond_expr}) do |lhs, op, rhs|
+                  | seq__(lazy{ ao_expr }, CMP_OP, lazy{ cond_expr }) do |lhs, op, rhs|
                       puts "cond_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                       ASTCompareOp.new(lhs, op, rhs)
                     end \
-                  | lazy{ao_expr} \
+                  | lazy{ ao_expr } \
                   )
-      ao_expr   = ( seq__(lazy{arith_expr}, CMP_OP, lazy{arith_expr}) do |lhs, op, rhs|
+      ao_expr   = ( seq__(lazy{ arith_expr }, CMP_OP, lazy{ arith_expr }) do |lhs, op, rhs|
                        puts "ao_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                        ASTCompareOp.new(lhs, op, rhs)
                      end \
                   | seq__('(', cond_expr, ')')[1] \
-                  | lazy{arith_expr} \
+                  | lazy{ arith_expr } \
                   | BOOLEAN \
                   )
       _ = ao_expr # Silence warning
@@ -765,11 +765,11 @@ class Parser
 
   def expr
     if @EXPR.nil?
-      expr = ( seq__(IF, lazy{cond_expr}, THEN, lazy{expr}, ELSE, lazy{expr}) do |_,cond,_,e1,_,e2|
+      expr = ( seq__(IF, lazy{ cond_expr }, THEN, lazy{ expr }, ELSE, lazy{ expr }) do |_,cond,_,e1,_,e2|
                       puts "IF #{cond} then {#{e1}} else {#{e2}}" if DEBUG_PARSER
                       ASTIf.new(cond, e1, e2)
                     end \
-                  | lazy{cond_expr} \
+                  | lazy{ cond_expr } \
                   | UNDEF \
                   | ERROR \
                   )
@@ -786,8 +786,8 @@ class Parser
 
   def call
     if @CALL.nil?
-      arg_list = ( seq__(lazy{expr}, lazy{arg_list}) \
-                 | lazy{expr} \
+      arg_list = ( seq__(lazy{ expr }, lazy{ arg_list }) \
+                 | lazy{ expr } \
                  )
       callsite =  ( seq__(IDENTIFIER, arg_list) \
                   | IDENTIFIER \
@@ -803,7 +803,7 @@ class Parser
 
   def decl
     if @DECL.nil?
-      par_list    = ( seq__(var_decl, lazy{par_list}) \
+      par_list    = ( seq__(var_decl, lazy{ par_list }) \
                     | var_decl \
                     ).fail "parameterlist"
       declaration = ( seq__(var_decl, par_list) \
@@ -832,12 +832,12 @@ class Parser
   end
 
   def program
-    program = ( seq_(comment, lazy{program}, skip:/[\r\n]+/)[1] \
-              | seq_(decl, lazy{program}, skip: /[\r\n]+/) \
-              | seq_(decl, /[\r\n]+/.r.maybe) {|d, _| [d]} \
+    program = ( seq_(comment, lazy{ program }, skip:/[\r\n]+/)[1] \
+              | seq_(decl, lazy{ program }, skip: /[\r\n]+/) \
+              | seq_(decl, /[\r\n]+/.r.maybe) { |d, _| [d] } \
               )
       seq(/[\r\n]+/.r.maybe, program, /[\r\n]+/.r.maybe).eof { |_,p,_| ASTProgram.new(p.flatten) } \
-        | /[\r\n]*/.r.maybe.eof { ASTProgram.new([])}
+        | /[\r\n]*/.r.maybe.eof { ASTProgram.new([]) }
   end
 end # class Parser
 

@@ -171,7 +171,7 @@ class MachineTraceMonitor < TraceMonitor
             while b0.instructions.size == 0
               debug(@options,:trace) { "Publishing empty block #{b0} (<-#{@last_block})" }
               publish(:block, b0, @cycles)
-              assert("Empty block may only have one successor") { b0.successors.size == 1}
+              assert("Empty block may only have one successor") { b0.successors.size == 1 }
               @last_block = b0
               b0 = @last_block.successors.first
             end
