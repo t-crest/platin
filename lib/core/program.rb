@@ -483,9 +483,9 @@ module PML
     def bundles
       bundle = 0
       instructions.chunk do |i|
-	idx = bundle
-	bundle += 1 unless i.bundled?
-	idx
+        idx = bundle
+        bundle += 1 unless i.bundled?
+        idx
       end.map{|b| b[1]}
     end
 

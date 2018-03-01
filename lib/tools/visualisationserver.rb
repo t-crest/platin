@@ -101,7 +101,7 @@ class Templates
     context.local_variable_set(:bodytemplate, bodytemplate)
 
     jsinit = %{
-		  init('<%= u(constrainturl) %>', 'ilpcanvas', '/static/css/ilp.svg.css');
+                  init('<%= u(constrainturl) %>', 'ilpcanvas', '/static/css/ilp.svg.css');
       sourceview_init('ilpcanvas', '<%= u(srchinturl) %>', '<%= u(srcviewurl) %>');
     }
     context.local_variable_set(:jsinit, jsinit)

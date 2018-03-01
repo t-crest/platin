@@ -166,11 +166,11 @@ class PMLConfigTool
       next unless entry
       # Clean up value
       if value.nil?
-	value = true
+        value = true
       elsif /^\d+$/ =~ value
-	value = value.to_i
+        value = value.to_i
       elsif /^0x[0-9a-fA-F]+$/ =~ value
-	value = Integer(value)
+        value = Integer(value)
       end
       entry.set_attribute(key, value)
     end if attrs

@@ -380,9 +380,9 @@ class FlowFactTransformation
 
     target_functions = if target_level == "machinecode"
                          @pml.machine_functions
-		       else
-		         @pml.bitcode_functions
-		       end
+                       else
+                         @pml.bitcode_functions
+                       end
     rs, unresolved = target_functions.reachable_from(target_analysis_entry.name)
 
     # partition local flow-facts by entry (if possible), rest is transformed in global scope
@@ -397,7 +397,7 @@ class FlowFactTransformation
         elsif ff.level == 'bitcode' &&  target_level == "machinecode"
           transform_entry = pml.machine_functions.by_label(transform_entry.name)
         end
-	next unless rs.include?(transform_entry)
+        next unless rs.include?(transform_entry)
       end
       transform_entry ||= target_analysis_entry
       (flowfacts_by_entry[transform_entry] ||= []).push(ff)

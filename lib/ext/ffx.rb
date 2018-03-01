@@ -249,7 +249,7 @@ class F4Exporter
           targets = successors.uniq.map do |succ|
             succ.f4_ref
           end.join(", ")
-	  # TODO: where does the flow fact actually come from?
+          # TODO: where does the flow fact actually come from?
           gen_fact("multibranch #{ins.f4_ref(:branch_index => branches)} to #{targets}","jumptable (source: llvm)",ins)
         end
       end
@@ -287,7 +287,7 @@ class F4Exporter
         gen_fact("loop #{loopname} #{bound.to_f4}",
                  "global loop header bound (source: #{ff.origin})")
       else
-	warn("F4: symbolic loop bound #{bound} not supported")
+        warn("F4: symbolic loop bound #{bound} not supported")
         @stats_skipped_flowfacts += 1
       end
     end

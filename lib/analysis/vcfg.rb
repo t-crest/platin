@@ -268,7 +268,7 @@ private
       end
       if block.successors.empty?
         # Either return or stuck node (should never be emitted by the compiler)
-	# SH: could be a tail call to a noreturn function; check if node has a call
+        # SH: could be a tail call to a noreturn function; check if node has a call
         if ! has_return
           # warn("Block with empty successors but without return information - adding exit edge")
           current_node.add_successor(@exit)

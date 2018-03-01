@@ -88,7 +88,7 @@ class CacheAnalysis
     { "instr" => ica_results, "stack" => sca_results, "data" => dca_results }.each do |type,r|
       r.each do |k,v|
         report.attributes[k + "-" + type] = v
-	total_cycles += v if k == "cache-max-cycles"
+        total_cycles += v if k == "cache-max-cycles"
       end if r
     end
 
@@ -215,8 +215,8 @@ class AlwaysMissCacheAnalysis < CacheAnalysisBase
       n.function.blocks.each do |block|
         block.instructions.each do |i|
 
-	  load_instructions = @cache_properties.load_instructions(i)
-	  next unless load_instructions
+          load_instructions = @cache_properties.load_instructions(i)
+          next unless load_instructions
 
           load_instructions = load_instructions.to_a
           next if load_instructions.empty?
@@ -226,28 +226,28 @@ class AlwaysMissCacheAnalysis < CacheAnalysisBase
           # add a variable for each load instruction
           load_instructions.each do |li|
 
-	    ipet_builder.ilp.add_variable(li)
-	    # load instruction is less equal to instruction frequency
-	    ipet_builder.mc_model.assert_less_equal({li => 1},{li.insref => 1},"load_ins_#{li}",:cache)
+            ipet_builder.ilp.add_variable(li)
+            # load instruction is less equal to instruction frequency
+            ipet_builder.mc_model.assert_less_equal({li => 1},{li.insref => 1},"load_ins_#{li}",:cache)
 
-	    # add load edges to attribute cost to
-	    load_edges = []
-	    li.insref.block.outgoing_edges.each do |edge|
-	      me = MemoryEdge.new(edge, li)
-	      ipet_builder.ilp.add_variable(me)
-	      ipet_builder.ilp.add_cost(me, @cache_properties.load_cost(li.tag))
+            # add load edges to attribute cost to
+            load_edges = []
+            li.insref.block.outgoing_edges.each do |edge|
+              me = MemoryEdge.new(edge, li)
+              ipet_builder.ilp.add_variable(me)
+              ipet_builder.ilp.add_cost(me, @cache_properties.load_cost(li.tag))
               debug(@options, :cache, :costs) { "Costs for load edge #{me}: #{@cache_properties.load_cost(li.tag)}" }
-	      # memory edge frequency is less equal to edge frequency
-	      ipet_builder.mc_model.assert_less_equal({me => 1},{me.edgeref => 1},"load_edge_#{me}",:cache)
-	      load_edges.push(me)
-	    end
-	    # sum of load edges is equal to load instructions
-	    load_edge_sum = load_edges.map { |me| [me,1] }
-	    ipet_builder.mc_model.assert_equal(load_edge_sum, {li => 1}, "load_edges_#{li}",:cache)
-	    # collect all load edges
-	    @all_load_edges.concat(load_edges)
-	  end
-	end
+              # memory edge frequency is less equal to edge frequency
+              ipet_builder.mc_model.assert_less_equal({me => 1},{me.edgeref => 1},"load_edge_#{me}",:cache)
+              load_edges.push(me)
+            end
+            # sum of load edges is equal to load instructions
+            load_edge_sum = load_edges.map { |me| [me,1] }
+            ipet_builder.mc_model.assert_equal(load_edge_sum, {li => 1}, "load_edges_#{li}",:cache)
+            # collect all load edges
+            @all_load_edges.concat(load_edges)
+          end
+        end
       end
     end
   end
@@ -320,8 +320,8 @@ class CacheRegionAnalysis < CacheAnalysisBase
           # sum of load edges is equal to load instructions
           load_edge_sum = load_edges.map { |me| [me,1] }
           ipet_builder.mc_model.assert_equal(load_edge_sum, {li => 1}, "load_edges_#{li}",:cache)
-	  # collect all load edges
-	  @all_load_edges.concat(load_edges)
+          # collect all load edges
+          @all_load_edges.concat(load_edges)
         end
 
         # add variable for tag

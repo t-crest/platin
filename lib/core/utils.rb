@@ -206,7 +206,7 @@ module PML
       pnt = Thread.current.backtrace[1]
       $stderr.puts ("#{$PROGRAM_NAME}: Assertion failed in #{pnt}: #{msg}")
       puts "    " + Thread.current.backtrace[1..-1].join("\n    ")
-	  raise Exception, "Assertion Error"
+          raise Exception, "Assertion Error"
     end
   end
 
@@ -219,7 +219,7 @@ module PML
     $stderr.puts(format_msg("FATAL","At #{pos}"))
     $stderr.puts(format_msg("FATAL",msg))
     # $stderr.puts Thread.current.backtrace
-	raise Exception, "I desire to die"
+        raise Exception, "I desire to die"
   end
 
   def die_usage(msg)

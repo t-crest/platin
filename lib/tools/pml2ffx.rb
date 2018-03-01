@@ -65,9 +65,9 @@ class FFXExportTool
 
     File.open(options.ff_file, "w") do |outfile|
       if options.export_ffx
-	ffx = FFXExporter.new(pml, options)
+        ffx = FFXExporter.new(pml, options)
       else
-	ffx = F4Exporter.new(pml, outfile, options)
+        ffx = F4Exporter.new(pml, outfile, options)
       end
 
       ffx.merge_file(options.ff_input) unless options.ff_input.nil?

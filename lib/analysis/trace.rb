@@ -99,8 +99,8 @@ class MachineTraceMonitor < TraceMonitor
       @cycles = cycles
       # Detect return stalls
       if pending_return && pending_return[1] + 1 == @executed_instructions
-	# TODO: maybe move this detection entirely into @pml.arch
-	pending_return[3] = @pml.arch.return_stall_cycles(pending_return[0], @cycles - pending_return[2])
+        # TODO: maybe move this detection entirely into @pml.arch
+        pending_return[3] = @pml.arch.return_stall_cycles(pending_return[0], @cycles - pending_return[2])
       end
       # Handle Return (TODO)
       if pending_return && pending_return[1] + pending_return[0].delay_slots + 1 == @executed_instructions
@@ -120,12 +120,12 @@ class MachineTraceMonitor < TraceMonitor
           if ! handle_return(*pending_return)
             # Finished
             @finished = true
-	    trace_count += 1
-	    if @options.max_target_traces && trace_count >= @options.max_target_traces
-	      break
-	    else
+            trace_count += 1
+            if @options.max_target_traces && trace_count >= @options.max_target_traces
+              break
+            else
               @started = false
-	    end
+            end
           end
           pending_return = nil
         end
@@ -188,14 +188,14 @@ class MachineTraceMonitor < TraceMonitor
           c.function == @current_function
         end
         pending_call = [c, @executed_instructions]
-	@finished = false
+        @finished = false
         # debug(@options, :trace) { "#{pc}: Call: #{c} in #{@current_function}" }
       end
 
       # Handle Return Block
       # TODO: in order to handle predicated returns, we need to know where return instructions ar
       if r = @wp_return_instr[pc]
-	# Format is: <instruction, instruction counter at instruction, cycle counter at instruction, return latency>
+        # Format is: <instruction, instruction counter at instruction, cycle counter at instruction, return latency>
         pending_return = [r,@executed_instructions,@cycles,0]
         # debug(@options, :trace) { "Scheduling return at #{r}" }
       end

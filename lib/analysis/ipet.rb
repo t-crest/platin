@@ -482,8 +482,8 @@ class IPETBuilder
     @mc_model.each_edge(mf_function) do |edge|
       @ilp.add_variable(edge, :machinecode)
       if not @options.ignore_instruction_timing
-	cost = cost_block.call(edge)
-	@ilp.add_cost(edge, cost)
+        cost = cost_block.call(edge)
+        @ilp.add_cost(edge, cost)
       end
     end
 
@@ -550,14 +550,14 @@ class IPETBuilder
           else
             target_block = ipet_edge.target.abb.get_region(:dst).entry_node
           end
-	  cost = cost_block.call(ipet_edge)
+          cost = cost_block.call(ipet_edge)
 
-	  @ilp.add_cost(ipet_edge, cost)
+          @ilp.add_cost(ipet_edge, cost)
 
           # Collect all outgoing super structure edges into this abb
           abb_outgoing_edge[abb].push(ipet_edge)
 
-	end
+        end
       end
       @gcfg_model.add_block_constraint(node)
       node.successors
@@ -627,8 +627,8 @@ class IPETBuilder
     @mc_model.each_intra_abb_edge(abb) do |ipet_edge|
       @ilp.add_variable(ipet_edge)
       if not @options.ignore_instruction_timing
-	cost = cost_block.call(ipet_edge)
-	@ilp.add_cost(ipet_edge, cost)
+        cost = cost_block.call(ipet_edge)
+        @ilp.add_cost(ipet_edge, cost)
       end
       # Collect edges
       edges[ipet_edge.source][:out].push(ipet_edge)

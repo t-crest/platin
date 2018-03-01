@@ -43,10 +43,10 @@ class SimulatorTrace
       end
     else
       begin
-	wpfile = build_wp_file
+        wpfile = build_wp_file
         needs_options(@options, :pasim)
         pasim_options = "--debug=0 --debug-fmt=trace -b #{@elf} --wpfile=#{wpfile.path}"
-	pasim_options += " -I #{@options.sim_input}" if @options.sim_input
+        pasim_options += " -I #{@options.sim_input}" if @options.sim_input
         cmd = "#{@options.pasim} #{arch.config_for_simulator.join(" ")} #{pasim_options} 2>&1 1>/dev/null"
         debug(@options, :patmos) { "Running pasim: #{cmd}" }
         IO.popen("#{cmd}") do |io|
@@ -57,7 +57,7 @@ class SimulatorTrace
         end
       ensure
         status = $CHILD_STATUS.exitstatus
-	wpfile.unlink unless @options.outdir
+        wpfile.unlink unless @options.outdir
         die("Running the simulator '#{@options.pasim}' failed: Program not found (exit status 127)") if status == 127
       end
     end
@@ -464,7 +464,7 @@ class Architecture < PML::Architecture
     def get_cache_kind(cache)
       if cache.policy && [ "dm", "ideal", "no" ].include?(cache.policy.downcase)
         # Ignore associativity here
-	cache.policy.downcase
+        cache.policy.downcase
       elsif not cache.fully_assoc?
         if cache.policy && cache.policy.downcase == 'lru'
           "lru#{cache.associativity}"
@@ -473,11 +473,11 @@ class Architecture < PML::Architecture
         else
           warn("Patmos simulator configuration: the only supported cache replacement " +
                "policies with associativity >= 1 are LRU and FIFO")
-	  "no"
+          "no"
         end
       elsif cache.policy && [ "lru", "fifo" ].include?(cache.policy.downcase)
         # If no associativity is given, use fully-associative caches
-	cache.policy.downcase
+        cache.policy.downcase
       else
         "no"
       end
@@ -498,13 +498,13 @@ class Architecture < PML::Architecture
       data_area = @config.memory_areas.by_name('data')
       if data_area.memory.ideal?
         # FIXME: This is incorrect for bypasses, but simulator does
-	# not support different timings based on access type yet.
-	warn("Bypass data loads and data stores are configured to be single cycle, but this " +
-	     "is not supported by pasim at the moment.")
+        # not support different timings based on access type yet.
+        warn("Bypass data loads and data stores are configured to be single cycle, but this " +
+             "is not supported by pasim at the moment.")
         opts.push("--dckind")
         opts.push("ideal")
       else
-	# In case no D$ is specified, disable the data cache
+        # In case no D$ is specified, disable the data cache
         opts.push("--dckind")
         opts.push("no")
       end
@@ -570,22 +570,22 @@ class Architecture < PML::Architecture
       dc = @config.caches.by_name('data-cache')
       if dc.nil? and (dc_policy != "no")
         dc = self.class.default_config.caches.by_name('data-cache')
-	@config.caches.add(dc)
+        @config.caches.add(dc)
       end
       if dc
-	dc.size = options.data_cache_size if options.data_cache_size
-	# We are not deleting the cache entry here, partly because it
-	# allows the user to easily edit the generated config manually,
-	# partly because it is easier to implement.
-	dc.type = 'set-associative' if dc_policy
-	dc.type = 'none' if dc_policy == 'no'
-	dc.policy = dc_policy if dc_policy and dc_policy != 'no'
-	# Set the associativiy whenever we set a policy
-	dc.associativity = dc_assoc if dc_policy
+        dc.size = options.data_cache_size if options.data_cache_size
+        # We are not deleting the cache entry here, partly because it
+        # allows the user to easily edit the generated config manually,
+        # partly because it is easier to implement.
+        dc.type = 'set-associative' if dc_policy
+        dc.type = 'none' if dc_policy == 'no'
+        dc.policy = dc_policy if dc_policy and dc_policy != 'no'
+        # Set the associativiy whenever we set a policy
+        dc.associativity = dc_assoc if dc_policy
 
-	# Update the data memory area
-	dma = @config.memory_areas.by_name('data')
-	dma.cache = (dc.type != 'none' ? dc : nil) if dma
+        # Update the data memory area
+        dma = @config.memory_areas.by_name('data')
+        dma.cache = (dc.type != 'none' ? dc : nil) if dma
       end
     end
 
@@ -595,14 +595,14 @@ class Architecture < PML::Architecture
       # null if the type is set to 'none', even if the entry exists.
       sc = @config.caches.by_name('stack-cache')
       if dc.nil? and options.stack_cache_type != 'no'
-	sc = self.class.default_config.caches.by_name('stack-cache')
-	@config.caches.add(sc)
+        sc = self.class.default_config.caches.by_name('stack-cache')
+        @config.caches.add(sc)
       end
       if sc
-	sc.size = options.stack_cache_size if options.stack_cache_size
-	sc.type = 'stack-cache' if options.stack_cache_type
-	sc.type = 'none' if options.stack_cache_type == 'no'
-	sc.policy = options.stack_cache_type if options.stack_cache_type and options.stack_cache_type != 'no'
+        sc.size = options.stack_cache_size if options.stack_cache_size
+        sc.type = 'stack-cache' if options.stack_cache_type
+        sc.type = 'none' if options.stack_cache_type == 'no'
+        sc.policy = options.stack_cache_type if options.stack_cache_type and options.stack_cache_type != 'no'
       end
     end
 
@@ -613,33 +613,33 @@ class Architecture < PML::Architecture
       if options.instr_cache_kind
         ic_key = options.instr_cache_kind == 'icache' ? "instruction-cache" : "method-cache"
       elsif instruction_cache
-	ic_key = "instruction-cache"
+        ic_key = "instruction-cache"
       else
-	ic_key = "method-cache"
+        ic_key = "method-cache"
       end
       # Get or create the active cache
       ic = @config.caches.by_name(ic_key)
       if ic.nil? and ic_policy != 'no'
-	ic = self.class.default_instr_cache(ic_key)
-	@config.caches.add(ic)
+        ic = self.class.default_instr_cache(ic_key)
+        @config.caches.add(ic)
       end
       # Deactivate the other instruction caches
       @config.caches.each do |cache|
         next if cache.name == ic_key
-	cache.type = 'none' if ['instruction-cache','method-cache'].include?(cache.name)
+        cache.type = 'none' if ['instruction-cache','method-cache'].include?(cache.name)
       end
       if ic
-	ic.size = options.instr_cache_size if options.instr_cache_size
-	# We are not deleting the cache entry here, partly because it
-	# allows the user to easily edit the generated config manually,
-	# partly because it is easier to implement.
-	ic.type = (ic_key == 'method-cache' ? 'method-cache' : 'set-associative') if ic_policy
-	ic.type = 'none' if ic_policy == 'no'
-	ic.policy = ic_policy if ic_policy and ic_policy != 'no'
-	# Set the associativiy whenever we set a policy
-	ic.associativity = ic_assoc if ic_policy
+        ic.size = options.instr_cache_size if options.instr_cache_size
+        # We are not deleting the cache entry here, partly because it
+        # allows the user to easily edit the generated config manually,
+        # partly because it is easier to implement.
+        ic.type = (ic_key == 'method-cache' ? 'method-cache' : 'set-associative') if ic_policy
+        ic.type = 'none' if ic_policy == 'no'
+        ic.policy = ic_policy if ic_policy and ic_policy != 'no'
+        # Set the associativiy whenever we set a policy
+        ic.associativity = ic_assoc if ic_policy
 
-	# Update the code memory area
+        # Update the code memory area
         cma = @config.memory_areas.by_name('code')
         cma.cache = (ic.type != 'none' ? ic : nil) if cma
       end

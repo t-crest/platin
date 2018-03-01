@@ -115,8 +115,8 @@ class OSXExporter
     add_element(platform, "memory") do |mem|
       add_element(mem, "banks") do |banks|
         @pml.arch.config.memory_areas.each do |area|
-	  add_bank(banks, area)
-	end
+          add_bank(banks, area)
+        end
       end
     end
   end

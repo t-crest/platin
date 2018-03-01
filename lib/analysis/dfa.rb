@@ -238,20 +238,20 @@ class DataFlowAnalysis
       bundles = b.bundles
       bundles[0..-2].each do |i|
         node = Node.new(i)
-	add_node(b, node, last, first_node)
-	last = node
+        add_node(b, node, last, first_node)
+        last = node
       end
       if bundles.empty?
-	node = Node.new
+        node = Node.new
       else
         # Is this a return block or does the block have a sucessor outside the region?
-	if b.successors.empty? or targets.length < b.successors.length
-	  # Then we have an exit node
-	  node = ExitNode.new(bundles.last)
-	  @exit_nodes.push(node)
-	else
-	  node = Node.new(bundles.last)
-	end
+        if b.successors.empty? or targets.length < b.successors.length
+          # Then we have an exit node
+          node = ExitNode.new(bundles.last)
+          @exit_nodes.push(node)
+        else
+          node = Node.new(bundles.last)
+        end
       end
       add_node(b, node, last, first_node, targets, pred_nodes)
     end
@@ -272,8 +272,8 @@ class DataFlowAnalysis
       # TODO: need to reverse entry and exit as well!
       nodes.each do |n|
         pred = n.predecessors
-	n.predecessors = n.successors
-	n.successors = pred
+        n.predecessors = n.successors
+        n.successors = pred
       end
     end
 

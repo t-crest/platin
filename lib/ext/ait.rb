@@ -33,12 +33,12 @@ class OptionParser
     self.on("--ait-icache-mode MODE", "aiT instruction cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do
       |f| options.ait_icache_mode = case f
               when "normal" then "Normal"
-	      when "always-miss" then "Always miss"
-	      when "always-hit" then "Always hit"
-	      when "miss-if-unknown" then "Miss if unknown"
-	      when "hit-if-unknown" then "Hit if unknown"
-	      else f
-	  end
+              when "always-miss" then "Always miss"
+              when "always-hit" then "Always hit"
+              when "miss-if-unknown" then "Miss if unknown"
+              when "hit-if-unknown" then "Hit if unknown"
+              else f
+          end
     end
   end
 
@@ -46,12 +46,12 @@ class OptionParser
     self.on("--ait-dcache-mode MODE", "aiT data cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do
       |f| options.ait_dcache_mode = case f
               when "normal" then "Normal"
-	      when "always-miss" then "Always miss"
-	      when "always-hit" then "Always hit"
-	      when "miss-if-unknown" then "Miss if unknown"
-	      when "hit-if-unknown" then "Hit if unknown"
-	      else f
-	  end
+              when "always-miss" then "Always miss"
+              when "always-hit" then "Always hit"
+              when "miss-if-unknown" then "Miss if unknown"
+              when "hit-if-unknown" then "Hit if unknown"
+              else f
+          end
     end
   end
 
@@ -256,14 +256,14 @@ class AISExporter
         elsif cache.policy == "dm"
           gen_fact("cache data size=#{cache.size}, associativity=1, line-size=#{cache.line_size}," +
                    "policy=LRU, may=chaos", "PML machine configuration")
-	elsif cache.policy == "ideal"
-	  # TODO: We can only configure an ideal cache by making the data memory zero-cycle accesses, which makes
-	  # it different for bypasses! Check how the underlying memory is configured and die if the configuration
-	  # is impossible to configure!
-	  warn("aiT: found ideal data-cache. This requires the data memory to have zero-cycle access times.")
-	elsif cache.policy != "no"
-	  warn("aiT: unsupported data-cache policy #{cache.policy}, skipping data cache configuration")
-	end
+        elsif cache.policy == "ideal"
+          # TODO: We can only configure an ideal cache by making the data memory zero-cycle accesses, which makes
+          # it different for bypasses! Check how the underlying memory is configured and die if the configuration
+          # is impossible to configure!
+          warn("aiT: found ideal data-cache. This requires the data memory to have zero-cycle access times.")
+        elsif cache.policy != "no"
+          warn("aiT: unsupported data-cache policy #{cache.policy}, skipping data cache configuration")
+        end
       when 'instruction-cache'
         gen_fact("cache code size=#{cache.size}, associativity=#{cache.associativity}, line-size=#{cache.line_size}," +
                  "policy=#{cache.policy.upcase}, may=chaos", "PML machine configuration")
@@ -282,8 +282,8 @@ class AISExporter
                  "policy=#{cache.policy.upcase}, may=chaos", "PML machine configuration")
       when 'stack-cache'
         # always enabled (new in aiT version >= 205838)
-	# TODO check if the configuration requests a S$ or if the S$ is set to ideal and the memory is ideal, otherwise
-	# die with an unsupported configuration error
+        # TODO check if the configuration requests a S$ or if the S$ is set to ideal and the memory is ideal, otherwise
+        # die with an unsupported configuration error
       end
     end
 
@@ -728,8 +728,8 @@ class APXExporter
         an_options << rexml_bool("xml_wcet_path", true)
         an_options << rexml_bool("xml_non_wcet_cycles", true)
         an_options << rexml_str("path_analysis_variant", "Prediction file based (ILP)")
-	an_options << rexml_str("instruction_cache_mode", @options.ait_icache_mode) if @options.ait_icache_mode
-	an_options << rexml_str("data_cache_mode", @options.ait_dcache_mode) if @options.ait_dcache_mode
+        an_options << rexml_str("instruction_cache_mode", @options.ait_icache_mode) if @options.ait_icache_mode
+        an_options << rexml_str("data_cache_mode", @options.ait_dcache_mode) if @options.ait_dcache_mode
       end
       add_element(proj_options, "general_options") do |gen_options|
         gen_options << rexml_str("include_path",".")
@@ -1131,7 +1131,7 @@ class AitImport
               if ! target_block && @is_loopblock[target_block_id]
                 exit_successor = nil
 
-		loop do
+                loop do
                   source.block.successors.each do |s|
                     if source.block.exitedge_source?(s)
                       die("More than one exit edge from a block within a loop. This makes it" +
@@ -1139,17 +1139,17 @@ class AitImport
                       exit_successor = s
                     end
                   end
-		  break if exit_successor
+                  break if exit_successor
 
-		  # If we did not simplify the CFG, the exit edge might leave from a successor of the block.
+                  # If we did not simplify the CFG, the exit edge might leave from a successor of the block.
                   # Hence check if there is a single successor block with a single predecessor, continue the exit search
                   # from there.
-		  if source.block.successors.length == 1 && source.block.successors.first.predecessors.length == 1
-		    source = source.block.successors.first
-		  else
+                  if source.block.successors.length == 1 && source.block.successors.first.predecessors.length == 1
+                    source = source.block.successors.first
+                  else
                     die("no loop exit successor for #{source}, although there is an edge to end-of-loop node")
-		  end
-		end
+                  end
+                end
 
                 pml_edge = source.block.edge_to(exit_successor)
               end
@@ -1244,9 +1244,9 @@ class AitImport
     if options.import_block_timings || options.ait_import_addresses
       read_routines(analysis_task_elem)
       debug(options,:ait) do |&msgs|
-	@routines.each do |id, r|
-	  msgs.call("Routine #{id}: #{r}")
-	end
+        @routines.each do |id, r|
+          msgs.call("Routine #{id}: #{r}")
+        end
       end
     end
 

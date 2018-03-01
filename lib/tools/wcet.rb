@@ -196,8 +196,8 @@ class WcetTool
       if opts.combine_wca
         # We only need the I$ analysis in this mode, everything else *must* be disabled
         opts.ignore_instruction_timing = true
-	opts.disable_sca = true
-	opts.disable_dca = true
+        opts.disable_sca = true
+        opts.disable_dca = true
       end
       WcaTool.run(pml, opts)
       compute_criticalities(opts) do |pml,tmp_opts,src,round|
@@ -357,9 +357,9 @@ class WcetTool
       trace_cycles = te.cycles if te.origin == "trace"
       wcet_cycles = [wcet_cycles,te.cycles].compact.min if te.origin != "trace"
       combined_cycles += case te.origin
-	  when "aiT"    then te.cycles
-	  when "platin" then te.attributes['cache-cycles-instr'] || 0
-	  else 0
+          when "aiT"    then te.cycles
+          when "platin" then te.attributes['cache-cycles-instr'] || 0
+          else 0
       end
       dict = { 'analysis-entry' => options.analysis_entry,
         'source' => te.origin,
@@ -373,17 +373,17 @@ class WcetTool
       wcet_cycles = combined_cycles
       results.push( { 'analysis-entry' => options.analysis_entry,
                       'source' => 'combined',
-		      'cycles' => combined_cycles
-		    } )
+                      'cycles' => combined_cycles
+                    } )
     end
     if options.runcheck and not trace_cycles.nil?
       die("wcet check: No timing for simulator trace") unless trace_cycles > 0
       die("wcet check: No WCET results") unless wcet_cycles and wcet_cycles > 0
       pml.timing.each do |te|
         next if te.origin == "trace"
-	next if te.origin != "combined" and options.combine_wca
+        next if te.origin != "combined" and options.combine_wca
         next unless te.cycles >= 0
-	# TODO: remember the trace_cycles per analysis-entry, check depending on analysis-entry
+        # TODO: remember the trace_cycles per analysis-entry, check depending on analysis-entry
         if te.cycles < trace_cycles
           die("wcet check: cycles for #{te.origin} (#{te.cycles}) less than measurement (#{trace_cycles})")
         end
@@ -392,7 +392,7 @@ class WcetTool
           if te.cycles > tolerated_overestimation
             die <<-EOF.strip_heredoc.delete("\n")
               WCET analysis check: Cycles for #{te.origin} (#{te.cycles}) #{te.cycles.fdiv(trace_cycles).round(2)}
-	      times larger than measurement (#{trace_cycles})
+              times larger than measurement (#{trace_cycles})
             EOF
           end
         end
