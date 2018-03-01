@@ -105,7 +105,7 @@ class PMLTool
                     "#{bb.qname} (#{freq})"
                   end
                end.join(", ")
-        puts "  #{marker}: #{bbstr}"
+      puts "  #{marker}: #{bbstr}"
     end
     puts "" unless bbs.empty?
   end
