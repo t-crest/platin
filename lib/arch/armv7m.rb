@@ -118,7 +118,7 @@ class Architecture < PML::Architecture
   end
 
 # found out through reading register on hardware:
-FLASH_WAIT_CYCLES = 3
+  FLASH_WAIT_CYCLES = 3
 #
 # FLASH_WAIT_CYCLES=15 # the actual worst case
 
@@ -160,8 +160,8 @@ FLASH_WAIT_CYCLES = 3
 #    end
   end
 
-NUM_REGISTERS = 10
-PIPELINE_REFILL = 3
+  NUM_REGISTERS = 10
+  PIPELINE_REFILL = 3
   def cycle_cost(instr)
     case instr.opcode
     # addsub

@@ -103,9 +103,9 @@ class EstimateSpill
 end
 
 if __FILE__ == $PROGRAM_NAME
-SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
-Estimate the number of spill instructions per function
-EOF
+  SYNOPSIS = <<-EOF
+  Estimate the number of spill instructions per function
+  EOF
   options, args = PML::optparse([],"", SYNOPSIS) do |opts|
     opts.needs_pml
     EstimateSpill.add_options(opts)

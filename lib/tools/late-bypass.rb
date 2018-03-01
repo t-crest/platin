@@ -83,9 +83,9 @@ class LateBypassTool
 end
 
 if __FILE__ == $PROGRAM_NAME
-SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
-Rewrite load from unknown memory access addresses to bypass-cache loads.
-EOF
+  SYNOPSIS = <<-EOF
+  Rewrite load from unknown memory access addresses to bypass-cache loads.
+  EOF
   options, args = PML::optparse([:binary_file], "binary.elf", SYNOPSIS) do |opts|
     opts.needs_pml
     opts.writes_pml

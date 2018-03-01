@@ -71,9 +71,9 @@ class AitAnalyzeTool
 end
 
 if __FILE__ == $PROGRAM_NAME
-SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
-Add aiT analysis results to the PML database.
-EOF
+  SYNOPSIS = <<-EOF if __FILE__ == $PROGRAM_NAME
+  Add aiT analysis results to the PML database.
+  EOF
   options, args = PML::optparse([], "", SYNOPSIS) do |opts|
     opts.needs_pml
     opts.writes_pml

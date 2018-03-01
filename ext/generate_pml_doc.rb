@@ -206,7 +206,7 @@ private
       v ? [k,v] : [k,true]
     end.flatten
 
-   [doc_lines.join("\n"), Hash[*attrs.flatten]]
+    [doc_lines.join("\n"), Hash[*attrs.flatten]]
   end
 
   def yaml_type_descr(v)

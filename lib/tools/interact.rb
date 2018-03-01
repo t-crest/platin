@@ -152,7 +152,7 @@ class ProgramPointToken < ListToken
     yield
   rescue Exception => e
     raise unless e.is_a?(exception_to_ignore)
-      default_value
+    default_value
   end
 
   def coerce(qname)

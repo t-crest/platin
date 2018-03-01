@@ -67,9 +67,9 @@ class WcaTool
 end
 
 if __FILE__ == $PROGRAM_NAME
-SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
-Calculate WCET using lp_solve and a simple timing model
-EOF
+  SYNOPSIS = <<-EOF
+  Calculate WCET using lp_solve and a simple timing model
+  EOF
   options, args = PML::optparse(0, "", SYNOPSIS) do |opts|
     opts.needs_pml
     opts.writes_pml

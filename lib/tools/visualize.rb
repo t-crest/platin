@@ -768,10 +768,10 @@ class VisualizeTool
 end
 
 if __FILE__ == $PROGRAM_NAME
-SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
-Visualize bitcode and machine code CFGS, and the control-flow relation
-graph of the specified set of functions
-EOF
+  SYNOPSIS = <<-EOF
+  Visualize bitcode and machine code CFGS, and the control-flow relation
+  graph of the specified set of functions
+  EOF
   options, args = PML::optparse([],"", SYNOPSIS) do |opts|
     opts.needs_pml
     opts.callstring_length

@@ -123,9 +123,9 @@ class SweetAnalyzeTool
 end
 
 if __FILE__ == $PROGRAM_NAME
-SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
-Run the Swedish Execution Time Analysis tool (SWEET)
-EOF
+  SYNOPSIS = <<-EOF
+  Run the Swedish Execution Time Analysis tool (SWEET)
+  EOF
   options, args = PML::optparse([], "", SYNOPSIS) do |opts|
     opts.needs_pml
     SweetAnalyzeTool.add_options(opts)

@@ -186,12 +186,12 @@ class AnalyzeTraceTool
 end
 
 if __FILE__ == $PROGRAM_NAME
-SYNOPSIS = <<EOF
-Run simulator (patmos: pasim --debug-fmt trace), record execution frequencies
-of instructions and generate flow facts. Also records indirect call targets.
-EOF
-  # FIXME: binary file is passed as positional argument, and thus should not be shown
-  # as option argument in usage
+  SYNOPSIS = <<-EOF
+  Run simulator (patmos: pasim --debug-fmt trace), record execution frequencies
+  of instructions and generate flow facts. Also records indirect call targets.
+  EOF
+    # FIXME: binary file is passed as positional argument, and thus should not be shown
+    # as option argument in usage
   options, args = PML::optparse([], "", SYNOPSIS) do |opts|
     opts.needs_pml
     opts.writes_pml

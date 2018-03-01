@@ -165,9 +165,9 @@ class TransformTool
 end
 
 if __FILE__ == $PROGRAM_NAME
-SYNOPSIS = <<EOF
-Transforms flow facts from IR level to machine code level or simplify set of flow facts
-EOF
+  SYNOPSIS = <<-EOF
+  Transforms flow facts from IR level to machine code level or simplify set of flow facts
+  EOF
   options, args = PML::optparse(0, "", SYNOPSIS) do |opts|
     opts.needs_pml
     opts.writes_pml

@@ -51,9 +51,9 @@ class SweetImportTool
 end
 
 if __FILE__ == $PROGRAM_NAME
-SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
-Translate SWEET flow facts (format FF) to PML flow facts
-EOF
+  SYNOPSIS = <<-EOF
+  Translate SWEET flow facts (format FF) to PML flow facts
+  EOF
   options, args = PML::optparse([:sweet_flowfact_file], "file.ff", SYNOPSIS) do |opts|
     opts.needs_pml
     opts.writes_pml
