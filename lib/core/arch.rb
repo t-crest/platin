@@ -384,7 +384,7 @@ class CacheConfig < PMLObject
       # Note: If we would remove all attributes, data['attributes']
       #       should be removed again.
       data['attributes'] = @attributes
-      @attributes.push( { 'key' => key, 'value' => value } )
+      @attributes.push({ 'key' => key, 'value' => value })
     end
   end
 
@@ -554,7 +554,7 @@ class MemoryArea < PMLObject
       # Note: If we would remove all attributes, data['attributes']
       #       should be removed again.
       data['attributes'] = @attributes
-      @attributes.push( { 'key' => key, 'value' => value } )
+      @attributes.push({ 'key' => key, 'value' => value })
     end
   end
 

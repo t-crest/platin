@@ -193,7 +193,7 @@ of instructions and generate flow facts. Also records indirect call targets.
 EOF
   # FIXME: binary file is passed as positional argument, and thus should not be shown
   # as option argument in usage
-  options, args = PML::optparse( [], "", SYNOPSIS) do |opts|
+  options, args = PML::optparse([], "", SYNOPSIS) do |opts|
     opts.needs_pml
     opts.writes_pml
     AnalyzeTraceTool.add_options(opts)

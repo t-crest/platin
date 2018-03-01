@@ -131,7 +131,7 @@ class ExtractSymbols
     reg_args = args.scan('$r').length
     case instr
     when "add", "sub", "and"
-      ret['opcode'] = instr.upcase + ( reg_args == 3 ? "r" : "i")
+      ret['opcode'] = instr.upcase + (reg_args == 3 ? "r" : "i")
       ret
     when "li"
       ret['opcode'] = (size == 8 ? "LIl" : "LIi")
@@ -492,7 +492,7 @@ class Architecture < PML::Architecture
       opts.push("--dckind")
       # Note: 'ideal' is not the same as mapping all data accesses to
       # an ideal memory; bypasses still have a latency.
-      opts.push( get_cache_kind(dc) )
+      opts.push(get_cache_kind(dc))
     else
       # if data is mapped to single-cycle access memory,
       # use an 'ideal' data cache
@@ -542,7 +542,7 @@ class Architecture < PML::Architecture
       opts.push("--ilsize")
       opts.push(ic.block_size)
       opts.push("--ickind")
-      opts.push( get_cache_kind(ic) )
+      opts.push(get_cache_kind(ic))
     else
       # if code is mapped to single-cycle access memory,
       # use an 'ideal' instruction cache

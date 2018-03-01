@@ -665,7 +665,7 @@ class Parser
 
 
   SPACE      = /[\ \t]*/.r
-  COMMENT    = ( seq_('{-', /((?!-}).)+/ ,'-}') \
+  COMMENT    = (seq_('{-', /((?!-}).)+/ ,'-}') \
                | seq(SPACE.maybe, /--((?!([\r\n]|$)).)+/.r) & (/[\r\n]/.r | ''.r.eof) \
                )
   CSPACE = (seq(SPACE, COMMENT, SPACE) | SPACE)
@@ -711,25 +711,25 @@ class Parser
 
   def arith_expr
     if @ARITH_EXPR.nil?
-      arith_expr = ( seq__(lazy{ sub_term }, ADD_OP, lazy{ arith_expr }) do |lhs, op, rhs|
+      arith_expr = (seq__(lazy{ sub_term }, ADD_OP, lazy{ arith_expr }) do |lhs, op, rhs|
                         puts "arith_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
                       end \
                    | lazy{ sub_term } \
                    )
-      sub_term   = ( seq__(lazy{ term }, SUB_OP, lazy{ sub_term }) do |lhs, op, rhs|
+      sub_term   = (seq__(lazy{ term }, SUB_OP, lazy{ sub_term }) do |lhs, op, rhs|
                         puts "arith_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
                       end \
                    | lazy{ term } \
                    )
-      term       = ( seq__(lazy{ factor }, MULT_OP, lazy{ term }) do |lhs, op, rhs|
+      term       = (seq__(lazy{ factor }, MULT_OP, lazy{ term }) do |lhs, op, rhs|
                         puts "term: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
                       end\
                    | lazy{ factor } \
                    )
-      factor     = ( seq__('(', arith_expr, ')')[1] \
+      factor     = (seq__('(', arith_expr, ')')[1] \
                    | lazy{ call } \
                    | NUM \
                    )
@@ -742,7 +742,7 @@ class Parser
 
   def cond_expr
     if @COND_EXPR.nil?
-      cond_expr = ( seq__(lazy{ ao_expr }, LOGIC_OP, lazy{ cond_expr }) do |lhs, op, rhs|
+      cond_expr = (seq__(lazy{ ao_expr }, LOGIC_OP, lazy{ cond_expr }) do |lhs, op, rhs|
                        puts "cond_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                        ASTLogicalOp.new(lhs, op, rhs)
                      end \
@@ -752,7 +752,7 @@ class Parser
                     end \
                   | lazy{ ao_expr } \
                   )
-      ao_expr   = ( seq__(lazy{ arith_expr }, CMP_OP, lazy{ arith_expr }) do |lhs, op, rhs|
+      ao_expr   = (seq__(lazy{ arith_expr }, CMP_OP, lazy{ arith_expr }) do |lhs, op, rhs|
                        puts "ao_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                        ASTCompareOp.new(lhs, op, rhs)
                      end \
@@ -768,7 +768,7 @@ class Parser
 
   def expr
     if @EXPR.nil?
-      expr = ( seq__(IF, lazy{ cond_expr }, THEN, lazy{ expr }, ELSE, lazy{ expr }) do |_,cond,_,e1,_,e2|
+      expr = (seq__(IF, lazy{ cond_expr }, THEN, lazy{ expr }, ELSE, lazy{ expr }) do |_,cond,_,e1,_,e2|
                       puts "IF #{cond} then {#{e1}} else {#{e2}}" if DEBUG_PARSER
                       ASTIf.new(cond, e1, e2)
                     end \
@@ -789,10 +789,10 @@ class Parser
 
   def call
     if @CALL.nil?
-      arg_list = ( seq__(lazy{ expr }, lazy{ arg_list }) \
+      arg_list = (seq__(lazy{ expr }, lazy{ arg_list }) \
                  | lazy{ expr } \
                  )
-      callsite =  ( seq__(IDENTIFIER, arg_list) \
+      callsite =  (seq__(IDENTIFIER, arg_list) \
                   | IDENTIFIER \
                   )
       @CALL = seq(''.r, callsite).cached do |_,xs|
@@ -806,10 +806,10 @@ class Parser
 
   def decl
     if @DECL.nil?
-      par_list    = ( seq__(var_decl, lazy{ par_list }) \
+      par_list    = (seq__(var_decl, lazy{ par_list }) \
                     | var_decl \
                     ).fail "parameterlist"
-      declaration = ( seq__(var_decl, par_list) \
+      declaration = (seq__(var_decl, par_list) \
                     | var_decl \
                     ).fail "function declaration"
       definition  = expr
@@ -835,7 +835,7 @@ class Parser
   end
 
   def program
-    program = ( seq_(comment, lazy{ program }, skip:/[\r\n]+/)[1] \
+    program = (seq_(comment, lazy{ program }, skip:/[\r\n]+/)[1] \
               | seq_(decl, lazy{ program }, skip: /[\r\n]+/) \
               | seq_(decl, /[\r\n]+/.r.maybe) { |d, _| [d] } \
               )

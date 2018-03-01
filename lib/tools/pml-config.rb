@@ -187,7 +187,7 @@ class PMLConfigTool
 
   def self.update_attributes(arch, options)
     set_attributes(arch.config.caches,       options.set_cache_attrs)
-    set_attributes(arch.config.memory_areas, options.set_area_attrs )
+    set_attributes(arch.config.memory_areas, options.set_area_attrs)
   end
 
   def self.run(pml, options)

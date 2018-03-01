@@ -651,7 +651,7 @@ class RegionGraph
     end
     file = "tmp/region_#{name.gsub('/','_')}.eps"
     puts "DEBUG file: #{file}"
-    g.output( eps: file)
+    g.output(eps: file)
   end
 
   def add_node(n)

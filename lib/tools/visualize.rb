@@ -22,7 +22,7 @@ class Visualizer
   attr_reader :options
   def generate(g,outfile)
     debug(options, :visualize) { "Generating #{outfile}" }
-    g.output( options.graphviz_format.to_sym => "#{outfile}" )
+    g.output(options.graphviz_format.to_sym => "#{outfile}")
     info("#{outfile} ok") if options.verbose
   end
 protected
@@ -145,8 +145,8 @@ class FlowGraphVisualizer < Visualizer
   end
 
   def find_vedge_timing(profile, node, succ)
-    start = Set.new( get_vblocks(node, :predecessors) )
-    targets = Set.new( get_vblocks(succ, :successors) )
+    start = Set.new(get_vblocks(node, :predecessors))
+    targets = Set.new(get_vblocks(succ, :successors))
     if (start == targets) && (not [*succ].any? { |s| s.kind_of?(CfgNode) && s.block_start? })
       [*node].map { |n| find_vnode_timing(profile, n) }.flatten
     elsif succ.kind_of?(ExitNode)
@@ -155,13 +155,13 @@ class FlowGraphVisualizer < Visualizer
       end
     else
       start.map{ |b| profile[b] || [] }.flatten.select do |t|
-        targets.include?( t.reference.programpoint.target )
+        targets.include?(t.reference.programpoint.target)
       end
     end
   end
 
   def visualize_vcfg(function, arch, timing = nil)
-    g = GraphViz.new( :G, type: :digraph )
+    g = GraphViz.new(:G, type: :digraph)
     g.node[:shape] = "rectangle"
     vcfg = VCFG.new(function, arch)
     name = function.name.to_s
@@ -232,7 +232,7 @@ class FlowGraphVisualizer < Visualizer
           # These are edges from a block node to either a different block, a self loop,
           # or edges to virtual nodes (assuming the VCFG does not insert virtual nodes
           # within a block)
-          if node.block && ( (node.block != s.block) || s.block_start? )
+          if node.block && ((node.block != s.block) || s.block_start?)
             options["label"] = ""
             t.each do |origin, profile|
               # TODO: We need a way to merge results from different contexts properly.
@@ -269,7 +269,7 @@ class FlowGraphVisualizer < Visualizer
   end
 
   def visualize_cfg(function)
-    g = GraphViz.new( :G, type: :digraph )
+    g = GraphViz.new(:G, type: :digraph)
     g.node[:shape] = "rectangle"
     name = function.name.to_s
     name << "/#{function.mapsto}" if function.mapsto
@@ -308,7 +308,7 @@ class RelationGraphVisualizer < Visualizer
 
   def visualize(rg)
     nodes = {}
-    g = GraphViz.new( :G, type: :digraph )
+    g = GraphViz.new(:G, type: :digraph)
     g.node[:shape] = "rectangle"
 
     # XXX: update me

@@ -161,7 +161,7 @@ class OSXExporter
 #      }
 #    }
 
-    REXML::Formatters::Transitive.new( 2, false ).write(doc, outfile)
+    REXML::Formatters::Transitive.new(2, false).write(doc, outfile)
   end
 
   private

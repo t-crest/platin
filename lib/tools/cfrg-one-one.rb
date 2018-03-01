@@ -24,7 +24,7 @@ class RGVisualizer
 
   def generate(g,outfile)
     debug(options, :visualize) { "Generating #{outfile}" }
-    g.output( options.graphviz_format.to_sym => "#{outfile}" )
+    g.output(options.graphviz_format.to_sym => "#{outfile}")
     info("#{outfile} ok") if options.verbose
   end
 
@@ -32,7 +32,7 @@ class RGVisualizer
 
   def visualize(rg)
     nodes = {}
-    g = GraphViz.new( :G, type: :digraph )
+    g = GraphViz.new(:G, type: :digraph)
     g.node[:shape] = "rectangle"
 
     # XXX: update me

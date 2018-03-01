@@ -194,7 +194,7 @@ private
       line =~ /^(\s*)(.*)/
       indent, rest = $1, $2
       doc_lines.push("##{indent}")
-      no_split = ( rest =~ /^\s*[\-\*]/ ) # do not split enumerations
+      no_split = (rest =~ /^\s*[\-\*]/) # do not split enumerations
       rest.scan(/\S+/) do |w|
         doc_lines.push("##{indent}") if doc_lines.last.length > 80 - w.length && !no_split
         doc_lines.last << ' ' << w

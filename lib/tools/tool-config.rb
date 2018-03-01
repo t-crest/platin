@@ -32,7 +32,7 @@ class ToolConfigTool
       opts.push("-mserialize=#{options.output.to_s}") if options.output
       opts.push("-mserialize-roots=#{roots.join(",")}") unless roots.empty?
       tc = pml.tool_configurations.by_name('clang')
-      opts.concat( tc.options || [] ) if tc
+      opts.concat(tc.options || []) if tc
       # TODO: add all analysis_configation tool options for analysis 'default'
       puts opts.map { |opt| escape(opt) }.join(" ")
     when 'pasim'
@@ -42,7 +42,7 @@ class ToolConfigTool
         unless pml.arch.instance_of?(Patmos::Architecture)
       opts = pml.arch.config_for_simulator
       tc = pml.tool_configurations.by_name(options.tool)
-      opts.concat( tc.options || [] ) if tc
+      opts.concat(tc.options || []) if tc
       # TODO: add all analysis_configation tool options for analysis 'default'
       puts opts.map { |opt| escape(opt) }.join(" ")
     when 'ait'

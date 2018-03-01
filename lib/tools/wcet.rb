@@ -37,7 +37,7 @@ class AitTool
   def self.add_config_options(opts)
     AisExportTool.add_config_options(opts)
     ApxExportTool.add_config_options(opts)
-    AitAnalyzeTool.add_config_options( opts)
+    AitAnalyzeTool.add_config_options(opts)
     AitImportTool.add_config_options(opts)
   end
 end
@@ -374,10 +374,10 @@ class WcetTool
     end
     if options.combine_wca
       wcet_cycles = combined_cycles
-      results.push( { 'analysis-entry' => options.analysis_entry,
+      results.push({ 'analysis-entry' => options.analysis_entry,
                       'source' => 'combined',
                       'cycles' => combined_cycles
-                    } )
+                    })
     end
     if options.runcheck && (not trace_cycles.nil?)
       die("wcet check: No timing for simulator trace") unless trace_cycles > 0

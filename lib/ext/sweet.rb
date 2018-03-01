@@ -192,7 +192,7 @@ module SWEET
     def quantifier
       range   = seq_(int,'..'.r,int).map { |lb,_,ub| [lb,ub] }
       foreach = paren(range.maybe,'<','>').map { |p| if p.empty? then :foreach else p.first end }
-      total   =  ( symbol('[') << symbol(']') ).map { :total }
+      total   =  (symbol('[') << symbol(']')).map { :total }
       quantifier = foreach | total
     end
 
@@ -216,7 +216,7 @@ module SWEET
     def constraint
       expr = sym /([^<>= -]|->)+/
       count_var = seq(stmt,('->'.r >> stmt).maybe).map { |c| c[1].empty? ? c[0] : Edge.new(c[0],c[1].first) }
-      cvar  = seq_( (symbol(int) << sym('*')).maybe.map { |f| f.empty? ? 1 : f.first }, count_var)
+      cvar  = seq_((symbol(int) << sym('*')).maybe.map { |f| f.empty? ? 1 : f.first }, count_var)
       mexpr = cvar | int.map { |p| [p,nil] }
       addop = one_of_("+-")
       expr = mexpr.join(addop).map(&build_vector)

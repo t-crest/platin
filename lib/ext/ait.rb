@@ -761,7 +761,7 @@ class APXExporter
       end
     end
     # Mandatory to use transitive formatter
-    REXML::Formatters::Transitive.new( 2, false ).write(doc, @outfile)
+    REXML::Formatters::Transitive.new(2, false).write(doc, @outfile)
   end
 
   private
