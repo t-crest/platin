@@ -26,7 +26,7 @@ def run(cmd)
   exit 1 unless system(cmd)
 end
 
-usage("") unless ARGV.length > 0
+usage("") if ARGV.empty?
 
 exec("patmos-clang", *ARGV) if ARGV.any? { |arg| arg == "-c" || arg == "-S" || arg == "-E" }
 

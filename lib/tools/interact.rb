@@ -841,7 +841,7 @@ class ResultsCommand < Command
   end
 
   def run(args)
-    raise ArgumentError, "Usage: results" if args.length != 0
+    raise ArgumentError, "Usage: results" if !args.empty?
 
     puts "Analysis results:"
     REPLContext.instance.timing.each do |k,v|
@@ -884,7 +884,7 @@ class GetCommand < Command
     segments = args[0].split(/\./)
     element  = REPLContext.instance.options
 
-    while segments.length > 0
+    while !segments.empty?
       key = segments.shift.to_sym
       unless element.to_h.key?(key)
         pp element[key]
@@ -932,10 +932,10 @@ class SetCommand < Command
 
     element  = REPLContext.instance.options
 
-    while segments.length > 0
+    while !segments.empty?
       key = segments.shift.to_sym
       raise ArgumentError, "No such key: #{key}" unless element.to_h.key?(key)
-      if segments.length == 0
+      if segments.empty?
         case op
         when '='
           element[key] = data
@@ -1052,7 +1052,7 @@ class Dispatcher
     end
 
     # Skip empty lines
-    if    args.length == 0
+    if    args.empty?
       return
     # Check if an command exists
     elsif !@commands.key?(args[0])

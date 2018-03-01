@@ -233,7 +233,7 @@ private
     block_predecessors = {}
     callnodes = {}
     function.blocks.each do |block|
-      if block.instructions.size == 0
+      if block.instructions.empty?
         first_nodes[block] = blocknode = BlockSliceNode.new(self, block, 0, -1)
         block.successors.each { |b| add_block_predecessor(block_predecessors, b, blocknode) }
         next

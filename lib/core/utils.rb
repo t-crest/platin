@@ -143,7 +143,7 @@ module PML
   # credits go to: http://stackoverflow.com/questions/2108727/which-in-ruby-checking-if-program-exists-in-path-from-ruby
   #
   def which(cmd)
-    return nil unless cmd && cmd.length > 0
+    return nil unless cmd && !cmd.empty?
     if cmd.include?(File::SEPARATOR)
       return cmd if File.executable? cmd
     end

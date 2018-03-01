@@ -522,7 +522,7 @@ module PML
     # return true if the block does not contain any actual instructions (labels are ok)
     # FIXME: blocks are currently also considered to be empty if they only contain inline asm
     def empty?
-      instructions.empty? || instructions.all? { |i| i.size == 0 }
+      instructions.empty? || instructions.all? { |i| i.empty? }
     end
 
     # block predecessors (not ready at initialization time)
@@ -629,7 +629,7 @@ module PML
     # list of callsites in this block
     def callsites
       return @callsites if @callsites
-      @callsites = instructions.list.select { |i| i.callees.length > 0 }
+      @callsites = instructions.list.select { |i| !i.callees.empty? }
     end
 
     # XXX: LLVM specific/arch specific
@@ -1224,7 +1224,7 @@ private
       @blocks = ABBList.new(relation_graphs, data['blocks'])
       @nodes  = GCFGNodeList.new(@blocks, data['nodes'])
       # Find the Entry Edge into the system
-      entry_nodes = @nodes.select { |e| e.predecessors.length == 0 }
+      entry_nodes = @nodes.select { |e| e.predecessors.empty? }
       die("GCFG #{name} is not well formed, multiple entries") unless entry_nodes.length == 1
       @entry_node = entry_nodes[0]
     end

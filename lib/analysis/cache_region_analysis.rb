@@ -1196,7 +1196,7 @@ class StackCacheAnalysisGraphBased < StackCacheAnalysis
     end
     @spills.values.flat_map { |i| i }.each do |e|
       ilp.add_variable(e)
-      next if e.target.size == 0
+      next if e.target.empty?
       # TODO: we should get the memory for the 'data' area
       delay = @pml.arch.config.main_memory.write_delay(0, e.target.size * @cache.block_size)
       debug(@options, :cache, :costs) { "Cost for stack cache spill: #{e.target.size}*#{@cache.block_size}=#{delay}" }

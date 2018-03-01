@@ -171,7 +171,7 @@ class MachineTraceMonitor < TraceMonitor
         # is published only if it is a successor of the last block
         @empty_blocks[b.address].each do |b0|
           if !@last_block || @last_block.successors.include?(b0)
-            while b0.instructions.size == 0
+            while b0.instructions.empty?
               debug(@options,:trace) { "Publishing empty block #{b0} (<-#{@last_block})" }
               publish(:block, b0, @cycles)
               assert("Empty block may only have one successor") { b0.successors.size == 1 }
@@ -588,7 +588,7 @@ class FunctionRecorder
   end
 
   def ret(_rsite, _csite, cycles, stall_cycles)
-    if @callstack.length == 0
+    if @callstack.empty?
       # puts "#{self}: stopping at #{rsite}->#{csite}"
       cycles -= stall_cycles if global? && (!@options.target_callret_costs)
       results.stop(cycles)

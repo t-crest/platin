@@ -238,7 +238,7 @@ argv = OptionParser.new do |opts|
     options.verbose = true
   end
 end.parse!
-if argv.length < 1
+if argv.empty?
   warn("Please specify a schema")
   exit 1
 end

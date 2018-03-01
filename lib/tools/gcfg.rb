@@ -67,7 +67,7 @@ class GCFGTool
       end
       # Region has no followup regions. It must be connected to an
       # Exit Region
-      if source.successors.length == 0
+      if source.successors.empty?
         src_rg.exit_node.add_successor(exit_node, :src)
         src_rg.exit_node.add_successor(exit_node, :dst)
       end

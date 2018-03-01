@@ -397,7 +397,7 @@ class ASTCall < ASTNode
     if @decl.params.length > args.length
       # Nope, we still need some curry
       puts "Currying call #{self}: Too few arguments: expecting #{@decl.params}, found #{@args}" if DEBUG
-      if args.length > 0
+      if !args.empty?
         # Adopt curry: Take args, return decl pointing to ASTScopeupdate -> Bodyexpr
         #              This eliminates scopeupdates
         # TODO

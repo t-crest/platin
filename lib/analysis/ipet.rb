@@ -600,7 +600,7 @@ class IPETBuilder
     end
 
     assert("Function calls are not allowed into the super structure") do
-      (abb_mfs & gcfg_mfs).length == 0
+      (abb_mfs & gcfg_mfs).empty?
     end
 
     add_global_call_constraints()
