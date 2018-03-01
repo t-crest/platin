@@ -331,7 +331,7 @@ class Server
 
       raise WEBrick::HTTPStatus::NotFound unless effpath.empty?
 
-      resp.set_redirect(WEBrick::HTTPStatus::TemporaryRedirect, @url);
+      resp.set_redirect(WEBrick::HTTPStatus::TemporaryRedirect, @url)
   end
   end
 

@@ -114,7 +114,7 @@ class PMLDoc
           mcode = m['dst']
         end
 
-        assert("relationship graphs map between bitcode and machinecode level") { mcode != nil };
+        assert("relationship graphs map between bitcode and machinecode level") { mcode != nil }
         mcode['function'] = qualify_machinefunction_name(m['pmlsrcfile'], mcode['function'])
       end
     end

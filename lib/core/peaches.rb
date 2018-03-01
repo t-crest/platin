@@ -126,7 +126,7 @@ class Context
     throw PeachesRecursionError.new "Recursion detected: #{decl} already contained in callstack" if @active_decls[decl]
 
     @callstack.push([call, decl])
-    @active_decls[decl] = true;
+    @active_decls[decl] = true
     enter_scope
   end
 
@@ -134,7 +134,7 @@ class Context
     leave_scope
     raise "pop_call: Callstack is empty" if @callstack.empty?
     _, decl = @callstack.pop()
-    @active_decls.delete(decl);
+    @active_decls.delete(decl)
   end
 end
 
@@ -414,7 +414,7 @@ class ASTCall < ASTNode
     # the callstack, breaking potential recursions
     # Also opens a new scope
     puts "#{self.class.name}#Pushcall: #{self} with decl #{@decl}" if DEBUG
-    context.push_call(self, @decl);
+    context.push_call(self, @decl)
     scopeupdates.each do |label, decl|
       context.insert(label, decl)
     end

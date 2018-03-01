@@ -1109,7 +1109,7 @@ class Dispatcher
         sanity += 1
       end
       # Extend only once
-      break if valid || sanity > 1;
+      break if valid || sanity > 1
     end
     raise ArgumentError, "Failed to extend input" unless valid
     args
@@ -1125,7 +1125,7 @@ class Dispatcher
     end
 
     # Which token has to be completed?
-    tokenindex = args.length - 1;
+    tokenindex = args.length - 1
 
     # Detect if we have to start with a new token:
     tokenindex += 1 if input =~ /\s$/
@@ -1136,7 +1136,7 @@ class Dispatcher
     else
       # Ok, so we are inside a command
       cmd = args.shift
-      tokenindex -= 1;
+      tokenindex -= 1
 
       # Do we know the command?
       return nil unless @commands.key?(cmd)

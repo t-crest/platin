@@ -393,10 +393,10 @@ module PML
         # programpoint easiest way to achieve this is to use ProgramPoint.from_pml...
         # Therefore, we fake the appropriate input here:
         fs = pml.functions_for_level(level)
-        data = {};
+        data = {}
         data['function'] = ppref.function.name
         data['loop']     = ppref.programpoint.block.name
-        scope = ContextRef.from_pml(fs, data);
+        scope = ContextRef.from_pml(fs, data)
         assert("lbounds operate on loops, no loop found for #{ppref} in #{self}") \
               { scope != nil && scope.programpoint.kind_of?(Loop) }
         # XXX: use model-eval-foo here

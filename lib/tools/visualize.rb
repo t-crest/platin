@@ -430,7 +430,7 @@ class ILPVisualisation < Visualizer
     l << "<B>#{var.mapsto}</B>" if var.respond_to?(:mapsto)
     l << var.src_hint if var.respond_to?(:src_hint)
     l << '<I>loopheader</I>' if var.respond_to?(:loopheader?) && var.loopheader?
-    str = l.join("<BR/>");
+    str = l.join("<BR/>")
     return var.to_s if str.empty?
     '<' + str + '>'
   end
