@@ -23,14 +23,14 @@ class CacheAnalysis
 
   def analyze(entry_function, ipet_builder)
     @scope_graph = nil # reset, entry_function might have changed
-    if (mc = @pml.arch.method_cache) && (not @options.disable_ica)
+    if (mc = @pml.arch.method_cache) && (!@options.disable_ica)
       @mca = CacheRegionAnalysis.new(MethodCacheAnalysis.new(mc, entry_function, @pml, @options), @pml, @options)
       @mca.extend_ipet(scope_graph(entry_function), ipet_builder)
-    elsif (ic = @pml.arch.instruction_cache) && (not @options.disable_ica)
+    elsif (ic = @pml.arch.instruction_cache) && (!@options.disable_ica)
       @ica = CacheRegionAnalysis.new(InstructionCacheAnalysis.new(ic, @pml, @options), @pml, @options)
       @ica.extend_ipet(scope_graph(entry_function), ipet_builder)
     end
-    if (sc = @pml.arch.stack_cache) && (not @options.disable_sca)
+    if (sc = @pml.arch.stack_cache) && (!@options.disable_sca)
       if @options.use_sca_graph
         @sca = StackCacheAnalysisGraphBased.new(sc, @pml, @options)
       else
@@ -39,7 +39,7 @@ class CacheAnalysis
       @sca.analyze_nonscope()
       @sca.extend_ipet(ipet_builder)
     end
-    if (dm = @pml.arch.data_memory) && (not dm.ideal?) && (not @options.disable_dca)
+    if (dm = @pml.arch.data_memory) && (!dm.ideal?) && (!@options.disable_dca)
       # Note: We also run the data cache analysis if there is no data-cache configured, since we
       #       also add the costs for uncached loads and stores here!
       # Note: @options.disable_dca disables *all* data memory access costs and assumes *0* costs.
@@ -59,7 +59,7 @@ class CacheAnalysis
       always_hit = :cached if @options.dca_analysis_type == 'always-hit'
       # An ideal D$ always hits on both loads *and* stores.
       always_hit = :all    if dc && dc.ideal?
-      if (not dc) || always_hit || (@options.dca_analysis_type == 'always-miss')
+      if (!dc) || always_hit || (@options.dca_analysis_type == 'always-miss')
         @dca = AlwaysMissCacheAnalysis.new(NoDataCacheAnalysis.new(dm, always_hit, @pml, @options), @pml, @options)
       else
         @dca = CacheRegionAnalysis.new(DataCacheAnalysis.new(dm, dc, @pml, @options), @pml, @options)
@@ -850,7 +850,7 @@ class DataCacheLine
     # TODO: For now the cache analysis does not support that the same cache line (equal qname) appears in
     #      multiple sets, since it tries to add a new variable to the ILP per set.
     #      As a workaround we need to ensure that an (unknown) cache line in different sets has different names.
-    if not address
+    if !address
       @qname = "CacheLine: unknown"
       @qname = "#{qname} (uncached)" if uncached?
     else
@@ -961,7 +961,7 @@ class NoDataCacheAnalysis < DataCacheAnalysisBase
     # All other (including stores) hit in an ideal cache
     return true  if @always_hit == :all
     # Otherwise all loads hit if we use an always-hit analysis
-    (@always_hit == :cached) && (not line.uncached?)
+    (@always_hit == :cached) && (!line.uncached?)
   end
 
   def load_instructions(i)

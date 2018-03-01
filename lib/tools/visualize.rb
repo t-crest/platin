@@ -126,7 +126,7 @@ class FlowGraphVisualizer < Visualizer
           profile[edge.source].push(e)
         end
         [t.origin, profile]
-      end.select { |k,v| not v.empty? }
+      end.select { |k,v| !v.empty? }
     ]
   end
 
@@ -147,7 +147,7 @@ class FlowGraphVisualizer < Visualizer
   def find_vedge_timing(profile, node, succ)
     start = Set.new(get_vblocks(node, :predecessors))
     targets = Set.new(get_vblocks(succ, :successors))
-    if (start == targets) && (not [*succ].any? { |s| s.kind_of?(CfgNode) && s.block_start? })
+    if (start == targets) && (![*succ].any? { |s| s.kind_of?(CfgNode) && s.block_start? })
       [*node].map { |n| find_vnode_timing(profile, n) }.flatten
     elsif succ.kind_of?(ExitNode)
       start.map { |b| profile[b] || [] }.flatten.select do |t|
@@ -201,7 +201,7 @@ class FlowGraphVisualizer < Visualizer
         # Mark subfunction headers
         options["fillcolor"] = "#ffffcc"
         options["style"] = "filled"
-      elsif (not node.block) || node.kind_of?(CallNode)
+      elsif (!node.block) || node.kind_of?(CallNode)
         options["style"] = "rounded"
       end
       if block_timing.any? { |o,profile| find_vnode_timing(profile, node).any? { |e| e.wcetfreq > 0 } }
@@ -223,7 +223,7 @@ class FlowGraphVisualizer < Visualizer
         #      the block at least.
         t = block_timing.map do |origin,profile|
           [origin, find_vedge_timing(profile, node, s).select { |e| e.wcetfreq > 0 }]
-        end.select { |o,p| not p.empty? }
+        end.select { |o,p| !p.empty? }
         unless t.empty?
           # TODO: visualize criticality < 1
           options["color"] = "#ff0000"

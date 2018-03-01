@@ -77,7 +77,7 @@ class SimulatorTrace
   end
 
   def parse(line)
-    return nil unless line && (not line.chomp.empty?)
+    return nil unless line && (!line.chomp.empty?)
     pc, cyc, instr = line.split(' ',3)
     begin
       [Integer("0x#{pc}"), Integer(cyc), Integer(instr)]
@@ -466,7 +466,7 @@ class Architecture < PML::Architecture
       if cache.policy && ["dm", "ideal", "no"].include?(cache.policy.downcase)
         # Ignore associativity here
         cache.policy.downcase
-      elsif not cache.fully_assoc?
+      elsif !cache.fully_assoc?
         if cache.policy && cache.policy.downcase == 'lru'
           "lru#{cache.associativity}"
         elsif cache.policy && cache.policy.downcase == 'fifo'

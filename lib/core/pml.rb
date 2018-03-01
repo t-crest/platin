@@ -435,9 +435,9 @@ class PMLDoc
 
     # XXX: we do not export machine-configuration and analysis-configurations by default for now
     # The trouble is that we first need to mirror those sections for LLVM's yaml-io :(
-    final.delete("machine-configuration") if (@data["machine-configuration"] == []) || (not write_config)
-    final.delete("analysis-configurations") if (@data["analysis-configurations"] == []) || (not write_config)
-    final.delete("tool-configurations") if (@data["tool-configurations"] == []) || (not write_config)
+    final.delete("machine-configuration") if (@data["machine-configuration"] == []) || (!write_config)
+    final.delete("analysis-configurations") if (@data["analysis-configurations"] == []) || (!write_config)
+    final.delete("tool-configurations") if (@data["tool-configurations"] == []) || (!write_config)
     final.delete("flowfacts") if @data["flowfacts"] == []
     final.delete("valuefacts") if @data["valuefacts"] == []
     final.delete("timing") if @data["timing"] == []
