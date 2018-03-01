@@ -59,7 +59,7 @@ class CacheAnalysis
       always_hit = false
       always_hit = :cached if @options.dca_analysis_type == 'always-hit'
       # An ideal D$ always hits on both loads *and* stores.
-      always_hit = :all    if (dc && dc.ideal?)
+      always_hit = :all    if dc && dc.ideal?
       if not dc or always_hit or @options.dca_analysis_type == 'always-miss'
         @dca = AlwaysMissCacheAnalysis.new(NoDataCacheAnalysis.new(dm, always_hit, @pml, @options), @pml, @options)
       else

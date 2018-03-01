@@ -23,7 +23,7 @@ class ExtractSymbols
           next unless current_function
           instruction = current_function.instructions[current_ix]
           if instruction.nil?
-            if (insname[0] != "." && insname != "nop")
+            if insname[0] != "." && insname != "nop"
               warn ("No instruction found at #{current_function}+#{current_ix} instructions (#{insname})")
             end
             next
@@ -33,12 +33,12 @@ class ExtractSymbols
           # is not able to distinguish them. 'Data Instructions' (opcode 121) with a size
           # different from 4 will thus get incorrected addresses. We partially try to address
           # this issue by skipping data entries if the opcode is not 121
-          next if (insname[0] == "." && instruction.opcode != OP_CONSTPOOL)
+          next if insname[0] == "." && instruction.opcode != OP_CONSTPOOL
           extractor.add_instruction_address(current_label,current_ix, Integer("0x#{addr}"))
 
           # SANITY CHECK (begin)
           if (re = OPCODE_NAMES[instruction.opcode])
-            if (insname !~ re)
+            if insname !~ re
               die ("Address extraction heuristic probably failed at #{addr}: #{insname} not #{re}")
             end
           end
@@ -131,7 +131,7 @@ FLASH_WAIT_CYCLES = 3
   def path_wcet(ilist)
     cost = ilist.reduce(0) do |cycles, instr|
       # TODO: flushes for call??
-      if (instr.callees[0] =~ /__aeabi_.*/ || instr.callees[0] =~ /__.*div.*/)
+      if instr.callees[0] =~ /__aeabi_.*/ || instr.callees[0] =~ /__.*div.*/
         cycles + cycle_cost(instr) + lib_cycle_cost(instr.callees[0]) + FLASH_WAIT_CYCLES
       else
         cycles + cycle_cost(instr) + FLASH_WAIT_CYCLES # access instructions

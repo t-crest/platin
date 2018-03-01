@@ -33,7 +33,7 @@ class AnalyzeTraceTool
     trace = @pml.arch.simulator_trace(@options, tm.watchpoints)
     tm.run(trace)
 
-    if (@main_recorder.runs == 0)
+    if @main_recorder.runs == 0
       die "Analysis entry '#{@options.analysis_entry}' (pc: #{@entry.address}) never executed"
     end
     @executed_blocks = @main_recorder.executed_blocks

@@ -231,7 +231,7 @@ private
     block_predecessors = {}
     callnodes = {}
     function.blocks.each do |block|
-      if (block.instructions.size == 0)
+      if block.instructions.size == 0
         first_nodes[block] = blocknode = BlockSliceNode.new(self, block, 0, -1)
         block.successors.each { |b| add_block_predecessor(block_predecessors, b, blocknode) }
         next
@@ -240,7 +240,7 @@ private
       split_node, index = nil, 0
       current_node = BlockSliceNode.new(self, block, 0)
       first_nodes[block] = current_node
-      while (index < block.instructions.size)
+      while index < block.instructions.size
         current_instruction = block.instructions[index]
         if split_node
           current_node = BlockSliceNode.new(self, block, index)
@@ -297,7 +297,7 @@ private
     delay_slots_left = ins.delay_slots
 
     # find the bundle in the last delay slot
-    while (delay_slots_left > 0)
+    while delay_slots_left > 0
       # find next bundle
       current_index += 1
       current_index += 1 while block.instructions[current_index].bundled?

@@ -424,9 +424,9 @@ class WcetTool
 
   # Configure files for aiT export
   def configure_ait_files(opts, outdir, basename, overwrite = true)
-    opts.ais_file = File.join(outdir, "#{basename}.ais") unless (!overwrite && opts.ais_file)
-    opts.apx_file = File.join(outdir, "#{basename}.apx") unless (!overwrite && opts.apx_file)
-    opts.ait_report_prefix = File.join(outdir, "#{basename}.ait") unless (!overwrite && opts.ait_report_prefix)
+    opts.ais_file = File.join(outdir, "#{basename}.ais") unless !overwrite && opts.ais_file
+    opts.apx_file = File.join(outdir, "#{basename}.apx") unless !overwrite && opts.apx_file
+    opts.ait_report_prefix = File.join(outdir, "#{basename}.ait") unless !overwrite && opts.ait_report_prefix
   end
 
   def WcetTool.run(pml,options, model=nil)
@@ -445,7 +445,7 @@ class WcetTool
       options.analysis_entry = "main"
     end
 
-    if (!pml.modelfacts.empty?)
+    if !pml.modelfacts.empty?
       # Hacky: Extracttool modifys bitcode_functions, so the
       # with_temporary_sections below would tigger an invalid caching in the
       # second run. Therefore run the ExtractSymbolsTool ahead of time.

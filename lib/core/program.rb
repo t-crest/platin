@@ -120,7 +120,7 @@ module PML
       lname = data['loop']
       iname = data['instruction']
       is_edge = ! data['edgesource'].nil?
-      if (lname || bname)
+      if lname || bname
         block = function.blocks.by_name(lname || bname)
         assert("ProgramPoint.from_pml: no such block: #{lname || bname}") {
           block
@@ -352,7 +352,7 @@ module PML
       @labelkey = opts[:labelkey]
       @blocks = BlockList.new(self, data['blocks'])
       @blocks.each do |block|
-        if (block.loopheader?)
+        if block.loopheader?
           @loops.push(block.loop)
         end
       end

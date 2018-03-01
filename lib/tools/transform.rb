@@ -45,10 +45,10 @@ class RelationGraphValidation
           end
         end
         # If we have an off by one error, we try to continue, collecting the errors
-        if (p1 == tdst[ix_dst + 1])
+        if p1 == tdst[ix_dst + 1]
           errors.push([p1,p2])
           ix_dst += 1
-        elsif (tsrc[ix_src + 1] == p2)
+        elsif tsrc[ix_src + 1] == p2
           errors.push([p1,p2])
           ix_src += 1
         else
@@ -132,7 +132,7 @@ class TransformTool
   def TransformTool.run(pml,options)
     needs_options(options,:flow_fact_selection,:flow_fact_srcs,:transform_action,:analysis_entry, :flow_fact_output)
 
-    if (options.validate)
+    if options.validate
       RelationGraphValidationTool.run(pml,options)
     end
 

@@ -543,7 +543,7 @@ private
 
       # Create flow-fact (with dealing different IPET edges)
       terms = lhs.select { |v,c| c != 0 }.map { |v,c|
-        pp = if (v.kind_of?(IPETEdge))
+        pp = if v.kind_of?(IPETEdge)
                if v.cfg_edge?
                  v.cfg_edge
                elsif v.call_edge?

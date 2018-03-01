@@ -50,9 +50,9 @@ class LpSolveILP < ILP
     obj = lp.objective
     freqmap = extract_frequencies(lp.get_variables)
     unbounded = nil
-    if (r == LPSolve::INFEASIBLE)
+    if r == LPSolve::INFEASIBLE
       diagnose_infeasible(lp_solve_error_msg(r), freqmap) if @do_diagnose
-    elsif (r == LPSolve::UNBOUNDED)
+    elsif r == LPSolve::UNBOUNDED
       unbounded, freqmap = diagnose_unbounded(lp_solve_error_msg(r), freqmap) if @do_diagnose
     end
     raise ILPSolverException.new(lp_solve_error(r), obj.round, freqmap, unbounded) unless r == 0

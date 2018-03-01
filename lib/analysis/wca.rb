@@ -81,7 +81,7 @@ class WCA
       # get list of executed instructions
       branch_index = nil
       ilist =
-        if (edge.kind_of?(Block))
+        if edge.kind_of?(Block)
           edge.instructions
         else
           # Special Case for GCFG Node+>Node Edges

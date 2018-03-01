@@ -372,9 +372,9 @@ class F4Exporter
   # export stack cache instruction annotation
   def export_stack_cache_annotation(type, ins, _value)
     assert("cannot annotate stack cache instruction w/o instruction addresses") { ins.address }
-    if (type == :fill)
+    if type == :fill
       feature = "stack_cache_fill_count"
-    elsif (type == :spill)
+    elsif type == :spill
       feature = "stack_cache_spill_count"
     else
       die("F4: unknown stack cache annotation")
@@ -547,9 +547,9 @@ class FFXExporter
   # export stack cache instruction annotation
   def export_stack_cache_annotation(type, ins, _value)
     assert("cannot annotate stack cache instruction w/o instruction addresses") { ins.address }
-    if (type == :fill)
+    if type == :fill
       feature = "stack_cache_fill_count"
-    elsif (type == :spill)
+    elsif type == :spill
       feature = "stack_cache_spill_count"
     else
       die("F4: unknown stack cache annotation")
