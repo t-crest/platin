@@ -204,7 +204,6 @@ class AlwaysMissCacheAnalysis < CacheAnalysisBase
 
   # extend IPET with load costs
   def extend_ipet(scopegraph, ipet_builder)
-
     # all memory edges
     @all_load_edges = []
 
@@ -278,7 +277,6 @@ class CacheRegionAnalysis < CacheAnalysisBase
 
   # extend IPET, using conflict free scopes computed by +analyze+
   def extend_ipet(scopegraph, ipet_builder)
-
     # cache tags per scope
     @all_tags = {}
 
@@ -377,7 +375,6 @@ class CacheRegionAnalysis < CacheAnalysisBase
   # for each memory block (tag)
   #
   def analyze(scopegraph)
-
     @region_graphs = {}
     @conflict_free_scopes = {}
 
@@ -627,7 +624,6 @@ class ConflictAnalysis
   # Find conflict-free sub scopes in a scope with conflicts
   #
   def analyze_conflict_scope(node, set)
-
     debug(options, :cache) { "Conflicts in scope #{node}: #{get_all_tags(node, set).keys.inspect}" }
 
     if rg = @analysis.get_region_graph(node)

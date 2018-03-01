@@ -116,7 +116,6 @@ class VariableElimination
   # eliminate set of variables (which must have no cost assigned in the ILP)
   #
   def eliminate_set(vars)
-
     # set of variable ids left to eliminate
     elim_vids = Set.new
     # map of known constraints to constraint references
@@ -381,7 +380,6 @@ class FlowFactTransformation
   end
 
   def transform(target_analysis_entry, flowfacts, target_level)
-
     target_functions = if target_level == "machinecode"
                          @pml.machine_functions
                        else
@@ -634,7 +632,6 @@ class SymbolicBoundTransformation
   end
 
   def translate_blocks_and_variables(ff, target_level)
-
     # get relation graph
     function = ff.scope.function
     rg_src_level    = ff.level == 'bitcode' ? :src : :dst

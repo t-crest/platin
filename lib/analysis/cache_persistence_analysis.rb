@@ -430,7 +430,6 @@ class PersistenceAnalysis
   # Find persistent sub scopes in a scope with conflicts
   #
   def analyze_conflict_scope(node, tag)
-
     debug(options, :cache) { "Tag #{tag} is not persistent in #{node}" }
     # for call nodes, subscopes have been taken care of
     unless node.kind_of?(ScopeGraph::CallNode)

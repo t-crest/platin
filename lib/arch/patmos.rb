@@ -565,7 +565,6 @@ class Architecture < PML::Architecture
 
   # Update the configuration using the given options
   def update_cache_config(options)
-
    # Update data cache
     if options.data_cache_size || options.data_cache_policy
       dc_policy = options.data_cache_policy[:policy] if options.data_cache_policy

@@ -606,7 +606,6 @@ class IPETBuilder
     add_global_call_constraints()
 
     die("Bitcode contraints are not implemented yet") if @bc_model
-
   end
 
   def build_gcfg_abb(abb, outgoing_abb_flux, _flowfacts, _opts, cost_block)

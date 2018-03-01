@@ -15,7 +15,6 @@ class ExtractSymbols
     @stats_address_count = 0
     @instruction_addresses = {}
     @instructions = {}
-
   end
 
   def add_symbol(label,address)

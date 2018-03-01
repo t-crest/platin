@@ -19,7 +19,6 @@ class String
   # Convenient for indented HEREDOCs; inspired by ActiveSupport's
   # strip_heredoc.
   def indent_doc(new_indent = 0)
-
     # let indent_diff = new_indent - first_line_indent
     # if indent_diff < 0 -> delete indent_diff leading spaces
     # if indent_diff > 0 -> add indent_diff leading spaces

@@ -271,7 +271,6 @@ class F4Exporter
 
   # export loop bounds
   def export_loopbounds(scope, bounds_and_ffs)
-
     # context-sensitive facts not yet supported
     unless scope.context.empty?
       warn("F4: callcontext-sensitive loop bounds not implemented")
@@ -435,7 +434,6 @@ class FFXExporter
 
   # export loop bounds
   def export_loopbounds(scope, _bounds_and_ffs)
-
     # context-sensitive facts not yet supported
     unless scope.context.empty?
       warn("F4: callcontext-sensitive loop bounds not implemented")

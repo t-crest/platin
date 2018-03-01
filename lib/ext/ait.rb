@@ -233,7 +233,6 @@ class AISExporter
 
   # Generate a global AIS header
   def export_header
-
     # TODO: get compiler type depending on YAML arch type
     @outfile.puts '# configure compiler'
     # @outfile.puts 'compiler "patmos-llvm";'
@@ -370,7 +369,6 @@ class AISExporter
 
   # export loop bounds
   def export_loopbounds(pml, scope, bounds_and_ffs)
-
     # context-sensitive facts not yet supported
     unless scope.context.empty?
       warn("aiT: no support for callcontext-sensitive loop bounds")
@@ -421,7 +419,6 @@ class AISExporter
 
   # export global infeasibles
   def export_infeasible(ff, infeasibleblocks)
-
     infeasibleblocks.each do |scope,pp|
       # context-sensitive facts not yet supported
       unless scope.context.empty? && pp.context.empty?
@@ -440,7 +437,6 @@ class AISExporter
   end
 
   def export_linear_constraint(ff)
-
     terms_lhs, terms_rhs = [],[]
     terms = ff.lhs.dup
     scope = ff.scope
@@ -886,7 +882,6 @@ class AitImport
   # read memory address ranges identified during value analysis
   #
   def read_value_analysis_results(analysis_task_elem)
-
     value_analysis_stats = Hash.new(0)
 
     facts = []

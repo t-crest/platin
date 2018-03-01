@@ -23,7 +23,6 @@ class WCA
   end
 
   def analyze(entry_label)
-
     # Builder and Analysis Entry
     ilp = GurobiILP.new(@options) if @options.use_gurobi
     ilp ||= LpSolveILP.new(@options)

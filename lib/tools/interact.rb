@@ -668,7 +668,6 @@ class EditCommand < ModelFactCommand
     else
       raise ArgumentError, "Usage: edit (modelfacts)"
     end
-
   end
 
   def get_tokens
