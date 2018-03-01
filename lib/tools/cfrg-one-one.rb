@@ -115,7 +115,7 @@ class OneOneCheck
       # Visualize relation graph
       begin
         rg = pml.data['relation-graphs'].find { |f| f['src']['function'] == target or f['dst']['function'] == target }
-        raise Exception.new("Relation Graph not found") unless rg
+        raise Exception, "Relation Graph not found" unless rg
 
         is11 = is_one_one(rg)
         puts "[OneOneCheck] #{target}: #{is11}"

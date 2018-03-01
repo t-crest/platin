@@ -206,7 +206,7 @@ module SWEET
           elsif op == '+'
             sum.add(coeff,var)
           else
-            raise Exception.new("Bad addop: #{op}")
+            raise Exception, "Bad addop: #{op}"
           end
         end
         sum
@@ -244,7 +244,7 @@ module SWEET
       @executed_instructions = 0
       lines = File.readlines(tracefile)
       lines[1..-1].each do |l|
-        raise Exception.new("Bad trace file: more than one trace line: #{l}") if l.strip != ""
+        raise Exception, "Bad trace file: more than one trace line: #{l}" if l.strip != ""
       end
       lastins = nil
       lines.first.split.each do |entry|
@@ -366,7 +366,7 @@ class SweetFlowFactImport
       case ffsrc.constraint.op
       when "<="; "less-equal"
       when "="; "equal"
-      else; raise Exception.new("Bad constraint op: #{ffsrc.constraint.op}")
+      else; raise Exception, "Bad constraint op: #{ffsrc.constraint.op}"
       end
     flowfact = FlowFact.new(scope, TermList.new(terms), op, ffsrc.constraint.rhs,
                             @fact_attributes.dup)
@@ -376,11 +376,11 @@ class SweetFlowFactImport
   def pp_to_ref(pp)
     if pp.kind_of?(SWEET::Edge)
       srcpp, dstpp = [pp.src,pp.target].map { |bpp| lookup_program_point(bpp) }
-      raise UnsupportedFlowFactException.new("interprocedural edges not yet supported") if srcpp.function != dstpp.function
+      raise UnsupportedFlowFactException, "interprocedural edges not yet supported" if srcpp.function != dstpp.function
       if srcpp.kind_of?(Edge) || dstpp.kind_of?(Edge)
-        raise UnsupportedFlowFactException.new("ALF edges involving LLVM edges are not supported")
+        raise UnsupportedFlowFactException, "ALF edges involving LLVM edges are not supported"
       elsif dstpp.kind_of?(Instruction)
-        raise UnsupportedFlowFactException.new("intrablock edges are not supported") if dstpp.ins
+        raise UnsupportedFlowFactException, "intrablock edges are not supported" if dstpp.ins
       elsif srcpp.kind_of?(Instruction)
         srcpp = srcpp.block
       end
@@ -395,7 +395,7 @@ class SweetFlowFactImport
     llvm,internal = pp.split(":::")
     funname,blockname,insname,targetfunname,targetblockname = llvm.split("::")
     # For upper bounds, we could ignore the internal structure of the block
-    raise UnsupportedFlowFactException.new("translation internal program points not supported") if internal
+    raise UnsupportedFlowFactException, "translation internal program points not supported" if internal
     block = @functions.by_name(funname).blocks.by_name(blockname)
     if targetblockname
       # ignore instruction for edges

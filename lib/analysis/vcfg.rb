@@ -20,7 +20,7 @@ class FlowInformation
 
   def get_calltargets(callsite, _context = nil)
     if callsite.unresolved_call?
-      raise Exception.new("Unresolved call")
+      raise Exception, "Unresolved call"
     else
       callsite.callees
     end
@@ -474,7 +474,7 @@ class CallNode < CfgNode
       return ts
     end
     if location.node.callsite.unresolved_call?
-      raise Exception.new("Indirect calls not yet supported: #{location.node.callsite}")
+      raise Exception, "Indirect calls not yet supported: #{location.node.callsite}"
     end
     Enumerator.new do |ss|
       callsite.callees.each do |flabel|
@@ -552,7 +552,7 @@ class LoopStateNode < CfgNode
           successors.each { |s| ss << cfmodel.location(s, refined_context) }
         end
       else
-        raise Exception.new("Bad loop state action")
+        raise Exception, "Bad loop state action"
       end
     end
   end

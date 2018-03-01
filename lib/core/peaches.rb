@@ -92,7 +92,7 @@ class Context
     list  = (@bindings[label] ||= [])
     entry = Entry.new(@level, val)
     if (!list.empty?) && (list.last.level >= level)
-      raise PeachesBindingError.new "Variable #{label} already bound at same scope #{level}"
+      raise PeachesBindingError, "Variable #{label} already bound at same scope #{level}"
     end
     list << entry
 
@@ -102,13 +102,13 @@ class Context
   def lookup(label, index = :last)
     entry = nil
     list  = @bindings[label]
-    raise PeachesBindingError.new "Unknown variable #{label}" if list.nil?
+    raise PeachesBindingError, "Unknown variable #{label}" if list.nil?
     if index == :last
       entry = list.last
     else
       list.each { |e| entry = e if e.level == index }
     end
-    raise PeachesBindingError.new "No binding for variable #{label} on level #{level}" if entry.nil?
+    raise PeachesBindingError, "No binding for variable #{label} on level #{level}" if entry.nil?
     entry.val
   end
 
@@ -155,11 +155,11 @@ class ASTNode
   end
 
   def to_bool
-    raise PeachesTypeError.new "No known conversion from #{self.class.name} to boolean"
+    raise PeachesTypeError, "No known conversion from #{self.class.name} to boolean"
   end
 
   def to_num
-    raise PeachesTypeError.new "No known conversion from #{self.class.name} to number"
+    raise PeachesTypeError, "No known conversion from #{self.class.name} to number"
   end
 
   def visit(visitor)
@@ -376,7 +376,7 @@ class ASTCall < ASTNode
 
     # Error handling
     if @decl.params.length < args.length
-      raise PeachesArgumentError.new "Argument number mismatch for #{self}:" +
+      raise PeachesArgumentError, "Argument number mismatch for #{self}:" +
         "expected #{@decl.params.length}, got #{args.length}"
     end
 
@@ -459,12 +459,12 @@ class ASTExpr < ASTNode
       when :number
         match = true if val.is_a?(ASTNumberLiteral)
       else
-        raise PeachesInternalError.new "Unknown type: #{type}"
+        raise PeachesInternalError, "Unknown type: #{type}"
       end
       match
     end.inject(false) { |x,y| x || y }
 
-    raise PeachesTypeError.new "Expression #{node.class.name}:#{node} is no instance of #{types}" if !typecheck
+    raise PeachesTypeError, "Expression #{node.class.name}:#{node} is no instance of #{types}" if !typecheck
 
     val
   end
@@ -516,7 +516,7 @@ class ASTArithmeticOp < ASTExpr
 
   def evaluate(context)
     desc = OP_MAP[@op]
-    raise PeachesInternalError.new "Unknown arithmetic operator: #{@op}" if desc.nil?
+    raise PeachesInternalError, "Unknown arithmetic operator: #{@op}" if desc.nil?
 
     lhs = ASTExpr.assert_full_eval(@lhs, context, desc[:types])
     rhs = ASTExpr.assert_full_eval(@rhs, context, desc[:types])
@@ -579,7 +579,7 @@ class ASTCompareOp < ASTExpr
 
   def evaluate(context)
     desc = OP_MAP[@op]
-    raise PeachesInternalError.new "Unknown compare operator: #{@op}" if desc.nil?
+    raise PeachesInternalError, "Unknown compare operator: #{@op}" if desc.nil?
 
     lhs = ASTExpr.assert_full_eval(@lhs, context, desc[:types])
     rhs = ASTExpr.assert_full_eval(@rhs, context, desc[:types])
@@ -637,7 +637,7 @@ class ReferenceCheckingVisitor < ASTVisitor
     begin
       @context.lookup(node.label) if node.is_a?(ASTIdentifier) || node.is_a?(ASTCall)
     rescue PeachesBindingError
-      raise PeachesBindingError.new "Unbound variable #{node.label} on right side of decl #{@current}"
+      raise PeachesBindingError, "Unbound variable #{node.label} on right side of decl #{@current}"
     end
 
     node
@@ -860,7 +860,7 @@ def self.evaluate_expression(context, expr, type)
     types      = [:number]
     exprparser = :expr
   else
-    raise Peaches::PeachesTypeError.new("Unknown expression type: #{type}")
+    raise Peaches::PeachesTypeError, "Unknown expression type: #{type}"
   end
   parser = Peaches::Parser.new
   ast    = parser.send(exprparser).eof.parse!(expr)

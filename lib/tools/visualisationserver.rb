@@ -365,7 +365,7 @@ class Server
       @server.mount '/api/data', HashServlet, opts[:data]
       @server.mount '/', RedirectServlet, '/api/data/callgraph.svg'
     else
-      raise ArgumentError.new "No such server mode: #{mode}"
+      raise ArgumentError, "No such server mode: #{mode}"
     end
   end
 

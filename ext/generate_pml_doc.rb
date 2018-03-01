@@ -102,7 +102,7 @@ private
     ty = entity['type']
     doc, attrs = parse_doc(entity['desc'])
     klass = get_klass(entity, attrs)
-    raise Exception.new("generate_klass: #{entity['desc']} has no 'class' attribute'") unless klass
+    raise Exception, "generate_klass: #{entity['desc']} has no 'class' attribute'" unless klass
     return false if @klasses[klass] # already generated
 
     @io.puts doc.indent_doc(KLASS_INDENT)
@@ -111,7 +111,7 @@ private
     elsif ty == 'seq'
       generate_list(klass,attrs,entity['sequence'])
     else
-      raise Exception.new("Refusing to generate class for scalar type: #{name}")
+      raise Exception, "Refusing to generate class for scalar type: #{name}"
     end
     @klasses[klass] = true
     klass
@@ -166,7 +166,7 @@ private
   def generate_list(klass, attrs, elemtypes)
     elemtype = elemtypes.first
     elemklass = get_klass(elemtype)
-    raise Exception.new("Schema error: element type of list class #{klass} has no 'class' attribute") unless elemklass
+    raise Exception, "Schema error: element type of list class #{klass} has no 'class' attribute" unless elemklass
     superklass = attrs[:super] || 'PMLList'
     if options.list_classes
       @io.puts <<-EOF.indent_doc(KLASS_INDENT)

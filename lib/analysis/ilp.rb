@@ -41,7 +41,7 @@ class IndexedConstraint
     @ilp = ilp
     @name, @lhs, @op, @rhs = name, lhs, op, rhs
     @tags = tags
-    raise Exception.new("add_indexed_constraint: name is nil") unless name
+    raise Exception, "add_indexed_constraint: name is nil" unless name
     assert("unexpected op #{@op}") { %w{equal less-equal}.include? @op }
     normalize!
   end
@@ -206,7 +206,7 @@ class ILP
 
   # index of a variable
   def index(variable)
-    @indexmap[variable] or raise UnknownVariableException.new("unknown variable: #{variable}")
+    @indexmap[variable] or raise UnknownVariableException, "unknown variable: #{variable}"
   end
 
   # variable indices
@@ -247,7 +247,7 @@ class ILP
 
   # add a new variable
   def add_variable(v, vartype= :machinecode)
-    raise Exception.new("Duplicate variable: #{v}") if @indexmap[v]
+    raise Exception, "Duplicate variable: #{v}" if @indexmap[v]
     assert("ILP#add_variable: type is not a symbol") { vartype.kind_of?(Symbol) }
     debug(@options, :ilp) { "Adding variable #{v} :: #{vartype.inspect}" }
 
@@ -296,7 +296,7 @@ class ILP
     terms_indexed.default = 0
     constr = IndexedConstraint.new(self, terms_indexed, op, const_rhs, name, tags)
     return nil if constr.tautology?
-    raise InconsistentConstraintException.new("Inconsistent constraint #{name}: #{constr}") if constr.inconsistent?
+    raise InconsistentConstraintException, "Inconsistent constraint #{name}: #{constr}" if constr.inconsistent?
     constr
   end
 

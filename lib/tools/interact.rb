@@ -936,7 +936,7 @@ class SetCommand < Command
 
     while segments.length > 0
       key = segments.shift.to_sym
-      raise ArgumentError.new("No such key: #{key}") if !element.to_h.has_key?(key)
+      raise ArgumentError, "No such key: #{key}" if !element.to_h.has_key?(key)
       if segments.length == 0
         case op
         when '='
@@ -944,7 +944,7 @@ class SetCommand < Command
         when '<<'
           element[key].concat(data)
         else
-          raise ArgumentError.new("Unknown Operation: #{op}")
+          raise ArgumentError, "Unknown Operation: #{op}"
         end
         return data
       end

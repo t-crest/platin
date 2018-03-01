@@ -112,7 +112,7 @@ module PML
       fname = data['function']
       assert("ProgramPoint.from_pml: no function attribute: #{data}") { fname }
       function = mod.by_name(fname)
-      raise UnknownFunctionException.new(fname) unless function
+      raise UnknownFunctionException, fname unless function
 
       bname = data['block']
       lname = data['loop']

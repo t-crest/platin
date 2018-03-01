@@ -131,7 +131,7 @@ class VariableElimination
 
     # initialize set of variables to eliminate
     vars.each do |v|
-      raise Exception.new("VariableElimination: variable #{v} has cost assigned and cannot be eliminated") if @ilp.get_cost(v) > 0
+      raise Exception, "VariableElimination: variable #{v} has cost assigned and cannot be eliminated" if @ilp.get_cost(v) > 0
       vid = @ilp.index(v)
       elim_vids.add(@ilp.index(v))
       eq_constraints[vid] = Set.new
@@ -174,7 +174,7 @@ class VariableElimination
         elimeq.status = :garbage
         elimeq.elim_vars.each do |v|
           tmp = eq_constraints[v].delete(elimeq)
-          raise Exception.new("Internal Error: inconstinstent eq_constraints dictionary") unless tmp
+          raise Exception, "Internal Error: inconstinstent eq_constraints dictionary" unless tmp
         end
 
         # substitute in all constraints referenced by elimvar
@@ -184,7 +184,7 @@ class VariableElimination
             subst_constr.status = :garbage
             subst_constr.elim_vars.each do |v|
               tmp = dict[v].delete(subst_constr)
-              raise Exception.new("Internal Error: inconsistent constraint dictionary") unless tmp
+              raise Exception, "Internal Error: inconsistent constraint dictionary" unless tmp
             end
 
             # substitute
@@ -202,7 +202,7 @@ class VariableElimination
           end
         end
       else # FM elimination
-        raise Exception.new("Internal error: equations left") unless eq_constraints[elimvar].empty?
+        raise Exception, "Internal error: equations left" unless eq_constraints[elimvar].empty?
         l, u = [], []
         bound_constraints[elimvar].each do |cref|
           coeff = cref.constraint.get_coeff(elimvar)
@@ -215,7 +215,7 @@ class VariableElimination
           # remove from all bound_constraints
           cref.elim_vars.each do |v|
             tmp = bound_constraints[v].delete(cref)
-            raise Exception.new("Internal Error: inconstinstent bound_constraints dictionary") unless tmp
+            raise Exception, "Internal Error: inconstinstent bound_constraints dictionary" unless tmp
           end
         end
         l.each do |l_constr|
@@ -264,7 +264,7 @@ class VariableElimination
     e_constr.lhs.each { |v,c| c_rterms[v] -= c_coeff * (e_sign * c) } # subtract c_coeff * e_terms
     c_rhs = c_constr.rhs * e_coeff - e_rhs * c_coeff                  # substract e_rhs * e_coeff
 
-    raise Exception.new("Internal error in constraint_substitution: #{e_var},#{e_constr},#{c_constr}") if c_rterms[e_var] != 0
+    raise Exception, "Internal error in constraint_substitution: #{e_var},#{e_constr},#{c_constr}" if c_rterms[e_var] != 0
 
     @ilp.create_indexed_constraint(c_rterms, c_constr.op, c_rhs, c_constr.name, e_constr.tags + c_constr.tags)
   end
@@ -547,7 +547,7 @@ private
                  ContextRef.new(v.target, ctx)
                else
                  assert("FlowFactTransformation: relation graph edge not eliminated") { !v.relation_graph_edge? }
-                 raise Exception.new("Bad IPETEdge: #{v}")
+                 raise Exception, "Bad IPETEdge: #{v}"
                end
              else
                v

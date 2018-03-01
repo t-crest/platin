@@ -122,7 +122,7 @@ module PML
     def to_pml
       # return cached YAML representation, if available
       return @data if @data
-      raise Exception.new("#{self.class}: to_pml not implemented")
+      raise Exception, "#{self.class}: to_pml not implemented"
     end
 
     # set YAML representation, if not nil
@@ -187,7 +187,7 @@ module PML
     def lookup(dict,key,name,error_if_missing=true)
       v = dict[key]
       if !v && error_if_missing
-        raise Exception.new("#{self.class}#by_#{name}: No object with key '#{key}' in #{dict.inspect}")
+        raise Exception, "#{self.class}#by_#{name}: No object with key '#{key}' in #{dict.inspect}"
       end
       v
     end
@@ -195,7 +195,7 @@ module PML
     def add_lookup(dict,key,val,name,opts={})
       return if !key && opts[:ignore_if_missing]
       if dict[key]
-        raise Exception.new("#{self.class}#by_#{name}: Duplicate object with key #{key}: #{val} and #{dict[key]}")
+        raise Exception, "#{self.class}#by_#{name}: Duplicate object with key #{key}: #{val} and #{dict[key]}"
       end
       dict[key] = val
     end

@@ -731,7 +731,7 @@ class VisualizeTool
       begin
         rgv = RelationGraphVisualizer.new(options)
         rg = pml.data['relation-graphs'].find { |f| f['src']['function'] == target or f['dst']['function'] == target }
-        raise Exception.new("Relation Graph not found") unless rg
+        raise Exception, "Relation Graph not found" unless rg
         file = File.join(outdir, target + ".rg" + suffix)
         rgv.generate(rgv.visualize(rg),file)
         html.add(target,"rg",file) if options.html

@@ -57,7 +57,7 @@ class LpSolveILP < ILP
     end
     raise ILPSolverException.new(lp_solve_error(r), obj.round, freqmap, unbounded) unless r == 0
     if (obj - obj.round.to_f).abs > @eps
-      raise Exception.new("Untolerable floating point inaccuracy > #{EPS} in objective #{obj}")
+      raise Exception, "Untolerable floating point inaccuracy > #{EPS} in objective #{obj}"
     end
 
     [obj.round, freqmap, unbounded]

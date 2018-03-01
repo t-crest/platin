@@ -22,7 +22,7 @@ class PMLPath
   def parse_predicate(str)
     return :all if str == '*'
     m = /^\[@(.+?)=(.+)\]$/.match(str)
-    raise Exception.new("Bad predicate in PMLpath: '#{str}'") unless m
+    raise Exception, "Bad predicate in PMLpath: '#{str}'" unless m
     [m[1],m[2]]
   end
 
@@ -114,7 +114,7 @@ class PMLDoc
     when "*"
       ft = [@bitcode_functions, @machine_functions]
     else
-      raise Exception.new("bad function type: #{ppath.ftype}")
+      raise Exception, "bad function type: #{ppath.ftype}"
     end
 
     fs = ft.map { |ff| matcher.match_functions(ff.list, ppath.pred_at_level(:func)) }.flatten

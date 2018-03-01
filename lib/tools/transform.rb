@@ -25,7 +25,7 @@ class RelationGraphValidation
       while is_machine_only_node(tdst[ix_dst],tsrc[ix_src])
         ix_dst += 1
         if ix_dst == tdst.length
-          raise Exception.new("RelationGraphValidation failed: ran out of MC entries at #{tsrc[ix1]}")
+          raise Exception, "RelationGraphValidation failed: ran out of MC entries at #{tsrc[ix1]}"
         end
       end
       p1, p2 = tsrc[ix_src], tdst[ix_dst]
@@ -52,13 +52,13 @@ class RelationGraphValidation
           errors.push([p1,p2])
           ix_src += 1
         else
-          raise Exception.new("Progress trace validation failed: #{p1} != #{p2}")
+          raise Exception, "Progress trace validation failed: #{p1} != #{p2}"
         end
       else
         ix_src,ix_dst = ix_src + 1, ix_dst + 1
       end
     end
-    raise Exception.new("Progress trace validation failed: #{errors.inspect}") if !errors.empty?
+    raise Exception, "Progress trace validation failed: #{errors.inspect}" if !errors.empty?
     statistics("CFRG-VALIDATION",
                "progress trace length (src)" => pt1.trace.length,
                "progress trace length (dst)" => pt2.trace.length) if @options.stats
@@ -136,7 +136,7 @@ class TransformTool
     end
     p options.transform_action
     machine_entry = pml.machine_functions.by_label(options.analysis_entry)
-    raise Exception.new("Analysis Entry #{options.analysis_entry} not found") unless machine_entry
+    raise Exception, "Analysis Entry #{options.analysis_entry} not found" unless machine_entry
 
     # Select flow facts
     flowfacts = pml.flowfacts.filter(pml, options.flow_fact_selection, options.flow_fact_srcs, ["bitcode","machinecode"])

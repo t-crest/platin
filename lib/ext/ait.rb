@@ -112,7 +112,7 @@ end
 #
 class SymbolicExpression
   def to_ais
-    raise Exception.new("#{self.class}#to_ais: no translation available")
+    raise Exception, "#{self.class}#to_ais: no translation available"
   end
 end
 
@@ -145,7 +145,7 @@ class SEBinary
     when 'smax' then "max(#{lexpr},#{rexpr})"
     when 'smin' then "min(#{lexpr},#{rexpr})"
     when '/s'   then "(#{lexpr} / #{rexpr})"
-    else        raise Exception.new("SymbolicExpression#eval: unknown binary operator #{@op}")
+    else        raise Exception, "SymbolicExpression#eval: unknown binary operator #{@op}"
     end
   end
 end
@@ -200,13 +200,13 @@ end
 class Loop
   # no automatic translation for loops
   def ais_ref
-    raise AISUnsupportedProgramPoint.new(self)
+    raise AISUnsupportedProgramPoint, self
   end
 end
 
 class Edge
   def ais_ref
-    raise AISUnsupportedProgramPoint.new(self)
+    raise AISUnsupportedProgramPoint, self
   end
 end
 
@@ -868,7 +868,7 @@ class AitImport
         ctx.context = []
       end
       if @contexts[ctx.id] && @contexts[ctx.id] != ctx
-        raise Exception.new("Duplicate context with different meaning: #{ctx.id}")
+        raise Exception, "Duplicate context with different meaning: #{ctx.id}"
       end
       @contexts[ctx.id] = Context.from_list(ctx.context)
     end

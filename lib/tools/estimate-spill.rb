@@ -32,7 +32,7 @@ class EstimateSpill
 
   def self.estimate(pml, target)
     rg = pml.data['relation-graphs'].find { |f| f['src']['function'] == target or f['dst']['function'] == target }
-    raise Exception.new("Relation Graph not found") unless rg
+    raise Exception, "Relation Graph not found" unless rg
 
     nodes = {}
 

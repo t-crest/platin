@@ -63,12 +63,12 @@ class ValueRange
     if s = symbol
       dquote(s)
     else
-      raise Exception.new("#{self.class}#to_f4: no translation available")
+      raise Exception, "#{self.class}#to_f4: no translation available"
     end
   end
 
   def to_ffx
-    raise Exception.new("#{self.class}#to_ffx: no translation available")
+    raise Exception, "#{self.class}#to_ffx: no translation available"
   end
 
   def self.range_to_ffx(range)
@@ -81,11 +81,11 @@ end
 #
 class SymbolicExpression
   def to_f4
-    raise Exception.new("#{self.class}#to_f4: no translation available")
+    raise Exception, "#{self.class}#to_f4: no translation available"
   end
 
   def to_ffx
-    raise Exception.new("#{self.class}#to_ffx: no translation available")
+    raise Exception, "#{self.class}#to_ffx: no translation available"
   end
 end
 
@@ -104,11 +104,11 @@ end
 
 class SEBinary
   def to_f4
-    raise Exception.new("#{self.class}#to_f4: no translation available")
+    raise Exception, "#{self.class}#to_f4: no translation available"
   end
 
   def to_ffx
-    raise Exception.new("#{self.class}#to_ffx: no translation available")
+    raise Exception, "#{self.class}#to_ffx: no translation available"
 #    left,right = self.a, self.b
 #    if SEBinary.commutative?(op) && left.constant? && ! right.constant?
 #      left, right = right, left
@@ -155,7 +155,7 @@ class Function
   end
 
   def ffx_ref
-    raise Exception.new("#{self.class}#to_ffx: no translation available")
+    raise Exception, "#{self.class}#to_ffx: no translation available"
   end
 end
 
@@ -172,7 +172,7 @@ class Block
   end
 
   def ffx_ref
-    raise Exception.new("#{self.class}#to_ffx: no translation available")
+    raise Exception, "#{self.class}#to_ffx: no translation available"
   end
 end
 
@@ -191,21 +191,21 @@ end
 class Loop
   # no automatic translation for loops
   def f4_ref
-    raise F4UnsupportedProgramPoint.new(self)
+    raise F4UnsupportedProgramPoint, self
   end
 
   def ffx_ref
-    raise FFXUnsupportedProgramPoint.new(self)
+    raise FFXUnsupportedProgramPoint, self
   end
 end
 
 class Edge
   def f4_ref
-    raise F4UnsupportedProgramPoint.new(self)
+    raise F4UnsupportedProgramPoint, self
   end
 
   def ffx_ref
-    raise FFXUnsupportedProgramPoint.new(self)
+    raise FFXUnsupportedProgramPoint, self
   end
 end
 

@@ -514,7 +514,7 @@ class ConflictFreeRegionFormation
       region_header.scope_node
     else
       # should never be reached, as entry, exit and recursion nodes are isolated without accesses
-      raise Exception.new("#{region_header} of type #{region_node.class} does not correspond to a scope")
+      raise Exception, "#{region_header} of type #{region_node.class} does not correspond to a scope"
     end
   end
 

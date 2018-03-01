@@ -369,7 +369,7 @@ class PMLDoc
     elsif level == 'machinecode'
       machine_functions
     else
-      raise Exception.new("Unsupported representation level: #{level}")
+      raise Exception, "Unsupported representation level: #{level}"
     end
   end
 

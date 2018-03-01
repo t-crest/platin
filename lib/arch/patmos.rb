@@ -82,7 +82,7 @@ class SimulatorTrace
     begin
       [ Integer("0x#{pc}"), Integer(cyc), Integer(instr) ]
     rescue Exception => e
-      raise Exception.new("Patmos::SimulatorTrace: bad line (\"#{line.chomp}\")")
+      raise Exception, "Patmos::SimulatorTrace: bad line (\"#{line.chomp}\")"
     end
   end
 end

@@ -77,7 +77,7 @@ module PML
       when "rt-support-all"   then c.is_rt || c.is_indirect_calltarget
       when "rt-support-local" then (c.is_rt && (c.is_local || c.is_minimal)) || c.is_indirect_calltarget
       when "rt-support-minimal" then (c.is_rt && c.is_minimal) || c.is_indirect_calltarget
-      else raise Exception.new("Bad Flow-Fact Selection Profile: #{profile}")
+      else raise Exception, "Bad Flow-Fact Selection Profile: #{profile}"
       end
     end
   end
@@ -471,7 +471,7 @@ module PML
       @scope, @lhs, @op, @rhs = scope, lhs, op, rhs
       @rhs = SEInt.new(@rhs) if rhs.kind_of?(Integer)
       @attributes = attributes
-      raise Exception.new("No level attribute!") unless level
+      raise Exception, "No level attribute!" unless level
       set_yaml_repr(data)
     end
 
@@ -505,7 +505,7 @@ module PML
           name
         elsif ty == :loop
           b = scope.function.blocks.by_name(name[1..-1]).loop
-          raise Exception.new("Unable to lookup loop: #{name} in #{b}") unless b
+          raise Exception, "Unable to lookup loop: #{name} in #{b}" unless b
           b
         end
       end
@@ -674,7 +674,7 @@ module PML
     def initialize(min, max, symbol, data =nil)
       @min, @max, @symbol = min, max, symbol
       set_yaml_repr(data)
-      raise Exception.new("Bad ValueRange: #{self}") unless @min <= @max if @min
+      raise Exception, "Bad ValueRange: #{self}" unless @min <= @max if @min
     end
 
     def inspect

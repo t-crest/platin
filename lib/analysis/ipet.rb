@@ -75,7 +75,7 @@ class ControlFlowRefinement
     global_set = @calltargets[callsite][Context.empty] if dict
     ctx_set    = @calltargets[callsite][context] unless context.empty? if dict
     sets = [ctx_set,global_set,static_set].compact
-    raise UnresolvedIndirectCall.new(callsite) if sets.empty?
+    raise UnresolvedIndirectCall, callsite if sets.empty?
     sets.inject { |a,b| a.intersection(b) }
   end
 
@@ -654,7 +654,7 @@ class IPETBuilder
   #
   def add_flowfact(ff, tag = :flowfact)
     model = ff.level == "machinecode" ? @mc_model : @bc_model
-    raise Exception.new("IPETBuilder#add_flowfact: cannot add bitcode flowfact without using relation graph") unless model
+    raise Exception, "IPETBuilder#add_flowfact: cannot add bitcode flowfact without using relation graph" unless model
     unless ff.rhs.constant?
       warn("IPETBuilder#add_flowfact: cannot add flowfact with symbolic RHS to IPET: #{ff}")
       return false
@@ -684,7 +684,7 @@ class IPETBuilder
         warn("IPETBuilder#add_flowfact: references instruction, not block or edge: #{ff}")
         return false
       else
-        raise Exception.new("IPETBuilder#add_flowfact: Unknown programpoint type: #{term.programpoint.class}")
+        raise Exception, "IPETBuilder#add_flowfact: Unknown programpoint type: #{term.programpoint.class}"
       end
     end
     scope = ff.scope
@@ -697,7 +697,7 @@ class IPETBuilder
     elsif scope.programpoint.kind_of?(Loop)
       lhs += model.sum_loop_entry(scope.programpoint, -rhs)
     else
-      raise Exception.new("IPETBuilder#add_flowfact: Unknown scope type: #{scope.programpoint.class}")
+      raise Exception, "IPETBuilder#add_flowfact: Unknown scope type: #{scope.programpoint.class}"
     end
     begin
       name = "ff_#{@ffcount += 1}"
@@ -753,7 +753,7 @@ private
         if term.programpoint.kind_of?(Marker)
           factor = term.factor
           if !@markers[term.programpoint.name]
-            raise Exception.new("No instructions corresponding to marker #{term.programpoint.name.inspect}")
+            raise Exception, "No instructions corresponding to marker #{term.programpoint.name.inspect}"
           end
           @markers[term.programpoint.name].each do |instruction|
               new_lhs.push(Term.new(instruction.block, factor))

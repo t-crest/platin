@@ -37,7 +37,7 @@ class SymbolicExpression
 
   # Convert constant expression to integer. Fails if expression is not #constant?
   def to_i
-    raise Exception.new("SymbolicExpression#to_i: not constant")
+    raise Exception, "SymbolicExpression#to_i: not constant"
   end
 
   # Evaluate the symbolic expression, given the variable environment env
@@ -48,7 +48,7 @@ class SymbolicExpression
   # +lenv+:: a loop environent
   #
   def eval(env, lenv = nil)
-    raise Exception.new("SEAFfineRec#eval: no loop environment given") unless lenv
+    raise Exception, "SEAFfineRec#eval: no loop environment given" unless lenv
     resolve_loops(lenv).eval(env,lenv)
   end
 
@@ -59,7 +59,7 @@ class SymbolicExpression
   #  - +[:loop, l]+     ... Loop block used in a CHR
   #
   def map_names
-    raise Exception.new("map_names not implemented for #{self.class}")
+    raise Exception, "map_names not implemented for #{self.class}"
   end
 
   def constant;            nil; end
@@ -90,7 +90,7 @@ class SymbolicExpression
 
   def ==(other)
     return false if other.nil?
-    raise Exception.new("unexpected comparsion with symbolic expression") unless other.kind_of?(SymbolicExpression)
+    raise Exception, "unexpected comparsion with symbolic expression" unless other.kind_of?(SymbolicExpression)
     return super(other)
   end
 
@@ -99,7 +99,7 @@ end
 
 class SEInt < SymbolicExpression
   def initialize(int)
-    raise Exception.new("Bad integer: #{int}/#{int.class}") unless int.kind_of?(Integer)
+    raise Exception, "Bad integer: #{int}/#{int.class}" unless int.kind_of?(Integer)
     @num = int
   end
 
@@ -132,7 +132,7 @@ class SEVar < SymbolicExpression
     if v = env[@var]
       v
     else
-      raise Exception.new("SymbolicExpression#eval: unknown variable #{@var}")
+      raise Exception, "SymbolicExpression#eval: unknown variable #{@var}"
     end
   end
 
@@ -218,7 +218,7 @@ class SEBinary < SymbolicExpression
     end
     args = args.select { |e| e.constant? } + args.select { |e| !e.constant? } if SEBinary.commutative?(op)
     fst = args.shift
-    raise Exception.new("SEbinary#fold: no arguments") unless fst
+    raise Exception, "SEbinary#fold: no arguments" unless fst
     args.inject(fst) do |a,b|
       SEBinary.create(op,a,b)
     end
@@ -255,7 +255,7 @@ class SEBinary < SymbolicExpression
     when 'smin' then [ae,be].min
     when '/u'   then ae / be
     when '/s'   then ae / be
-    else        raise Exception.new("SymbolicExpression#eval: unknown binary operator #{@op}")
+    else        raise Exception, "SymbolicExpression#eval: unknown binary operator #{@op}"
     end
   end
 
@@ -288,7 +288,7 @@ class SEAffineRec < SymbolicExpression
   def to_s; "{#{@a},+,#{@b}}<#{@flags}><#{@loopheader}>"; end
 
   def eval(env, lenv = nil)
-    raise Exception.new("SEAFfineRec#eval: no loop environment given") unless lenv
+    raise Exception, "SEAFfineRec#eval: no loop environment given" unless lenv
     resolve_loops(lenv).eval(env,lenv)
   end
 
@@ -377,8 +377,8 @@ class SEAffineRec < SymbolicExpression
   def loop_bound_sum(outer_loop_bound)
     x = outer_loop_bound
     if !@b.constant? || @b.to_i == 0
-      raise Exception.new("SEAffineRec#loop_bound_sum: not possible to calculate total bound for" +
-                          "non-constant/zero #{@b}::#{@b.class} in #{self}")
+      raise Exception, "SEAffineRec#loop_bound_sum: not possible to calculate total bound for" +
+                          "non-constant/zero #{@b}::#{@b.class} in #{self}"
     end
     if @b.to_i > 0
       lb = @b.add(-@a,-1).sdiv(@b).smax(0)
@@ -473,7 +473,7 @@ private
         a  = ps.shift
         op = ps.shift
         stack.push([a,op])
-        raise Exception.new("SymbolicExpressionParser: mixed ops without parenthesis") unless !last_op || op == last_op
+        raise Exception, "SymbolicExpressionParser: mixed ops without parenthesis" unless !last_op || op == last_op
         last_op = op
       end
       expr = ps.first

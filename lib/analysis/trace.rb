@@ -299,7 +299,7 @@ class MachineTraceMonitor < TraceMonitor
     if !addr
       warn ("No address for #{data.inspect[0..60]}")
     elsif dict[addr]
-      raise Exception.new("Duplicate watchpoint at address #{addr.inspect}: #{data} already set to #{dict[addr]}")
+      raise Exception, "Duplicate watchpoint at address #{addr.inspect}: #{data} already set to #{dict[addr]}"
     else
       @wp[addr] = true
       dict[addr] = data

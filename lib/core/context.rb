@@ -288,7 +288,7 @@ class LoopContextEntry < ContextEntry
   # Normalized
   #  (step = 0 ^ offset < peel) v (step = unroll ^ offset = peel + k ^ k < unroll)
   def check_and_normalize(offset,step,peel,unroll)
-    raise Exception.new("LoopContextEntry: step #{step} or offset #{offset} negative") if offset < 0 || step < 0
+    raise Exception, "LoopContextEntry: step #{step} or offset #{offset} negative" if offset < 0 || step < 0
     if step != 0
       assert("LoopContextEntry: step #{step} does not match unroll factor #{unroll}") { step == unroll }
       assert("LoopContextEntry: offset #{offset} to small for peel factor #{peel}")   { offset >= peel }

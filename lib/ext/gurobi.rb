@@ -170,6 +170,6 @@ class GurobiILP < ILP
   end
 
   def gurobi_error(msg)
-    raise Exception.new(gurobi_error_msg(msg))
+    raise Exception, gurobi_error_msg(msg)
   end
 end

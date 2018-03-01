@@ -15,7 +15,7 @@ module PML
   end
 
   def div_ceil(num, denom)
-    raise Exception.new("div_ceil: negative numerator or denominator") unless num >= 0 && denom > 0
+    raise Exception, "div_ceil: negative numerator or denominator" unless num >= 0 && denom > 0
     (num + denom - 1) / denom
   end
 
@@ -211,7 +211,7 @@ module PML
   end
 
   def internal_error(msg)
-    raise Exception.new(format_msg("INTERNAL ERROR", msg))
+    raise Exception, format_msg("INTERNAL ERROR", msg)
   end
 
   def die(msg)
