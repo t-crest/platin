@@ -77,10 +77,10 @@ module PML
       on("--report [FILE]", "generate report") { |f| options.report = f || "-" }
       on("--append-report [KEYVALUELIST]", "append to existing report") do |kvlist|
         options.report_append = if kvlist
-          Hash[kvlist.split(/,/).map { |s| s.split(/=/) }]
-        else
-          {}
-        end
+                                  Hash[kvlist.split(/,/).map { |s| s.split(/=/) }]
+                                else
+                                  {}
+                                end
       end
     end
 
@@ -168,7 +168,7 @@ module PML
 
     def stack_cache_analysis
       on("--use-sca-graph", "use SCA graph for stack-cache analysis") do
-          options.use_sca_graph = true
+        options.use_sca_graph = true
       end
     end
 

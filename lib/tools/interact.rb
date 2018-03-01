@@ -141,9 +141,9 @@ class ProgramPointToken < ListToken
   end
 
   def get_list
-      qnameblocks(REPLContext.instance.pml.bitcode_functions) \
-    + qnameblocks(REPLContext.instance.pml.machine_functions) \
-    + qnameinstructions(REPLContext.instance.pml.machine_functions) \
+    qnameblocks(REPLContext.instance.pml.bitcode_functions) +
+      qnameblocks(REPLContext.instance.pml.machine_functions) +
+      qnameinstructions(REPLContext.instance.pml.machine_functions)
     # Skipped for performance reasons
     # + qnameinstructions(REPLContext.instance.pml.bitcode_functions)
   end

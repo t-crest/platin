@@ -58,14 +58,14 @@ class EstimateSpill
 
       ls_src = 0
       block_src.instructions.each do |instr|
-          # puts "#{instr.opcode}" if (instr.memmode == "store" or instr.memmode == "load")
-          ls_src = ls_src + 1 if (instr.memmode == "store") || (instr.memmode == "load")
+        # puts "#{instr.opcode}" if (instr.memmode == "store" or instr.memmode == "load")
+        ls_src = ls_src + 1 if (instr.memmode == "store") || (instr.memmode == "load")
       end
 
       ls_dst = 0
       block_dst.instructions.each do |instr|
-          # puts "#{instr.opcode}" if (instr.memmode == "store" or instr.memmode == "load")
-          ls_dst = ls_dst + 1 if (instr.memmode == "store") || (instr.memmode == "load")
+        # puts "#{instr.opcode}" if (instr.memmode == "store" or instr.memmode == "load")
+        ls_dst = ls_dst + 1 if (instr.memmode == "store") || (instr.memmode == "load")
       end
 
       spills_per_depth[block_src.loopnest]  = 0 if NIL == spills_per_depth[block_src.loopnest]

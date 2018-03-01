@@ -224,7 +224,7 @@ class Server
       end
 
       begin
-      code = File.read(realfile).split("\n")
+        code = File.read(realfile).split("\n")
       rescue Errno
         resp.body = "Failed to open file"
         raise WEBrick::HTTPStatus::BadRequest

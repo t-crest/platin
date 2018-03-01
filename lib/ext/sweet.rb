@@ -284,12 +284,12 @@ end
 # option parser extensions
 #
 class OptionParser
-    def alfllc_command
-      on("--alf-llc FILE", "path to alf-llc (=alf-llc)") { |f| options.alf_llc = f }
-      add_check do |options|
-        options.alf_llc ||= "alf-llc"
-      end
+  def alfllc_command
+    on("--alf-llc FILE", "path to alf-llc (=alf-llc)") { |f| options.alf_llc = f }
+    add_check do |options|
+      options.alf_llc ||= "alf-llc"
     end
+  end
 
     def sweet_command
       on("--sweet-command FILE", "path to sweet (=sweet)") { |f| options.sweet = f }

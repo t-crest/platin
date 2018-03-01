@@ -90,21 +90,21 @@ class PMLTool
   def print_markers(io = $stdout)
     bbs = {}
     pml.bitcode_functions.each do |f|
-        f.blocks.each do |bb|
-            bb.instructions.each do |i|
-                (bbs[i.marker] ||= Hash.new(0))[bb] += 1 if i.marker
-            end
+      f.blocks.each do |bb|
+        bb.instructions.each do |i|
+          (bbs[i.marker] ||= Hash.new(0))[bb] += 1 if i.marker
         end
+      end
     end
     io.puts "=== Markers ==="
     bbs.each do |marker,bbms|
-        bbstr = bbms.map do |bb,freq|
-                  if freq == 1
-                    "#{bb.qname}"
-                   else
-                     "#{bb.qname} (#{freq})"
-                   end
-                 end.join(", ")
+      bbstr = bbms.map do |bb,freq|
+                 if freq == 1
+                   "#{bb.qname}"
+                  else
+                    "#{bb.qname} (#{freq})"
+                  end
+               end.join(", ")
         puts "  #{marker}: #{bbstr}"
     end
     puts "" unless bbs.empty?

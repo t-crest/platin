@@ -212,7 +212,7 @@ class PMLDoc
     (data['machine-functions'] || []).reject! do |fun|
       mapped = fun['mapsto']
       assert ("Insufficient data for machine-function: #{fun['name']} -> mapped") do
-           fun.key?('mapsto') && resolved.key?(mapped) && fun.key?('pmlsrcfile')
+        fun.key?('mapsto') && resolved.key?(mapped) && fun.key?('pmlsrcfile')
       end
       if resolved[mapped] != fun['pmlsrcfile']
         # prune

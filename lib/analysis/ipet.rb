@@ -736,9 +736,9 @@ private
     end
     # record markers
     bitcode_function.blocks.each do |bb|
-        bb.instructions.each do |i|
-            (@markers[i.marker] ||= []).push(i) if i.marker
-        end
+      bb.instructions.each do |i|
+        (@markers[i.marker] ||= []).push(i) if i.marker
+      end
     end
   end
 

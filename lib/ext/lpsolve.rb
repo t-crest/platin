@@ -120,18 +120,18 @@ class LpSolveILP < ILP
   end
 
   def lp_solve_error_msg(r)
-      case r
-      when LPSolve::NOMEMORY
-        "NOMEMORY"
-      when LPSolve::SUBOPTIMAL
-        "SUBOPTIMAL"
-      when LPSolve::INFEASIBLE
-        "INFEASIBLE"
-      when LPSolve::UNBOUNDED
-        "UNBOUNDED"
-      else
-        "ERROR_#{r}"
-      end
+    case r
+    when LPSolve::NOMEMORY
+      "NOMEMORY"
+    when LPSolve::SUBOPTIMAL
+      "SUBOPTIMAL"
+    when LPSolve::INFEASIBLE
+      "INFEASIBLE"
+    when LPSolve::UNBOUNDED
+      "UNBOUNDED"
+    else
+      "ERROR_#{r}"
+    end
   end
 
   def lp_solve_error(r)

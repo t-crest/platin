@@ -714,12 +714,12 @@ class MethodCacheAnalysis
     #      At the moment, recursive functions are not supported anyway though.
     if i.index == 0 && sf.entry == i.block &&
        (i.block != @entry_function.entry_block || @options.target_callret_costs)
-       [LoadInstruction.new(i, sf)]
+      [LoadInstruction.new(i, sf)]
     # Load subfunction when returning into the subfunction after a call site.
     elsif i.may_return_to?
-       [LoadInstruction.new(i, sf)]
+      [LoadInstruction.new(i, sf)]
     else
-       []
+      []
     end
   end
 

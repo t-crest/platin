@@ -223,15 +223,15 @@ module PML
         private
         def add_index(item)
           #{(unique_indices.map do |index|
-            %Q&
-              k = item.send(:#{index})
-              if k
-                if duplicate = @index_#{index}[k]
-                  raise Exception.new("#{self.class}#add_index(\#{item.inspect}): duplicate index #{index}: \#{duplicate.inspect}")
-                end
-                @index_#{index}[k] = item
-              end
-            &
+             %Q&
+               k = item.send(:#{index})
+               if k
+                 if duplicate = @index_#{index}[k]
+                   raise Exception.new("#{self.class}#add_index(\#{item.inspect}): duplicate index #{index}: \#{duplicate.inspect}")
+                 end
+                 @index_#{index}[k] = item
+               end
+             &
            end +
            indices.map do |index|
              "(@index_#{index}[item.send(:#{index})]||=[]).push(item)"
@@ -240,14 +240,14 @@ module PML
         end
       _end_eval
       all_indices.each do |index|
-         module_eval <<-"_end_eval", __FILE__, __LINE__
+        module_eval <<-"_end_eval", __FILE__, __LINE__
            def by_#{index}(key, error_if_missing = false)
                lookup(@index_#{index}, key, "#{index}", error_if_missing)
            end
          _end_eval
       end
       all_indices.each do |index|
-         module_eval <<-"_end_eval", __FILE__, __LINE__
+        module_eval <<-"_end_eval", __FILE__, __LINE__
            def keys_#{index}()
                @index_#{index}.keys
            end

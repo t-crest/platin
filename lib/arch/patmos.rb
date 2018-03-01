@@ -105,7 +105,7 @@ class ExtractSymbols
           size = opcode.length / 2
 
           if last_addr && (addr != last_addr + last_size)
-              die "Cannot parse objdump. Last address (#{last_addr} #{addr})."
+            die "Cannot parse objdump. Last address (#{last_addr} #{addr})."
           end
 
           # Update counters for next round

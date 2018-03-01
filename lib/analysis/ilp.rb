@@ -281,12 +281,12 @@ class ILP
   def debug_bound_frequencies(freq)
     freq.each do |v,k|
       freq[v] = if k < BIGM
-        k.to_i
-      elsif k == BIGM
-        "\u221e"
-      else
-        "c\u221e"
-      end
+                  k.to_i
+                elsif k == BIGM
+                  "\u221e"
+                else
+                  "c\u221e"
+                end
     end
   end
 

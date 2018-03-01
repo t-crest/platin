@@ -142,6 +142,7 @@ class Architecture < PML::Architecture
   end
 
   def lib_cycle_cost(func)
+    die("Unknown library function: #{func}")
 #    case func
 #    when "__aeabi_uidivmod"
 #      845 + 16
@@ -156,7 +157,7 @@ class Architecture < PML::Architecture
 #    when "__divmodsi4"
 #      922
 #    else
-      die("Unknown library function: #{func}")
+#      die("Unknown library function: #{func}")
 #    end
   end
 
