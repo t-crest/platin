@@ -674,7 +674,6 @@ class EditCommand < ModelFactCommand
   def get_tokens
     @tokens
   end
-
 end
 
 class AnnotateCommand < ModelFactCommand

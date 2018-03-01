@@ -15,7 +15,6 @@ module PML
 
   # rubocop:disable Metrics/LineLength
   class OptionParser < ::OptionParser
-
     attr_reader :options, :checks
 
     def initialize(options, &block)

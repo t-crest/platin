@@ -303,11 +303,9 @@ class VariableElimination
                                               l_constr.tags + u_constr.tags)
     t_constr
   end
-
 end
 
 class FlowFactTransformation
-
   attr_reader :pml, :options
 
   def initialize(pml,options)

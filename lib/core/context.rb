@@ -548,7 +548,6 @@ end
 # fairly generic context manager
 # loop contexts are disabled if looppeel == 0 and loopunroll == 1
 class ContextManager
-
   def self.create(history_length, looppeel = 0, loopunroll = 1)
     return ContextManagerEmpty.new if history_length < 1
     ContextManager.new(history_length, looppeel, loopunroll)

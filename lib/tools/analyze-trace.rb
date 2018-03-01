@@ -183,7 +183,6 @@ class AnalyzeTraceTool
     tool.console_output
     tool.export_facts
   end
-
 end
 
 if __FILE__ == $PROGRAM_NAME

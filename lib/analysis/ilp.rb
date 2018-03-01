@@ -376,7 +376,6 @@ class ILP
     $stderr.puts "Finished diagnosis with objective #{cycles}"
     @do_diagnose = true
   end
-
 end
 
 end # module PML

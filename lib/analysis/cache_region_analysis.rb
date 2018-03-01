@@ -12,7 +12,6 @@ require 'analysis/cache_persistence_analysis'
 module PML
 
 class CacheAnalysis
-
   def initialize(refinement, pml, options)
     @pml, @options, @refinement = pml, options, refinement
   end
@@ -197,7 +196,6 @@ end
 # for conflicts, it just adds all the costs to the IPET.
 #
 class AlwaysMissCacheAnalysis < CacheAnalysisBase
-
   attr_reader :pml, :options, :cache_properties
 
   def initialize(cache_properties, pml, options)
@@ -254,7 +252,6 @@ class AlwaysMissCacheAnalysis < CacheAnalysisBase
       end
     end
   end
-
 end
 
 #
@@ -264,7 +261,6 @@ end
 # transfer costs.
 #
 class CacheRegionAnalysis < CacheAnalysisBase
-
   # cache tags
   class Tag
     include QNameObject
@@ -458,7 +454,6 @@ class CacheRegionAnalysis < CacheAnalysisBase
   def persistence_analysis?
     @cache_properties.cache.policy == "lru" && options.wca_persistence_analysis
   end
-
 end
 
 #
@@ -547,7 +542,6 @@ class ConflictFreeRegionFormation
 end
 
 class ConflictAnalysis
-
   class RegionFormationRA < ConflictFreeRegionFormation
     def initialize(region_graph, cache_set, analysis)
       super(region_graph, cache_set, analysis)
@@ -675,11 +669,9 @@ class ConflictAnalysis
       end
     end
   end
-
 end
 
 class MethodCacheAnalysis
-
   def name
     "M$"
   end
@@ -774,7 +766,6 @@ class CacheLine
 end
 
 class InstructionCacheAnalysis
-
   attr_reader :cache
 
   def name
@@ -948,7 +939,6 @@ end
 # Data access analysis for setups without a data-cache
 #
 class NoDataCacheAnalysis < DataCacheAnalysisBase
-
   attr_reader :always_hit
 
   def initialize(memory, always_hit, pml, options)
@@ -996,7 +986,6 @@ end
 # Data-cache analysis plugin for scope based cache analysis
 #
 class DataCacheAnalysis < DataCacheAnalysisBase
-
   attr_reader :cache
 
   def initialize(memory, cache, pml, options)

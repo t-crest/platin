@@ -89,7 +89,6 @@ module PML
   # Additionally, every PML object needs to implement to_pml (to generate the YAML representation),
   # and must keep YAML and instance variables in sync at all times.
   class PMLObject
-
     def data
       # on-demand construction of the YAML representation
       @data ||= to_pml

@@ -871,7 +871,6 @@ module PML
 
   # List of relation graphs (unmodifiable)
   class RelationGraphList < PMLList
-
     # non-standard pml list
     #
     def initialize(data, srclist, dstlist)

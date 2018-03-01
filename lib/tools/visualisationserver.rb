@@ -277,7 +277,6 @@ class Server
   end
 
   class ILPServlet < WEBrick::HTTPServlet::AbstractServlet
-
     def initialize(server, entrypoint, svgurl, constraintsurl, srchinturl, srcviewurl)
       super server
       @entrypoint, @svgurl, @constraintsurl, @srchinturl = entrypoint, svgurl, constraintsurl, srchinturl

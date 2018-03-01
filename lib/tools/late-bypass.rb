@@ -8,7 +8,6 @@ require 'fileutils'
 include PML
 
 class LateBypassTool
-
   def self.add_config_options(opts)
     opts.on("-t", "--threshold [THRESHOLD]", Integer,
             "classify as unknown if a range is wider than 2^THRESHOLD") do |num|

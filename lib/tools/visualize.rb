@@ -336,7 +336,6 @@ class RelationGraphVisualizer < Visualizer
 end
 
 class ILPVisualisation < Visualizer
-
   INFEASIBLE_COLOUR = 'red'
   INFEASIBLE_FILL   = '#e76f6f'
 

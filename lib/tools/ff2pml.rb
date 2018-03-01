@@ -48,7 +48,6 @@ class SweetImportTool
     debug(options, :sweet) { "Reasons for skipping flow facts: #{reasons.inspect}" }
     pml
   end
-
 end
 
 if __FILE__ == $PROGRAM_NAME

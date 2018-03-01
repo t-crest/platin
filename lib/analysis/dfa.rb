@@ -111,7 +111,6 @@ class DFASetOperator < LiftedDFAOperator
 end
 
 class DataFlowAnalysis
-
   class Node
     # Determines the order in the worklist
     attr_accessor :order

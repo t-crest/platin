@@ -162,7 +162,6 @@ class TransformTool
     # PerfTools::CpuProfiler.stop
     pml
   end
-
 end
 
 if __FILE__ == $PROGRAM_NAME

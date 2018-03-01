@@ -8,7 +8,6 @@ require 'ext/ait'
 include PML
 
 class AisExportTool
-
   AIS_EXPORT_TYPES = %w{header jumptables loop-bounds symbolic-loop-bounds} +
                      %w{flow-constraints infeasible-code call-targets mem-addresses stack-cache}
 

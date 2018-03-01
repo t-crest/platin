@@ -14,7 +14,6 @@ module PML
 
   # Flow fact classification and selection
   class FlowFactClassifier
-
     def initialize(pml)
       @pml = pml
     end
@@ -745,7 +744,6 @@ module PML
       "#<ValueFact #{attributes.map { |k,v| "#{k}=#{v}" }.join(",")}, " +
         "at #{ppref}: #{variable}#{"[width=#{width}]" if width} \\in {#{vs}}>"
     end
-
   end
 
   # List of timing entries (modifiable)

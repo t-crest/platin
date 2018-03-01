@@ -215,7 +215,6 @@ end
 
 # class to export PML information to AIS
 class AISExporter
-
   MAX_METHODCACHE_ASSOCIATIVITY = Hash.new(8)
   MAX_METHODCACHE_ASSOCIATIVITY['LRU'] = 16
 
@@ -702,7 +701,6 @@ class AIS2Helper
       n -= 1
     end
   end
-
 end
 
 class APXExporter

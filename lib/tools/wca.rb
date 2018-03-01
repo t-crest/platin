@@ -9,7 +9,6 @@ require 'analysis/wca'
 include PML
 
 class WcaTool
-
   def self.add_config_options(opts)
     opts.on("--[no-]wca-cache-regions","use single-entry cache regions (=true)") do |b|
       opts.options.wca_cache_regions = b

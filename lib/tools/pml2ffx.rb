@@ -9,7 +9,6 @@ require 'ext/otawa'
 include PML
 
 class FFXExportTool
-
   # TODO: There should be a common base class to the FFXExportTool and AISExportTool, providing helper-methods for the
   #      disable-export option and the actual export.
 

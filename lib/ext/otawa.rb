@@ -36,7 +36,6 @@ end
 
 # class to export PML machine information to OSX
 class OSXExporter
-
   attr_reader :options
 
   def initialize(pml, options)
@@ -186,7 +185,6 @@ class OSXExporter
 end
 
 class OtawaAnalyzer
-
 end
 
 class OtawaImporter

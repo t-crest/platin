@@ -211,7 +211,6 @@ end
 
 # class to export PML information to FFX
 class F4Exporter
-
   attr_reader :stats_generated_facts, :stats_skipped_flowfacts
   attr_reader :outfile, :options
 
@@ -385,7 +384,6 @@ class F4Exporter
 end
 
 class FFXExporter
-
   attr_reader :stats_generated_facts, :stats_skipped_flowfacts
   attr_reader :options
 

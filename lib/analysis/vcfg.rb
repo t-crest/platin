@@ -328,7 +328,6 @@ end
 #  For efficiency reasons, we do not use qnames here
 #  That is, CfgNodes are compared by pointer equality
 class CfgNode
-
   attr_reader :vcfg, :nid, :successors, :predecessors, :context_tree
 
   def initialize(vcfg)

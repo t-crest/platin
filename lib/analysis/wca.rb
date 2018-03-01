@@ -18,7 +18,6 @@ require 'json'
 module PML
 
 class WCA
-
   def initialize(pml, options)
     @pml, @options = pml, options
   end

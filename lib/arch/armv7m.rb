@@ -58,7 +58,6 @@ class ExtractSymbols
     ( \S+ )             # instruction
     # rest
   }x
-
 end
 
 class Architecture < PML::Architecture

@@ -12,7 +12,6 @@ require 'set'
 # Inspired by the global analysis of [Hyunh et.al 2012]
 #
 class PersistenceDataFlowAnalysis
-
   # for each cache tag T possibly accessed in the scope, compute
   #
   #  NO set:   other tags possibly accessed on paths where T is not accessed at all
@@ -218,7 +217,6 @@ class PersistenceDataFlowAnalysis
   #
   #
   class PersistenceInfo
-
     attr_reader :final_state, :active_tags
 
     def initialize(rg, results, scope_node, set, active_tags, analysis)
@@ -276,7 +274,6 @@ class PersistenceDataFlowAnalysis
         end
       end
     end
-
   end
 
   def initialize(persistence_analysis, check_conflict)
@@ -355,7 +352,6 @@ class PersistenceDataFlowAnalysis
 end
 
 class PersistenceAnalysis
-
   attr_reader :options
 
   def initialize(cache_analysis, options)

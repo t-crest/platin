@@ -152,7 +152,6 @@ module SWEET
   # Parse SWEETs flow fact format using the Rsec parser
   # combinator library
   class FlowFactParser
-
     def flowfact(as)
       FlowFact.new(*as)
     end
@@ -345,7 +344,6 @@ class OptionParser
 # class to import SWEET flow facts (format .ff) to PML
 #
 class SweetFlowFactImport
-
   def initialize(functions, fact_attributes)
     @functions = functions
     @fact_attributes = fact_attributes

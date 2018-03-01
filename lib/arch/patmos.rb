@@ -659,7 +659,6 @@ class Architecture < PML::Architecture
     dma.set_attribute('shadow-stack-base', memsize - stack_size)
     dma.set_attribute('heap-end', memsize - stack_size * num_stacks * 2)
   end
-
 end
 
 end # module patmos

@@ -29,7 +29,6 @@ end
 # The syntax used is that of LLVM, as we import their Scalar Evolution
 # expressions
 class SymbolicExpression
-
   # Parse symbolic expression (LLVM 3.4's Scalar Evolution Expression format)
   def self.parse(str)
     SymbolicExpressionParser.parse(str)
@@ -278,7 +277,6 @@ class SEBinary < SymbolicExpression
 end
 
 class SEAffineRec < SymbolicExpression
-
   attr_reader :loopheader
 
   def initialize(a,b,loopheader,flags = '')

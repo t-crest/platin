@@ -105,7 +105,6 @@ end
 # Scope graphs are useful for a variety of purposes, in particular for cache persistence analysis
 #
 class ScopeGraph
-
   # Scopegraph node (has a qualified name)
   class Node
     include QNameObject
@@ -419,7 +418,6 @@ end
 
 # DAG that represents control-flow in a single-entry region
 class RegionGraph
-
   # RegionGraph node
   class Node
     include QNameObject
@@ -663,7 +661,6 @@ class RegionGraph
   end
 
 private
-
 end
 
 # Callgraph are a specialization of scope graphs; they only consist of function nodes, edges
