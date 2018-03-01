@@ -95,7 +95,7 @@ class MachineTraceMonitor < TraceMonitor
       @cycles = cycles
       # Detect return stalls
       if pending_return && pending_return[1] + 1 == @executed_instructions
-	# TODO maybe move this detection entirely into @pml.arch
+	# TODO: maybe move this detection entirely into @pml.arch
 	pending_return[3] = @pml.arch.return_stall_cycles(pending_return[0], @cycles - pending_return[2])
       end
       # Handle Return (TODO)

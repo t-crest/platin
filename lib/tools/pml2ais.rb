@@ -152,7 +152,7 @@ EOF
   pml = PMLDoc.from_files(options.input, options)
   AisExportTool.run(pml, options)
 
-  # TODO make this available as separate platin-tool to to generate only the APX file!?
+  # TODO: make this available as separate platin-tool to to generate only the APX file!?
   if options.apx_file
     ApxExportTool.run(pml, options)
   end

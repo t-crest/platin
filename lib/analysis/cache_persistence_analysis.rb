@@ -274,7 +274,7 @@ class PersistenceDataFlowAnalysis
   # run data flow analysis, and compute persistence
   def analyze(scope_node, set)
     return @results[[scope_node,set]] if @results[[scope_node,set]]
-    # HACK (indirect calls not yet supported)
+    # HACK: (indirect calls not yet supported)
     if(scope_node.kind_of?(ScopeGraph::CallNode))
       assert("persistence analysis does not support indirect calls yet") { scope_node.successors.length == 1 }
       return @results[[scope_node,set]] = analyze(scope_node.successors.first, set)

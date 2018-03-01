@@ -32,17 +32,17 @@ class ToolConfigTool
       opts.push("-mserialize-roots=#{roots.join(",")}") unless roots.empty?
       tc = pml.tool_configurations.by_name('clang')
       opts.concat( tc.options||[] ) if tc
-      # TODO add all analysis_configation tool options for analysis 'default'
+      # TODO: add all analysis_configation tool options for analysis 'default'
       puts opts.map { |opt| escape(opt) }.join(" ")
     when 'pasim'
-      # TODO move the arch-specific tool configs into arch and call something like
+      # TODO: move the arch-specific tool configs into arch and call something like
       #      pml.arch.config_for(options.tool), and get the available_tools list from arch.
       die("Cannot use #{options.tool} for an architecture other than Patmos!")\
         unless pml.arch.instance_of?(Patmos::Architecture)
       opts = pml.arch.config_for_simulator
       tc = pml.tool_configurations.by_name(options.tool)
       opts.concat( tc.options||[] ) if tc
-      # TODO add all analysis_configation tool options for analysis 'default'
+      # TODO: add all analysis_configation tool options for analysis 'default'
       puts opts.map { |opt| escape(opt) }.join(" ")
     when 'ait'
       AISExporter.new(pml,$stdout,options).export_header

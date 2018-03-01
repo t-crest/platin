@@ -243,7 +243,7 @@ class F4Exporter
           targets = successors.uniq.map { |succ|
             succ.f4_ref
           }.join(", ")
-	  # TODO where does the flow fact actually come from?
+	  # TODO: where does the flow fact actually come from?
           gen_fact("multibranch #{ins.f4_ref(:branch_index => branches)} to #{targets}","jumptable (source: llvm)",ins)
         end
       end
@@ -356,7 +356,7 @@ class F4Exporter
     end
     rangelist = vf.values.map { |v| v.to_f4 }.join(", ")
 
-    # TODO not yet supported
+    # TODO: not yet supported
     #gen_fact("instruction #{vf.programpoint.ffx_ref}" + " accesses #{rangelist}",
     #         "Memory address (source: #{vf.origin})", vf)
   end
@@ -372,7 +372,7 @@ class F4Exporter
       die("F4: unknown stack cache annotation")
     end
 
-    # TODO not yet supported
+    # TODO: not yet supported
     #gen_fact("instruction #{ins.ffx_ref} features \"#{feature}\" = #{value}", "SC blocks (source: llvm sca)")
   end
 end
@@ -531,7 +531,7 @@ class FFXExporter
     end
     rangelist = vf.values.map { |v| v.to_f }.join(", ")
 
-    # TODO not yet supported
+    # TODO: not yet supported
     #gen_fact("instruction #{vf.programpoint.ffx_ref}" + " accesses #{rangelist}",
     #         "Memory address (source: #{vf.origin})", vf)
   end
@@ -547,7 +547,7 @@ class FFXExporter
       die("F4: unknown stack cache annotation")
     end
 
-    # TODO not yet supported
+    # TODO: not yet supported
     #gen_fact("instruction #{ins.ffx_ref} features \"#{feature}\" = #{value}", "SC blocks (source: llvm sca)")
   end
 

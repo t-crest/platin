@@ -95,7 +95,7 @@ class WcetTool
     # FIXME: check if this is necessary (CFRG testsuite)
     flow_srcs.push("trace.support") if options.enable_sweet && options.trace_analysis
 
-    # TODO we should (also?) add a 'configuration' name to the TimingEntry that refers to an analysis-configuration name
+    # TODO: we should (also?) add a 'configuration' name to the TimingEntry that refers to an analysis-configuration name
     options.timing_output = [options.timing_output,'trace'].compact.join('/') if options.use_trace_facts
 
     wcet_analysis(flow_srcs)
@@ -168,7 +168,7 @@ class WcetTool
   def wcet_analysis(srcs)
     run_wca = options.enable_wca
     if options.combine_wca
-      # TODO is there a way to disable the stack cache analysis in aiT as well and use the platin analysis??
+      # TODO: is there a way to disable the stack cache analysis in aiT as well and use the platin analysis??
       options.ait_icache_mode = "always-hit"
       run_wca = true
     end
@@ -383,7 +383,7 @@ class WcetTool
         next if te.origin == "trace"
 	next if te.origin != "combined" and options.combine_wca
         next unless te.cycles >= 0
-	# TODO remember the trace_cycles per analysis-entry, check depending on analysis-entry
+	# TODO: remember the trace_cycles per analysis-entry, check depending on analysis-entry
         if te.cycles < trace_cycles
           die("wcet check: cycles for #{te.origin} (#{te.cycles}) less than measurement (#{trace_cycles})")
         end

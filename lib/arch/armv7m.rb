@@ -70,7 +70,7 @@ class Architecture < PML::Architecture
     @config = self.class.default_config unless @config
   end
   def Architecture.default_config
-  # TODO FIXME dummy values
+  # TODO: FIXME dummy values
     memories = PML::MemoryConfigList.new([PML::MemoryConfig.new('main',2*1024*1024,16,0,21,0,21)])
     caches = PML::CacheConfigList.new([Architecture.default_instr_cache('method-cache'),
                                   PML::CacheConfig.new('stack-cache','stack-cache','block',nil,4,2048),
@@ -82,10 +82,10 @@ class Architecture < PML::Architecture
     PML::MachineConfig.new(memories,caches,memory_areas)
   end
   def update_cache_config(options)
-  # FIXME dummy stub
+  # FIXME: dummy stub
   end
   def Architecture.default_instr_cache(type)
-  # TODO FIXME dummy values
+  # TODO: FIXME dummy values
     if type == 'method-cache'
       PML::CacheConfig.new('method-cache','method-cache','fifo',16,8,4096)
     else
@@ -93,13 +93,13 @@ class Architecture < PML::Architecture
     end
   end
   def Architecture.simulator_options(opts)
-  # FIXME dummy stub
+  # FIXME: dummy stub
   end
   def config_for_clang(options)
-  # FIXME dummy stub
+  # FIXME: dummy stub
   end
   def config_for_simulator
-  # FIXME dummy stub
+  # FIXME: dummy stub
   end
   def simulator_trace(options, watchpoints)
     M5SimulatorTrace.new(options.binary_file, self, options)
@@ -122,7 +122,7 @@ FLASH_WAIT_CYCLES=3
 # WAIT_CYCLES_FLASH_ACCESS=3
   def path_wcet(ilist)
     cost = ilist.reduce(0) do |cycles, instr|
-      # TODO flushes for call??
+      # TODO: flushes for call??
       if (instr.callees[0] =~ /__aeabi_.*/ || instr.callees[0] =~ /__.*div.*/)
         cycles + cycle_cost(instr) + lib_cycle_cost(instr.callees[0]) + FLASH_WAIT_CYCLES
       else
@@ -334,45 +334,45 @@ PIPELINE_REFILL=3
   end
 
   def method_cache
-  # FIXME dummy stub
+  # FIXME: dummy stub
     nil
   end
 
   def instruction_cache
-  # FIXME dummy stub
+  # FIXME: dummy stub
     nil
   end
 
   def stack_cache
-  # FIXME dummy stub
+  # FIXME: dummy stub
     nil
   end
 
   def data_cache
-  # FIXME dummy stub
+  # FIXME: dummy stub
     nil
   end
 
   def data_memory
-  # FIXME dummy stub
+  # FIXME: dummy stub
     dm = @config.memory_areas.by_name('data')
     dm.memory if dm
   end
 
   def local_memory
-  # FIXME dummy stub
+  # FIXME: dummy stub
     # used for local scratchpad and stack cache accesses
     @config.memories.by_name("local")
   end
 
   # Return the maximum size of a load or store in bytes.
   def max_data_transfer_bytes
-  # FIXME dummy stub
+  # FIXME: dummy stub
     4
   end
 
   def data_cache_access?(instr)
-  # FIXME dummy stub
+  # FIXME: dummy stub
     false
   end
 end

@@ -117,7 +117,7 @@ class DataFlowAnalysis
     def exit?  ; true ; end
   end
 
-  # TODO order matters here for performance. Use different worklist order based on DFA direction
+  # TODO: order matters here for performance. Use different worklist order based on DFA direction
   class Worklist
     def initialize
       #@worklist = []
@@ -235,7 +235,7 @@ class DataFlowAnalysis
     }
     
     if @reverse
-      # TODO need to reverse entry and exit as well!
+      # TODO: need to reverse entry and exit as well!
       nodes.each { |n|
         pred = n.predecessors
 	n.predecessors = n.successors

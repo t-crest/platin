@@ -19,7 +19,7 @@ class InspectTool
     @pml, @options = pml, options
   end
 
-  # TODO same code as in wcet tool, move to library?
+  # TODO: same code as in wcet tool, move to library?
   def time(descr)
     begin
       t1 = Time.now
@@ -29,7 +29,7 @@ class InspectTool
     end
   end
 
-  # TODO same code as in wcet tool, move to library?
+  # TODO: same code as in wcet tool, move to library?
   def transform_down(srcs, output)
     time("Flow Fact Transformation #{srcs}") do
       opts = options.dup

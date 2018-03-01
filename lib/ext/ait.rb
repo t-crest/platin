@@ -235,7 +235,7 @@ class AISExporter
   # Generate a global AIS header
   def export_header
 
-    # TODO get compiler type depending on YAML arch type
+    # TODO: get compiler type depending on YAML arch type
     @outfile.puts '# configure compiler'
     # @outfile.puts 'compiler "patmos-llvm";'
     @outfile.puts 'compiler "arm-gcc";'
@@ -264,7 +264,7 @@ class AISExporter
           gen_fact("cache data size=#{cache.size}, associativity=1, line-size=#{cache.line_size},"+
                    "policy=LRU, may=chaos", "PML machine configuration")
 	elsif cache.policy == "ideal"
-	  # TODO We can only configure an ideal cache by making the data memory zero-cycle accesses, which makes
+	  # TODO: We can only configure an ideal cache by making the data memory zero-cycle accesses, which makes
 	  # it different for bypasses! Check how the underlying memory is configured and die if the configuration
 	  # is impossible to configure!
 	  warn("aiT: found ideal data-cache. This requires the data memory to have zero-cycle access times.")
@@ -1227,7 +1227,7 @@ class AitImport
   def read_cache_stats(wcet_elem, analysis_entry)
     stats = {}
     wcet_elem.each_element("wcet_results/wcet_cache_infos/wcet_cache_info") { |e|
-      # TODO check: can there be cache results for anything else than the analysis entry?
+      # TODO: check: can there be cache results for anything else than the analysis entry?
       #routine = @routines[e.attributes['routine']]
       type = e.attributes['type']
       stats[type] = CacheStats.new(e.attributes['hits'].to_i, e.attributes['misses'].to_i)

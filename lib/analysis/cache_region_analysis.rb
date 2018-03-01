@@ -165,7 +165,7 @@ class CacheAnalysisBase
       # count store and bypass separately
       misses += freqs[me] || 0 unless li.bypass? or li.store?
       hits += (freqs[me.edgeref] || 0) - (freqs[me] || 0) unless li.bypass? or li.store?
-      # TODO depending on the cache, we might count stores as hits+misses too..
+      # TODO: depending on the cache, we might count stores as hits+misses too..
       stores += freqs[me] || 0 if li.store?
       bypasses += freqs[me] || 0 if li.bypass?
       # count known and unknown accesses indepenently
@@ -199,7 +199,7 @@ class AlwaysMissCacheAnalysis < CacheAnalysisBase
 
     # iterate over all instructions in the call graph
     scopegraph.bottom_up.each { |n|
-      # TODO Handle SCCNodes from recursive calls
+      # TODO: Handle SCCNodes from recursive calls
       next unless n.kind_of?(ScopeGraph::FunctionNode)
 
       n.function.blocks.each { |block|
@@ -399,7 +399,7 @@ class CacheRegionAnalysis < CacheAnalysisBase
       all_tags.concat(get_all_tags(scopegraph.root, set).keys)
     end
 
-    # hack for evaluation purposes only
+    # HACK: for evaluation purposes only
     $imem_bytes = @cache_properties.size_in_bytes(all_tags) if @cache_properties.name == "I$" || @cache_properties.name == "M$"
     statistics("CACHE", "size of all reachable memory blocks for #{@cache_properties.name} (bytes)" =>
                @cache_properties.size_in_bytes(all_tags)) if options.stats
@@ -840,7 +840,7 @@ class DataCacheLine
   attr_reader :address, :function, :memmode, :memtype
   def initialize(address, function, memmode, memtype)
     @address, @function, @memmode, @memtype = address, function, memmode, memtype
-    # TODO For now the cache analysis does not support that the same cache line (equal qname) appears in
+    # TODO: For now the cache analysis does not support that the same cache line (equal qname) appears in
     #      multiple sets, since it tries to add a new variable to the ILP per set. 
     #      As a workaround we need to ensure that an (unknown) cache line in different sets has different names.
     if not address
@@ -987,7 +987,7 @@ class DataCacheAnalysis < DataCacheAnalysisBase
   end
 
   def sets
-    # TODO for now, we only have two sets: (unknown) accesses to data-cache, and
+    # TODO: for now, we only have two sets: (unknown) accesses to data-cache, and
     #      all bypasses and stores
     2
 
@@ -998,7 +998,7 @@ class DataCacheAnalysis < DataCacheAnalysisBase
 
   def set_of(cache_line)
     return sets - 1 if cache_line.uncached?
-    # TODO all other accesses go to set 0 for now.
+    # TODO: all other accesses go to set 0 for now.
     #      For unknown accesses we should instead return a set of
     #      all set-ids, and the cache analysis must put the cache line
     #      into all those sets (same for ranges).
@@ -1012,7 +1012,7 @@ class DataCacheAnalysis < DataCacheAnalysisBase
 
   def load_instructions(i)
     if i.memmode == 'load' or i.memmode == 'store'
-      # TODO try to determine address (range) of access
+      # TODO: try to determine address (range) of access
       return [] if not @pml.arch.data_cache_access?(i)
       line = DataCacheLine.new(nil, i.function, i.memmode, i.memtype)
       [LoadInstruction.new(i, line, line.store?, line.bypass?)]
@@ -1178,7 +1178,7 @@ class StackCacheAnalysisGraphBased < StackCacheAnalysis
     @spills.values.flat_map { |i| i }.each { |e|
       ilp.add_variable(e)
       next if e.target.size == 0
-      # TODO we should get the memory for the 'data' area
+      # TODO: we should get the memory for the 'data' area
       delay = @pml.arch.config.main_memory.write_delay(0, e.target.size*@cache.block_size)
       debug(@options, :cache, :costs) { "Cost for stack cache spill: #{e.target.size}*#{@cache.block_size}=#{delay}" }
       ilp.add_cost(e, delay)

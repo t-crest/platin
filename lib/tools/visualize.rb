@@ -199,7 +199,7 @@ class FlowGraphVisualizer < Visualizer
         options["style"] = "rounded"
       end
       if block_timing.any?{ |o,profile| find_vnode_timing(profile, node).any? { |e| e.wcetfreq > 0 } }
-        # TODO visualize criticality < 1
+        # TODO: visualize criticality < 1
 	options["color"] = "#ff0000"
 	options["penwidth"] = 2
       end
@@ -219,7 +219,7 @@ class FlowGraphVisualizer < Visualizer
 	  [origin, find_vedge_timing(profile, node, s).select{ |e| e.wcetfreq > 0 } ]
 	}.select{ |o,p| not p.empty? }
 	if not t.empty?
-	  # TODO visualize criticality < 1
+	  # TODO: visualize criticality < 1
 	  options["color"] = "#ff0000"
 	  options["penwidth"] = 2
 	  # Annotate frequency and cycles only to 'real' edges between blocks
@@ -229,7 +229,7 @@ class FlowGraphVisualizer < Visualizer
 	  if node.block and ( node.block != s.block or s.block_start? )
 	    options["label"] = ""
 	    t.each do |origin, profile|
-	      # TODO We need a way to merge results from different contexts properly.
+	      # TODO: We need a way to merge results from different contexts properly.
 	      #      aiT returns multiple loop context results, frequencies must
 	      #      be merged properly for sub-contexts.
 	      #      Merging timing results should go into core library functions.

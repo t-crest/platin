@@ -39,7 +39,7 @@ class PMLConfigTool
       opts.options.triple = a
     }
 
-    # TODO Some (if not all) of the options here may be specific to an architecture. There are several ways to handle this
+    # TODO: Some (if not all) of the options here may be specific to an architecture. There are several ways to handle this
     #      - Let pml.arch define and check the options. This requires that at least the --target option is already
     #        parsed or the PML file is loaded, so that pml.arch is available. Problem: how do we handle 
     #        unknown options in the first pass?
@@ -117,7 +117,7 @@ class PMLConfigTool
       opts.options.update_heap_syms = { :stack_size => parse_size(a[0]), :num_stacks => a[1].to_i }
     }
 
-    # TODO Add options to remove attributes
+    # TODO: Add options to remove attributes
     # TODO Add options to modify tool-configurations and analysis-configurations.
 
     opts.add_check do |options|
@@ -126,7 +126,7 @@ class PMLConfigTool
   end
   
   def PMLConfigTool.update_memories(arch, options)
-    # TODO set name of memory to configure, enable configuration of multiple memories?
+    # TODO: set name of memory to configure, enable configuration of multiple memories?
 
     # Get or create the main memory
     main = arch.config.memories.by_name('main')
@@ -183,7 +183,7 @@ class PMLConfigTool
   def PMLConfigTool.run(pml, options)
     arch = pml.arch
 
-    # TODO call pml.arch to make sure all required memories, caches and areas exist
+    # TODO: call pml.arch to make sure all required memories, caches and areas exist
 
     # We can handle the main memory ourselves
     update_memories(arch, options)
@@ -199,7 +199,7 @@ class PMLConfigTool
       arch.update_heap_symbols(options.update_heap_syms[:stack_size], options.update_heap_syms[:num_stacks])
     end
 
-    # TODO call pml.arch to check and unify the machine-configuration
+    # TODO: call pml.arch to check and unify the machine-configuration
 
     # If machine-config did not exist, the PML data is out of sync now (see PMLDoc::initialize).
     pml.data['machine-configuration'] = pml.arch.config.to_pml
@@ -225,7 +225,7 @@ if __FILE__ == $0
     end
   else
     data = {}
-    # TODO Get the default format from somewhere? a constant? read from pml.yml?
+    # TODO: Get the default format from somewhere? a constant? read from pml.yml?
     # TODO For now, we use 'pml-0.1' to be compatible with patmos-llc, otherwise
     #      we get a value mismatch error from platin merge_streams when mixing 
     #      generated .pml files from pml-config and patmos-llc.

@@ -287,7 +287,7 @@ class Architecture < PML::Architecture
   end
 
   def data_cache
-    # TODO check if this is consistent with what is configured in the
+    # TODO: check if this is consistent with what is configured in the
     #      data memory-area (but check only once!)
     dc = @config.caches.by_name('data-cache')
     return nil if dc.nil? or dc.type == 'none'
@@ -500,7 +500,7 @@ class Architecture < PML::Architecture
       # use an 'ideal' data cache
       data_area = @config.memory_areas.by_name('data')
       if data_area.memory.ideal?
-        # FIXME This is incorrect for bypasses, but simulator does
+        # FIXME: This is incorrect for bypasses, but simulator does
 	# not support different timings based on access type yet.
 	warn("Bypass data loads and data stores are configured to be single cycle, but this "+
 	     "is not supported by pasim at the moment.")
