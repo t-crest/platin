@@ -12,6 +12,7 @@ module PML
 
 # option extensions for ffx
 class OptionParser
+  # rubocop:disable Metrics/LineLength
   def otawa_platform_file(mandatory=true)
     on("--otawa-platform-file FILE", "Platform description file for OTAWA") { |f| options.otawa_platform_file = f }
     add_check { |options| die_usage "Option --otawa-platform-file is mandatory" unless options.otawa_platform_file } if mandatory
@@ -23,6 +24,7 @@ class OptionParser
     end
     add_check { |options| die_usage "Option --otawa-report-file is mandatory" unless options.otawa_report_file } if mandatory
   end
+  # rubocop:enable Metrics/LineLength
 end
 
 # Features not supported by the Otawa module

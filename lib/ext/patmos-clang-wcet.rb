@@ -10,7 +10,8 @@ def usage(err)
   $stderr.puts
   $stderr.puts("Usage: patmos-clang-wcet [-c|-S|-E] <clang-option>..")
   $stderr.puts("Usage: patmos-clang-wcet [--target-config=patmos.pml] [--flow-facts=analysis.pml]")
-  $stderr.puts("                         [--wcet-guided-optimization] [--platin-wcet-options=<optstr>]  <clang-option>..")
+  $stderr.puts("                         [--wcet-guided-optimization]" +
+               " [--platin-wcet-options=<optstr>]  <clang-option>..")
   $stderr.puts("")
   $stderr.puts("This is a wrapper for patmos-clang (when producing binaries)")
   $stderr.puts("patmos-clang-wcet will configure all tools to match the hardware settings")
@@ -132,15 +133,19 @@ if options.guided_optimization
   FileUtils.cp(options.outfile, options.outfile + ".preopt")
 
   # compute WCETs
-  run("platin wcet #{platin_inputs} -i #{llvmoutput} -b #{options.outfile} -o #{llvminput} #{platin_derived_options} --report")
+  run("platin wcet #{platin_inputs} -i #{llvmoutput} -b #{options.outfile} " +
+      "-o #{llvminput} #{platin_derived_options} --report")
 
   # recompile, serialize pml, elf, bc
-  # run("patmos-clang #{clang_config} -nodefaultlibs -nostartfiles -mimport-pml=#{llvminput} -o #{options.outfile} #{linked_bitcode}")
-  run("patmos-clang #{clang_config} -mpreemit-bitcode=#{linked_bitcode} -mimport-pml=#{llvminput} #{clang_argstr} -mpatmos-enable-bypass-from-pml")
+  # run("patmos-clang #{clang_config} -nodefaultlibs -nostartfiles " +
+  #     "-mimport-pml=#{llvminput} -o #{options.outfile} #{linked_bitcode}")
+  run("patmos-clang #{clang_config} -mpreemit-bitcode=#{linked_bitcode} " +
+      "-mimport-pml=#{llvminput} #{clang_argstr} -mpatmos-enable-bypass-from-pml")
 end
 
 # compute WCETs and report
-run("platin wcet #{platin_inputs} --bitcode #{linked_bitcode} -i #{llvmoutput} -b #{options.outfile} -o #{options.pmloutput} #{platin_derived_options} --report")
+run("platin wcet #{platin_inputs} --bitcode #{linked_bitcode} -i #{llvmoutput}" +
+    "-b #{options.outfile} -o #{options.pmloutput} #{platin_derived_options} --report")
 
 unless options.save_temps
   File.unlink(llvminput)

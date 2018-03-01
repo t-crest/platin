@@ -186,7 +186,9 @@ module PML
       assert("PML::Edge: source and target need to be blocks, not #{source.class}/#{target.class}") do
         source.kind_of?(Block) && (target.nil? || target.kind_of?(Block))
       end
-      assert("PML::Edge: source and target function need to match") { target.nil? || source.function == target.function }
+      assert("PML::Edge: source and target function need to match") do
+        target.nil? || source.function == target.function
+      end
 
       @source, @target = source, target
       @name = "#{source.name}->#{target ? target.name : '' }"

@@ -74,7 +74,8 @@ class PMLTool
         warn("Timing entry #{te}: WCET cycles are less than cycles from origin <trace>")
       end
       if total_cycles != accum_cycles
-        warn("Timing entry #{te}: cycles in profile sum up to #{accum_cycles}, which is different to WCET #{total_cycles}")
+        warn("Timing entry #{te}: cycles in profile sum up to #{accum_cycles}, " +
+             "which is different to WCET #{total_cycles}")
       elsif total_cycles < simple_cycles
         info("Timing entry #{te}: weighted sum of block WCETs is #{simple_cycles} " +
              "(factor: #{simple_cycles.to_f / total_cycles})")

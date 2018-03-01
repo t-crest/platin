@@ -139,7 +139,8 @@ class TransformTool
     raise Exception, "Analysis Entry #{options.analysis_entry} not found" unless machine_entry
 
     # Select flow facts
-    flowfacts = pml.flowfacts.filter(pml, options.flow_fact_selection, options.flow_fact_srcs, ["bitcode","machinecode"])
+    flowfacts = pml.flowfacts.filter(pml, options.flow_fact_selection,
+                                     options.flow_fact_srcs, ["bitcode","machinecode"])
     # Start transformation
     fft = FlowFactTransformation.new(pml,options)
     if options.transform_action == "copy"

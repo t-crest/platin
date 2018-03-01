@@ -679,7 +679,9 @@ class Parser
     |num| ASTNumberLiteral.new (Integer(num))
   end
   # Magic here: negative lookahead to prohibit keyword/symbol ambiguity
-  IDENTIFIER = seq((''.r ^ lazy{ KEYWORD }), symbol_(/[a-zA-Z]\w*/)) { |_,id| ASTIdentifier.new(id) }.expect('identifier')
+  IDENTIFIER = seq((''.r ^ lazy{ KEYWORD }), symbol_(/[a-zA-Z]\w*/)) do |_,id|
+                 ASTIdentifier.new(id)
+               end.expect('identifier')
   IF         = word('if').expect 'keyword_if'
   THEN       = word('then').expect 'keyword_then'
   ELSE       = word('else').expect 'keyword_else'
@@ -688,7 +690,8 @@ class Parser
   MULT_OP    = symbol_(/[*\/%]/).fail 'multiplication operator'
   ADD_OP     = symbol_(/[\+]/).fail 'addition operator'
   SUB_OP     = symbol_(/[\-]/).fail 'subtraction operator'
-  BOOLEAN    = (symbol_('True') { |_| ASTBoolLiteral.new(true) } | symbol_('False') { |_| ASTBoolLiteral.new(false) }).fail 'boolean'
+  BOOLEAN    = (symbol_('True')  { |_| ASTBoolLiteral.new(true) } |
+                symbol_('False') { |_| ASTBoolLiteral.new(false) }).fail 'boolean'
   UNDEF      = symbol_('undefined')
   ERROR      = symbol_('error')
   KEYWORD    = IF | THEN | ELSE | BOOLEAN | UNDEF | ERROR

@@ -43,7 +43,8 @@ class PMLDoc
     # read-only sections
     if @data['triple']
       @triple = @data['triple'].split('-')
-      machine_config = @data['machine-configuration'] ? MachineConfig.from_pml(self, @data['machine-configuration']) : nil
+      machine_config = @data['machine-configuration'] ?
+        MachineConfig.from_pml(self, @data['machine-configuration']) : nil
       @arch = Architecture.from_triple(triple, machine_config)
     else
       @triple = nil
@@ -472,11 +473,11 @@ class PMLDoc
   end
 
   def machine_code_only_functions
-    %w{_start _exit exit abort __ashldi3 __adddf3 __addsf3 __divsi3 __udivsi3 __divdf3 __divsf3 __eqdf2 __eqsf2 __extendsfdf2} +
-      %w{__fixdfdi __fixdfsi __fixsfdi __fixsfsi __fixunsdfdi __fixunsdfsi __fixunssfdi __fixunssfsi __floatdidf __floatdisf} +
-      %w{__floatsidf __floatsisf __floatundidf __floatundisf __floatunsidf __floatunsisf __gedf2 __gesf2 __gtdf2 __gtsf2} +
-      %w{__ledf2 __lesf2 __lshrdi3 __ltdf2 __ltsf2 __muldf3 __mulsf3 __nedf2 __nesf2 __subdf3 __subsf3 __truncdfsf2 __unorddf2 __unordsf2} +
-      %w{memcpy memmove memset}
+    %w{_start _exit exit abort __ashldi3 __adddf3 __addsf3 __divsi3 __udivsi3 __divdf3 __divsf3 __eqdf2 __eqsf2} +
+      %w{__extendsfdf2 __fixdfdi __fixdfsi __fixsfdi __fixsfsi __fixunsdfdi __fixunsdfsi __fixunssfdi __fixunssfsi} +
+      %w{__floatdidf __floatdisf __floatsidf __floatsisf __floatundidf __floatundisf __floatunsidf __floatunsisf} +
+      %w{__gedf2 __gesf2 __gtdf2 __gtsf2 __ledf2 __lesf2 __lshrdi3 __ltdf2 __ltsf2 __muldf3 __mulsf3 __nedf2} +
+      %w{__nesf2 __subdf3 __subsf3 __truncdfsf2 __unorddf2 __unordsf2 memcpy memmove memset}
   end
 
   def self.from_files(filenames, options)

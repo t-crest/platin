@@ -32,7 +32,8 @@ end
 class ControlFlowModel
   attr_reader :ctx_manager, :vcfgs
   def initialize(function_list, entry, flowfacts, ctx_manager, arch, opts = {})
-    @function_list, @entry, @flowfacts, @ctx_manager, @arch, @opts = function_list, entry, flowfacts, ctx_manager, arch, opts.dup
+    @function_list, @entry, @flowfacts = function_list, entry, flowfacts
+    @ctx_manager, @arch, @opts         = ctx_manager, arch, opts.dup
     @vcfgs = { @entry => VCFG.new(@entry, arch) }
     @locations, @scope_entries, @scope_exits = {}, {}, {}
     extract_flow_refinements

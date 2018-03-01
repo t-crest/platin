@@ -265,7 +265,9 @@ module PML
     include ProgramInfoObject
 
     def initialize(ppref, type, expr, attrs, mode, data = nil)
-      assert("ModelFact#initialize: program point reference has wrong type (#{ppref.class})") { ppref.kind_of?(ContextRef) }
+      assert("ModelFact#initialize: program point reference has wrong type (#{ppref.class})") {
+        ppref.kind_of?(ContextRef)
+      }
       @ppref, @type, @expr = ppref, type, expr
       @attributes = attrs
       @mode = mode
@@ -709,7 +711,9 @@ module PML
     attr_reader :attributes, :ppref, :variable, :width, :values
     include ProgramInfoObject
     def initialize(ppref, variable, width, values, attrs, data = nil)
-      assert("ValueFact#initialize: program point reference has wrong type (#{ppref.class})") { ppref.kind_of?(ContextRef) }
+      assert("ValueFact#initialize: program point reference has wrong type (#{ppref.class})") {
+        ppref.kind_of?(ContextRef)
+      }
       @ppref, @variable, @width, @values = ppref, variable, width, values
       @attributes = attrs
       set_yaml_repr(data)
@@ -738,7 +742,8 @@ module PML
     # string representation of the value fact
     def to_s
       vs = values.map { |vr| vr.to_s }.join(", ")
-      "#<ValueFact #{attributes.map { |k,v| "#{k}=#{v}" }.join(",")}, at #{ppref}: #{variable}#{"[width=#{width}]" if width} \\in {#{vs}}>"
+      "#<ValueFact #{attributes.map { |k,v| "#{k}=#{v}" }.join(",")}, " +
+        "at #{ppref}: #{variable}#{"[width=#{width}]" if width} \\in {#{vs}}>"
     end
 
   end

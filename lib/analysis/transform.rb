@@ -131,7 +131,9 @@ class VariableElimination
 
     # initialize set of variables to eliminate
     vars.each do |v|
-      raise Exception, "VariableElimination: variable #{v} has cost assigned and cannot be eliminated" if @ilp.get_cost(v) > 0
+      if @ilp.get_cost(v) > 0
+        raise Exception, "VariableElimination: variable #{v} has cost assigned and cannot be eliminated"
+      end
       vid = @ilp.index(v)
       elim_vids.add(@ilp.index(v))
       eq_constraints[vid] = Set.new
@@ -264,7 +266,9 @@ class VariableElimination
     e_constr.lhs.each { |v,c| c_rterms[v] -= c_coeff * (e_sign * c) } # subtract c_coeff * e_terms
     c_rhs = c_constr.rhs * e_coeff - e_rhs * c_coeff                  # substract e_rhs * e_coeff
 
-    raise Exception, "Internal error in constraint_substitution: #{e_var},#{e_constr},#{c_constr}" if c_rterms[e_var] != 0
+    if c_rterms[e_var] != 0
+      raise Exception, "Internal error in constraint_substitution: #{e_var},#{e_constr},#{c_constr}"
+    end
 
     @ilp.create_indexed_constraint(c_rterms, c_constr.op, c_rhs, c_constr.name, e_constr.tags + c_constr.tags)
   end
@@ -294,7 +298,10 @@ class VariableElimination
     rhs = u_coeff * l_constr.rhs - l_coeff * u_constr.rhs
 
     assert("Variable #{e_var} not eliminated as it should be") { terms[e_var] == 0 }
-    t_constr = @ilp.create_indexed_constraint(terms, l_constr.op, rhs, l_constr.name + "<>" + u_constr.name, l_constr.tags + u_constr.tags)
+    t_constr = @ilp.create_indexed_constraint(terms, l_constr.op,
+                                              rhs,
+                                              l_constr.name + "<>" + u_constr.name,
+                                              l_constr.tags + u_constr.tags)
     t_constr
   end
 
@@ -676,7 +683,9 @@ class SymbolicBoundTransformation
       if loopblock
         mapped_loopblock = blockmap[loopblock]
         if !mapped_loopblock.loopheader?
-          debug(options, :transform) { "SymbolicBoundTransformation: not a loop header mapping: #{loopblock} -> #{mapped_loopblock}" }
+          debug(options, :transform) do
+            "SymbolicBoundTransformation: not a loop header mapping: #{loopblock} -> #{mapped_loopblock}"
+          end
           # Note: The frequency of the header of the loop nb is member of
           # provides an upper bound to the frequency of nb
           mapped_loopblock = mapped_loopblock.loops.first.loopheader
@@ -731,7 +740,9 @@ class SymbolicBoundTransformation
       begin
         b.resolve_loops(loop_bounds)
       rescue NoLoopBoundAvailableException => ex
-        debug(options, :transform) { "Failed to resolve loop CHR, because outer loop bound for (#{ex.loop}) is not available" }
+        debug(options, :transform) do
+          "Failed to resolve loop CHR, because outer loop bound for (#{ex.loop}) is not available"
+        end
         return nil
       end
     ff_new = FlowFact.loop_bound(s,rb,ff.attributes)
@@ -746,7 +757,8 @@ class SymbolicBoundTransformation
       while parent_loops.first != referenced_loop
         ind_bound = loop_bounds[parent_loops.shift.loopheader]
         debug(options,:transform) do
-          "A loop different from the parent loop is referenced in a CHR - multiplying sum by indepent bound #{ind_bound}"
+          "A loop different from the parent loop is referenced in a CHR " +
+            "- multiplying sum by indepent bound #{ind_bound}"
         end
         sum = ind_bound * sum
       end
@@ -754,7 +766,9 @@ class SymbolicBoundTransformation
                                               ContextRef.new(s.programpoint.loopheader, Context.empty),
                                               sum,
                                               ff.attributes)
-      debug(options, :transform) { "Triangle loop bound: #{ff_triangle} #{ff_triangle.symbolic_bound? ? '(ignored)' : ''}" }
+      debug(options, :transform) do
+        "Triangle loop bound: #{ff_triangle} #{ff_triangle.symbolic_bound? ? '(ignored)' : ''}"
+      end
       # HACK: Symbolic triangle bounds are not yet supported
       ff_triangle = nil if ff_triangle.symbolic_bound?
     end

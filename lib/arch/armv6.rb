@@ -201,7 +201,8 @@ class Architecture < PML::Architecture
       1
 
     # alu
-    when 'tAND', 'tEOR', 'tADC', 'tSBC', 'tROR', 'tTST', 'tRSB', 'tCMPr', 'tCMNz', 'tLSLrr', 'tLSRrr', 'tASRrr', 'tORR', 'tBIC', 'tMVN'
+    when 'tAND', 'tEOR', 'tADC', 'tSBC', 'tROR', 'tTST', 'tRSB', 'tCMPr',
+         'tCMNz', 'tLSLrr', 'tLSRrr', 'tASRrr', 'tORR', 'tBIC', 'tMVN'
       2
 
     # branchcond

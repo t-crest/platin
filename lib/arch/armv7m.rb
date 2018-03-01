@@ -180,7 +180,8 @@ PIPELINE_REFILL = 3
       1
 
     # alu
-    when 'tAND', 'tEOR', 'tADC', 'tSBC', 'tROR', 'tTST', 'tRSB', 'tCMPr', 'tCMNz', 'tLSLrr', 'tLSRrr', 'tASRrr', 'tORR', 'tBIC', 'tMVN'
+    when 'tAND', 'tEOR', 'tADC', 'tSBC', 'tROR', 'tTST', 'tRSB', 'tCMPr',
+         'tCMNz', 'tLSLrr', 'tLSRrr', 'tASRrr', 'tORR', 'tBIC', 'tMVN'
       1
 
     # branchcond (requires pipeline refill)
@@ -314,7 +315,8 @@ PIPELINE_REFILL = 3
     when 't2ADDrs', 't2ADDri', 't2ADDrr', 't2ADCrs', 't2ADCri', 't2ADCrr', 't2ADDri12'
       1
     # logical operations
-    when 't2ANDrr', 't2ANDrs', 't2ANDri', 't2EORrr', 't2EORri', 't2ORRrr', 't2ORRrs', 't2ORRri', 't2ORNrr', 't2BICrr', 't2MVNrr', 't2TSTrr', 't2TEQrr', 't2EORrs', 't2BICri', 't2ORNri'
+    when 't2ANDrr', 't2ANDrs', 't2ANDri', 't2EORrr', 't2EORri', 't2ORRrr', 't2ORRrs', 't2ORRri',
+         't2ORNrr', 't2BICrr', 't2MVNrr', 't2TSTrr', 't2TEQrr', 't2EORrs', 't2BICri', 't2ORNri'
       1
     # bitwise shifts
     when 't2LSLri', 't2LSLri', 't2LSRri', 't2LSRri', 't2ASRri', 't2ASRri'

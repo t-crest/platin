@@ -120,7 +120,8 @@ class AnalyzeTraceTool
         end
       end
     end
-    statistics("TRACE", "extracted flow-flact hypotheses" => outpml.flowfacts.length - flowfacts_before) if @options.stats
+    statistics("TRACE", "extracted flow-flact hypotheses" =>
+               outpml.flowfacts.length - flowfacts_before) if @options.stats
     outpml
   end
 
@@ -133,7 +134,8 @@ class AnalyzeTraceTool
     opts.trace_entry
     opts.callstring_length
     opts.target_callret_costs
-    opts.on("--recorders LIST", "recorder specification (=#{DEFAULT_RECORDER_SPEC}; see --help=recorders)") do |recorder_spec|
+    opts.on("--recorders LIST",
+            "recorder specification (=#{DEFAULT_RECORDER_SPEC}; see --help=recorders)") do |recorder_spec|
       opts.options.recorder_spec = recorder_spec
     end
     opts.on("--max-cycles NUM", Integer,

@@ -40,18 +40,25 @@ class PMLConfigTool
       opts.options.triple = a
     end
 
-    # TODO: Some (if not all) of the options here may be specific to an architecture. There are several ways to handle this
-    #      - Let pml.arch define and check the options. This requires that at least the --target option is already
-    #        parsed or the PML file is loaded, so that pml.arch is available. Problem: how do we handle
+    # TODO: Some (if not all) of the options here may be specific to an
+    #       architecture. There are several ways to handle this
+    #      - Let pml.arch define and check the options. This requires that at
+    #        least the --target option is already parsed or the PML file is
+    #        loaded, so that pml.arch is available. Problem: how do we handle
     #        unknown options in the first pass?
-    #      - Add all options to the option parser, but only include them in the help text and check them
-    #        when an architecture is given, i.e. with 'pml-config --target patmos --help'. Problem: different
-    #        architectures may have different definitions (and short names) of the same option name. Is this a problem?
-    #      - Leave it like it is, with a common set of options for all architectures. This ensures consistency
-    #        of the options across archs, but is less nice to maintain and it is very difficult to understand for the
-    #        user, which options are actually used for a given architecture.
-    #      - Make the options more generic to avoid architecture-specific options altogether.
+    #      - Add all options to the option parser, but only include them in the
+    #        help text and check them when an architecture is given, i.e. with
+    #        'pml-config --target patmos --help'. Problem: different architectures
+    #        may have different definitions (and short names) of the same option
+    #        name. Is this a problem?
+    #      - Leave it like it is, with a common set of options for all
+    #        architectures. This ensures consistency of the options across archs,
+    #        but is less nice to maintain and it is very difficult to understand
+    #        for the user, which options are actually used for a given architecture.
+    #      - Make the options more generic to avoid architecture-specific options
+    #        altogether.
 
+    # rubocop:disable Metrics/LineLength
     opts.on("-g", "--gsize SIZE", "Global memory size") do |s|
       opts.options.memory_size = parse_size(s)
     end
@@ -117,6 +124,8 @@ class PMLConfigTool
       a[1] ||= "16"
       opts.options.update_heap_syms = { stack_size: parse_size(a[0]), num_stacks: a[1].to_i }
     end
+    # rubocop:enable Metrics/LineLength
+
 
     # TODO: Add options to remove attributes
     # TODO Add options to modify tool-configurations and analysis-configurations.

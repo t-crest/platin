@@ -122,7 +122,8 @@ class ExtractSymbols
         end
       end
     end
-    die "The objdump command '#{options.objdump}' exited with status #{$CHILD_STATUS.exitstatus}" unless $CHILD_STATUS.success?
+    die "The objdump command '#{options.objdump}'" +
+        " exited with status #{$CHILD_STATUS.exitstatus}" unless $CHILD_STATUS.success?
   end
   private
   def self.build_instruction(addr, _cond, size, instr, args)
@@ -607,7 +608,9 @@ class Architecture < PML::Architecture
     end
 
    # Update instruction cache / method cache
-    if options.instr_cache_kind or options.instr_cache_size or options.instr_cache_policy or options.instr_cache_line_size
+    if options.instr_cache_kind or options.instr_cache_size or
+        options.instr_cache_policy or options.instr_cache_line_size
+
       ic_policy = options.instr_cache_policy[:policy] if options.instr_cache_policy
       ic_assoc  = options.instr_cache_policy[:assoc]  if options.instr_cache_policy
       if options.instr_cache_kind

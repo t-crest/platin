@@ -170,7 +170,8 @@ class CacheAnalysisBase
     unknown = 0
     @all_load_edges.each do |me|
       li = me.load_instruction
-      puts "  cache load edge #{me}: #{freqs[me] || '??'} / #{freqs[me.edgeref] || '??'} (#{cost[me]} cyc)" if options.verbose
+      puts "  cache load edge #{me}: #{freqs[me] || '??'} / #{freqs[me.edgeref] || '??'} " +
+           "(#{cost[me]} cyc)" if options.verbose
       cycles += cost[me] || 0
       # count store and bypass separately
       misses += freqs[me] || 0 unless li.bypass? or li.store?
@@ -185,7 +186,9 @@ class CacheAnalysisBase
     { "cache-max-cycles" => cycles, "cache-min-hits" => hits, "cache-max-misses" => misses,
       "cache-max-stores" => stores, "cache-max-bypass" => bypasses,
       "cache-known-address" => known, "cache-unknown-address" => unknown
-    }.select { |k,v| v > 0 or %w[cache-max-cycles cache-max-misses cache-min-hits].include?(k) }.map { |k,v| [k,v.to_i] }
+    }.select { |k,v| v > 0 or %w[cache-max-cycles cache-max-misses cache-min-hits].include?(k) }.map do |k,v|
+      [k,v.to_i]
+    end
   end
 end
 
@@ -406,9 +409,13 @@ class CacheRegionAnalysis < CacheAnalysisBase
     end
 
     # HACK: for evaluation purposes only
-    $imem_bytes = @cache_properties.size_in_bytes(all_tags) if @cache_properties.name == "I$" || @cache_properties.name == "M$"
-    statistics("CACHE", "size of all reachable memory blocks for #{@cache_properties.name} (bytes)" =>
-               @cache_properties.size_in_bytes(all_tags)) if options.stats
+    if @cache_properties.name == "I$" || @cache_properties.name == "M$"
+      $imem_bytes = @cache_properties.size_in_bytes(all_tags)
+    end
+    if options.stats
+      statistics("CACHE", "size of all reachable memory blocks for #{@cache_properties.name} (bytes)" =>
+                 @cache_properties.size_in_bytes(all_tags))
+    end
     # cache = @cache_properties.cache
     # all_tags.each { |tag|
     #   info "#{tag.inspect} -> #{tag.size} -> #{cache.bytes_to_blocks(tag.size) * cache.block_size}"

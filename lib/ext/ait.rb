@@ -12,6 +12,7 @@ module PML
 
 # option extensions for aiT
 class OptionParser
+  # rubocop:disable Metrics/LineLength
   def apx_file(mandatory=true)
     on("-a", "--apx FILE", "APX file for a3") { |f| options.apx_file = f }
     add_check { |options| die_usage "Option --apx is mandatory" unless options.apx_file } if mandatory
@@ -71,6 +72,7 @@ class OptionParser
             end
     end
   end
+  # rubocop:enable Metrics/LineLength
 end
 
 # Features not supported by the AIS/APX export module
@@ -162,7 +164,8 @@ class Function
     elsif address
       "0x#{address.to_s(16)}"
     else
-      raise AISUnsupportedProgramPoint.new(self, "neither address nor label available (forgot 'platin extract-symbols'?)")
+      raise AISUnsupportedProgramPoint.new(self, "neither address nor label available " +
+                                                 "(forgot 'platin extract-symbols'?)")
     end
   end
 end
@@ -175,7 +178,8 @@ class Block
     elsif address
       "0x#{address.to_s(16)}"
     else
-      raise AISUnsupportedProgramPoint.new(self, "neither address nor label available (forgot 'platin extract-symbols'?)")
+      raise AISUnsupportedProgramPoint.new(self, "neither address nor label available " +
+                                                 "(forgot 'platin extract-symbols'?)")
     end
   end
 end
@@ -190,7 +194,8 @@ class Instruction
     elsif address
       "0x#{address.to_s(16)}"
     else
-      raise AISUnsupportedProgramPoint.new(self, "neither address nor symbolic offset available (forgot 'platin extract-symbols'?)")
+      raise AISUnsupportedProgramPoint.new(self, "neither address nor symbolic offset available " +
+                                                 "(forgot 'platin extract-symbols'?)")
       # FIXME: we first have to check whether our idea of instruction counting and aiT's match
       # "#{block.ais_ref} + #{self.index} instructions"
     end
@@ -251,8 +256,9 @@ class AISExporter
       case cache.name
       when 'data-cache'
         if cache.policy == "lru" or cache.policy == "fifo"
-          gen_fact("cache data size=#{cache.size}, associativity=#{cache.associativity}, line-size=#{cache.line_size}," +
-                   "policy=#{cache.policy.upcase}, may=chaos", "PML machine configuration")
+          gen_fact("cache data size=#{cache.size}, associativity=#{cache.associativity}, " +
+                   "line-size=#{cache.line_size},policy=#{cache.policy.upcase}, may=chaos",
+                   "PML machine configuration")
         elsif cache.policy == "dm"
           gen_fact("cache data size=#{cache.size}, associativity=1, line-size=#{cache.line_size}," +
                    "policy=LRU, may=chaos", "PML machine configuration")
@@ -318,8 +324,8 @@ class AISExporter
       address_range = area.address_range
       address_range ||= ValueRange.new(0,0xFFFFFFFF,nil)
       transfer_bitsize = area.memory.transfer_size * 8
-      gen_fact("area #{address_range.to_ais} features \"port_width\" = #{transfer_bitsize} and access #{properties.join(", ")}",
-               "PML machine configuration")
+      gen_fact("area #{address_range.to_ais} features \"port_width\" = #{transfer_bitsize}" +
+               " and access #{properties.join(", ")}", "PML machine configuration")
     end
   end
 
@@ -344,7 +350,8 @@ class AISExporter
           targets = successors.uniq.map do |succ|
             succ.ais_ref
           end.join(", ")
-          gen_fact("instruction #{ins.ais_ref(branch_index: branches)} branches to #{targets}","jumptable (source: llvm)",ins)
+          gen_fact("instruction #{ins.ais_ref(branch_index: branches)} branches to #{targets}",
+                   "jumptable (source: llvm)", ins)
         end
       end
     end
@@ -554,7 +561,9 @@ class AISExporter
 
   # export value facts
   def export_valuefact(vf)
-    assert("AisExport#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") { vf.programpoint.kind_of?(Instruction) }
+    assert("AisExport#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") do
+      vf.programpoint.kind_of?(Instruction)
+    end
     if !vf.ppref.context.empty?
       warn("AisExport#export_valuefact: cannot export context-sensitive program point")
       return false
@@ -817,10 +826,13 @@ class AitImport
       routine = OpenStruct.new
       routine.instruction = pml.machine_functions.instruction_by_address(address)
       die("Could not find instruction at address #{address}") unless routine.instruction
-      die("routine #{routine.instruction} is not a basic block") unless routine.instruction.block.instructions.first == routine.instruction
+      unless routine.instruction.block.instructions.first == routine.instruction
+        die("routine #{routine.instruction} is not a basic block")
+      end
       if elem.attributes['loop']
         routine.loop = routine.instruction.block
-        die("loop #{routine.loop} with id #{elem.attributes['id']} in loop routine #{routine.instruction} is not a loop header") unless routine.loop.loopheader?
+        die("loop #{routine.loop} with id #{elem.attributes['id']} in " +
+            "loop routine #{routine.instruction} is not a loop header") unless routine.loop.loopheader?
       else
         routine.function = routine.instruction.function
         die("routine is not entry block") unless routine.function.entry_block == routine.instruction.block

@@ -150,7 +150,8 @@ class Function
     elsif address
       "0x#{address.to_s(16)}"
     else
-      raise F4UnsupportedProgramPoint.new(self, "neither address nor label available (forgot 'platin extract-symbols'?)")
+      raise F4UnsupportedProgramPoint.new(self, "neither address nor label " +
+                                                "available (forgot 'platin extract-symbols'?)")
     end
   end
 
@@ -167,7 +168,8 @@ class Block
     elsif address
       "0x#{address.to_s(16)}"
     else
-      raise F4UnsupportedProgramPoint.new(self, "neither address nor label available (forgot 'platin extract-symbols'?)")
+      raise F4UnsupportedProgramPoint.new(self, "neither address nor label " +
+                                                "available (forgot 'platin extract-symbols'?)")
     end
   end
 
@@ -183,7 +185,8 @@ class Instruction
     elsif address
       "0x#{address.to_s(16)}"
     else
-      raise F4UnsupportedProgramPoint.new(self, "neither address nor symbolic offset available (forgot 'platin extract-symbols'?)")
+      raise F4UnsupportedProgramPoint.new(self, "neither address nor symbolic offset " +
+                                                "available (forgot 'platin extract-symbols'?)")
     end
   end
 end
@@ -355,7 +358,9 @@ class F4Exporter
 
   # export value facts
   def export_valuefact(vf)
-    assert("F4Exporter#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") { vf.programpoint.kind_of?(Instruction) }
+    assert("F4Exporter#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") do
+      vf.programpoint.kind_of?(Instruction)
+    end
     if !vf.ppref.context.empty?
       warn("F4Exporter#export_valuefact: cannot export context-sensitive program point")
       return false
@@ -413,7 +418,8 @@ class FFXExporter
           targets = successors.uniq.map do |succ|
             succ.f4_ref
           end.join(", ")
-          # gen_fact("multibranch #{ins.f4_ref(:branch_index => branches)} to #{targets}","jumptable (source: llvm)",ins)
+          # gen_fact("multibranch #{ins.f4_ref(:branch_index => branches)} to #{targets}",
+          #          "jumptable (source: llvm)",ins)
         end
       end
     end
@@ -530,7 +536,9 @@ class FFXExporter
 
   # export value facts
   def export_valuefact(vf)
-    assert("F4Exporter#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") { vf.programpoint.kind_of?(Instruction) }
+    assert("F4Exporter#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") do
+      vf.programpoint.kind_of?(Instruction)
+    end
     if !vf.ppref.context.empty?
       warn("F4Exporter#export_valuefact: cannot export context-sensitive program point")
       return false

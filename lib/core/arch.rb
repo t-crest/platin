@@ -191,8 +191,9 @@ class MemoryConfig < PMLObject
 
   def initialize(name, size, transfer_size, read_latency, read_transfer_time, write_latency,
                  write_transfer_time, min_burst_size=nil, max_burst_size=nil, data=nil)
-    @name, @size, @transfer_size, @read_latency, @read_transfer_time, @write_latency, @write_transfer_time, @min_burst_size, @max_burst_size =
-      name, size, transfer_size, read_latency, read_transfer_time, write_latency, write_transfer_time, min_burst_size, max_burst_size
+    @name, @size, @transfer_size = name, size, transfer_size
+    @read_latency, @read_transfer_time, @write_latency = read_latency, read_transfer_time, write_latency
+    @write_transfer_time, @min_burst_size, @max_burst_size = write_transfer_time, min_burst_size, max_burst_size
     set_yaml_repr(data)
   end
 

@@ -77,7 +77,8 @@ class WcetTool
     # Comment out for transformed GCFG
     prepare_pml
     unless pml.analysis_entry(options)
-      die("Analysis entry '#{options.analysis_entry}' not found (check for typos, inlined functions or code not reachable from program entry)")
+      die("Analysis entry '#{options.analysis_entry}' not found (check for typos, " +
+          "inlined functions or code not reachable from program entry)")
     end
     options.use_trace_facts = true if options.compare_trace_facts
     options.trace_analysis = true if options.use_trace_facts
@@ -96,7 +97,8 @@ class WcetTool
     # FIXME: check if this is necessary (CFRG testsuite)
     flow_srcs.push("trace.support") if options.enable_sweet && options.trace_analysis
 
-    # TODO: we should (also?) add a 'configuration' name to the TimingEntry that refers to an analysis-configuration name
+    # TODO: we should (also?) add a 'configuration' name to the TimingEntry that
+    # refers to an analysis-configuration name
     options.timing_output = [options.timing_output,'trace'].compact.join('/') if options.use_trace_facts
 
     wcet_analysis(flow_srcs)
@@ -107,7 +109,8 @@ class WcetTool
   def prepare_pml
     # Sanity check and address extraction
     rgs = pml.relation_graphs.list.select { |rg| rg.data['status'] != 'valid' && rg.src.name != "abort" }
-    warn("Problematic Relation Graphs: #{rgs.map { |rg| "#{rg.qname} / #{rg.data['status']}" }.join(", ")}") unless rgs.empty?
+    warn("Problematic Relation Graphs: " +
+         "#{rgs.map { |rg| "#{rg.qname} / #{rg.data['status']}" }.join(", ")}") unless rgs.empty?
 
     # Extract Symbols
     if pml.text_symbols
@@ -434,9 +437,12 @@ class WcetTool
 
     # Get analysis configurations from PML
     # TODO Add option to optionally specify config section name
-    # TODO Support running multiple analysis configurations? Would be more efficient to let the actual analysis tool handle this
-    #      so analysis steps that are shared between configurations are run only once (like address extraction or trace analysis).
+    # TODO Support running multiple analysis configurations? Would be more
+    # efficient to let the actual analysis tool handle this so analysis steps
+    # that are shared between configurations are run only once (like address
+    # extraction or trace analysis).
     config = pml.analysis_configurations.by_name('default')
+
     options.analysis_entry = config.analysis_entry if config and not options.analysis_entry
     if not options.analysis_entry
       warn("Analysis entry not specified, falling back to 'main'.") if config
@@ -480,6 +486,7 @@ class WcetTool
     opts.accept_corrected_rgs
     opts.calculates_wcet
     opts.model_file
+    # rubocop:disable Metrics/LineLength
     opts.on("--batch", "run in batch processing mode, reading analysis targets and configuration from PML file") { opts.options.batch = true }
     opts.on("--outdir DIR", "directory for generated files") { |d| opts.options.outdir = d }
     opts.on("--enable-trace-analysis", "run trace analysis") { |d| opts.options.trace_analysis = true }
@@ -491,12 +498,14 @@ class WcetTool
     opts.on("--compute-criticalities", "calculate block criticalities") { opts.options.compute_criticalities = true }
     opts.on("--enable-sweet", "run SWEET bitcode analyzer") { |d| opts.options.enable_sweet = true }
     opts.on("--visualize-ilp", "display an graphical representation of the geneated ILP") { opts.options.visualize_ilp = true }
+    # rubocop:enable Metrics/LineLength
     use_sweet = Proc.new { |options| options.enable_sweet }
     opts.bitcode_file(use_sweet)
     opts.alf_file(Proc.new { false })
     opts.sweet_options
     opts.sweet_flowfact_file(Proc.new { false })
-    opts.on("--check [FACTOR]", "check that analyzed WCET is higher than MOET [and less than MOET * FACTOR]") do |factor|
+    opts.on("--check [FACTOR]", "check that analyzed WCET is higher than MOET " +
+            "[and less than MOET * FACTOR]") do |factor|
       opts.options.runcheck = true
       opts.options.runcheck_factor = factor.to_f
     end

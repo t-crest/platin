@@ -45,7 +45,8 @@ class ExtractSymbols
         end
       end
     end
-    die "The objdump command '#{@options.objdump}' exited with status #{$CHILD_STATUS.exitstatus}" unless $CHILD_STATUS.success?
+    die "The objdump command '#{@options.objdump}' exited " +
+        "with status #{$CHILD_STATUS.exitstatus}" unless $CHILD_STATUS.success?
 
     # Run platform-specific extractor, if available
     # Computes instruction_addresses
@@ -69,7 +70,8 @@ class ExtractSymbols
           if @instruction_addresses.empty?
             die("There is no symbol for basic block #{block.label} (function: #{function.label}) in the binary")
           else
-            die("There is no symbol for #{block.label}, and no instruction addresses for function #{function.label} are available")
+            die("There is no symbol for #{block.label}, and no instruction " +
+                "addresses for function #{function.label} are available")
           end
         elsif ins_addr = @instruction_addresses[function.label][ins_index]
           warn("Heuristic found wrong address for #{block}: #{addr}, not #{ins_addr}") if addr != ins_addr
@@ -139,8 +141,12 @@ end
 
 class ExtractSymbolsTool
   def self.add_config_options(opts)
-    opts.on("--objdump-command FILE", "path to 'llvm-objdump'") { |f| opts.options.objdump = f }
-    opts.on("--text-sections SECTION,..", "list of code sections (=.text)") { |s| opts.options.text_sections = s.split(/\s*,\s*/) }
+    opts.on("--objdump-command FILE", "path to 'llvm-objdump'") do |f|
+      opts.options.objdump = f
+    end
+    opts.on("--text-sections SECTION,..", "list of code sections (=.text)") do |s|
+      opts.options.text_sections = s.split(/\s*,\s*/)
+    end
     opts.add_check do |options|
       options.objdump = "patmos-llvm-objdump" unless options.objdump
       options.text_sections = [".text"] unless options.text_sections

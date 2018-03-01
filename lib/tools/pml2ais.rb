@@ -9,7 +9,8 @@ include PML
 
 class AisExportTool
 
-  AIS_EXPORT_TYPES = %w{header jumptables loop-bounds symbolic-loop-bounds flow-constraints infeasible-code call-targets mem-addresses stack-cache}
+  AIS_EXPORT_TYPES = %w{header jumptables loop-bounds symbolic-loop-bounds} +
+                     %w{flow-constraints infeasible-code call-targets mem-addresses stack-cache}
 
   def self.add_config_options(opts)
     opts.on("--ais-header-file FILE", "the contents of this file is copied verbatim to the final AIS file") do |file|

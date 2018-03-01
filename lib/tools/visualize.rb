@@ -745,8 +745,11 @@ class VisualizeTool
   end
 
   def self.add_options(opts)
+    # rubocop:disable Metrics/LineLength
     opts.on("--[no-]html","Generate HTML index pages") { |b| opts.options.html = b }
-    opts.on("-f","--function FUNCTION,...","Name of the function(s) to visualize") { |f| opts.options.functions = f.split(/\s*,\s*/) }
+    opts.on("-f","--function FUNCTION,...","Name of the function(s) to visualize") do |f|
+      opts.options.functions = f.split(/\s*,\s*/)
+    end
     opts.on("--show-calls", "Visualize call sites") { opts.options.show_calls = true }
     opts.on("--show-instr", "Show instructions in basic block nodes") { opts.options.show_instructions = true }
     opts.on("--show-timings [ORIGIN]", Array, "Show timing results in flow graphs (=all; can be a list of origins))") do |o|
@@ -763,6 +766,7 @@ class VisualizeTool
         die("Bad GraphViz format: #{options.graphviz_format}")
       end
     end
+    # rubocop:enable Metrics/LineLength
   end
 end
 

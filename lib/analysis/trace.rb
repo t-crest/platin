@@ -39,7 +39,8 @@ class MachineTraceMonitor < TraceMonitor
     @pml, @options = pml, options
     @program_entry = @pml.machine_functions.by_label(options.trace_entry)
     if not @program_entry
-      die("Trace Analysis: Could not find trace entry function '#{options.trace_entry}' in PML file. Make sure it is serialized by patmos-clang.")
+      die("Trace Analysis: Could not find trace entry function '#{options.trace_entry}' " +
+          "in PML file. Make sure it is serialized by patmos-clang.")
     end
     @start = @program_entry.blocks.first.address
     # whether an instruction is a watch point
@@ -161,7 +162,9 @@ class MachineTraceMonitor < TraceMonitor
         handle_loopheader(b)
 
         # basic block
-        assert("Current function does not match block: #{@current_function} != #{b}") { @current_function == b.function }
+        assert("Current function does not match block: #{@current_function} != #{b}") do
+          @current_function == b.function
+        end
 
         # Empty blocks are problematic (cannot be distinguished) - what do do?
         # They are rare (only with -O0), so we tolerate some work. An empty block
@@ -350,7 +353,8 @@ class RecorderSpecification
     out.puts("")
     out.puts("Example: g:lc/1  ==> loop bounds and call targets in global scope using callstring length 1")
     out.puts("         g:b/0   ==> block frequencies in global scope (context insensitive)")
-    out.puts("         f:b     ==> local block frequencies for every executed function (default callstring/virtual inlining)")
+    out.puts("         f:b     ==> local block frequencies for every executed function " +
+             "(default callstring/virtual inlining)")
     out.puts("         f/2:b/1 ==> block frequencies for every executed function (distinguished by callstrings")
     out.puts("                     of length 2), virtually inlining directly called functions")
   end
@@ -445,8 +449,10 @@ class RecorderScheduler
       rid = @recorder_map.size
       assert("Global recorder must not have a context.") { type != :global || scope_context == nil }
       @recorder_map[key] = recorder = case type
-                                   when :global;   FunctionRecorder.new(self, rid, scope_entity, scope_context, spec, @options)
-                                   when :function; FunctionRecorder.new(self, rid, scope_entity, scope_context, spec, @options)
+                                   when :global
+                                     FunctionRecorder.new(self, rid, scope_entity, scope_context, spec, @options)
+                                   when :function
+                                     FunctionRecorder.new(self, rid, scope_entity, scope_context, spec, @options)
                                    end
     end
     @active[recorder.rid] = recorder

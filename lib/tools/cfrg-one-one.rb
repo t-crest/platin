@@ -135,7 +135,9 @@ class OneOneCheck
   end
 
   def self.add_options(opts)
-    opts.on("-f","--function FUNCTION,...","Name of the function(s) to check") { |f| opts.options.functions = f.split(/\s*,\s*/) }
+    opts.on("-f","--function FUNCTION,...","Name of the function(s) to check") do |f|
+      opts.options.functions = f.split(/\s*,\s*/)
+    end
     opts.on("-O","--outdir DIR","Output directory for image files") { |d| opts.options.outdir = d }
     opts.on("-e","--entry FUNC","PML entry function") { |f| opts.options.entry = f }
   end

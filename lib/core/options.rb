@@ -13,6 +13,7 @@ module PML
     end
   end
 
+  # rubocop:disable Metrics/LineLength
   class OptionParser < ::OptionParser
 
     attr_reader :options, :checks
@@ -220,4 +221,6 @@ module PML
     parser.check!(arg_range)
     [options, ARGV]
   end
+
+  # rubocop:enable Metrics/LineLength
 end

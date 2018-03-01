@@ -78,7 +78,12 @@ class EstimateSpill
       instr_dst += block_dst.instructions.length
     end
 
-    { "spills" => spills, "instr_src" => instr_src, "instr_dst" => instr_dst, "mem_src" => mem_src, "mem_dst" => mem_dst, "spd" => spills_per_depth }
+    { "spills" => spills,
+      "instr_src" => instr_src,
+      "instr_dst" => instr_dst,
+      "mem_src" => mem_src,
+      "mem_dst" => mem_dst,
+      "spd" => spills_per_depth }
   end
 
   def self.run(pml, options)
@@ -92,7 +97,9 @@ class EstimateSpill
   end
 
   def self.add_options(opts)
-    opts.on("-f","--function FUNCTION,...","Name of the function(s) to check") { |f| opts.options.functions = f.split(/\s*,\s*/) }
+    opts.on("-f","--function FUNCTION,...","Name of the function(s) to check") do |f|
+      opts.options.functions = f.split(/\s*,\s*/)
+    end
   end
 end
 

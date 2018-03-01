@@ -13,13 +13,16 @@ class FFXExportTool
   # TODO: There should be a common base class to the FFXExportTool and AISExportTool, providing helper-methods for the
   #      disable-export option and the actual export.
 
-  FF_EXPORT_TYPES = %w{jumptables loop-bounds symbolic-loop-bounds flow-constraints infeasible-code call-targets mem-addresses stack-cache}
+  FF_EXPORT_TYPES = %w{jumptables loop-bounds symbolic-loop-bounds flow-constraints} +
+                    %w{infeasible-code call-targets mem-addresses stack-cache}
 
   def self.add_config_options(opts)
-    # TODO: should we name the options --ffx-* to be consistent with the tool name and to distinguish from the SWEET ff format,
-    #      or should we keep them as --ff to avoid confusion with F4 export ??
+    # TODO: should we name the options --ffx-* to be consistent with the tool
+    #       name and to distinguish from the SWEET ff format, or should we keep them
+    #       as --ff to avoid confusion with F4 export ??
     opts.on("--ffx", "Export flow-facts using F4 instead of FFX") { |d| opts.options.export_ffx = true }
-    opts.on("--ff-input FILE", "the F4/FFX file is merged into the final F4/FFX file. Needs to be the same format as the output format") do |file|
+    opts.on("--ff-input FILE", "the F4/FFX file is merged into the final F4/FFX file. " +
+            "Needs to be the same format as the output format") do |file|
       opts.option.ff_input = file
     end
     opts.on("--ff-disable-exports LIST","F4/FFX information that should not be exported (see --help=ff)") do |list|
