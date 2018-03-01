@@ -529,7 +529,7 @@ private
         #     and replace min_coeff * outgoing-edges by min_coeff * block
         out_blocks.keys.each do |b|
           edges = b.successors.map { |b2| IPETEdge.new(b,b2,target_level) }
-          edges = [ IPETEdge.new(b,:exit,target_level) ] if b.may_return?
+          edges = [IPETEdge.new(b,:exit,target_level)] if b.may_return?
           min_coeff = edges.map { |e| lhs[e] }.min
           if min_coeff != 0
             edges.each { |e| lhs[e] -= min_coeff; lhs.delete(e) if lhs[e] == 0 }

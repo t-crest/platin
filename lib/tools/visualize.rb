@@ -222,7 +222,7 @@ class FlowGraphVisualizer < Visualizer
         #      one of those edges here, it should be edge with the longest path through
         #      the block at least.
         t = block_timing.map do |origin,profile|
-          [origin, find_vedge_timing(profile, node, s).select{ |e| e.wcetfreq > 0 } ]
+          [origin, find_vedge_timing(profile, node, s).select{ |e| e.wcetfreq > 0 }]
         end.select{ |o,p| not p.empty? }
         if not t.empty?
           # TODO: visualize criticality < 1

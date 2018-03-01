@@ -719,7 +719,7 @@ class ScopeGraph
   # get callgraph (scopegraph restricted to FunctionNodes) for scopegraph
   def callgraph
     nodes, edges = Set.new, []
-    worklist = WorkList.new([ [root, root] ])
+    worklist = WorkList.new([[root, root]])
     worklist.process do |node, function_node|
       assert("ScopeGraph#callgraph: function_node of wrong type") { function_node.kind_of?(FunctionNode) }
       nodes.add(node) if node.kind_of?(FunctionNode)
@@ -738,7 +738,7 @@ class ScopeGraph
       cg_nodes[n] = cg.add_node(n.function, n.context)
     end
     edges.each do |pre,succ,cs|
-      cg_nodes[pre].add_callsite(cs, [ cg_nodes[succ] ])
+      cg_nodes[pre].add_callsite(cs, [cg_nodes[succ]])
     end
     cg
   end

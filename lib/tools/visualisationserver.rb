@@ -67,19 +67,19 @@ class Templates
     context.local_variable_set(:title, "#{entrypoint}: ILP")
     # context.local_variable_set(:jsscripts, [ '/static/js/interactivity.js' \
                                            # , '/static/js/thirdparty/seedrandom.min.js'])
-    context.local_variable_set(:jsscripts, [ '/static/js/interactivity.js' \
+    context.local_variable_set(:jsscripts, ['/static/js/interactivity.js' \
                                            , '/static/js/thirdparty/seedrandom.min.js' \
                                            , '/static/js/thirdparty/prism.js' \
                                            , '/static/js/thirdparty/jquery-2.2.4.min.js' \
                                            , '/static/js/thirdparty/jquery.qtip.min.js' \
                                            , '/static/js/sourceviewtooltip.js' \
-                                           ])
+])
     # context.local_variable_set(:cssfiles,  ['/static/css/interactivity.css'])
-    context.local_variable_set(:cssfiles,  [ '/static/css/thirdparty/jquery.qtip.min.css' \
+    context.local_variable_set(:cssfiles,  ['/static/css/thirdparty/jquery.qtip.min.css' \
                                            , '/static/css/thirdparty/prism.css' \
                                            , '/static/css/interactivity.css' \
                                            , '/static/css/sourceviewtooltip.css' \
-                                           ])
+])
 
     context.local_variable_set(:svgurl, svgurl)
     context.local_variable_set(:constrainturl, constraintsurl)
@@ -112,12 +112,12 @@ class Templates
   def tooltip_test
     context = binding
     context.local_variable_set(:title, "tooltiptest")
-    context.local_variable_set(:jsscripts, [ '/static/js/thirdparty/prism.js' \
+    context.local_variable_set(:jsscripts, ['/static/js/thirdparty/prism.js' \
                                            , '/static/js/thirdparty/jquery-2.2.4.min.js' \
                                            , '/static/js/thirdparty/jquery.qtip.min.js' \
                                            , '/static/js/sourceviewtooltip.js' \
-                                           ])
-    context.local_variable_set(:cssfiles,  [ '/static/css/thirdparty/jquery.qtip.min.css' \
+])
+    context.local_variable_set(:cssfiles,  ['/static/css/thirdparty/jquery.qtip.min.css' \
                                            , '/static/css/thirdparty/prism.css'])
 
     bodytemplate = <<-EOS

@@ -526,13 +526,13 @@ module PML
 
     # Flow fact builders
     def self.block_frequency(scoperef, blockref, freq, attrs)
-      terms = [ Term.new(blockref, 1) ]
+      terms = [Term.new(blockref, 1)]
       flowfact = FlowFact.new(scoperef, TermList.new(terms),'less-equal',freq.max, attrs.dup)
       flowfact
     end
 
     def self.calltargets(scoperef, csref, receivers, attrs)
-      terms = [ Term.new(csref,1) ]
+      terms = [Term.new(csref,1)]
       receivers.each do |fref|
         terms.push(Term.new(fref,-1))
       end

@@ -256,7 +256,7 @@ class IPETModel
     # the sum of all calledge frequencies is (less than or) equal to the callsite frequency
     # Note: less-than in the presence of predicated calls
     calledges = []
-    lhs = [ [callsite, -1] ]
+    lhs = [[callsite, -1]]
     fs.each do |f|
       calledge = IPETEdge.new(callsite, f, level)
       ilp.add_variable(calledge, level.to_sym)
@@ -274,7 +274,7 @@ class IPETModel
     # variable for instruction
     ilp.add_variable(instruction, level.to_sym)
     # frequency of instruction = frequency of block
-    lhs = [ [instruction,1] ] + block_frequency(instruction.block,-1)
+    lhs = [[instruction,1]] + block_frequency(instruction.block,-1)
     ilp.add_constraint(lhs, "equal", 0, "instruction_#{instruction.qname}",:instruction)
   end
 
@@ -342,7 +342,7 @@ class IPETModel
   end
 
   def edge_frequency(edge, factor = 1)
-    [[IPETEdge.new(edge.source, edge.target ? edge.target : :exit, level), factor ]]
+    [[IPETEdge.new(edge.source, edge.target ? edge.target : :exit, level), factor]]
   end
 
   def sum_incoming(block, factor = 1)

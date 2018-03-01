@@ -73,11 +73,11 @@ class Architecture < PML::Architecture
     memories = PML::MemoryConfigList.new([PML::MemoryConfig.new('main',2 * 1024 * 1024,16,0,21,0,21)])
     caches = PML::CacheConfigList.new([Architecture.default_instr_cache('method-cache'),
                                        PML::CacheConfig.new('stack-cache','stack-cache','block',nil,4,2048),
-                                       PML::CacheConfig.new('data-cache','set-associative','dm',nil,16,2048) ])
+                                       PML::CacheConfig.new('data-cache','set-associative','dm',nil,16,2048)])
     full_range = PML::ValueRange.new(0,0xFFFFFFFF,nil)
     memory_areas =
       PML::MemoryAreaList.new([PML::MemoryArea.new('code','code',caches.list[0], memories.first, full_range),
-                               PML::MemoryArea.new('data','data',caches.list[2], memories.first, full_range) ])
+                               PML::MemoryArea.new('data','data',caches.list[2], memories.first, full_range)])
     PML::MachineConfig.new(memories,caches,memory_areas)
   end
 

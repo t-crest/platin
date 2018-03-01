@@ -320,11 +320,11 @@ class LoopContextEntry < ContextEntry
     if o == 0 # implies @step == 0
       []
     elsif o == peel
-      [ LoopContextEntry.new(@loop,0,peel - 1,@callsite),
-        LoopContextEntry.new(@loop,unroll,peel + unroll - 1,@callsite) ]
+      [LoopContextEntry.new(@loop,0,peel - 1,@callsite),
+        LoopContextEntry.new(@loop,unroll,peel + unroll - 1,@callsite)]
     else
       o2, s2 = check_and_normalize(@offset - 1, @step, peel, unroll)
-      [ LoopContextEntry.new(@loop, s2, o2, @callsite) ]
+      [LoopContextEntry.new(@loop, s2, o2, @callsite)]
     end
   end
 
@@ -582,7 +582,7 @@ class ContextManager
       assert("pop_call: need to exit loop first") { ctx_entry.kind_of?(CallContextEntry) }
       ctx_entry = ctx_entry.callsite
     end
-    [ ctx.pop, ctx_entry ]
+    [ctx.pop, ctx_entry]
   end
 
   def enter_loop(ctx, loop)
@@ -594,7 +594,7 @@ class ContextManager
     return ctx unless store_loopcontext?
     assert("exit_loop: not a loop context #{ctx.top}") { ctx.top.kind_of?(LoopContextEntry) }
     loopnode = ctx.top.loop
-    [ ctx.pop, loopnode ]
+    [ctx.pop, loopnode]
   end
 
   def continue_loop(ctx)

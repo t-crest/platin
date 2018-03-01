@@ -34,7 +34,7 @@ class RelationGraphValidation
           info("Progress Trace Validation Mismatch: #{p1} vs #{p2}")
           info("Trace to SRC:")
           (-SHOW_ERROR_TRACE..SHOW_ERROR_TRACE).each do |off|
-            is,id = [ [0,ix_src + off].max, tsrc.length - 1].min, [ [0,ix_dst + off].max, tdst.length - 1 ].min
+            is,id = [[0,ix_src + off].max, tsrc.length - 1].min, [[0,ix_dst + off].max, tdst.length - 1].min
             pt1.internal_preds[is].each do |n|
               $stderr.puts "        #{n}"
             end

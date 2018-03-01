@@ -80,7 +80,7 @@ class SimulatorTrace
     return nil unless line && (not line.chomp.empty?)
     pc, cyc, instr = line.split(' ',3)
     begin
-      [ Integer("0x#{pc}"), Integer(cyc), Integer(instr) ]
+      [Integer("0x#{pc}"), Integer(cyc), Integer(instr)]
     rescue Exception => e
       raise Exception, "Patmos::SimulatorTrace: bad line (\"#{line.chomp}\")"
     end
@@ -209,11 +209,11 @@ class Architecture < PML::Architecture
     memories = PML::MemoryConfigList.new([PML::MemoryConfig.new('main',2 * 1024 * 1024,16,0,21,0,21)])
     caches = PML::CacheConfigList.new([Architecture.default_instr_cache('method-cache'),
                                        PML::CacheConfig.new('stack-cache','stack-cache','block',nil,4,2048),
-                                       PML::CacheConfig.new('data-cache','set-associative','dm',nil,16,2048) ])
+                                       PML::CacheConfig.new('data-cache','set-associative','dm',nil,16,2048)])
     full_range = PML::ValueRange.new(0,0xFFFFFFFF,nil)
     memory_areas =
       PML::MemoryAreaList.new([PML::MemoryArea.new('code','code',caches.list[0], memories.first, full_range),
-                               PML::MemoryArea.new('data','data',caches.list[2], memories.first, full_range) ])
+                               PML::MemoryArea.new('data','data',caches.list[2], memories.first, full_range)])
     PML::MachineConfig.new(memories,caches,memory_areas)
   end
 
@@ -463,7 +463,7 @@ class Architecture < PML::Architecture
     #   -l [ --lsize ] arg (=2k)  local memory size in bytes
 
     def get_cache_kind(cache)
-      if cache.policy && [ "dm", "ideal", "no" ].include?(cache.policy.downcase)
+      if cache.policy && ["dm", "ideal", "no"].include?(cache.policy.downcase)
         # Ignore associativity here
         cache.policy.downcase
       elsif not cache.fully_assoc?
@@ -476,7 +476,7 @@ class Architecture < PML::Architecture
                "policies with associativity >= 1 are LRU and FIFO")
           "no"
         end
-      elsif cache.policy && [ "lru", "fifo" ].include?(cache.policy.downcase)
+      elsif cache.policy && ["lru", "fifo"].include?(cache.policy.downcase)
         # If no associativity is given, use fully-associative caches
         cache.policy.downcase
       else

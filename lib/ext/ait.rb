@@ -313,7 +313,7 @@ class AISExporter
       kw = if area.type == 'code' then 'code' else 'data' end
       tt_read_first_beat = area.memory.read_latency + area.memory.read_transfer_time
       tt_write_first_beat = area.memory.write_latency + area.memory.write_transfer_time
-      properties = [ "#{kw} read transfer-time = [#{tt_read_first_beat},#{area.memory.read_transfer_time}]" ]
+      properties = ["#{kw} read transfer-time = [#{tt_read_first_beat},#{area.memory.read_transfer_time}]"]
       if area.cache
         # Changed in aiT version 205838 (should not be specified)
         #          properties.push("#{kw} cached")
@@ -748,8 +748,8 @@ class APXExporter
       end
     end
     add_element(project, "files") do |files|
-      [ ['executables', binary],  ['ais',aisfile],
-        ['xml_results', results], ['report',report] ].each do |k,v|
+      [['executables', binary],  ['ais',aisfile],
+        ['xml_results', results], ['report',report]].each do |k,v|
         files << rexml_file(k,v)
       end
     end

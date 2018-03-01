@@ -52,11 +52,11 @@ CHECK_OVERESTIMATION_TOLERANCE = 10
 class WcetTool
   attr_reader :additional_report_info
 
-  TOOLS = [ ExtractSymbolsTool,
+  TOOLS = [ExtractSymbolsTool,
             AnalyzeTraceTool,
             WcaTool,
             AitTool,
-            AlfTool, SweetAnalyzeTool, SweetImportTool ]
+            AlfTool, SweetAnalyzeTool, SweetImportTool]
   attr_reader :pml, :options
   def initialize(pml, opts)
     @pml, @options = pml, opts.dup
@@ -355,7 +355,7 @@ class WcetTool
     combined_cycles = 0
 
     results = pml.timing.sort_by do |te|
-      [ te.scope.qname, te.cycles, te.origin ]
+      [te.scope.qname, te.cycles, te.origin]
     end.map do |te|
       trace_cycles = te.cycles if te.origin == "trace"
       wcet_cycles = [wcet_cycles,te.cycles].compact.min if te.origin != "trace"

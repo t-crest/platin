@@ -26,7 +26,7 @@ class AlfTool
   def self.run(options, alf_opts = {})
     needs_options(options, :alf_llc, :alf_file, :bitcode_file)
     raise MissingToolException, "alf-llc not found" unless which(options.alf_llc)
-    cmd = [ options.alf_llc, "-march=alf", "-o", options.alf_file ]
+    cmd = [options.alf_llc, "-march=alf", "-o", options.alf_file]
     cmd.push("-alf-standalone") if alf_opts[:standalone]
     cmd.push("-alf-ignore-volatiles") if alf_opts[:ignore_volatiles]
     cmd.push("-alf-ignore-definitions=#{alf_opts[:ignored_definitions].join(",")}") if alf_opts[:ignored_definitions]
@@ -88,18 +88,18 @@ class SweetAnalyzeTool
                 ignored_definitions: AlfTool.default_ignored_definitions }
     alfopts[:ignore_volatiles] = true if options.sweet_ignore_volatiles
     AlfTool.run(options, alfopts)
-    i_args  = [ "-i=#{options.alf_file}", "func=#{options.analysis_entry}" ]
-    do_args = [ ]
+    i_args  = ["-i=#{options.alf_file}", "func=#{options.analysis_entry}"]
+    do_args = []
     do_args.push("floats=est") if options.sweet_ignore_volatiles
-    ae_args = [ "-ae", "ffg=uhss,uhsf,uhsp,unss,unsf,unsp,uesp,uesf,uess,ubns", "vola=t" ]
+    ae_args = ["-ae", "ffg=uhss,uhsf,uhsp,unss,unsf,unsp,uesp,uesf,uess,ubns", "vola=t"]
     if f = options.sweet_generate_trace
       ae_args.push('css')
       ae_args.push("gtf=#{options.sweet_trace_file}")
     else
       ae_args.push('pu')
     end
-    ff_args = ["-f", "co", "o=#{options.sweet_flowfact_file}" ]
-    do_args = [ "-do" , "floats=est" ] if options.sweet_ignore_volatiles
+    ff_args = ["-f", "co", "o=#{options.sweet_flowfact_file}"]
+    do_args = ["-do" , "floats=est"] if options.sweet_ignore_volatiles
     raise MissingToolException, "sweet not found" unless which(options.sweet)
     cmd = ([options.sweet] + i_args + do_args + ae_args + ff_args)
     version, commands, parsed = nil, [], []

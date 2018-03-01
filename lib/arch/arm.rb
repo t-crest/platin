@@ -33,7 +33,7 @@ class M5SimulatorTrace
     return nil unless line
     time,event,pc,rest = line.split(/\s*:\s*/,4)
     return nil unless event =~ /system\.cpu/
-    [ Integer(pc), time.to_i / TIME_PER_TICK, @stats_num_items ]
+    [Integer(pc), time.to_i / TIME_PER_TICK, @stats_num_items]
   end
 end
 
