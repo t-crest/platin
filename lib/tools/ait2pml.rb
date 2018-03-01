@@ -59,7 +59,7 @@ class AitAnalyzeTool
     AitAnalyzeTool.add_config_options(opts)
     opts.apx_file(mandatory)
   end
-  def AitAnalyzeTool.run(pml, options)
+  def AitAnalyzeTool.run(_pml, options)
     needs_options(options, :a3, :apx_file)
 
     unless safe_system("#{options.a3} -b #{options.apx_file}")

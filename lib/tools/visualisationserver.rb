@@ -270,7 +270,7 @@ class Server
   end
 
   class ToolTipTest < WEBrick::HTTPServlet::AbstractServlet
-    def do_GET(req, resp)
+    def do_GET(_req, resp)
       resp.content_type = 'text/html'
       begin
         resp.body = Templates.new.tooltip_test
@@ -289,7 +289,7 @@ class Server
       @srcviewurl = srcviewurl
     end
 
-    def do_GET(req, resp)
+    def do_GET(_req, resp)
       resp.content_type = 'text/html'
       begin
         resp.body = Templates.new.view_ilp(@entrypoint, @svgurl, @constraintsurl, @srchinturl, @srcviewurl)

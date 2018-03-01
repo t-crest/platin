@@ -73,7 +73,7 @@ class SCCGraph
       }
     }
   end
-  def dump(io = $stdout)
+  def dump(_io = $stdout)
     puts("SCC Graph")
     puts "SCCs: #{@sccs.inspect}"
     nodes.each { |node|
@@ -328,7 +328,7 @@ private
     }
   end
 
-  def build_region_graph(region_graph, scc_graph, entry, scope_loop, context, blocks_of_node, loop_of_node)
+  def build_region_graph(region_graph, scc_graph, entry, _scope_loop, context, blocks_of_node, loop_of_node)
     entry_node, exit_node = {}, {}
     scc_graph.nodes.each { |scc_node|
       blocks = scc_node.blocks
@@ -606,7 +606,7 @@ class RegionGraph
     add_node(ExitNode.new)
   end
 
-  def dump(io=$stdout)
+  def dump(_io=$stdout)
     puts "Dumping RegionGraph with #{@nodes.length} nodes"
     @nodes.each { |n|
       puts "- #{n}"

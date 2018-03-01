@@ -112,7 +112,7 @@ module PML
       data.reject! { |ff| rejects.shift }
     end
 
-    def filter(pml, ff_selection, ff_srcs, ff_levels, exclude_symbolic = false)
+    def filter(pml, ff_selection, ff_srcs, _ff_levels, _exclude_symbolic = false)
       classifier = FlowFactClassifier.new(pml)
       @list.select { |ff|
         # skip if level does not match
@@ -236,11 +236,11 @@ module PML
       data.reject! { |mf| rejects.shift }
     end
 
-    def stats(pml)
+    def stats(_pml)
       assert("Unimplemented") {false}
     end
 
-    def dump_stats(pml, io=$stderr)
+    def dump_stats(_pml, _io=$stderr)
       assert("Unimplemented") {false}
     end
 
@@ -824,7 +824,7 @@ module PML
   class SCAEdgeList < PMLList
     extend PMLListGen
     pml_name_index_list(:SCANode)
-    def initialize(data, tree)
+    def initialize(data, _tree)
       @list = data.map { |n| SCAEdge.new(n) }
       set_yaml_repr(data)
     end

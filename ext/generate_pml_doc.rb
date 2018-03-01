@@ -117,7 +117,7 @@ private
     klass
   end
 
-  def get_klass(item, attrs = nil)
+  def get_klass(item, _attrs = nil)
     return item['class'] if item['class']
     if item['type'] == 'seq' && elemklass = item['sequence'].first['class']
       elemklass + "List"

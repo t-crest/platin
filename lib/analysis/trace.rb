@@ -234,7 +234,7 @@ class MachineTraceMonitor < TraceMonitor
     # debug(@options, :trace) { "Call from #{@callstack.inspect}" }
   end
 
-  def handle_return(r, ret_exec_counter, ret_cycles, stall_cycles)
+  def handle_return(r, _ret_exec_counter, _ret_cycles, stall_cycles)
     exit_loops_downto(0)
     if @callstack.empty?
       publish(:ret, r, nil, @cycles, stall_cycles)
@@ -531,17 +531,17 @@ class FunctionRecorder
     results.stop(cycles)
     @scheduler.deactivate(self)
   end
-  def function(callee, callsite, cycles)
+  def function(callee, callsite, _cycles)
     results.call(in_context(callsite),callee) if active? && @record_calltargets
     @callstack.push(callsite)
     callee.blocks.each { |bb| results.init_block(in_context(bb)) } if active? && @record_block_frequencies
   end
-  def block(bb, cycles)
+  def block(bb, _cycles)
     return unless active?
     # puts "#{self}: visiting #{bb} active:#{active?} calllimit:#{@calllimit}"
     results.increment_block(in_context(bb)) if @record_block_frequencies
   end
-  def loopenter(loop, cycles)
+  def loopenter(loop, _cycles)
     return unless active?
     assert("loopenter: not a loop") { loop.kind_of?(Loop) }
     results.start_loop(in_context(loop)) if @record_loopheaders
@@ -556,7 +556,7 @@ class FunctionRecorder
     assert("loopexit: not a loop") { loop.kind_of?(Loop) }
     results.stop_loop(in_context(loop)) if @record_loopheaders
   end
-  def ret(rsite, csite, cycles, stall_cycles)
+  def ret(_rsite, _csite, cycles, stall_cycles)
     if @callstack.length == 0
       # puts "#{self}: stopping at #{rsite}->#{csite}"
       if global? and not @options.target_callret_costs
@@ -685,7 +685,7 @@ class ProgressTraceRecorder
   end
   # set current relation graph
   # if there is no relation graph, skip function
-  def function(callee,callsite,cycles)
+  def function(callee,_callsite,_cycles)
     @rg = @pml.relation_graphs.by_name(callee.name, @rg_level)
     debug(@options,:trace) { "Call to rg for #{@rg_level}-#{callee}: #{@rg.nodes.first}" } if rg
     @rg_callstack.push(@node)
@@ -724,7 +724,7 @@ class ProgressTraceRecorder
     # debug(@options,:trace) { "Visiting node: #{@node} (#{bb})" }
   end
   # set current relation graph
-  def ret(rsite, csite, cycles, stall_cycles)
+  def ret(_rsite, csite, _cycles, _stall_cycles)
     return if csite.nil?
     @rg = @pml.relation_graphs.by_name(csite.function.name, @rg_level)
     @node = @rg_callstack.pop

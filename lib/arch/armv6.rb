@@ -131,7 +131,7 @@ class Architecture < PML::Architecture
   def config_for_simulator
   # FIXME: dummy stub
   end
-  def simulator_trace(options, watchpoints)
+  def simulator_trace(options, _watchpoints)
     M5SimulatorTrace.new(options.binary_file, self, options)
   end
   def extract_symbols(extractor, pml, options)
@@ -152,7 +152,7 @@ class Architecture < PML::Architecture
     end
     cost
   end
-  def edge_wcet(ilist,branch_index,edge)
+  def edge_wcet(_ilist,_branch_index,_edge)
     # control flow is for free
     0
   end
@@ -345,7 +345,7 @@ class Architecture < PML::Architecture
     4
   end
 
-  def data_cache_access?(instr)
+  def data_cache_access?(_instr)
   # FIXME: dummy stub
     false
   end

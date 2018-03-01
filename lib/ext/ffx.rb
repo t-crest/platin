@@ -173,7 +173,7 @@ class Block
 end
 
 class Instruction
-  def f4_ref(opts = {})
+  def f4_ref(_opts = {})
     if address && block.label && !EXPORT_ADDR
       "#{block.f4_ref} + #{self.address - block.address}"
     elsif address
@@ -362,7 +362,7 @@ class F4Exporter
   end
 
   # export stack cache instruction annotation
-  def export_stack_cache_annotation(type, ins, value)
+  def export_stack_cache_annotation(type, ins, _value)
     assert("cannot annotate stack cache instruction w/o instruction addresses") { ins.address }
     if(type == :fill)
       feature = "stack_cache_fill_count"
@@ -429,7 +429,7 @@ class FFXExporter
   end
 
   # export loop bounds
-  def export_loopbounds(scope, bounds_and_ffs)
+  def export_loopbounds(scope, _bounds_and_ffs)
 
     # context-sensitive facts not yet supported
     unless scope.context.empty?
@@ -537,7 +537,7 @@ class FFXExporter
   end
 
   # export stack cache instruction annotation
-  def export_stack_cache_annotation(type, ins, value)
+  def export_stack_cache_annotation(type, ins, _value)
     assert("cannot annotate stack cache instruction w/o instruction addresses") { ins.address }
     if(type == :fill)
       feature = "stack_cache_fill_count"

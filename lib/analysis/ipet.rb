@@ -626,7 +626,7 @@ class IPETBuilder
 
   end
 
-  def build_gcfg_abb(abb, outgoing_abb_flux, flowfacts, opts, cost_block)
+  def build_gcfg_abb(abb, outgoing_abb_flux, _flowfacts, _opts, cost_block)
     # Restrict the influx of our ABB Region
     region = abb.get_region(:dst)
 

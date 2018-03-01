@@ -14,10 +14,10 @@ module PML
 
 # Necessary flow information to build control-flow model
 class FlowInformation
-  def is_infeasible(block, context = nil)
+  def is_infeasible(_block, _context = nil)
     false
   end
-  def get_calltargets(callsite, context = nil)
+  def get_calltargets(callsite, _context = nil)
     if callsite.unresolved_call?
       raise Exception.new("Unresolved call")
     else
@@ -222,7 +222,7 @@ class VCFG
     @blockstart[block]
   end
 private
-  def build_basic_block_nodes(function, arch)
+  def build_basic_block_nodes(function, _arch)
     first_nodes = {}
     block_predecessors = {}
     callnodes = {}
@@ -347,7 +347,7 @@ class CfgNode
   end
 
   # if this is a scope entry (call, loop-enter), matching scope exits in the given context
-  def matching_scope_exits(cfmodel, location); [] ; end
+  def matching_scope_exits(_cfmodel, _location); [] ; end
   def callnode? ; false ; end
   def instructions ; [] ; end
   def entry? ; false ; end
@@ -643,7 +643,7 @@ BOTTOM = :bottom
 
 # reachability semantics (trivial)
 class ReachabilitySemantics
-  def transfer_value(node, inval) ; inval ; end
+  def transfer_value(_node, inval) ; inval ; end
   def merge(oldval, newval)
     if oldval
       false # no change

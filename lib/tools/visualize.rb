@@ -592,7 +592,7 @@ class ILPVisualisation < Visualizer
     @graph.output({format => String})
   end
 
-  def visualize(title, opts = {})
+  def visualize(_title, opts = {})
     begin
       require 'graphviz'
     rescue LoadError => e

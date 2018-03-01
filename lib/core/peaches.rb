@@ -148,7 +148,7 @@ class ASTNode
   MESS = "SYSTEM ERROR: method missing"
 
   # Typecheck a variable
-  def evaluate(context)
+  def evaluate(_context)
     raise MESS
   end
 
@@ -265,7 +265,7 @@ class ASTLiteral < ASTNode
     @value = value
   end
 
-  def evaluate(context)
+  def evaluate(_context)
     # Is already fully evaluated
     self
   end

@@ -104,7 +104,7 @@ class Architecture < PML::Architecture
   end
   def config_for_simulator
   end
-  def simulator_trace(options, watchpoints)
+  def simulator_trace(options, _watchpoints)
     M5SimulatorTrace.new(options.binary_file, self, options)
   end
   def extract_symbols(extractor, pml, options)

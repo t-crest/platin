@@ -26,17 +26,17 @@ class PersistenceDataFlowAnalysis
   end
 
   class ZeroTagSet < TagSet
-    def access(t); self; end
-    def concat(set); self ; end
+    def access(_t); self; end
+    def concat(_set); self ; end
     def join(other); other ; end
     def to_s; "0"; end
     def dup ; self ; end
   end
 
   class TopTagSet < TagSet
-    def access(t);   self ; end
+    def access(_t);   self ; end
     def concat(set); (set == ZERO) ? ZERO : self; end
-    def join(other); self ; end
+    def join(_other); self ; end
     def to_s; "1"; end
     def dup; self ; end
   end

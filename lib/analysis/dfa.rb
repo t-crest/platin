@@ -19,7 +19,7 @@ class LiftedBOT < LiftedType
   def dup  ; self; end
 end
 class LiftedTOP < LiftedType
-  def lub(rhs) ; self ; end
+  def lub(_rhs) ; self ; end
   def bot? ; false; end
   def top? ; true ; end
   def to_s ; "TOP"; end
@@ -53,9 +53,9 @@ class DFAOperator
   # Return the state for the entry node
   def entry ; nil ; end
   # Return the joined state for a list of out states
-  def join(outs) ; nil ; end
+  def join(_outs) ; nil ; end
   # Transfer in state to out state.
-  def transfer(node, ins) ; ins ; end
+  def transfer(_node, ins) ; ins ; end
   # Check if state has changed
   def changed?(olds, news) ; olds != news ; end
 end

@@ -281,7 +281,7 @@ class ILP
 
   SLACK = 10000000
   BIGM = 10000000
-  def diagnose_unbounded(problem, freqmap)
+  def diagnose_unbounded(problem, _freqmap)
     debug(options, :ilp) { "#{problem} PROBLEM - starting diagnosis" }
     @do_diagnose = false
     variables.each do |v|
@@ -318,7 +318,7 @@ class ILP
     [unbounded, freq]
   end
 
-  def diagnose_infeasible(problem, freqmap)
+  def diagnose_infeasible(problem, _freqmap)
     $stderr.puts "#{problem} PROBLEM - starting diagnosis"
     @do_diagnose = false
     old_constraints, slackvars = @constraints, []

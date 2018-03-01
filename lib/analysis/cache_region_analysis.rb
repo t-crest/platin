@@ -941,7 +941,7 @@ class NoDataCacheAnalysis < DataCacheAnalysisBase
     1
   end
 
-  def set_of(cache_line)
+  def set_of(_cache_line)
     0
   end
 
@@ -967,7 +967,7 @@ class NoDataCacheAnalysis < DataCacheAnalysisBase
     end
   end
 
-  def conflict_free?(cache_lines)
+  def conflict_free?(_cache_lines)
     false
   end
 end

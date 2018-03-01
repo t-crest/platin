@@ -127,7 +127,7 @@ class ExtractSymbols
     die "The objdump command '#{options.objdump}' exited with status #{$?.exitstatus}" unless $?.success?
   end
   private
-  def ExtractSymbols.build_instruction(addr, cond, size, instr, args)
+  def ExtractSymbols.build_instruction(addr, _cond, size, instr, args)
     ret = {'address' => addr, 'size' => size, 'source' => 'objdump', 'opcode' => instr}
     reg_args = args.scan('$r').length
     case instr
@@ -223,7 +223,7 @@ class Architecture < PML::Architecture
     ExtractSymbols.run(extractor, pml, options)
   end
 
-  def return_stall_cycles(ret_instruction, ret_latency)
+  def return_stall_cycles(_ret_instruction, ret_latency)
     ret_latency - 1
   end
 
@@ -351,7 +351,7 @@ class Architecture < PML::Architecture
     cost
   end
 
-  def edge_wcet(ilist,index,edge)
+  def edge_wcet(ilist,index,_edge)
     cost = 0
     if index
       instr = ilist[index]

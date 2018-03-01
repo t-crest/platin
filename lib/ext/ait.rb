@@ -1224,7 +1224,7 @@ class AitImport
 
   # Returns a map with [hits,misses] per cache-type
   # XXX  investigate scope of hit/miss stats
-  def read_cache_stats(wcet_elem, analysis_entry)
+  def read_cache_stats(wcet_elem, _analysis_entry)
     stats = {}
     wcet_elem.each_element("wcet_results/wcet_cache_infos/wcet_cache_info") { |e|
       # TODO: check: can there be cache results for anything else than the analysis entry?

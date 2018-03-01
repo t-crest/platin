@@ -280,7 +280,7 @@ module PML
     }
   end
 
-  def format_msg(tag,msg,align=-1)
+  def format_msg(tag,msg,_align=-1)
     "[platin] #{tag}: #{msg}"
   end
 
@@ -313,7 +313,7 @@ end
 
 # Development helpers
 class Hash
-  def dump(io=$>)
+  def dump(_io=$>)
     self.each do |k,v|
       puts "#{k.to_s.ljust(24)} #{v}"
     end

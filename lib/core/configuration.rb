@@ -41,7 +41,7 @@ class ToolConfig < PMLObject
     @name, @configuration, @options = name, configuration, options
     set_yaml_repr(data)
   end
-  def ToolConfig.from_pml(pml, data)
+  def ToolConfig.from_pml(_pml, data)
     ToolConfig.new(data['name'],data['configuration'],data['options'], data)
   end
   def to_pml

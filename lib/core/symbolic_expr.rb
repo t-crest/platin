@@ -95,11 +95,11 @@ class SEInt < SymbolicExpression
   def constant?; true; end
   def to_i; @num     ; end
   def to_s; @num.to_s; end
-  def eval(_,lenv=nil);     @num ; end
-  def resolve_loops(lenv) ; self ; end
+  def eval(_,_lenv=nil);     @num ; end
+  def resolve_loops(_lenv) ; self ; end
   def referenced_loops ; Set.new; end
   def referenced_vars  ; Set.new; end
-  def map_names(&block) ; self ; end
+  def map_names() ; self ; end
 end
 
 class SEVar < SymbolicExpression
@@ -108,7 +108,7 @@ class SEVar < SymbolicExpression
     @var = str
   end
 
-  def eval(env, lenv)
+  def eval(env, _lenv)
     if v = env[@var]
       v
     else
@@ -129,7 +129,7 @@ class SEVar < SymbolicExpression
     Set.new
   end
 
-  def resolve_loops(lenv)
+  def resolve_loops(_lenv)
     self
   end
 
@@ -402,7 +402,7 @@ class SEUnknown < SymbolicExpression
     @str = str
   end
   def to_s; "#{@str}"; end
-  def map_names(&block); self; end
+  def map_names(); self; end
 end
 
 class SymbolicExpressionParser

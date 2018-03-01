@@ -495,7 +495,7 @@ class ContextManager
     Context.empty
   end
   # do not record instruction history context for now
-  def blockslice(ctx, node)
+  def blockslice(ctx, _node)
     ctx
   end
   def store_loopcontext?
@@ -544,7 +544,7 @@ end
 class ContextManagerEmpty
   def initialize ; end
   def initial ; Context.empty ; end
-  def blockslice(ctx, node) ; ctx ; end
+  def blockslice(ctx, _node) ; ctx ; end
   def store_loopcontext? ; false ; end
   def push_call(ctx,_); ctx ; end
   def pop_call(ctx,_) ; ctx ; end

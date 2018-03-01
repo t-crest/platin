@@ -23,13 +23,13 @@ class Architecture
     die("unknown architecture #{triple} (#{@@register})") unless @@register[archname]
     @@register[archname].new(triple, machine_config)
   end
-  def return_stall_cycles(ret_instruction, ret_latency)
+  def return_stall_cycles(_ret_instruction, _ret_latency)
     0 # no miss costs by the return instruction itself in the traces
   end
   def path_wcet(ilist)
     ilist.length # 1-cycle per instruction pseudo cost
   end
-  def edge_wcet(ilist,index,edge)
+  def edge_wcet(_ilist,_index,_edge)
     0 # control flow is for free
   end
 end
@@ -190,7 +190,7 @@ class MemoryConfig < PMLObject
     set_yaml_repr(data)
   end
 
-  def MemoryConfig.from_pml(ctx, data)
+  def MemoryConfig.from_pml(_ctx, data)
     MemoryConfig.new(
       data['name'],
       data['size'],
@@ -451,7 +451,7 @@ class CacheConfig < PMLObject
   end
 
 
-  def CacheConfig.from_pml(ctx, data)
+  def CacheConfig.from_pml(_ctx, data)
     CacheConfig.new(
       data['name'],
       data['type'],

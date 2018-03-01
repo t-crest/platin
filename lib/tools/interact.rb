@@ -28,7 +28,7 @@ require 'tools/visualisationserver'
 
 # Token implementations {{{
 class Token
-  def complete(prefix)
+  def complete(_prefix)
     raise ArgumentError, 'This should be overwritten in the child class'
   end
 end
@@ -235,11 +235,11 @@ end
 
 # Command Implementations {{{
 class Command
-  def run(args)
+  def run(_args)
     raise 'This should be overwritten in the child class'
   end
 
-  def help(long = false)
+  def help(_long = false)
     raise "This should be overwritten in the child class"
   end
 
