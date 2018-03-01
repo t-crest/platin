@@ -416,13 +416,13 @@ class VisualizeCommand < Command
       server = VisualisationServer::Server.new( \
                           :ilp, \
                           { \
-                              :entrypoint => opts.analysis_entry \
-                            , :srcroot => opts.source_path  \
-                            , :assets  => assetdir \
-                            , :data    => ilpdata  \
+                              entrypoint: opts.analysis_entry \
+                            , srcroot: opts.source_path  \
+                            , assets: assetdir \
+                            , data: ilpdata  \
                           }, \
-                          :BindAddress => opts.server_bind_addr, \
-                          :Port => opts.server_port \
+                          BindAddress: opts.server_bind_addr, \
+                          Port: opts.server_port \
       )
 
       # Restore the old value
@@ -475,16 +475,16 @@ class VisualizeCommand < Command
       data = {
         'callgraph.svg' => {
           'content_type' => 'image/svg+xml',
-          'data' => graph.output(:svg => String),
+          'data' => graph.output(svg: String),
         },
       }
       server = VisualisationServer::Server.new( \
                           :callgraph, \
                           { \
-                            :data => data  \
+                            data: data  \
                           }, \
-                          :BindAddress => opts.server_bind_addr, \
-                          :Port => opts.server_port \
+                          BindAddress: opts.server_bind_addr, \
+                          Port: opts.server_port \
       )
     else
       assert("Unexpected visualisation type: :#{args[0]}") { false }

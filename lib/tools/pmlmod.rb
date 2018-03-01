@@ -27,7 +27,7 @@ class PMLPath
   end
 
   def lvl_to_num(lvl)
-    { :func => 0, :bb => 1, :inst => 2 }[lvl]
+    { func: 0, bb: 1, inst: 2 }[lvl]
   end
 
   def has_level?(lvl)

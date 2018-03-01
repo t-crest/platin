@@ -32,7 +32,7 @@ class RGVisualizer
 
   def visualize(rg)
     nodes = {}
-    g = GraphViz.new( :G, :type => :digraph )
+    g = GraphViz.new( :G, type: :digraph )
     g.node[:shape] = "rectangle"
 
     # XXX: update me
@@ -44,7 +44,7 @@ class RGVisualizer
       label = "#{bid} #{node['type']}"
       label << " #{node['src-block']}" if node['src-block']
       label << " #{node['dst-block']}" if node['dst-block']
-      nodes[bid] = g.add_nodes(bid.to_s, :label => label)
+      nodes[bid] = g.add_nodes(bid.to_s, label: label)
     end
     rg['nodes'].each do |node|
       bid = node['name']
@@ -52,7 +52,7 @@ class RGVisualizer
         g.add_edges(nodes[bid],nodes[sid])
       end
       (node['dst-successors'] || []).each do |sid|
-        g.add_edges(nodes[bid],nodes[sid], :style => 'dotted')
+        g.add_edges(nodes[bid],nodes[sid], style: 'dotted')
       end
     end
     g

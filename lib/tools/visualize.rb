@@ -27,7 +27,7 @@ class Visualizer
   end
 protected
   def digraph(label)
-    g = GraphViz.new(:G, :type => :digraph)
+    g = GraphViz.new(:G, type: :digraph)
     g.node[:shape] = "rectangle"
     g[:label] = label
     g
@@ -46,7 +46,7 @@ class CallGraphVisualizer < Visualizer
     cg.nodes.each do |node|
       nid = nids[node]
       label = node.to_s
-      nodes[node] = g.add_nodes(nid.to_s, :label => label)
+      nodes[node] = g.add_nodes(nid.to_s, label: label)
     end
     cg.nodes.each do |n|
       n.successors.each do |s|
@@ -71,7 +71,7 @@ class PlainCallGraphVisualizer < Visualizer
       src_hint = node.blocks.first.src_hint
       src_hint = src_hint ? '<BR/>' + src_hint : ''
       label = '<' + node.to_s + '<BR/><B>' + node.label.to_s + '</B>' + src_hint + '>'
-      nodes[node] = g.add_nodes(nid.to_s, :label => label)
+      nodes[node] = g.add_nodes(nid.to_s, label: label)
     end
     @functions.each do |mf|
       mf.callsites.each do |cs|
@@ -97,7 +97,7 @@ class ScopeGraphVisualizer < Visualizer
     sg.nodes.each do |node|
       nid = nids[node]
       label = node.to_s
-      nodes[node] = g.add_nodes(nid.to_s, :label => label)
+      nodes[node] = g.add_nodes(nid.to_s, label: label)
     end
     sg.nodes.each do |n|
       n.successors.each do |s|
@@ -161,7 +161,7 @@ class FlowGraphVisualizer < Visualizer
   end
 
   def visualize_vcfg(function, arch, timing=nil)
-    g = GraphViz.new( :G, :type => :digraph )
+    g = GraphViz.new( :G, type: :digraph )
     g.node[:shape] = "rectangle"
     vcfg = VCFG.new(function, arch)
     name = function.name.to_s
@@ -196,7 +196,7 @@ class FlowGraphVisualizer < Visualizer
       elsif node.kind_of?(LoopStateNode)
         label += "LOOP #{node.action} #{node.loop.name}"
       end
-      options = { :label => label }
+      options = { label: label }
       if node.block_start? and sf_headers.include?(node.block)
         # Mark subfunction headers
         options["fillcolor"] = "#ffffcc"
@@ -269,7 +269,7 @@ class FlowGraphVisualizer < Visualizer
   end
 
   def visualize_cfg(function)
-    g = GraphViz.new( :G, :type => :digraph )
+    g = GraphViz.new( :G, type: :digraph )
     g.node[:shape] = "rectangle"
     name = function.name.to_s
     name << "/#{function.mapsto}" if function.mapsto
@@ -292,8 +292,8 @@ class FlowGraphVisualizer < Visualizer
         end
         label << "\\l"
       end
-      nodes[bid] = g.add_nodes(bid.to_s, :label => label,
-                               :peripheries => block.loops.length + 1)
+      nodes[bid] = g.add_nodes(bid.to_s, label: label,
+                               peripheries: block.loops.length + 1)
     end
     function.blocks.each do |block|
       block.successors.each do |s|
@@ -308,7 +308,7 @@ class RelationGraphVisualizer < Visualizer
 
   def visualize(rg)
     nodes = {}
-    g = GraphViz.new( :G, :type => :digraph )
+    g = GraphViz.new( :G, type: :digraph )
     g.node[:shape] = "rectangle"
 
     # XXX: update me
@@ -320,7 +320,7 @@ class RelationGraphVisualizer < Visualizer
       label = "#{bid} #{node['type']}"
       label << " #{node['src-block']}" if node['src-block']
       label << " #{node['dst-block']}" if node['dst-block']
-      nodes[bid] = g.add_nodes(bid.to_s, :label => label)
+      nodes[bid] = g.add_nodes(bid.to_s, label: label)
     end
     rg['nodes'].each do |node|
       bid = node['name']
@@ -328,7 +328,7 @@ class RelationGraphVisualizer < Visualizer
         g.add_edges(nodes[bid],nodes[sid])
       end
       (node['dst-successors'] || []).each do |sid|
-        g.add_edges(nodes[bid],nodes[sid], :style => 'dotted')
+        g.add_edges(nodes[bid],nodes[sid], style: 'dotted')
       end
     end
     g
@@ -398,8 +398,8 @@ class ILPVisualisation < Visualizer
       file, _, line = src_hint.rpartition(':')
       assert("Failed to parse src_hint #{src_hint}, expecting file:line") { file && line }
       hint = {
-        :file => file,
-        :line => line,
+        file: file,
+        line: line,
       }
 
       hint[:function] = variable.function.to_s if variable.respond_to?(:function)
@@ -442,7 +442,7 @@ class ILPVisualisation < Visualizer
     g = get_subgraph(variable)
 
     nname = "n" + @mapping.size.to_s
-    node = g.add_nodes(nname, :id => nname, :label => to_label(variable), :tooltip => variable.to_s)
+    node = g.add_nodes(nname, id: nname, label: to_label(variable), tooltip: variable.to_s)
     @mapping[key] = node
 
     add_srchint(nname, variable)
@@ -451,13 +451,13 @@ class ILPVisualisation < Visualizer
     when Function
       node[:shape] = "cds"
       entry = add_node(variable.entry_block)
-      @graph.add_edges(node, entry, :style => 'bold')
+      @graph.add_edges(node, entry, style: 'bold')
     when Block
       node[:shape] = "box"
     when Instruction
       node[:shape] = "ellipse"
       block = add_node(variable.block)
-      @graph.add_edges(block, node, :style => 'dashed')
+      @graph.add_edges(block, node, style: 'dashed')
     else
       node[:shape] = "Mdiamond"
     end
@@ -476,7 +476,7 @@ class ILPVisualisation < Visualizer
     dst = add_node(edge.target)
 
     ename = "n" + @mapping.size.to_s
-    e = @graph.add_edges(src, dst, :id => ename, :tooltip => edge.to_s, :labeltooltip => edge.to_s)
+    e = @graph.add_edges(src, dst, id: ename, tooltip: edge.to_s, labeltooltip: edge.to_s)
     @mapping[key] = e
 
     e[:label] = cost.to_s if cost
@@ -534,7 +534,7 @@ class ILPVisualisation < Visualizer
       next if c.name =~ /^__debug_upper_bound/
 
       index = constraints.length
-      constraints << { :formula => c.to_s, :name => c.name }
+      constraints << { formula: c.to_s, name: c.name }
       vals = []
       # If this assertion breaks: merge left and right side
       assert ("We only deal with constant rhs") { c.rhs.is_a?(Fixnum) }
@@ -542,16 +542,16 @@ class ILPVisualisation < Visualizer
         next unless @mapping.has_key?(v)
         node = add_node(v)
         id = node[:id].to_ruby
-        vals << { :id => id, :name => v.to_s }
+        vals << { id: id, name: v.to_s }
         (v2c[id] ||= []) << index
       end
       c2v << vals
     end
 
     return {
-      :constraints => constraints,
-      :c2v         => c2v,
-      :v2c         => v2c,
+      constraints: constraints,
+      c2v: c2v,
+      v2c: v2c,
     }
   end
 

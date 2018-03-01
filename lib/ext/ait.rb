@@ -344,7 +344,7 @@ class AISExporter
           targets = successors.uniq.map do |succ|
             succ.ais_ref
           end.join(", ")
-          gen_fact("instruction #{ins.ais_ref(:branch_index => branches)} branches to #{targets}","jumptable (source: llvm)",ins)
+          gen_fact("instruction #{ins.ais_ref(branch_index: branches)} branches to #{targets}","jumptable (source: llvm)",ins)
         end
       end
     end
@@ -611,7 +611,7 @@ class AISExporter
     @sc.each do |instr,(type,n)|
       n_spill = "max(0, user(\"m_top\") - (user(\"sc_top\") - #{n}) - #{sz})"
       n_fill  = "max(0, #{n} - (user(\"m_top\") - user(\"sc_top\")))"
-      ais2.scope("instruction", "#{instr.ais_ref(:ais2 => true)}")
+      ais2.scope("instruction", "#{instr.ais_ref(ais2: true)}")
       case type
       when :reserve
         ais2.enter("enter")

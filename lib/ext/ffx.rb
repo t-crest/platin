@@ -250,7 +250,7 @@ class F4Exporter
             succ.f4_ref
           end.join(", ")
           # TODO: where does the flow fact actually come from?
-          gen_fact("multibranch #{ins.f4_ref(:branch_index => branches)} to #{targets}","jumptable (source: llvm)",ins)
+          gen_fact("multibranch #{ins.f4_ref(branch_index: branches)} to #{targets}","jumptable (source: llvm)",ins)
         end
       end
     end

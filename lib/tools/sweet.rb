@@ -83,7 +83,7 @@ class SweetAnalyzeTool
 
   def self.run(_pml, options)
     needs_options(options, :sweet, :alf_file, :analysis_entry, :sweet_flowfact_file)
-    alfopts = {:standalone => true, :memory_areas => [(0..0xffff)], :ignored_definitions => AlfTool.default_ignored_definitions }
+    alfopts = {standalone: true, memory_areas: [(0..0xffff)], ignored_definitions: AlfTool.default_ignored_definitions }
     alfopts[:ignore_volatiles] = true if options.sweet_ignore_volatiles
     AlfTool.run(options, alfopts)
     i_args  = [ "-i=#{options.alf_file}", "func=#{options.analysis_entry}" ]
@@ -102,7 +102,7 @@ class SweetAnalyzeTool
     cmd = ([options.sweet] + i_args + do_args + ae_args + ff_args)
     version, commands, parsed = nil, [], []
     $stderr.puts("Executing #{cmd.join(" ")}") if options.verbose
-    IO.popen(cmd + [:err => [:child,:out]]) do |sweet_io|
+    IO.popen(cmd + [err: [:child,:out]]) do |sweet_io|
       while l = sweet_io.gets
         if l =~ /SWEET version (.*)/
           version = $1

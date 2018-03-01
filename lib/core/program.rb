@@ -899,7 +899,7 @@ module PML
     end
 
     def build_lookup
-      @named = { :src => {}, :dst => {} }
+      @named = { src: {}, dst: {} }
       @list.each do |rg|
         add_lookup(@named[:src], rg.src.name, rg, "src-name")
         add_lookup(@named[:dst], rg.dst.name, rg, "dst-name")
@@ -928,7 +928,7 @@ module PML
 
 private
     def build_relation_index
-      @basic_block_index = { :src => {}, :dst => {} }
+      @basic_block_index = { src: {}, dst: {} }
       @list.each do |rgn|
         [:src,:dst].each do |level|
           bb = rgn.get_block(level)
@@ -1127,9 +1127,9 @@ private
         rg_nodes_lhs == Set.new(bitcode_region.nodes) and rg_nodes_rhs == Set.new(machine_region.nodes)
       end
       @regions = {
-        :rg => rg_region,
-        :src => bitcode_region,
-        :dst => machine_region,
+        rg: rg_region,
+        src: bitcode_region,
+        dst: machine_region,
       }
       @regions[level]
     end

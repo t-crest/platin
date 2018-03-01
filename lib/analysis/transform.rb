@@ -316,7 +316,7 @@ class FlowFactTransformation
 
   # Simplify
   def simplify(machine_entry, flowfacts)
-    builder_opts = { :use_rg => false }
+    builder_opts = { use_rg: false }
     if options.transform_eliminate_edges
       builder_opts[:mbb_variables] = true
     else
@@ -425,7 +425,7 @@ class FlowFactTransformation
           else
             { 'bitcode' => entry, 'machinecode' => pml.machine_functions.by_label(entry.name) }
           end
-        ilp = build_model(entries, ffs, :use_rg => true).ilp
+        ilp = build_model(entries, ffs, use_rg: true).ilp
 
         # If direction up/down, eliminate all vars but dst/src
         elim_set = ilp.variables.select do |var|
@@ -481,7 +481,7 @@ private
   #  +:use_rg+::        whether to enable relation graphs
   #  +:mbb_variables+:: add variables representing basic blocks
   #
-  def build_model(entry, flowfacts, opts = { :use_rg => false })
+  def build_model(entry, flowfacts, opts = { use_rg: false })
     # ILP for transformation
     ilp = ILP.new(@options)
 
@@ -492,7 +492,7 @@ private
 
     # Build IPET (no cost) and add flow facts
     ffs = flowfacts.select { |ff| ! ff.symbolic_bound? }
-    ipet.build(entry, ffs, :mbb_variables => true) { |edge| 0 }
+    ipet.build(entry, ffs, mbb_variables: true) { |edge| 0 }
     ipet
   end
 

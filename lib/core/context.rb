@@ -664,7 +664,7 @@ if __FILE__ == $PROGRAM_NAME
 
     def test_call_return1
       c = @ctxm1.initial
-      fs = FunctionList.new(sd_flist, :labelkey => 'name')
+      fs = FunctionList.new(sd_flist, labelkey: 'name')
       c1 = fs['main'].blocks.first.instructions.first
       c2 = fs['f'].blocks.first.instructions.first
       c = @ctxm1.push_call(c, c1)
@@ -680,7 +680,7 @@ if __FILE__ == $PROGRAM_NAME
 
     def test_call_return2
       c = @ctxm1.initial
-      fs = FunctionList.new(sd_flist, :labelkey => 'name')
+      fs = FunctionList.new(sd_flist, labelkey: 'name')
       c1 = fs['main'].blocks.first.instructions.first
       c2 = fs['f'].blocks.first.instructions.first
       c3 = fs['g'].blocks.first.instructions.first
@@ -703,7 +703,7 @@ if __FILE__ == $PROGRAM_NAME
 
     def test_loop
       c = @ctxm2.initial
-      fs = FunctionList.new(sd_flist, :labelkey => 'name')
+      fs = FunctionList.new(sd_flist, labelkey: 'name')
       c1 = fs['main'].blocks.first.instructions.first
       c2 = fs['f'].blocks.first.instructions.first
       c3 = fs['g'].blocks.first.instructions.first

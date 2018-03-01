@@ -115,7 +115,7 @@ class PMLConfigTool
       die("Too many values for --update-heap-syms #{a}") if a.length > 2
       a[0] ||= "32k"
       a[1] ||= "16"
-      opts.options.update_heap_syms = { :stack_size => parse_size(a[0]), :num_stacks => a[1].to_i }
+      opts.options.update_heap_syms = { stack_size: parse_size(a[0]), num_stacks: a[1].to_i }
     end
 
     # TODO: Add options to remove attributes

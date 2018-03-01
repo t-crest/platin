@@ -634,7 +634,7 @@ class RegionGraph
       n.successors.each { |s| puts "  --> #{s}" }
     end
     require 'graphviz'
-    g = GraphViz.new(:G, :type => :digraph)
+    g = GraphViz.new(:G, type: :digraph)
     g.node[:shape] = "rectangle"
     g[:label] = "Region Graoh #{name}"
     node_dict, nids = {}, {}
@@ -642,7 +642,7 @@ class RegionGraph
     nodes.each do |node|
       nid = nids[node]
       label = node.to_s
-      node_dict[node] = g.add_nodes(nid.to_s, :label => label)
+      node_dict[node] = g.add_nodes(nid.to_s, label: label)
     end
     nodes.each do |n|
       n.successors.each do |s|
@@ -651,7 +651,7 @@ class RegionGraph
     end
     file = "tmp/region_#{name.gsub('/','_')}.eps"
     puts "DEBUG file: #{file}"
-    g.output( :eps => file)
+    g.output( eps: file)
   end
 
   def add_node(n)

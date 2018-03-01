@@ -507,11 +507,11 @@ class ASTArithmeticOp < ASTExpr
   end
 
   OP_MAP = {
-    "+" => { :op => :+, :types => [:number]},
-    "-" => { :op => :-, :types => [:number]},
-    "*" => { :op => :*, :types => [:number]},
-    "/" => { :op => :/, :types => [:number]},
-    "%" => { :op => :%, :types => [:number]},
+    "+" => { op: :+, types: [:number]},
+    "-" => { op: :-, types: [:number]},
+    "*" => { op: :*, types: [:number]},
+    "/" => { op: :/, types: [:number]},
+    "%" => { op: :%, types: [:number]},
   }
 
   def evaluate(context)
@@ -569,12 +569,12 @@ class ASTCompareOp < ASTExpr
   end
 
   OP_MAP = {
-    '<'  => { :op => "<".to_sym,  :types => [:number]},
-    '<=' => { :op => "<=".to_sym, :types => [:number]},
-    '>'  => { :op => ">".to_sym,  :types => [:number]},
-    '>=' => { :op => ">=".to_sym, :types => [:number]},
-    '==' => { :op => "==".to_sym, :types => [:number, :boolean]},
-    '/=' => { :op => "!=".to_sym, :types => [:number, :boolean]},
+    '<'  => { op: "<".to_sym,  types: [:number]},
+    '<=' => { op: "<=".to_sym, types: [:number]},
+    '>'  => { op: ">".to_sym,  types: [:number]},
+    '>=' => { op: ">=".to_sym, types: [:number]},
+    '==' => { op: "==".to_sym, types: [:number, :boolean]},
+    '/=' => { op: "!=".to_sym, types: [:number, :boolean]},
   }
 
   def evaluate(context)

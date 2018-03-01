@@ -240,7 +240,7 @@ class Server
         out = code[from, to - from].join("\n")
       end
       resp.content_type = 'application/json'
-      resp.body = JSON.generate({:from => from + 1, :to => to + 1, :code => out})
+      resp.body = JSON.generate({from: from + 1, to: to + 1, code: out})
       raise WEBrick::HTTPStatus::OK
     end
   end
@@ -382,10 +382,10 @@ if __FILE__ == $PROGRAM_NAME
   assert ("Usage: #{$PROGRAM_NAME} srcroot artifactsdir") { ARGV.length == 2 }
   server = Server.new(:ilp, \
                       { \
-                          :srcroot => ARGV[0] \
-                        , :assets  => ARGV[1] \
+                          srcroot: ARGV[0] \
+                        , assets: ARGV[1] \
                       },
-                      :BindAddress => '127.0.0.1',
-                      :Port => 8080)
+                      BindAddress: '127.0.0.1',
+                      Port: 8080)
   server.start
 end

@@ -154,8 +154,8 @@ class WCA
     if @options.visualize_ilp
       vis = ILPVisualisation.new(builder.ilp, [:bitcode, :machinecode, :relationgraph, :gcfg])
       vfreqs = builder.ilp.debug_bound_frequencies(vfreqs)
-      svg = vis.visualize("ILP: #{@options.analysis_entry}", :unbounded => vunbounded, :freqmap => vfreqs)
-      dot = vis.output(:format => :dot)
+      svg = vis.visualize("ILP: #{@options.analysis_entry}", unbounded: vunbounded, freqmap: vfreqs)
+      dot = vis.output(format: :dot)
       constraints = vis.get_constraints
       srchints    = vis.get_srchints
 
@@ -163,10 +163,10 @@ class WCA
       # visualisation interact.rb...
       if @options.visualize_ilp.is_a?(Hash)
         @options.visualize_ilp[:ilp] = {
-          :svg         => svg,
-          :dot         => dot,
-          :constraints => constraints,
-          :srchints    => srchints,
+          svg: svg,
+          dot: dot,
+          constraints: constraints,
+          srchints: srchints,
         }
       else
         assert ("Visualizing ILPs requires the outdir parameter") { @options.outdir != nil }

@@ -54,8 +54,8 @@ class PMLDoc
 
     run_linker(@data) if options.run_linker
 
-    @bitcode_functions = FunctionList.new(@data['bitcode-functions'] || [], :labelkey => 'name')
-    @machine_functions = FunctionList.new(@data['machine-functions'] || [], :labelkey => 'mapsto')
+    @bitcode_functions = FunctionList.new(@data['bitcode-functions'] || [], labelkey: 'name')
+    @machine_functions = FunctionList.new(@data['machine-functions'] || [], labelkey: 'mapsto')
     @relation_graphs   = RelationGraphList.new(@data['relation-graphs'] || [],
                                                @bitcode_functions, @machine_functions)
     @global_cfgs       = GCFGList.new(@data['global-cfgs'] || [], @relation_graphs)
