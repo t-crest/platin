@@ -2,7 +2,8 @@
 # PLATIN tool set
 #
 # ARMV6 specific functionality
-#
+
+require 'English'
 
 module ARMV6
 

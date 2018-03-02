@@ -7,6 +7,7 @@
 require 'platin'
 require "rexml/document"
 require "rexml/formatters/transitive"
+require 'English'
 
 module PML
 

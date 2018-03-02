@@ -4,6 +4,7 @@
 # Tool to extract addresses from a ELF file
 #
 require 'platin'
+require 'English'
 include PML
 
 # Class to extract symbol addresses from an ELF file
@@ -33,6 +34,7 @@ class ExtractSymbols
   def analyze
     elf = @options.binary_file
     die "The binary file '#{elf}' does not exist" unless File.exist?(elf)
+
     r = IO.popen("#{@options.objdump} -t '#{elf}'") do |io|
       io.each_line do |line|
         if record = objdump_extract(line.chomp)

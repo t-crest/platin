@@ -6,6 +6,7 @@
 
 require 'platin'
 require 'ext/sweet'
+require 'English'
 include PML
 
 # FIXME: it might happen that calls are moved to other nodes

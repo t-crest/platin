@@ -1,4 +1,6 @@
 require 'platin'
+require 'English'
+
 include PML
 
 class PMLPath

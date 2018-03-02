@@ -4,6 +4,7 @@
 # support for context sensitivity
 #
 require 'core/pml'
+require 'English'
 
 module PML
 

@@ -14,6 +14,7 @@ require 'tools/ff2pml'
 require 'tools/sweet'
 require 'core/model'
 require 'tmpdir'
+require 'English'
 
 # High-Level Wrapper for aiT
 # XXX: Internal tool; move into different directory; these tools are not visible on the command line)

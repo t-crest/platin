@@ -8,6 +8,7 @@
 require 'platin'
 require 'tools/extract-symbols'
 require 'ext/ait'
+require 'English'
 include PML
 
 class AitImportTool

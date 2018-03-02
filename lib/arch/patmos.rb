@@ -4,6 +4,8 @@
 # Patmos specific functionality
 #
 
+require 'English'
+
 #
 # pasim traces
 #

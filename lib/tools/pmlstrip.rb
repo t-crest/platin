@@ -5,6 +5,7 @@
 
 require 'platin'
 require 'tools/extract-symbols'
+require 'English'
 include PML
 
 if __FILE__ == $PROGRAM_NAME

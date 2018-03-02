@@ -4,6 +4,7 @@
 # Bindings for Gurobi
 #
 require 'platin'
+require 'English'
 include PML
 
 # Simple interface to gurobi_cl

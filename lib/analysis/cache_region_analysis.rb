@@ -8,6 +8,7 @@
 require 'core/pml'
 require 'analysis/scopegraph'
 require 'analysis/cache_persistence_analysis'
+require 'English'
 
 module PML
 

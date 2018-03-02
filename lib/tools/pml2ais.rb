@@ -5,6 +5,7 @@
 #
 require 'platin'
 require 'ext/ait'
+require 'English'
 include PML
 
 class AisExportTool

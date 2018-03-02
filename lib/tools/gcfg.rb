@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'platin'
+require 'English'
 
 include PML
 

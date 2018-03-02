@@ -9,6 +9,7 @@
 #
 require 'set'
 require 'platin'
+require 'English'
 include PML
 
 require 'tools/transform'

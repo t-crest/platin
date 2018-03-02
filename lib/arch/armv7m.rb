@@ -4,6 +4,8 @@
 # ARMv7m specific functionality
 #
 
+require 'English'
+
 module ARMv7m
 
 class ExtractSymbols

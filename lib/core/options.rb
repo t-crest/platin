@@ -5,6 +5,7 @@
 #
 require 'ostruct'
 require 'optparse'
+require 'English'
 
 module PML
   def needs_options(ostruct,*opts)

@@ -6,6 +6,7 @@
 #
 # TODO: support a larger variety of flow facts (call strings, loop contexts)
 require 'platin'
+require 'English'
 include PML
 require 'ext/sweet'
 

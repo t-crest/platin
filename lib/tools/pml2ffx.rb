@@ -6,6 +6,7 @@
 require 'platin'
 require 'ext/ffx'
 require 'ext/otawa'
+require 'English'
 include PML
 
 class FFXExportTool

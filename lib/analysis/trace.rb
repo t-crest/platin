@@ -5,6 +5,7 @@
 #
 require 'core/utils'
 require 'core/pml'
+require 'English'
 
 module PML
 

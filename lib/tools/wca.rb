@@ -6,6 +6,7 @@
 
 require 'platin'
 require 'analysis/wca'
+require 'English'
 include PML
 
 class WcaTool

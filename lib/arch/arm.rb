@@ -4,6 +4,8 @@
 # ARM specific functionality
 #
 
+require 'English'
+
 module ARM
 
 #

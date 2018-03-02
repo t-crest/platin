@@ -5,6 +5,7 @@
 #
 require 'platin'
 require 'ext/sweet'
+require 'English'
 include PML
 
 class AlfTool

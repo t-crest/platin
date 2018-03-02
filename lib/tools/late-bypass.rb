@@ -5,6 +5,7 @@
 #
 require 'platin'
 require 'fileutils'
+require 'English'
 include PML
 
 class LateBypassTool

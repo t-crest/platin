@@ -7,6 +7,7 @@ require 'yaml'
 require 'set'
 require 'tsort'
 require 'core/options'
+require 'English'
 
 module PML
 

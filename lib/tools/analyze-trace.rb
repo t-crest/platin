@@ -15,6 +15,7 @@
 
 require 'platin'
 require 'tools/extract-symbols.rb'
+require 'English'
 include PML
 
 class AnalyzeTraceTool

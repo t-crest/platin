@@ -13,6 +13,7 @@ require 'core/programinfo'
 
 require 'pathname'
 require 'set'
+require 'English'
 
 # preferably, we would have something like:
 # include PML::Kernel

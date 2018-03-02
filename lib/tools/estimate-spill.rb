@@ -7,6 +7,7 @@
 require 'set'
 require 'platin'
 require 'analysis/scopegraph'
+require 'English'
 include PML
 
 begin

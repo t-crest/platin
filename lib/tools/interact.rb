@@ -8,6 +8,7 @@ require 'tempfile'
 
 require 'tools/wcet'
 require 'tools/visualisationserver'
+require 'English'
 
 # On the code design
 #
