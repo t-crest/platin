@@ -1,0 +1,121 @@
+# Commonly used screens these days easily fit more than 80 characters.
+Metrics/LineLength:
+  Max: 120
+
+# Use Unix-style lineendings everywhere
+Layout/EndOfLine:
+  EnforcedStyle: lf
+
+Style/CommentedKeyword:
+  Enabled: false
+
+Layout/SpaceAfterComma:
+  Enabled: false
+
+Style/StringLiterals:
+  Enabled: false
+
+Style/StringLiteralsInInterpolation:
+  Enabled: false
+
+Layout/CommentIndentation:
+  Enabled: false
+
+Layout/EmptyLinesAroundModuleBody:
+  Enabled: false
+
+Style/ParallelAssignment:
+  Enabled: false
+
+Metrics/MethodLength:
+  Enabled: false
+
+Metrics/AbcSize:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Enabled: false
+
+Metrics/PerceivedComplexity:
+  Enabled: false
+
+Layout/IndentationWidth:
+  IgnoredPatterns: ['^\s*module']
+
+Style/NumericPredicate:
+  Enabled: false
+
+Style/PerlBackrefs:
+  Enabled: false
+
+Metrics/ClassLength:
+  Enabled: false
+
+Metrics/BlockLength:
+  Enabled: false
+
+Style/YodaCondition:
+  Enabled: false
+
+Style/NonNilCheck:
+  Enabled: false
+
+Style/NilComparison:
+  Enabled: false
+
+Style/TrailingCommaInLiteral:
+  Enabled: false
+
+Style/FormatStringToken:
+  Enabled: false
+
+Layout/AccessModifierIndentation:
+  EnforcedStyle: 'outdent'
+
+# To be discussed
+Style/SymbolProc:
+  Enabled: false
+
+Style/SingleLineMethods:
+  Enabled: false
+
+Style/ClassCheck:
+  Enabled: false
+
+Naming/HeredocDelimiterNaming:
+  Enabled: false
+
+Style/PercentLiteralDelimiters:
+  Enabled: false
+
+Style/WordArray:
+  Enabled: false
+Style/SymbolArray:
+  Enabled: false
+
+# To fix
+Style/MutableConstant:
+  Enabled: false
+
+Naming/AccessorMethodName:
+  Enabled: false
+
+Style/ColonMethodCall:
+  Enabled: false
+
+Style/MixinUsage:
+  Enabled: false
+
+Style/ConditionalAssignment:
+  Enabled: false
+
+Style/Next:
+  Enabled: false
+
+Performance/HashEachMethods:
+  Enabled: false
+
+# Enable one-day(tm)
+Style/Documentation:
+  Enabled: false
+
