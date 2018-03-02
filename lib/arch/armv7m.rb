@@ -301,7 +301,9 @@ class Architecture < PML::Architecture
       1 + PIPELINE_REFILL
     when 't2LDMIA_RET', 't2STRi8', 't2STRBi8', 't2STRHi8', 't2STRBi12', 't2STRHi12'
       2 + FLASH_WAIT_CYCLES
-    when 't2LDRi8', 't2LDRi12', 't2LDRBi12', 't2LDRSBi12', 't2LDRSHi12', 't2LDRSHi12', 't2LDRHi12'
+    when 't2LDRi8', 't2LDRi12', 't2LDRBi12', 't2LDRSBi12', 't2LDRSHi12', 't2LDRSHi12'
+      2 + FLASH_WAIT_CYCLES
+    when /^t2LDRHi[0-9]+$/
       2 + FLASH_WAIT_CYCLES
     when 't2LDRDi8', 't2STRDi8', 't2STMIA'
       1 + FLASH_WAIT_CYCLES * NUM_REGISTERS
