@@ -204,7 +204,7 @@ class WcetTool
         opts.disable_dca = true
       end
       WcaTool.run(pml, opts)
-      compute_criticalities(opts) do |pml,tmp_opts,src,round|
+      compute_criticalities(opts) do |pml,tmp_opts,src,_round|
         tmp_opts.flow_fact_srcs.push(src)
         WcaTool.run(pml,tmp_opts)
       end if opts.compute_criticalities
@@ -229,7 +229,7 @@ class WcetTool
         AitTool.run(pml,opts)
 
         # criticality analysis
-        compute_criticalities(opts) do |pml,tmp_opts,src,round|
+        compute_criticalities(opts) do |pml,tmp_opts,src,_round|
           simplify_flowfacts([src], tmp_opts)
           tmp_opts.flow_fact_srcs.push(src + ".simplified")
           configure_ait_files(tmp_opts, File.dirname(options.ait_report_prefix), "criticality", true)
@@ -368,8 +368,8 @@ class WcetTool
       dict = { 'analysis-entry' => options.analysis_entry,
         'source' => te.origin,
         'cycles' => te.cycles }
-      te.attributes.select { |k,v| k.start_with? 'memory-' }.each { |k,v| dict[k] = v }
-      te.attributes.select { |k,v| k.start_with? 'cache-' }.each { |k,v| dict[k] = v }
+      te.attributes.select { |k,_v| k.start_with? 'memory-' }.each { |k,v| dict[k] = v }
+      te.attributes.select { |k,_v| k.start_with? 'cache-' }.each { |k,v| dict[k] = v }
       (additional_info[te.origin] || []).each { |k,v| dict[k] = v }
       dict
     end
@@ -490,14 +490,14 @@ class WcetTool
     # rubocop:disable Metrics/LineLength
     opts.on("--batch", "run in batch processing mode, reading analysis targets and configuration from PML file") { opts.options.batch = true }
     opts.on("--outdir DIR", "directory for generated files") { |d| opts.options.outdir = d }
-    opts.on("--enable-trace-analysis", "run trace analysis") { |d| opts.options.trace_analysis = true }
-    opts.on("--use-trace-facts", "use flow facts from trace") { |d| opts.options.use_trace_facts = true }
-    opts.on("--compare-trace-facts", "run WCET analysis with and without trace facts") { |d| opts.options.compare_trace_facts = true }
-    opts.on("--disable-ait", "do not run aiT analysis") { |d| opts.options.disable_ait = true }
+    opts.on("--enable-trace-analysis", "run trace analysis") { |_d| opts.options.trace_analysis = true }
+    opts.on("--use-trace-facts", "use flow facts from trace") { |_d| opts.options.use_trace_facts = true }
+    opts.on("--compare-trace-facts", "run WCET analysis with and without trace facts") { |_d| opts.options.compare_trace_facts = true }
+    opts.on("--disable-ait", "do not run aiT analysis") { |_d| opts.options.disable_ait = true }
     opts.on("--[no-]enable-wca", "run platin WCA calculator") { |b| opts.options.enable_wca = b }
-    opts.on("--combine-wca", "run both aiT and WCA and combine cache analysis results") { |d| opts.options.combine_wca = true }
+    opts.on("--combine-wca", "run both aiT and WCA and combine cache analysis results") { |_d| opts.options.combine_wca = true }
     opts.on("--compute-criticalities", "calculate block criticalities") { opts.options.compute_criticalities = true }
-    opts.on("--enable-sweet", "run SWEET bitcode analyzer") { |d| opts.options.enable_sweet = true }
+    opts.on("--enable-sweet", "run SWEET bitcode analyzer") { |_d| opts.options.enable_sweet = true }
     opts.on("--visualize-ilp", "display an graphical representation of the geneated ILP") { opts.options.visualize_ilp = true }
     # rubocop:enable Metrics/LineLength
     use_sweet = proc { |options| options.enable_sweet }

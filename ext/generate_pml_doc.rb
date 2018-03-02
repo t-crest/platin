@@ -230,10 +230,10 @@ options = OpenStruct.new
 argv = OptionParser.new do |opts|
   opts.banner = "Usage: gen_pml.rb [options] pml.yml"
   opts.on("--list-classes",
-          "Generate list class for objects that have a class attribute") do |b|
+          "Generate list class for objects that have a class attribute") do |_b|
     options.list_classes = true
   end
-  opts.on("-v", "--[no-]verbose", "Run verbosely") do |v|
+  opts.on("-v", "--[no-]verbose", "Run verbosely") do |_v|
     options.verbose = true
   end
 end.parse!

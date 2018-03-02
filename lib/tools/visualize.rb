@@ -129,7 +129,7 @@ class FlowGraphVisualizer < Visualizer
           profile[edge.source].push(e)
         end
         [t.origin, profile]
-      end.reject { |k,v| v.empty? }
+      end.reject { |_k,v| v.empty? }
     ]
   end
 
@@ -207,7 +207,7 @@ class FlowGraphVisualizer < Visualizer
       elsif !node.block || node.kind_of?(CallNode)
         options["style"] = "rounded"
       end
-      if block_timing.any? { |o,profile| find_vnode_timing(profile, node).any? { |e| e.wcetfreq > 0 } }
+      if block_timing.any? { |_o,profile| find_vnode_timing(profile, node).any? { |e| e.wcetfreq > 0 } }
         # TODO: visualize criticality < 1
         options["color"] = "#ff0000"
         options["penwidth"] = 2
@@ -226,7 +226,7 @@ class FlowGraphVisualizer < Visualizer
         #      the block at least.
         t = block_timing.map do |origin,profile|
           [origin, find_vedge_timing(profile, node, s).select { |e| e.wcetfreq > 0 }]
-        end.reject { |o,p| p.empty? }
+        end.reject { |_o,p| p.empty? }
         unless t.empty?
           # TODO: visualize criticality < 1
           options["color"] = "#ff0000"
@@ -518,7 +518,7 @@ class ILPVisualisation < Visualizer
 
   def collect_variables(term)
     vars = Set.new
-    term.lhs.each do |vi,c|
+    term.lhs.each do |vi,_c|
       v = @ilp.var_by_index(vi)
       vars.add(v)
     end
@@ -632,7 +632,7 @@ private
 
   def type_index(selected_target, selected_type, io)
     io.puts("<div>")
-    @targets[selected_target].each do |type,image|
+    @targets[selected_target].each do |type,_image|
       style = if type == selected_type then "background-color: lightblue;" else "" end
       io.puts("<span style=\"#{style}\"><a href=\"#{link(selected_target,type)}\">#{type}</a></span>")
     end
@@ -642,7 +642,7 @@ private
   def target_index(selected_target, selected_type, io)
     io.puts("<div>")
     @targets.each do |target,images|
-      type, image = images.find { |type,image| type == selected_type } || images.to_a.first
+      type, image = images.find { |type,_image| type == selected_type } || images.to_a.first
       style = if target == selected_target then "background-color: lightblue;" else "" end
       io.puts("<span style=\"#{style}\"><a href=\"#{link(target,type)}\">#{target}</a></span>")
     end

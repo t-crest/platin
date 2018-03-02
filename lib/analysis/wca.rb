@@ -227,7 +227,7 @@ class WCA
         puts "  #{v}: #{freqs[v]} (#{cost} cyc)"
       end
       puts "Function Profile:"
-      mf_costs = Hash.new { |x| 0 }
+      mf_costs = Hash.new { |_x| 0 }
       freqs.each do |v,freq|
         mf_costs[v.function] += freq * builder.ilp.get_cost(v)
       end

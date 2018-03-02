@@ -138,7 +138,7 @@ class PMLModTool
   def self.add_options(opts)
     opts.writes_pml
     opts.on("--match PMLPATH", "match instructions via PMLPath") { |p| opts.options.pml_path = p }
-    opts.on("--clear-callees", "remove callees from matched instructions") { |p| opts.options.clear_callees = true }
+    opts.on("--clear-callees", "remove callees from matched instructions") { |_p| opts.options.clear_callees = true }
   end
 
   def self.run(pml, options)

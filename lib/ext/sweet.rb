@@ -126,7 +126,7 @@ module SWEET
     end
 
     def vars
-      @vector.map { |var,coeff| var }
+      @vector.map { |var,_coeff| var }
     end
 
     def to_s
@@ -298,7 +298,7 @@ class OptionParser
     end
   end
 
-  def bitcode_file(mandatory = proc { |options| false })
+  def bitcode_file(mandatory = proc { |_options| false })
     on("--bitcode FILE", "linked bitcode file") { |f| options.bitcode_file = f }
     add_check do |options|
       if mandatory.call(options)
@@ -307,7 +307,7 @@ class OptionParser
     end
   end
 
-  def alf_file(mandatory = proc { |options| false })
+  def alf_file(mandatory = proc { |_options| false })
     on("--alf FILE", "ALF program model file") { |f| options.alf_file = f }
     add_check do |options|
       if mandatory.call(options)
@@ -317,12 +317,12 @@ class OptionParser
   end
 
   def sweet_options
-    on("--sweet-ignore-volatiles", "treat volatile memory areas as ordinary ones") do |f|
+    on("--sweet-ignore-volatiles", "treat volatile memory areas as ordinary ones") do |_f|
       options.sweet_ignore_volatiles = true
     end
   end
 
-  def sweet_flowfact_file(mandatory = proc { |options| true })
+  def sweet_flowfact_file(mandatory = proc { |_options| true })
     on("--sweet-flowfacts FILE.ff", "SWEET flowfact file") { |f| options.sweet_flowfact_file = f }
     add_check do |options|
       if mandatory.call(options)
@@ -331,7 +331,7 @@ class OptionParser
     end
   end
 
-  def sweet_trace_file(mandatory = proc { |options| true })
+  def sweet_trace_file(mandatory = proc { |_options| true })
     on("--sweet-trace FILE.tf", "SWEET trace file") { |f| options.sweet_trace_file = f }
     add_check do |options|
       if mandatory && mandatory.call(options)

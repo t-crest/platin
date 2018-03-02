@@ -389,7 +389,7 @@ class PersistenceAnalysis
     @persistent = {}
     @conflict_free = {}
     scopegraph.bottom_up.each do |node|
-      get_all_tags(node, set).each do |tag, load_instructions|
+      get_all_tags(node, set).each do |tag, _load_instructions|
         if persistent?(node, tag)
           # if the tag is persistent in the node, just mark it (unless it is the root)
           debug(options, :cache) { "Persistent in Scope: #{tag} in #{node}" }

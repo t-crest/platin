@@ -643,7 +643,7 @@ class AISExporter
     @outfile.puts("}")
 
     # generate AIS1 instruction facts for spill/fill latencies
-    @sc.each do |instr,(type,n)|
+    @sc.each do |instr,(type,_n)|
       data_area = @pml.arch.config.memory_areas.by_name('data')
       case type
       when :reserve

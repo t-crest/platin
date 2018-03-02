@@ -602,7 +602,7 @@ class ConflictAnalysis
         # if the node is conflict free, just mark it (unless it is the entry)
         debug(options, :cache) { "Conflict-free Scope: #{node} #{set}" }
         if node == scopegraph.root
-          get_all_tags(node, set).each do |tag, load_instructions|
+          get_all_tags(node, set).each do |tag, _load_instructions|
             @analysis.add_scope_for_tag(node, tag)
           end
         end
@@ -660,7 +660,7 @@ class ConflictAnalysis
     node.successors.each do |snode|
       debug(options, :cache) { "conflict_scope: subscope #{snode}, needs action: #{conflict_free?(snode,set)}" }
       if conflict_free?(snode, set)
-        get_all_tags(snode,set).each do |tag, load_instructions|
+        get_all_tags(snode,set).each do |tag, _load_instructions|
           @analysis.add_scope_for_tag(snode, tag)
         end
       end
@@ -1119,7 +1119,7 @@ class StackCacheAnalysis
   def summarize(options, freqs, cost)
     fills = summarize_fills(options, freqs, cost)
     spills = summarize_spills(options, freqs, cost)
-    fills.merge!(spills) { |k, v1, v2| v1 + v2 }
+    fills.merge!(spills) { |_k, v1, v2| v1 + v2 }
   end
 
   def summarize_fills(options, freqs, cost)

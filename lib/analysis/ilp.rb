@@ -97,7 +97,7 @@ class IndexedConstraint
 
   def normalize!
     return unless @tauto.nil?
-    @lhs.delete_if { |v,c| c == 0 }
+    @lhs.delete_if { |_v,c| c == 0 }
     @tauto, @inconsistent = false, false
     if @lhs.empty?
       if @rhs == 0
@@ -113,7 +113,7 @@ class IndexedConstraint
       @lhs[v] = 1
     else
       @gcd = @lhs.values.inject(@rhs, :gcd)
-      @lhs.merge!(@lhs) { |v,c| c / @gcd }
+      @lhs.merge!(@lhs) { |_v,c| c / @gcd }
       @rhs /= @gcd
     end
   end
@@ -265,7 +265,7 @@ class ILP
   # const_rhs .. integer
   def add_constraint(terms_lhs,op,const_rhs,name,tag)
     assert("Markers should not appear in ILP") do
-      terms_lhs.none? { |v,c| v.kind_of?(Marker) }
+      terms_lhs.none? { |v,_c| v.kind_of?(Marker) }
     end
     terms_indexed = Hash.new(0)
     terms_lhs.each do |v,c|

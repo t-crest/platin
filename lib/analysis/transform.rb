@@ -142,12 +142,12 @@ class VariableElimination
     @ilp.constraints.each do |constr|
       cref = ConstraintRef.new(known_constraints.size, constr, elim_vids)
       known_constraints[constr] = cref
-      if constr.lhs.all? { |v,c| !elim_vids.include?(v) }
+      if constr.lhs.all? { |v,_c| !elim_vids.include?(v) }
         unaffected.add(cref)
       else
         dict = (constr.op == "equal") ? eq_constraints : bound_constraints
         elimeq_list = []
-        constr.lhs.each do |vid,c|
+        constr.lhs.each do |vid,_c|
           dict[vid].add(cref) if dict[vid]
         end
         elim_eqs.add(cref) if constr.op == "equal" && cref.num_elim_vars > 0
@@ -260,7 +260,7 @@ class VariableElimination
     c_coeff = c_constr.get_coeff(e_var)
     terms = c_constr.lhs
 
-    c_rterms = terms.merge(terms) { |v,c| e_coeff * c }               # multiply by e_coeff
+    c_rterms = terms.merge(terms) { |_v,c| e_coeff * c }              # multiply by e_coeff
     e_constr.lhs.each { |v,c| c_rterms[v] -= c_coeff * (e_sign * c) } # subtract c_coeff * e_terms
     c_rhs = c_constr.rhs * e_coeff - e_rhs * c_coeff                  # substract e_rhs * e_coeff
 
@@ -494,7 +494,7 @@ private
 
     # Build IPET (no cost) and add flow facts
     ffs = flowfacts.reject { |ff| ff.symbolic_bound? }
-    ipet.build(entry, ffs, mbb_variables: true) { |edge| 0 }
+    ipet.build(entry, ffs, mbb_variables: true) { |_edge| 0 }
     ipet
   end
 
@@ -519,7 +519,7 @@ private
       unless lhs.any? { |var,_| !var.kind_of?(IPETEdge) }
         # (1) get all referenced outgoing blocks
         out_blocks = {}
-        lhs.each { |edge,coeff| out_blocks[edge.source] = 0 }
+        lhs.each { |edge,_coeff| out_blocks[edge.source] = 0 }
         # (2) for each block, find minimum coeff for all of its outgoing edges
         #     and replace min_coeff * outgoing-edges by min_coeff * block
         out_blocks.keys.each do |b|
@@ -540,7 +540,7 @@ private
       lhs[entry_block] = 0
 
       # Create flow-fact (with dealing different IPET edges)
-      terms = lhs.reject { |v,c| c == 0 }.map do |v,c|
+      terms = lhs.reject { |_v,c| c == 0 }.map do |v,c|
         pp = if v.kind_of?(IPETEdge)
                if v.cfg_edge?
                  v.cfg_edge
@@ -590,7 +590,7 @@ class SymbolicBoundTransformation
 
     # resolve CHRs
     # translate blocks and arguments
-    ffs.each do |f,lbs|
+    ffs.each do |_f,lbs|
 
       # resolve CHR on bitcode level, out loops first
       lbs_resolved = []

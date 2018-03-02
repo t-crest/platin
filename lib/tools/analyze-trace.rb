@@ -37,7 +37,7 @@ class AnalyzeTraceTool
     die "Analysis entry '#{@options.analysis_entry}' (pc: #{@entry.address}) never executed" if @main_recorder.runs == 0
     @executed_blocks = @main_recorder.executed_blocks
     @infeasible_functions = Set.new
-    @executed_blocks.each do |function,bset|
+    @executed_blocks.each do |function,_bset|
       function.callsites.each do |cs|
         next if cs.unresolved_call?
         cs.callees.each do |callee|

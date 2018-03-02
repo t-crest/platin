@@ -108,7 +108,7 @@ module PML
     def reject!
       rejects = []
       @list.reject! { |ff| r = yield ff; rejects.push(r); r }
-      data.reject! { |ff| rejects.shift }
+      data.reject! { |_ff| rejects.shift }
     end
 
     def filter(pml, ff_selection, ff_srcs, _ff_levels, _exclude_symbolic = false)
@@ -236,7 +236,7 @@ module PML
     def reject!
       rejects = []
       @list.reject! { |mf| r = yield mf; rejects.push(r); r }
-      data.reject! { |mf| rejects.shift }
+      data.reject! { |_mf| rejects.shift }
     end
 
     def stats(_pml)
@@ -773,7 +773,7 @@ module PML
 
     def to_pml
       { 'reference' => reference.data, 'cycles' => cycles, 'wcet-frequency' => wcetfreq,
-        'criticality' => criticality, 'wcet-contribution' => wcet_contribution }.delete_if { |k,v| v.nil? }
+        'criticality' => criticality, 'wcet-contribution' => wcet_contribution }.delete_if { |_k,v| v.nil? }
     end
 
     def to_s

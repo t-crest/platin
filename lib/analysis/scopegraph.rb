@@ -682,7 +682,7 @@ class CallGraph < PMLObject
     end
 
     def successors
-      Set[*@successors_with_callsite.map { |t,cs| t }].to_a
+      Set[*@successors_with_callsite.map { |t,_cs| t }].to_a
     end
 
     def to_s

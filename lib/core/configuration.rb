@@ -28,7 +28,7 @@ class AnalysisConfig < PMLObject
 
   def to_pml
     { 'name' => @name, 'program-entry' => @program_entry, 'analysis-entry' => @analysis_entry,
-      'tool-configurations' => @tool_configurations }.delete_if { |k,v| v.nil? }
+      'tool-configurations' => @tool_configurations }.delete_if { |_k,v| v.nil? }
   end
 end
 
@@ -50,7 +50,7 @@ class ToolConfig < PMLObject
 
   def to_pml
     { 'name' => @name, 'configuration' => @configuration,
-      'options' => @options }.delete_if { |k,v| v.nil? }
+      'options' => @options }.delete_if { |_k,v| v.nil? }
   end
 end
 

@@ -35,7 +35,7 @@ class WcaTool
       opts.options.use_gurobi = v
     end
     # Disable all cache related costs.
-    opts.on("--wca-disable-cache", "disable all cache related  costs") do |f|
+    opts.on("--wca-disable-cache", "disable all cache related  costs") do |_f|
       opts.options.disable_dca = true
       opts.options.disable_sca = true
       opts.options.disable_ica = true

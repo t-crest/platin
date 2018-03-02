@@ -107,7 +107,7 @@ private
     worklist = [block]
     until worklist.empty?
       block = worklist.pop
-      add_refinement(ContextRef.new(block, ctx), true, @infeasible) { |oldval, _| true }
+      add_refinement(ContextRef.new(block, ctx), true, @infeasible) { |_oldval, _| true }
       block.successors.each do |bsucc|
         next if infeasible_block?(bsucc, ctx)
         if bsucc.predecessors.all? { |bpred| infeasible_block?(bpred, ctx) || bsucc.backedge_target?(bpred) }
@@ -359,7 +359,7 @@ class IPETModel
   end
 
   def sum_loop_entry(loop, factor = 1)
-    sum_incoming(loop.loopheader,factor).reject do |edge,factor|
+    sum_incoming(loop.loopheader,factor).reject do |edge,_factor|
       edge.backedge?
     end
   end

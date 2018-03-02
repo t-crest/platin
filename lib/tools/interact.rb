@@ -1229,7 +1229,7 @@ EOF
   # Setup completion
   #   We need it in REPLContext as debug.pry sets its on completor, so we have
   #   to restore it
-  REPLContext.instance.completor = proc do |s|
+  REPLContext.instance.completor = proc do |_s|
     Dispatcher.instance.complete(Readline.line_buffer.slice(0,Readline.point))
   end
   Readline.completion_proc = REPLContext.instance.completor

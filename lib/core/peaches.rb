@@ -84,7 +84,7 @@ class Context
   def leave_scope
     @level -= 1
 
-    @bindings.each do |k,v|
+    @bindings.each do |_k,v|
       v.select! { |e| e.level <= @level }
     end
   end
