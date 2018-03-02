@@ -6,23 +6,23 @@ require 'tempfile'
 require 'fileutils'
 
 def usage(err)
-  warn(err) unless err.to_s.empty?
-  warn
-  warn("Usage: patmos-clang-wcet [-c|-S|-E] <clang-option>..")
-  warn("Usage: patmos-clang-wcet [--target-config=patmos.pml] [--flow-facts=analysis.pml]")
-  warn("                         [--wcet-guided-optimization]" \
+  $stderr.puts(err) unless err.to_s.empty?
+  $stderr.puts
+  $stderr.puts("Usage: patmos-clang-wcet [-c|-S|-E] <clang-option>..")
+  $stderr.puts("Usage: patmos-clang-wcet [--target-config=patmos.pml] [--flow-facts=analysis.pml]")
+  $stderr.puts("                         [--wcet-guided-optimization]" \
                " [--platin-wcet-options=<optstr>]  <clang-option>..")
-  warn("")
-  warn("This is a wrapper for patmos-clang (when producing binaries)")
-  warn("patmos-clang-wcet will configure all tools to match the hardware settings")
-  warn("and invoke clang, platin and aiT (in a loop for optimization)")
-  warn("")
-  warn("See: patmos-clang-wcet --help")
+  $stderr.puts("")
+  $stderr.puts("This is a wrapper for patmos-clang (when producing binaries)")
+  $stderr.puts("patmos-clang-wcet will configure all tools to match the hardware settings")
+  $stderr.puts("and invoke clang, platin and aiT (in a loop for optimization)")
+  $stderr.puts("")
+  $stderr.puts("See: patmos-clang-wcet --help")
   exit 1
 end
 
 def run(cmd)
-  warn "[patmos-clang-wcet] #{cmd}"
+  $stderr.puts "[patmos-clang-wcet] #{cmd}"
   exit 1 unless system(cmd)
 end
 
@@ -38,7 +38,7 @@ args, initial_args = [], []
 
 ARGV.each_with_index do |arg,ix|
   if arg =~ /^-mconfig=(.*)$/
-    warn("The option -mconfig is deprecated; use --target-config and/or --flow-facts instead")
+    $stderr.puts("The option -mconfig is deprecated; use --target-config and/or --flow-facts instead")
     options.target_config = $1
   elsif arg =~ /^--target-config=(.*)$/
     options.target_config = $1
@@ -73,12 +73,12 @@ ARGV.each_with_index do |arg,ix|
   end
 end
 if !options.target_config
-  warn("Warning: using default target configuration")
+  $stderr.puts("Warning: using default target configuration")
 elsif !File.exist?(options.target_config)
   usage("Configuration file #{options.target_config} does not exist.")
 end
 if !options.flow_facts
-  warn("Warning: using default analysis target / no external flow facts")
+  $stderr.puts("Warning: using default analysis target / no external flow facts")
 elsif !File.exist?(options.flow_facts)
   usage("Configuration file #{options.flow_facts} does not exist.")
 end

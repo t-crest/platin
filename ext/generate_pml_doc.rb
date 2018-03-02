@@ -238,7 +238,7 @@ argv = OptionParser.new do |opts|
   end
 end.parse!
 if argv.empty?
-  warn("Please specify a schema")
+  $stderr.puts("Please specify a schema")
   exit 1
 end
 PMLGenerator.new(ARGV.first, options).generate
