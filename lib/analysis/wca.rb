@@ -169,7 +169,7 @@ class WCA
           srchints: srchints,
         }
       else
-        assert ("Visualizing ILPs requires the outdir parameter") { @options.outdir != nil }
+        assert("Visualizing ILPs requires the outdir parameter") { @options.outdir != nil }
         File.write("#{@options.outdir}/ilp.svg", svg)
         File.write("#{@options.outdir}/constraints.json", JSON.generate(constraints))
         File.write("#{@options.outdir}/srchints.json", JSON.generate(srchints))

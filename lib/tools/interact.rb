@@ -412,7 +412,7 @@ class VisualizeCommand < Command
       }
 
       assetdir = File.realpath(File.join(__dir__, '..', '..', 'assets'))
-      assert ("Not a directory #{assetdir}") { File.directory? assetdir }
+      assert("Not a directory #{assetdir}") { File.directory? assetdir }
 
       server = VisualisationServer::Server.new( \
                           :ilp, \
@@ -1223,7 +1223,7 @@ EOF
     require 'pry-stack_explorer'
     Dispatcher.instance.register('debug', DebugCommand.new)
   rescue LoadError
-    STDERR.puts ("Failed to load pry-stack_explorer or pry-rescue. Debugging will be disabled")
+    STDERR.puts("Failed to load pry-stack_explorer or pry-rescue. Debugging will be disabled")
   end
 
   # Setup completion

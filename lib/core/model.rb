@@ -90,7 +90,7 @@ class Model
   def repair(pml)
     facts = @stack.pop
 
-    assert ("Trying to repair a pml without undo information") { facts != nil }
+    assert("Trying to repair a pml without undo information") { facts != nil }
 
     # We have to apply the undo steps in the inverse order of the "mutate"
     # operations, if two mutations target the same pieces of information, or we

@@ -202,7 +202,7 @@ class PMLDoc
     # Step 1: bit-code
     (data['bitcode-functions'] || []).select! do |fun|
       symname = fun['name']
-      assert ("Insufficient data for bitcode-function: #{symname}") do
+      assert("Insufficient data for bitcode-function: #{symname}") do
         fun.key?('name') && resolved.key?(symname) && fun.key?('pmlsrcfile')
       end
       resolved[symname] == fun['pmlsrcfile']
@@ -212,7 +212,7 @@ class PMLDoc
     pruned_machinefunctions = Set.new # Collection of mf to prune
     (data['machine-functions'] || []).reject! do |fun|
       mapped = fun['mapsto']
-      assert ("Insufficient data for machine-function: #{fun['name']} -> mapped") do
+      assert("Insufficient data for machine-function: #{fun['name']} -> mapped") do
         fun.key?('mapsto') && resolved.key?(mapped) && fun.key?('pmlsrcfile')
       end
       if resolved[mapped] != fun['pmlsrcfile']
@@ -229,18 +229,18 @@ class PMLDoc
       prune = false
       ["src", "dst"].each do |locdesc|
         loc = graph[locdesc]
-        assert ("Insufficient data for relation-graph(#{locdesc}): #{graph['src']} <-> #{graph['dst']}") do
+        assert("Insufficient data for relation-graph(#{locdesc}): #{graph['src']} <-> #{graph['dst']}") do
           graph.key?(locdesc) && loc.key?('level') &&
           loc.key?('function') && graph.key?('pmlsrcfile')
         end
         case loc['level']
         when 'bitcode'
-          assert ("Unresolved function #{loc['function']}") { resolved.key?(loc['function']) }
+          assert("Unresolved function #{loc['function']}") { resolved.key?(loc['function']) }
           prune ||= resolved[loc['function']] != graph['pmlsrcfile']
         when 'machinecode'
           prune ||= pruned_machinefunctions.include?(loc['function'])
         else
-          assert ("No such level: #{loc['level']}") { false }
+          assert("No such level: #{loc['level']}") { false }
         end
       end
       prune
@@ -248,7 +248,7 @@ class PMLDoc
 
     # Step 4: flowfacts
     (data['flowfacts'] || []).reject! do |ff|
-      assert ("Incomplete flowfact: #{ff}") do
+      assert("Incomplete flowfact: #{ff}") do
         ff.key?('scope') && ff['scope'].key?('function') && ff.key?('level')
       end
 
@@ -257,12 +257,12 @@ class PMLDoc
 
       case ff['level']
       when 'bitcode'
-        assert ("No such function: #{fun}") { resolved.key?(fun) && ff.key?('pmlsrcfile') }
+        assert("No such function: #{fun}") { resolved.key?(fun) && ff.key?('pmlsrcfile') }
         prune ||= resolved[fun] != ff['pmlsrcfile']
       when 'machinecode'
         prune ||= pruned_machinefunctions.include?(fun)
       else
-        assert ("No such level: #{ff['level']}") { false }
+        assert("No such level: #{ff['level']}") { false }
       end
 
       prune
@@ -270,7 +270,7 @@ class PMLDoc
 
     # Step 5: valuefacts
     (data['valuefacts'] || []).reject! do |vf|
-      assert ("Incomplete valuefacts: #{vf}") do
+      assert("Incomplete valuefacts: #{vf}") do
         vf.key?('program-point') && vf['program-point'].key?('function') && vf.key?('level')
       end
 
@@ -279,19 +279,19 @@ class PMLDoc
 
       case vf['level']
       when 'bitcode'
-        assert ("No such function: #{fun}") { resolved.key?(fun) && vf.key?('pmlsrcfile') }
+        assert("No such function: #{fun}") { resolved.key?(fun) && vf.key?('pmlsrcfile') }
         prune ||= resolved[fun] != vf['pmlsrcfile']
       when 'machinecode'
         prune ||= pruned_machinefunctions.include?(fun)
       else
-        assert ("No such level: #{vf['level']}") { false }
+        assert("No such level: #{vf['level']}") { false }
       end
 
       prune
     end
 
     (data['modelfacts'] || []).reject! do |mf|
-      assert ("Incomplete modelfacts: #{mf}") do
+      assert("Incomplete modelfacts: #{mf}") do
         mf.key?('program-point') && mf['program-point'].key?('function') && mf.key?('level')
       end
 
@@ -300,12 +300,12 @@ class PMLDoc
 
       case mf['level']
       when 'bitcode'
-        assert ("No such function: #{fun}") { resolved.key?(fun) && mf.key?('pmlsrcfile') }
+        assert("No such function: #{fun}") { resolved.key?(fun) && mf.key?('pmlsrcfile') }
         prune ||= resolved[fun] != mf['pmlsrcfile']
       when 'machinecode'
         prune ||= pruned_machinefunctions.include?(fun)
       else
-        assert ("No such level: #{mf['level']}") { false }
+        assert("No such level: #{mf['level']}") { false }
       end
 
       prune

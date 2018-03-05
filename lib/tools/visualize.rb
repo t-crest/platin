@@ -539,7 +539,7 @@ class ILPVisualisation < Visualizer
       constraints << { formula: c.to_s, name: c.name }
       vals = []
       # If this assertion breaks: merge left and right side
-      assert ("We only deal with constant rhs") { c.rhs.is_a?(Fixnum) }
+      assert("We only deal with constant rhs") { c.rhs.is_a?(Fixnum) }
       collect_variables(c).each do |v|
         next unless @mapping.key?(v)
         node = add_node(v)
