@@ -96,6 +96,9 @@ Style/SymbolArray:
 Style/RegexpLiteral:
   Enabled: false
 
+Style/GuardClause:
+  Enabled: false
+
 # Platin already defines a "warn" method itself
 Style/StderrPuts:
   Enabled: false
