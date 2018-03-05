@@ -40,13 +40,13 @@ class LateBypassTool
     # possibly accessing a large address range
     valuefacts = pml.valuefacts.select do |vf|
       vf.level == "machinecode" &&
-      vf.origin == "aiT" &&
-      vf.programpoint.kind_of?(PML::Instruction) &&
+        vf.origin == "aiT" &&
+        vf.programpoint.kind_of?(PML::Instruction) &&
       # skip store instructions for now
       # ['mem-address-read', 'mem-address-write'].include?(vf.variable) &&
-      ['mem-address-read'].include?(vf.variable) &&
-      vf.programpoint.memtype == "cache" &&
-      has_large_range(vf, options.range_threshold)
+        ['mem-address-read'].include?(vf.variable) &&
+        vf.programpoint.memtype == "cache" &&
+        has_large_range(vf, options.range_threshold)
     end
 
     # get the instruction addresses these facts refer to;

@@ -718,7 +718,7 @@ class VisualizeTool
         mf = pml.machine_functions.by_label(target)
         t = pml.timing.select do |t|
           t.level == mf.level && options.show_timings &&
-          (options.show_timings.include?(t.origin) || options.show_timings.include?("all"))
+            (options.show_timings.include?(t.origin) || options.show_timings.include?("all"))
         end
         graph = fgv.visualize_vcfg(mf, pml.arch, t)
         file = File.join(outdir, target + ".mc" + suffix)

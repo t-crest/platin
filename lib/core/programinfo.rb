@@ -34,7 +34,7 @@ module PML
         mcofs = @pml.machine_code_only_functions
         c.is_rt = ff.lhs.any? { |term|
                     term.programpoint.function &&
-                    mcofs.include?(term.programpoint.function.label)
+                      mcofs.include?(term.programpoint.function.label)
                   }
       else
         c.is_rt = false
@@ -555,13 +555,14 @@ module PML
       return true if local? && rhs.constant? && rhs.to_i == 0
       # otherwise, the scoep has to be the entry function
       scope.programpoint.kind_of?(Function) &&
-             scope.function == entry_function &&
-             scope.context.empty?
+        scope.function == entry_function &&
+        scope.context.empty?
     end
 
     def local?
-      lhs.all? do |term| term.programpoint.function &&
-                        term.programpoint.function == scope.function end
+      lhs.all? do |term|
+        term.programpoint.function && term.programpoint.function == scope.function
+      end
     end
 
     def loop_bound?

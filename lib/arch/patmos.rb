@@ -616,7 +616,7 @@ class Architecture < PML::Architecture
 
    # Update instruction cache / method cache
     if options.instr_cache_kind || options.instr_cache_size ||
-        options.instr_cache_policy || options.instr_cache_line_size
+       options.instr_cache_policy || options.instr_cache_line_size
 
       ic_policy = options.instr_cache_policy[:policy] if options.instr_cache_policy
       ic_assoc  = options.instr_cache_policy[:assoc]  if options.instr_cache_policy

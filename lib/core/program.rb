@@ -752,11 +752,11 @@ module PML
         # XXX: hackish
         # filter known pseudo functions on bitcode
         n =~ /llvm\..*/ ||
-        n =~ /__aeabi_uidivmod/ ||
-        n =~ /__aeabi_idivmod/ ||
-        n =~ /__udivsi3/ ||
-        n =~ /__divsi3/ ||
-        n =~ /__udivmodsi4/
+          n =~ /__aeabi_uidivmod/ ||
+          n =~ /__aeabi_idivmod/ ||
+          n =~ /__udivsi3/ ||
+          n =~ /__divsi3/ ||
+          n =~ /__udivmodsi4/
       end.map do |n|
         block.function.module.by_label_or_name(n, true)
       end

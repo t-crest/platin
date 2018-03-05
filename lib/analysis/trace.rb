@@ -85,7 +85,7 @@ class MachineTraceMonitor < TraceMonitor
     trace.each do |pc,cycles,instructions|
       break if @options.max_cycles       && @cycles >= @options.max_cycles
       break if @options.max_instructions &&
-                  @executed_instructions >= @options.max_instructions
+               @executed_instructions >= @options.max_instructions
 
       @started = instructions if pc == @start
       next unless @started

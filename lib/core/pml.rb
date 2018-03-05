@@ -231,7 +231,7 @@ class PMLDoc
         loc = graph[locdesc]
         assert("Insufficient data for relation-graph(#{locdesc}): #{graph['src']} <-> #{graph['dst']}") do
           graph.key?(locdesc) && loc.key?('level') &&
-          loc.key?('function') && graph.key?('pmlsrcfile')
+            loc.key?('function') && graph.key?('pmlsrcfile')
         end
         case loc['level']
         when 'bitcode'
