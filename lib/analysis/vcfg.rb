@@ -283,7 +283,7 @@ private
         block.successors.each do |b|
           add_block_predecessor(block_predecessors, b, current_node)
         end
-      elsif b = block.fallthrough_successor
+      elsif (b = block.fallthrough_successor)
         # There was branch information available, and the block is fall-through
         add_block_predecessor(block_predecessors,b,current_node)
       end
@@ -472,7 +472,7 @@ class CallNode < CfgNode
   # return VCFGs of functions possible called at this location
   #
   def callees(location)
-    if ts = @targets.path_find_last(location.context.callstring.to_a)
+    if (ts = @targets.path_find_last(location.context.callstring.to_a))
       return ts
     end
     if location.node.callsite.unresolved_call?
@@ -635,7 +635,7 @@ class Interpreter
       inval = @in[loc]
       outval = @semantics.transfer_value(loc.node, inval)
       loc.successors.each do |loc|
-        if change = @semantics.merge(@in[loc],outval)
+        if (change = @semantics.merge(@in[loc],outval))
           @in[loc] = change[1]
           @queue.unshift(loc)
         end

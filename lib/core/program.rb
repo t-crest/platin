@@ -834,7 +834,7 @@ module PML
     # whether the given block is still a successor if we are at this instruction in the current block
     def live_successor?(target)
       ix = index
-      while i = block.instructions[ix]
+      while (i = block.instructions[ix])
         return true if i.branch_targets.include?(target)
         ix += 1
       end

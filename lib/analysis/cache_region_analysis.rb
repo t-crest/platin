@@ -381,7 +381,7 @@ class CacheRegionAnalysis < CacheAnalysisBase
 
     # for each region node, we compute the cache access graph
     scopegraph.bottom_up.each do |n|
-      if rg = n.region
+      if (rg = n.region)
         assert("Inconsistent region graph") do
           sub_scope_nodes = rg.nodes.select { |n| n.kind_of?(RegionGraph::SubScopeNode) }.map { |n| n.scope_node }
           Set[*sub_scope_nodes] == Set[*n.successors]
@@ -627,7 +627,7 @@ class ConflictAnalysis
   def analyze_conflict_scope(node, set)
     debug(options, :cache) { "Conflicts in scope #{node}: #{get_all_tags(node, set).keys.inspect}" }
 
-    if rg = @analysis.get_region_graph(node)
+    if (rg = @analysis.get_region_graph(node))
       if options.wca_cache_regions
         # process region graph in topological order
         rf = RegionFormationRA.new(rg, set, self)
@@ -693,7 +693,7 @@ class MethodCacheAnalysis
   end
 
   def subfunction_of_block(b)
-    unless sf_of_block = @block_subfunction_map[b.function]
+    unless (sf_of_block = @block_subfunction_map[b.function])
       sf_of_block = @block_subfunction_map[b.function] = {}
       b.function.subfunctions.each do |sf|
         sf.blocks.each { |b| sf_of_block[b] = sf }

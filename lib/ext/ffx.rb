@@ -58,7 +58,7 @@ end
 class ValueRange
   # Either the symbol this range references (double quoted), or a numeric range
   def to_f4
-    if s = symbol
+    if (s = symbol)
       dquote(s)
     else
       raise Exception, "#{self.class}#to_f4: no translation available"
@@ -305,7 +305,7 @@ class F4Exporter
     loop_bounds = {}
 
     ffs.each do |ff|
-      if scope_bound = ff.get_loop_bound
+      if (scope_bound = ff.get_loop_bound)
         scope,bound = scope_bound
         next if options.ff_disable_export.include?('loop-bounds')
         next if !bound.constant? && options.ff_disable_export.include?('symbolic-loop-bounds')
@@ -332,11 +332,11 @@ class F4Exporter
       debug(options, :ffx) { "Symbolic Bounds only supported for loop bounds" }
       false
 
-    elsif scope_cs_targets = ff.get_calltargets
+    elsif (scope_cs_targets = ff.get_calltargets)
       return false if options.ff_disable_export.include?('call-targets')
       export_calltargets(ff,*scope_cs_targets)
 
-    elsif infeasibleblocks = ff.get_block_infeasible && !infeasibleblocks.empty?
+    elsif (infeasibleblocks = ff.get_block_infeasible) && !infeasibleblocks.empty?
       return false if options.ff_disable_export.include?('infeasible-code')
       export_infeasible(ff,infeasibleblocks)
 
@@ -480,7 +480,7 @@ class FFXExporter
   def export_flowfacts(ffs)
     loop_bounds = {}
     ffs.each do |ff|
-      if scope_bound = ff.get_loop_bound
+      if (scope_bound = ff.get_loop_bound)
         scope,bound = scope_bound
         next if options.ff_disable_export.include?('loop-bounds')
         next if !bound.constant? && options.ff_disable_export.include?('symbolic-loop-bounds')
@@ -507,11 +507,11 @@ class FFXExporter
       debug(options, :ffx) { "Symbolic Bounds only supported for loop bounds" }
       false
 
-    elsif scope_cs_targets = ff.get_calltargets
+    elsif (scope_cs_targets = ff.get_calltargets)
       return false if options.ff_disable_export.include?('call-targets')
       export_calltargets(ff,*scope_cs_targets)
 
-    elsif infeasibleblocks = ff.get_block_infeasible && !infeasibleblocks.empty?
+    elsif (infeasibleblocks = ff.get_block_infeasible) && !infeasibleblocks.empty?
       return false if options.ff_disable_export.include?('infeasible-code')
       export_infeasible(ff,infeasibleblocks)
 

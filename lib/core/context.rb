@@ -162,7 +162,7 @@ class ContextNode
   end
 
   def add_child(ctx_item)
-    if c = get_child(ctx_item)
+    if (c = get_child(ctx_item))
       c
     else
       @children[ctx_item] = ContextNode.new

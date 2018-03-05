@@ -1235,7 +1235,7 @@ EOF
   Readline.completion_proc = REPLContext.instance.completor
 
   # The main loop
-  while buf = Readline.readline("> ", true)
+  while (buf = Readline.readline("> ", true))
     Dispatcher.instance.dispatch(buf)
   end
 end

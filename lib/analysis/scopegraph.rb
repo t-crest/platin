@@ -406,7 +406,7 @@ private
   end
 
   def add_node(n)
-    if existing = @nodeset[n]
+    if (existing = @nodeset[n])
       existing
     else
       @nodeset[n] = n
@@ -652,7 +652,7 @@ class RegionGraph
   end
 
   def add_node(n)
-    if existing = @nodeset[n]
+    if (existing = @nodeset[n])
       existing
     else
       @nodes.push(n)

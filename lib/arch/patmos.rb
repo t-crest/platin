@@ -52,7 +52,7 @@ class SimulatorTrace
         cmd = "#{@options.pasim} #{arch.config_for_simulator.join(" ")} #{pasim_options} 2>&1 1>/dev/null"
         debug(@options, :patmos) { "Running pasim: #{cmd}" }
         IO.popen(cmd.to_s) do |io|
-          while item = parse(io.gets)
+          while (item = parse(io.gets))
             yield item
             @stats_num_items += 1
           end
@@ -250,7 +250,7 @@ class Architecture < PML::Architecture
   end
 
   def main_memory(area_name)
-    if area = @config.memory_areas.by_name(area_name)
+    if (area = @config.memory_areas.by_name(area_name))
       area.memory
     else
       @config.main_memory
@@ -373,7 +373,7 @@ class Architecture < PML::Architecture
   end
 
   def config_for_apx(options)
-    if sc = stack_cache
+    if (sc = stack_cache)
       patmos_options = REXML::Element.new("patmos_options")
       # workaround sets SC size and base address to 0
       if options.ait_disable_internal_sc
@@ -407,19 +407,19 @@ class Architecture < PML::Architecture
 
   def config_for_clang(options)
     opts = []
-    if mc = method_cache
+    if (mc = method_cache)
       opts.push("-mpatmos-method-cache-size=#{mc.size}")
-      if pref_sf_size = method_cache.get_attribute("preferred-subfunction-size")
+      if (pref_sf_size = method_cache.get_attribute("preferred-subfunction-size"))
         opts.push("-mpatmos-preferred-subfunction-size=#{pref_sf_size}")
       end
-      if max_sf_size = method_cache.get_attribute("max-subfunction-size")
+      if (max_sf_size = method_cache.get_attribute("max-subfunction-size"))
         opts.push("-mpatmos-max-subfunction-size=#{max_sf_size}")
       end
     else
       opts.push("-mpatmos-disable-function-splitter")
       # opts.push("-mpatmos-basicblock-align=8")
     end
-    if sc = stack_cache
+    if (sc = stack_cache)
       if options.sca
         opts.push("-mpatmos-enable-stack-cache-analysis")
         # we need to specify a solver
@@ -447,7 +447,7 @@ class Architecture < PML::Architecture
   def config_for_simulator
     opts = []
 
-    if main_memory = @config.main_memory
+    if (main_memory = @config.main_memory)
       if main_memory.size
         opts.push("--gsize")
         opts.push(main_memory.size)
@@ -490,7 +490,7 @@ class Architecture < PML::Architecture
       end
     end
 
-    if dc = data_cache
+    if (dc = data_cache)
       opts.push("--dcsize")
       opts.push(dc.size)
       opts.push("--dlsize")
@@ -516,7 +516,7 @@ class Architecture < PML::Architecture
         opts.push("no")
       end
     end
-    if sc = stack_cache
+    if (sc = stack_cache)
       warn("Cache named 'stack-cache' is not of type 'stack-cache'") unless sc.type == "stack-cache"
       opts.push("--scsize")
       opts.push(sc.size)
@@ -527,7 +527,7 @@ class Architecture < PML::Architecture
       opts.push("--sckind")
       opts.push("dcache")
     end
-    if mc = method_cache
+    if (mc = method_cache)
       warn("Cache named 'method-cache' is not of type 'method-cache'") unless mc.type == "method-cache"
       opts.push("--icache")
       opts.push("mcache")
@@ -539,7 +539,7 @@ class Architecture < PML::Architecture
       opts.push(mc.associativity)
       opts.push("--mckind")
       opts.push((mc.policy || "fifo").downcase)
-    elsif ic = instruction_cache
+    elsif (ic = instruction_cache)
       warn("Cache named 'instruction-cache' must not be of type 'method-cache'") if ic.type == "method-cache"
       opts.push("--icache")
       opts.push("icache")

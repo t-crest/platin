@@ -124,7 +124,7 @@ private
   def add_refinement(reference, value, dict)
     pp_dict    = (dict[reference.programpoint] ||= {})
     ctx        = reference.context
-    newval = if oldval = pp_dict[ctx]
+    newval = if (oldval = pp_dict[ctx])
                yield [oldval, value]
              else
                value

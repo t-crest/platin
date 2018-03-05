@@ -37,7 +37,7 @@ class ExtractSymbols
 
     r = IO.popen("#{@options.objdump} -t '#{elf}'") do |io|
       io.each_line do |line|
-        if record = objdump_extract(line.chomp)
+        if (record = objdump_extract(line.chomp))
           next unless @options.text_sections.include?(record.section)
           debug(@options, :elf) do
             "Adding address for label #{record.label}: #{record.address}"
@@ -63,7 +63,7 @@ class ExtractSymbols
       (warn("No symbol for machine function #{function.to_s}");next) unless addr
       ins_index = 0
       function.blocks.each do |block|
-        if block_addr = @text_symbols[block.label]
+        if (block_addr = @text_symbols[block.label])
           # Migh be different from current addr, as subfunctions require the emitter
           # to insert additional text between blocks.
           addr = block_addr
@@ -74,7 +74,7 @@ class ExtractSymbols
             die("There is no symbol for #{block.label}, and no instruction " \
                 "addresses for function #{function.label} are available")
           end
-        elsif ins_addr = @instruction_addresses[function.label][ins_index]
+        elsif (ins_addr = @instruction_addresses[function.label][ins_index])
           warn("Heuristic found wrong address for #{block}: #{addr}, not #{ins_addr}") if addr != ins_addr
           addr = ins_addr
         else
@@ -84,7 +84,7 @@ class ExtractSymbols
         block.instructions.each do |instruction|
           # This might be necessary for von-Neumann architectures
           # (e.g., for ARMs BR_JTm instruction, where PML does not provide a size)
-          if ins_addr = (@instruction_addresses[function.label] || {})[ins_index]
+          if (ins_addr = (@instruction_addresses[function.label] || {})[ins_index])
             warn("Heuristic found wrong address: #{instruction}: #{addr}, not #{ins_addr}") if addr != ins_addr
             addr = ins_addr
           elsif instruction.empty?

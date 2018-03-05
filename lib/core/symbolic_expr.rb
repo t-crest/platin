@@ -128,7 +128,7 @@ class SEVar < SymbolicExpression
   end
 
   def eval(env, _lenv)
-    if v = env[@var]
+    if (v = env[@var])
       v
     else
       raise Exception, "SymbolicExpression#eval: unknown variable #{@var}"

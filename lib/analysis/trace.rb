@@ -134,7 +134,7 @@ class MachineTraceMonitor < TraceMonitor
       end
 
       # Handle Basic Block
-      if b = @wp_block_start[pc]
+      if (b = @wp_block_start[pc])
         # debug(@options, :trace) { "#{pc}: Block: #{b} / #{b.address}" }
         # function entry
         if b.address == b.function.address
@@ -187,7 +187,7 @@ class MachineTraceMonitor < TraceMonitor
       end
 
       # Handle Call
-      if c = @wp_call_instr[pc]
+      if (c = @wp_call_instr[pc])
         assert("Call instruction #{c} does not match current function #{@current_function}") do
           c.function == @current_function
         end
@@ -198,7 +198,7 @@ class MachineTraceMonitor < TraceMonitor
 
       # Handle Return Block
       # TODO: in order to handle predicated returns, we need to know where return instructions ar
-      if r = @wp_return_instr[pc]
+      if (r = @wp_return_instr[pc])
         # Format is: <instruction, instruction counter at instruction, cycle counter at instruction, return latency>
         pending_return = [r,@executed_instructions,@cycles,0]
         # debug(@options, :trace) { "Scheduling return at #{r}" }

@@ -97,7 +97,7 @@ end
 class ValueRange
   # Either the symbol this range references (double quoted), or a numeric range
   def to_ais
-    if s = symbol
+    if (s = symbol)
       dquote(s)
     else
       self.class.range_to_ais(range)
@@ -503,7 +503,7 @@ class AISExporter
   def export_flowfacts(pml, ffs)
     loop_bounds = {}
     ffs.each do |ff|
-      if scope_bound = ff.get_loop_bound
+      if (scope_bound = ff.get_loop_bound)
         scope,bound = scope_bound
         next if options.ais_disable_export.include?('loop-bounds')
         next if !bound.constant? && options.ais_disable_export.include?('symbolic-loop-bounds')
@@ -534,11 +534,11 @@ class AISExporter
       debug(options, :ait) { "Symbolic Bounds only supported for loop bounds" }
       false
 
-    elsif scope_cs_targets = ff.get_calltargets
+    elsif (scope_cs_targets = ff.get_calltargets)
       return false if options.ais_disable_export.include?('call-targets')
       export_calltargets(ff,*scope_cs_targets)
 
-    elsif infeasibleblocks = ff.get_block_infeasible && !infeasibleblocks.empty?
+    elsif (infeasibleblocks = ff.get_block_infeasible) && !infeasibleblocks.empty?
       return false if options.ais_disable_export.include?('infeasible-code')
       export_infeasible(ff,infeasibleblocks)
 
@@ -596,7 +596,7 @@ class AISExporter
     # no stack cache instructions to annotate
     return unless @sc.size
 
-    unless sc_cache = @pml.arch.config.caches.find { |c| c.name == 'stack-cache' }
+    unless (sc_cache = @pml.arch.config.caches.find { |c| c.name == 'stack-cache' })
       warn("aiT: stack cache not configured, cannot add annotations")
       return
     end
@@ -694,7 +694,7 @@ class AIS2Helper
   end
 
   def close_n (n)
-    while n > 0 && s = close
+    while n > 0 && (s = close)
       n -= 1
     end
   end
@@ -735,7 +735,7 @@ class APXExporter
       add_element(proj_options, "general_options") do |gen_options|
         gen_options << rexml_str("include_path",".")
       end
-      if arch_el = @pml.arch.config_for_apx(@options)
+      if (arch_el = @pml.arch.config_for_apx(@options))
         proj_options << arch_el
       end
     end
@@ -1029,7 +1029,7 @@ class AitImport
           # => If we have an edge from a node to a 'loop call node', we need to replace
           #    it by an edge to the loop header node
           ctx_elem.each_element("wcet_edge_call") do |call_edge|
-            if loopblock = @routines[call_edge.attributes['target_routine']].loop
+            if (loopblock = @routines[call_edge.attributes['target_routine']].loop)
               loop_nodes[call_edge.attributes['source_block']] = loopblock
             else
               call_nodes[call_edge.attributes['source_block']] = true

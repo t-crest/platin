@@ -642,7 +642,7 @@ class SymbolicBoundTransformation
     elsif !ff.local?
       debug(options, :transform) { "Cannot transform non-local symbolic flow fact" }
       return nil
-    elsif non_block_ref = ff.lhs.find { |t| !t.programpoint.kind_of?(Block) }
+    elsif (non_block_ref = ff.lhs.find { |t| !t.programpoint.kind_of?(Block) })
       debug(options, :transform) { "Cannot transform symbolic flow fact referencing edges: #{non_block_ref}" }
       return nil
     elsif !pml.relation_graphs.has_named?(function.name, rg_src_level)

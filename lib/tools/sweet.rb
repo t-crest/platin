@@ -93,7 +93,7 @@ class SweetAnalyzeTool
     do_args = []
     do_args.push("floats=est") if options.sweet_ignore_volatiles
     ae_args = ["-ae", "ffg=uhss,uhsf,uhsp,unss,unsf,unsp,uesp,uesf,uess,ubns", "vola=t"]
-    if f = options.sweet_generate_trace
+    if options.sweet_generate_trace
       ae_args.push('css')
       ae_args.push("gtf=#{options.sweet_trace_file}")
     else
@@ -106,7 +106,7 @@ class SweetAnalyzeTool
     version, commands, parsed = nil, [], []
     $stderr.puts("Executing #{cmd.join(" ")}") if options.verbose
     IO.popen(cmd + [err: [:child,:out]]) do |sweet_io|
-      while l = sweet_io.gets
+      while (l = sweet_io.gets)
         if l =~ /SWEET version (.*)/
           version = $1
         elsif l =~ /Parsing ALF file (.*)/
