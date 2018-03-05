@@ -404,9 +404,11 @@ class CacheRegionAnalysis < CacheAnalysisBase
     end
 
     # HACK: for evaluation purposes only
+    # rubocop:disable Style/GlobalVars
     if @cache_properties.name == "I$" || @cache_properties.name == "M$"
       $imem_bytes = @cache_properties.size_in_bytes(all_tags)
     end
+    # rubocop:enable Style/GlobalVars
     if options.stats
       statistics("CACHE", "size of all reachable memory blocks for #{@cache_properties.name} (bytes)" =>
                  @cache_properties.size_in_bytes(all_tags))
@@ -919,14 +921,12 @@ class DataCacheAnalysisBase
         # Note: We assume here that we do not have unaligned stores.
         d = @memory.write_delay_aligned(@line_size)
       end
+    elsif cache_line.known?
+      d = @memory.read_delay(cache_line.address, @line_size)
     else
-      if cache_line.known?
-        d = @memory.read_delay(cache_line.address, @line_size)
-      else
-        # Note: We assume here that we do not have
-        # unaligned accesses across multiple cache lines.
-        d = @memory.read_delay_aligned(@line_size)
-      end
+      # Note: We assume here that we do not have
+      # unaligned accesses across multiple cache lines.
+      d = @memory.read_delay_aligned(@line_size)
     end
     # info("read_delay for cache_line at #{cache_line.address} (#{cache_line.address & (@cache.line_size-1)}): #{d}")
     d

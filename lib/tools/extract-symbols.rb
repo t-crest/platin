@@ -62,7 +62,10 @@ class ExtractSymbols
   def update_pml
     @pml.machine_functions.each do |function|
       addr = @text_symbols[function.label] || @text_symbols[function.blocks.first.label]
-      (warn("No symbol for machine function #{function.to_s}"); next) unless addr
+      unless addr
+        warn("No symbol for machine function #{function.to_s}")
+        next
+      end
       ins_index = 0
       function.blocks.each do |block|
         if (block_addr = @text_symbols[block.label])

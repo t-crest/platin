@@ -163,7 +163,7 @@ class WCA
       constraints = vis.get_constraints
       srchints    = vis.get_srchints
 
-      # Hacky, but a passable wörk-around for returning this metadata for
+      # Hacky, but a passable work-around for returning this metadata for
       # visualisation interact.rb...
       if @options.visualize_ilp.is_a?(Hash)
         @options.visualize_ilp[:ilp] = {
@@ -200,11 +200,10 @@ class WCA
             die("ILP cost: source is not a block") unless v.source.kind_of?(Block)
             die("ILP cost: target is not a block") unless v.target == :exit || v.target.kind_of?(Block)
             ref = ContextRef.new(v.cfg_edge, Context.empty)
-            edgefreqs[ref] = freq
           else
             ref = ContextRef.new(v.cfg_edge, Context.empty)
-            edgefreqs[ref] = freq
           end
+          edgefreqs[ref] = freq
         elsif v.kind_of?(MemoryEdge)
           ref = ContextRef.new(v.edgeref, Context.empty)
         end

@@ -243,6 +243,7 @@ class DataFlowAnalysis
       if bundles.empty?
         node = Node.new
       else
+        # rubocop:disable Style/IfInsideElse
         # Is this a return block or does the block have a sucessor outside the region?
         if b.successors.empty? || (targets.length < b.successors.length)
           # Then we have an exit node
@@ -251,6 +252,7 @@ class DataFlowAnalysis
         else
           node = Node.new(bundles.last)
         end
+        # rubocop:enable Style/IfInsideElse
       end
       add_node(b, node, last, first_node, targets, pred_nodes)
     end

@@ -11,7 +11,9 @@ module PML
 # Stacks with bounded memory
 class BoundedStack
   # fly-weight, to get cheaper comparisons (profile hotspot)
+  # rubocop:disable Style/ClassVars
   @@repository = {}
+  # rubocop:enable Style/ClassVars
   attr_reader :stack
   def self.empty
     BoundedStack.create([])
@@ -294,12 +296,10 @@ class LoopContextEntry < ContextEntry
       assert("LoopContextEntry: step #{step} does not match unroll factor #{unroll}") { step == unroll }
       assert("LoopContextEntry: offset #{offset} to small for peel factor #{peel}")   { offset >= peel }
       [peel + (offset - peel) % unroll, unroll]
+    elsif offset >= peel
+      [peel + (offset - peel) % unroll, unroll]
     else
-      if offset >= peel
-        [peel + (offset - peel) % unroll, unroll]
-      else
-        [offset, 0]
-      end
+      [offset, 0]
     end
   end
 

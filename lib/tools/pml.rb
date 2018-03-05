@@ -40,7 +40,7 @@ class PMLTool
     validation_errors = validator.validate(pml.data)
     # show errors
     if validation_errors && !validation_errors.empty?
-      for e in validation_errors
+      validation_errors.each do |e|
         warn "[#{e.path}] #{e.message}"
       end
     end
@@ -104,7 +104,7 @@ class PMLTool
                    bb.qname.to_s
                  else
                    "#{bb.qname} (#{freq})"
-                  end
+                 end
                end.join(", ")
       puts "  #{marker}: #{bbstr}"
     end

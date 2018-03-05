@@ -366,7 +366,9 @@ class Server
   end
 
   def start
+    # rubocop:disable Style/BlockDelimiter
     old = trap 'INT' do @server.shutdown end
+    # rubocop:enable Style/BlockDelimiter
     @server.start
     trap 'INT', old
   end

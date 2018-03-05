@@ -262,6 +262,7 @@ module PML
     $stderr.puts(format_msg("WARNING",msg))
   end
 
+  # rubocop:disable Style/GlobalVars
   def warn_once(msg,detail = nil)
     $warn_once ||= {}
     return if $warn_once[msg]
@@ -269,6 +270,7 @@ module PML
     warn(msg + detail.to_s)
     $warn_once[msg] = true
   end
+  # rubocop:enable Style/GlobalVars
 
   def info(msg)
     $stderr.puts(format_msg("INFO",msg))

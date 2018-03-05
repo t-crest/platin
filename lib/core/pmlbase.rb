@@ -209,7 +209,7 @@ module PML
     def pml_list(element_type, unique_indices = [], indices = [])
       all_indices = unique_indices + indices
       # rubocop:disable Layout/SpaceInsideStringInterpolation
-      module_eval <<-"_end_eval", __FILE__, __LINE__
+      module_eval <<-"_end_eval", __FILE__, __LINE__ + 1
         def initialize(list, existing_data = nil)
           assert("#{self.class}#initialize: list must not be nil") { list }
           @list = list
@@ -243,14 +243,14 @@ module PML
         end
       _end_eval
       all_indices.each do |index|
-        module_eval <<-"_end_eval", __FILE__, __LINE__
+        module_eval <<-"_end_eval", __FILE__, __LINE__ + 1
            def by_#{index}(key, error_if_missing = false)
                lookup(@index_#{index}, key, "#{index}", error_if_missing)
            end
          _end_eval
       end
       all_indices.each do |index|
-        module_eval <<-"_end_eval", __FILE__, __LINE__
+        module_eval <<-"_end_eval", __FILE__, __LINE__ + 1
            def keys_#{index}()
                @index_#{index}.keys
            end
@@ -261,7 +261,7 @@ module PML
 
     def pml_name_index_list(element_type, unique_indices = [], indices = [])
       pml_list(element_type, [:name,:qname] + unique_indices, indices)
-      module_eval <<-"_end_eval", __FILE__, __LINE__
+      module_eval <<-"_end_eval", __FILE__, __LINE__ + 1
         def [](arg)
           by_name(arg)
         end

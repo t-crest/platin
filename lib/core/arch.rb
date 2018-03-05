@@ -7,7 +7,9 @@ module PML
 
 # architectures
 class Architecture
+  # rubocop:disable Style/ClassVars
   @@register = {}
+  # rubocop:enable Style/ClassVars
   def self.register(archname,klass)
     die("architecture #{archname} already registered to #{@@register[archname]}") if @@register[archname]
     @@register[archname] = klass

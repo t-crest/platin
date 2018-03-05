@@ -73,7 +73,7 @@ class PersistenceDataFlowAnalysis
     end
 
     def concat(set)
-      if set == ZERO || set == TOP
+      if [ZERO, TOP].include?(set)
         set.concat(self)
       else
         create(@set + set.set)
@@ -81,7 +81,7 @@ class PersistenceDataFlowAnalysis
     end
 
     def join(other)
-      return other.join(self) if other == ZERO || other == TOP
+      return other.join(self) if [ZERO, TOP].include?(other)
       create(@set + other.set)
     end
 

@@ -533,7 +533,10 @@ private
           edges = [IPETEdge.new(b,:exit,target_level)] if b.may_return?
           min_coeff = edges.map { |e| lhs[e] }.min
           if min_coeff != 0
-            edges.each { |e| lhs[e] -= min_coeff; lhs.delete(e) if lhs[e] == 0 }
+            edges.each do |e|
+              lhs[e] -= min_coeff
+              lhs.delete(e) if lhs[e] == 0
+            end
             lhs[b] += min_coeff
           end
         end

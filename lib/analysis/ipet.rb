@@ -165,7 +165,7 @@ class IPETEdge
 
   def cfg_edge
     assert("IPETEdge#cfg_edge: not a edge between blocks") { cfg_edge? }
-    (:exit == target) ? source.edge_to_exit : source.edge_to(target)
+    :exit == target ? source.edge_to_exit : source.edge_to(target)
   end
 
   def call_edge?

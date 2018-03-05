@@ -971,11 +971,13 @@ class REPLContext
     @initial_modelfacts = nil
   end
 
+  # rubocop:disable Style/ClassVars
   @@instance = REPLContext.new
 
   def self.instance
     @@instance
   end
+  # rubocop:enable Style/ClassVars
 
   private_class_method :new
 end
@@ -985,11 +987,13 @@ class Dispatcher
     @commands = {}
   end
 
+  # rubocop:disable Style/ClassVars
   @@instance = Dispatcher.new
 
   def self.instance
     @@instance
   end
+  # rubocop:enable Style/ClassVars
 
   def register(name, command)
     @commands[name] = command

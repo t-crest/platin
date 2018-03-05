@@ -1008,8 +1008,8 @@ class AitImport
         if routine.function
           @function_count[routine.function] = re.attributes['count'].to_i
           @function_cost[routine.function] += re.attributes['cumulative_cycles'].to_i
-        else
-          # loop cost
+        # else
+        #   loop cost
         end
 
         # extract edge cost (relative to LLVM terminology)

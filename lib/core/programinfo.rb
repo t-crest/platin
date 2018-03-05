@@ -107,7 +107,11 @@ module PML
 
     def reject!
       rejects = []
-      @list.reject! { |ff| r = yield ff; rejects.push(r); r }
+      @list.reject! do |ff|
+        r = yield ff
+        rejects.push(r)
+        r
+      end
       data.reject! { |_ff| rejects.shift }
     end
 
@@ -235,7 +239,11 @@ module PML
 
     def reject!
       rejects = []
-      @list.reject! { |mf| r = yield mf; rejects.push(r); r }
+      @list.reject! do |mf|
+        r = yield mf
+        rejects.push(r)
+        r
+      end
       data.reject! { |_mf| rejects.shift }
     end
 

@@ -8,7 +8,9 @@ require 'ext/ait'
 require 'English'
 include PML
 
+# rubocop:disable Style/GlobalVars
 $available_tools = ["clang", "pasim", "ait"]
+# rubocop:enable Style/GlobalVars
 
 class ToolConfigTool
   def self.add_options(opts)
@@ -49,8 +51,10 @@ class ToolConfigTool
     when 'ait'
       AISExporter.new(pml,$stdout,options).export_header
     else
+      # rubocop:disable Style/GlobalVars
       die("platin tool configuration: Unknown tool specified: #{options.tool}" \
           " (#{$available_tools.join(", ")})")
+      # rubocop:enable Style/GlobalVars
     end
   end
 
@@ -69,6 +73,7 @@ class ToolConfigTool
 end
 
 if __FILE__ == $PROGRAM_NAME
+  # rubocop:disable Style/GlobalVars
   synopsis = <<-EOF
     Configure external tools to use the correct hardware (timing) model.
     Similar to pkg-config, this tool writes the arguments to be passed to $stdout. It uses
@@ -78,6 +83,7 @@ if __FILE__ == $PROGRAM_NAME
 
     Supported Tools: #{$available_tools.join(", ")}
   EOF
+  # rubocop:enable Style/GlobalVars
   options, args = PML::optparse([], "", synopsis) do |opts|
     opts.needs_pml
     ToolConfigTool.add_options(opts)

@@ -140,40 +140,31 @@ private
     case instr
     when "add", "sub", "and"
       ret['opcode'] = instr.upcase + (reg_args == 3 ? "r" : "i")
-      ret
     when "li"
       ret['opcode'] = (size == 8 ? "LIl" : "LIi")
-      ret
     when "clr", "mov"
       ret['opcode'] = "MOV"
-      ret
     when "nop", "mfs", "mts"
       ret['opcode'] = instr.upcase
-      ret
     when "sws", "swm", "swl", "swc", "lwl", "lwm", "lwc"
       ret['opcode'] = instr.upcase
       ret['memode'] = { "s" => "store", "l" => "load" }[instr[0]]
       ret['memtype'] = { "l" => "local", "m" => "memory", "s" => "stack", "c" => "cache" }[instr[2]]
-      ret
     when "ret", "retnd", "xret"
       ret['opcode'] = instr.upcase
       ret['branch-type'] = "return"
-      ret
     when "call", "callnd"
       ret['opcode'] = instr.upcase
       ret['branch-type'] = "call"
       # FIXME: call target
       # p args.strip # <- function call
-      ret
     when "sspill", "sens"
       ret['opcode'] = instr.upcase + (reg_args == 1 ? "r" : "i")
-      ret
-
     else
       ret['opcode'] = [instr, args]
       ret['invalid'] = true
-      ret
     end
+    ret
   end
   RE_HEX = /[0-9A-Fa-f]/
   RE_FUNCTION_LABEL = %r{ ^

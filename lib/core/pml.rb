@@ -44,8 +44,10 @@ class PMLDoc
     # read-only sections
     if @data['triple']
       @triple = @data['triple'].split('-')
-      machine_config = @data['machine-configuration'] ?
-        MachineConfig.from_pml(self, @data['machine-configuration']) : nil
+      machine_config = nil
+      if @data['machine-configuration']
+        machine_config = MachineConfig.from_pml(self, @data['machine-configuration'])
+      end
       @arch = Architecture.from_triple(triple, machine_config)
     else
       @triple = nil

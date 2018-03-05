@@ -66,7 +66,7 @@ ARGV.each_with_index do |arg,ix|
   elsif arg =~ /-mpatmos-max-subfunction-size=(.*)/ # override
     options.override[:mc_max_sf_size] = true
   elsif arg == '-v'
-    $verbose = true # hack, but this is really prototypical for now
+    # $verbose = true # hack, but this is really prototypical for now
     options.verbose = true
   elsif arg == '--debug'
     options.debug = true

@@ -316,6 +316,10 @@ class VerboseRecorder
     @out = out
   end
 
+  def respond_to_missing?(method_name, include_private = false)
+    super
+  end
+
   def method_missing(event, *args)
     @out.puts("EVENT #{event.to_s.ljust(15)} #{args.join(" ")}")
   end
@@ -504,6 +508,10 @@ class RecorderScheduler
 
   def eof; end
 
+  def respond_to_missing?(method_name, include_private = false)
+    super
+  end
+
   def method_missing(event, *args); end
 end
 
@@ -599,6 +607,10 @@ class FunctionRecorder
 
   def eof; end
 
+  def respond_to_missing?(method_name, include_private = false)
+    super
+  end
+
   def method_missing(event, *args); end
 
   def to_s
@@ -693,7 +705,10 @@ class FrequencyRecord
   end
 
   def dump(io = $DEFAULT_OUTPUT, header = nil)
-    (io.puts "No records"; return) unless @blockfreqs
+    unless @blockfreqs
+      io.puts "No records"
+      return
+    end
     io.puts "---"
     io.puts header if header
     io.puts "  cycles: #{cycles}"
@@ -780,6 +795,10 @@ class ProgressTraceRecorder
   end
 
   def eof; end
+
+  def respond_to_missing?(method_name, include_private = false)
+    super
+  end
 
   def method_missing(event, *args); end
 end

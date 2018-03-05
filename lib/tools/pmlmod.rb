@@ -95,15 +95,20 @@ class PMLMatchModify
     nummod = 0
     case action
     when :clear
-      (pml_object.data[@target] = nil; nummod += 1) if data.include? @target
+      if data.include? @target
+        pml_object.data[@target] = nil
+        nummod += 1
+      end
     end
     puts "#{pml_object}: #{nummod} modification(s)" if nummod > 0
   end
 end
 
+# rubocop:disable Style/ClassAndModuleChildren
 class PML::Function
   attr_reader :labelkey
 end
+# rubocop:enable Style/ClassAndModuleChildren
 
 class PMLDoc
   def match_path(matcher)
