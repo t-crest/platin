@@ -370,13 +370,15 @@ class FlowFactTransformation
     # Extract and add new flow facts
     new_ffs = extract_flowfacts(new_constraints, entry, 'machinecode', [:simplify])
     new_ffs.each { |ff| pml.flowfacts.add(ff) }
-    statistics("TRANSFORM",
-               "Constraints after 'simplify' FM-elimination (#{constraints_before} =>)" =>
-               new_constraints.length,
-               "Unsimplified flowfacts copied (=>#{options.flow_fact_output})" =>
-               copied.length,
-               "Simplified flowfacts (#{options.flow_fact_srcs} => #{options.flow_fact_output})" =>
-               new_ffs.length) if options.stats
+    if options.stats
+      statistics("TRANSFORM",
+                 "Constraints after 'simplify' FM-elimination (#{constraints_before} =>)" =>
+                 new_constraints.length,
+                 "Unsimplified flowfacts copied (=>#{options.flow_fact_output})" =>
+                 copied.length,
+                 "Simplified flowfacts (#{options.flow_fact_srcs} => #{options.flow_fact_output})" =>
+                 new_ffs.length)
+    end
   end
 
   def transform(target_analysis_entry, flowfacts, target_level)
@@ -463,13 +465,15 @@ class FlowFactTransformation
     directly_transformed_facts = sbt.transform(selected_flowfacts, target_level)
     directly_transformed_facts.each { |ff| pml.flowfacts.add(ff) }
 
-    statistics("TRANSFORM",
-               "#local IPET problems" => flowfacts_by_entry.length,
-               "generated flowfacts" => new_ffs.length,
-               "directly translated flowfacts" => directly_transformed_facts.length,
-               "constraints before FM eliminations" => stats_num_constraints_before,
-               "constraints after FM eliminations" => stats_num_constraints_after,
-               "elimination steps" => stats_elim_steps) if options.stats
+    if options.stats
+      statistics("TRANSFORM",
+                 "#local IPET problems" => flowfacts_by_entry.length,
+                 "generated flowfacts" => new_ffs.length,
+                 "directly translated flowfacts" => directly_transformed_facts.length,
+                 "constraints before FM eliminations" => stats_num_constraints_before,
+                 "constraints after FM eliminations" => stats_num_constraints_after,
+                 "elimination steps" => stats_elim_steps)
+    end
   end
 
 private

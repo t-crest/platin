@@ -102,9 +102,11 @@ class FFXExportTool
 
       ffx.write(outfile) if options.export_ffx
 
-      statistics("F4/FFX",
-                 "exported flow facts" => ffx.stats_generated_facts,
-                 "unsupported flow facts" => ffx.stats_skipped_flowfacts) if options.stats
+      if options.stats
+        statistics("F4/FFX",
+                   "exported flow facts" => ffx.stats_generated_facts,
+                   "unsupported flow facts" => ffx.stats_skipped_flowfacts)
+      end
     end
   end
 end

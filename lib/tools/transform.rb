@@ -60,9 +60,11 @@ class RelationGraphValidation
       end
     end
     raise Exception, "Progress trace validation failed: #{errors.inspect}" unless errors.empty?
-    statistics("CFRG-VALIDATION",
-               "progress trace length (src)" => pt1.trace.length,
-               "progress trace length (dst)" => pt2.trace.length) if @options.stats
+    if @options.stats
+      statistics("CFRG-VALIDATION",
+                 "progress trace length (src)" => pt1.trace.length,
+                 "progress trace length (dst)" => pt2.trace.length)
+    end
   end
 
   def is_machine_only_node(dstnode, srcnode)

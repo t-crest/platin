@@ -170,18 +170,20 @@ class MachineTraceMonitor < TraceMonitor
         # Empty blocks are problematic (cannot be distinguished) - what do do?
         # They are rare (only with -O0), so we tolerate some work. An empty block
         # is published only if it is a successor of the last block
-        @empty_blocks[b.address].each do |b0|
-          if !@last_block || @last_block.successors.include?(b0)
-            while b0.instructions.empty?
-              debug(@options,:trace) { "Publishing empty block #{b0} (<-#{@last_block})" }
-              publish(:block, b0, @cycles)
-              assert("Empty block may only have one successor") { b0.successors.size == 1 }
-              @last_block = b0
-              b0 = @last_block.successors.first
+        if @empty_blocks[b.address]
+          @empty_blocks[b.address].each do |b0|
+            if !@last_block || @last_block.successors.include?(b0)
+              while b0.instructions.empty?
+                debug(@options,:trace) { "Publishing empty block #{b0} (<-#{@last_block})" }
+                publish(:block, b0, @cycles)
+                assert("Empty block may only have one successor") { b0.successors.size == 1 }
+                @last_block = b0
+                b0 = @last_block.successors.first
+              end
+              break
             end
-            break
           end
-        end if @empty_blocks[b.address]
+        end
         publish(:block, b, @cycles)
         @last_block = b
       end

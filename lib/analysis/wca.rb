@@ -130,10 +130,12 @@ class WCA
 
     # END: remove me soon
 
-    statistics("WCA",
-               "flowfacts" => flowfacts.length,
-               "ipet variables" => builder.ilp.num_variables,
-               "ipet constraints" => builder.ilp.constraints.length) if @options.stats
+    if @options.stats
+      statistics("WCA",
+                 "flowfacts" => flowfacts.length,
+                 "ipet variables" => builder.ilp.num_variables,
+                 "ipet constraints" => builder.ilp.constraints.length)
+    end
 
     # Solve ILP
     begin

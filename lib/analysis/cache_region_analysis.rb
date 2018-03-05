@@ -86,10 +86,12 @@ class CacheAnalysis
     dca_results = @dca.summarize(options, freqs, cost) if @dca
 
     { "instr" => ica_results, "stack" => sca_results, "data" => dca_results }.each do |type,r|
-      r.each do |k,v|
-        report.attributes[k + "-" + type] = v
-        total_cycles += v if k == "cache-max-cycles"
-      end if r
+      if r
+        r.each do |k,v|
+          report.attributes[k + "-" + type] = v
+          total_cycles += v if k == "cache-max-cycles"
+        end
+      end
     end
 
     report.attributes['cache-max-cycles'] = total_cycles
@@ -170,8 +172,10 @@ class CacheAnalysisBase
     unknown = 0
     @all_load_edges.each do |me|
       li = me.load_instruction
-      puts "  cache load edge #{me}: #{freqs[me] || '??'} / #{freqs[me.edgeref] || '??'} " \
-           "(#{cost[me]} cyc)" if options.verbose
+      if options.verbose
+        puts "  cache load edge #{me}: #{freqs[me] || '??'} / #{freqs[me.edgeref] || '??'} " \
+             "(#{cost[me]} cyc)"
+      end
       cycles += cost[me] || 0
       # count store and bypass separately
       misses += freqs[me] || 0 unless li.bypass? || li.store?

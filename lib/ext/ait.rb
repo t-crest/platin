@@ -823,8 +823,10 @@ class AitImport
       end
       if elem.attributes['loop']
         routine.loop = routine.instruction.block
-        die("loop #{routine.loop} with id #{elem.attributes['id']} in " \
-            "loop routine #{routine.instruction} is not a loop header") unless routine.loop.loopheader?
+        unless routine.loop.loopheader?
+          die("loop #{routine.loop} with id #{elem.attributes['id']} in " \
+              "loop routine #{routine.instruction} is not a loop header")
+        end
       else
         routine.function = routine.instruction.function
         die("routine is not entry block") unless routine.function.entry_block == routine.instruction.block
@@ -927,10 +929,12 @@ class AitImport
               warn("Bad value range element #{min} - this should be fixed in recent aiT versions")
               min,max = [min,max].map { |v| v - 0xffff_ffff_0000_0000 }
             end
-            debug(options,:ait) do
-              sprintf("- %s 0x%08x..0x%08x (%d bytes), mod=0x%x rem=0x%x\n",
-                      se.attributes['type'],min,max,max - min,mod || -1,rem || -1)
-            end if unpredictable
+            if unpredictable
+              debug(options,:ait) do
+                sprintf("- %s 0x%08x..0x%08x (%d bytes), mod=0x%x rem=0x%x\n",
+                        se.attributes['type'],min,max,max - min,mod || -1,rem || -1)
+              end
+            end
             if max < min
               # aiT uses a wraparound domain in the new versions
               # see:
@@ -1137,8 +1141,10 @@ class AitImport
                 loop do
                   source.block.successors.each do |s|
                     if source.block.exitedge_source?(s)
-                      die("More than one exit edge from a block within a loop. This makes it" \
-                          "impossible (for us) to determine correct edge frequencies") if exit_successor
+                      if exit_successor
+                        die("More than one exit edge from a block within a loop. This makes it" \
+                            "impossible (for us) to determine correct edge frequencies")
+                      end
                       exit_successor = s
                     end
                   end

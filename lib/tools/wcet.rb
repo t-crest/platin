@@ -110,8 +110,10 @@ class WcetTool
   def prepare_pml
     # Sanity check and address extraction
     rgs = pml.relation_graphs.list.select { |rg| rg.data['status'] != 'valid' && rg.src.name != "abort" }
-    warn("Problematic Relation Graphs: " \
-         "#{rgs.map { |rg| "#{rg.qname} / #{rg.data['status']}" }.join(", ")}") unless rgs.empty?
+    unless rgs.empty?
+      warn("Problematic Relation Graphs: " \
+           "#{rgs.map { |rg| "#{rg.qname} / #{rg.data['status']}" }.join(", ")}")
+    end
 
     # Extract Symbols
     if pml.text_symbols
@@ -204,10 +206,12 @@ class WcetTool
         opts.disable_dca = true
       end
       WcaTool.run(pml, opts)
-      compute_criticalities(opts) do |pml,tmp_opts,src,_round|
-        tmp_opts.flow_fact_srcs.push(src)
-        WcaTool.run(pml,tmp_opts)
-      end if opts.compute_criticalities
+      if opts.compute_criticalities
+        compute_criticalities(opts) do |pml,tmp_opts,src,_round|
+          tmp_opts.flow_fact_srcs.push(src)
+          WcaTool.run(pml,tmp_opts)
+        end
+      end
     end
   end
 
@@ -229,12 +233,14 @@ class WcetTool
         AitTool.run(pml,opts)
 
         # criticality analysis
-        compute_criticalities(opts) do |pml,tmp_opts,src,_round|
-          simplify_flowfacts([src], tmp_opts)
-          tmp_opts.flow_fact_srcs.push(src + ".simplified")
-          configure_ait_files(tmp_opts, File.dirname(options.ait_report_prefix), "criticality", true)
-          AitTool.run(pml,tmp_opts)
-        end if opts.compute_criticalities
+        if opts.compute_criticalities
+          compute_criticalities(opts) do |pml,tmp_opts,src,_round|
+            simplify_flowfacts([src], tmp_opts)
+            tmp_opts.flow_fact_srcs.push(src + ".simplified")
+            configure_ait_files(tmp_opts, File.dirname(options.ait_report_prefix), "criticality", true)
+            AitTool.run(pml,tmp_opts)
+          end
+        end
       end
     end
   end
@@ -344,10 +350,12 @@ class WcetTool
 
   def report(additional_info = {})
     results = summarize_results(additional_info)
-    file_open(options.report, (options.report_append ? "a" : "w")) do |fh|
-      info "Writing report to #{options.report}" if options.report != "-"
-      fh.puts YAML::dump(results.map { |r| r.merge(options.report_append || {}) })
-    end if options.report
+    if options.report
+      file_open(options.report, (options.report_append ? "a" : "w")) do |fh|
+        info "Writing report to #{options.report}" if options.report != "-"
+        fh.puts YAML::dump(results.map { |r| r.merge(options.report_append || {}) })
+      end
+    end
   end
 
   def summarize_results(additional_info = {})

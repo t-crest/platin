@@ -121,8 +121,10 @@ class AnalyzeTraceTool
         end
       end
     end
-    statistics("TRACE", "extracted flow-flact hypotheses" =>
-               outpml.flowfacts.length - flowfacts_before) if @options.stats
+    if @options.stats
+      statistics("TRACE", "extracted flow-flact hypotheses" =>
+                 outpml.flowfacts.length - flowfacts_before)
+    end
     outpml
   end
 

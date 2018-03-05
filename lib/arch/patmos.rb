@@ -126,8 +126,10 @@ class ExtractSymbols
         end
       end
     end
-    die "The objdump command '#{options.objdump}'" \
-        " exited with status #{$CHILD_STATUS.exitstatus}" unless $CHILD_STATUS.success?
+    unless $CHILD_STATUS.success?
+      die "The objdump command '#{options.objdump}'" \
+          " exited with status #{$CHILD_STATUS.exitstatus}"
+    end
   end
 
 private

@@ -134,9 +134,11 @@ class PMLTool
     print_by_origin(pml.timing.list, "timings", io) do |tes|
       tes.each do |te|
         puts te
-        te.profile.each do |pe|
-          puts "  #{pe.to_s}"
-        end if print_profiles & te.profile
+        if print_profiles & te.profile
+          te.profile.each do |pe|
+            puts "  #{pe.to_s}"
+          end
+        end
       end
     end
   end

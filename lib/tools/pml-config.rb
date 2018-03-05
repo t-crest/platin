@@ -169,20 +169,22 @@ class PMLConfigTool
   end
 
   def self.set_attributes(list, attrs)
-    attrs.each do |name,key,value|
-      entry = list.by_name(name)
-      # Cache/area must exist by now for us to attach attributes
-      next unless entry
-      # Clean up value
-      if value.nil?
-        value = true
-      elsif /^\d+$/ =~ value
-        value = value.to_i
-      elsif /^0x[0-9a-fA-F]+$/ =~ value
-        value = Integer(value)
+    if attrs
+      attrs.each do |name,key,value|
+        entry = list.by_name(name)
+        # Cache/area must exist by now for us to attach attributes
+        next unless entry
+        # Clean up value
+        if value.nil?
+          value = true
+        elsif /^\d+$/ =~ value
+          value = value.to_i
+        elsif /^0x[0-9a-fA-F]+$/ =~ value
+          value = Integer(value)
+        end
+        entry.set_attribute(key, value)
       end
-      entry.set_attribute(key, value)
-    end if attrs
+    end
   end
 
   def self.update_attributes(arch, options)

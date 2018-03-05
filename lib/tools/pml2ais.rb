@@ -97,9 +97,11 @@ class AisExportTool
         end
         ais.export_stack_cache_annotations()
       end
-      statistics("AIS",
-                 "exported flow facts" => ais.stats_generated_facts,
-                 "unsupported flow facts" => ais.stats_skipped_flowfacts) if options.stats
+      if options.stats
+        statistics("AIS",
+                   "exported flow facts" => ais.stats_generated_facts,
+                   "unsupported flow facts" => ais.stats_skipped_flowfacts)
+      end
     end
   end
 end

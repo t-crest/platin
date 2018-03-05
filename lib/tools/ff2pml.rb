@@ -44,8 +44,10 @@ class SweetImportTool
         skipped += 1
       end
     end
-    statistics("SWEET", "added flow facts (=>#{flow_fact_origin})" => added,
-               "skipped flow facts" => skipped) if options.stats
+    if options.stats
+      statistics("SWEET", "added flow facts (=>#{flow_fact_origin})" => added,
+                 "skipped flow facts" => skipped)
+    end
     debug(options, :sweet) { "Reasons for skipping flow facts: #{reasons.inspect}" }
     pml
   end
