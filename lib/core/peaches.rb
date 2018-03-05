@@ -890,6 +890,7 @@ if __FILE__ == $PROGRAM_NAME
   }
 
   puts "Running Tests..."
+  # rubocop:disable Layout/EmptyLinesAroundArguments
   parser.expr.eof.parse! "ASDF > 0 || True"
 
   parser.expr.eof.parse! "a * b"
@@ -1023,6 +1024,8 @@ y = not True
 
   program = parser.program.parse! "y = 4 - 3 + 3 - 3*4 + 8"
   assert_literal.call(program, "y", 0)
+
+ # rubocop:enable Layout/EmptyLinesAroundArguments
 
   puts "All tests were successful"
 end

@@ -30,17 +30,21 @@ class WCA
     if entry_label.start_with?("GCFG:")
       gcfg_entry = @pml.analysis_entry(@options)
       machine_entry = gcfg_entry.abb.get_region(:dst).entry_node
+      # rubocop:disable Layout/MultilineHashBraceLayout
       entry = { 'gcfg' => gcfg_entry,
                 'machinecode' => gcfg_entry,
                 'bitcode' => gcfg_entry,
               }
+      # rubocop:enable Layout/MultilineHashBraceLayout
       @options.gcfg_analysis = true
     else
       machine_entry = @pml.machine_functions.by_label(entry_label)
       bitcode_entry = @pml.bitcode_functions.by_name(entry_label)
+      # rubocop:disable Layout/MultilineHashBraceLayout
       entry = { 'machinecode' => machine_entry,
                 'bitcode' => bitcode_entry,
               }
+      # rubocop:enable Layout/MultilineHashBraceLayout
       @options.gcfg_analysis = false
     end
 

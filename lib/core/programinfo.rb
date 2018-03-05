@@ -287,10 +287,12 @@ module PML
     end
 
     def to_pml
+       # rubocop:disable Layout/MultilineHashBraceLayout
       { 'program-point' => @ppref.data,
         'type' => @type,
         'expression' => @expr
       }.merge(attributes)
+       # rubocop:enable Layout/MultilineHashBraceLayout
     end
 
     def to_source
@@ -517,12 +519,14 @@ module PML
     end
 
     def to_pml
+      # rubocop:disable Layout/MultilineHashBraceLayout
       assert("no 'level' attribute for flow-fact") { level }
       { 'scope' => scope.data,
         'lhs' => lhs.data,
         'op' => op,
         'rhs' => rhs.to_s,
       }.merge(attributes)
+      # rubocop:enable Layout/MultilineHashBraceLayout
     end
 
     # Flow fact builders

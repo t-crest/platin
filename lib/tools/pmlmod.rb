@@ -163,9 +163,9 @@ class PMLModTool
   end
 end
 
-SYNOPSIS = <<EOF
-Programmatically modify PML documents.
-EOF
+SYNOPSIS = <<-EOF
+  Programmatically modify PML documents.
+  EOF
 
 if __FILE__ == $PROGRAM_NAME
   options, args = PML::optparse([], "", SYNOPSIS) do |opts|

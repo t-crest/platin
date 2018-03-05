@@ -78,10 +78,12 @@ class MachineConfig < PMLObject
   end
 
   def to_pml
+    # rubocop:disable Layout/MultilineHashBraceLayout
     { "memories" => memories.to_pml,
       "caches" => caches.to_pml,
       "memory-areas" => memory_areas.to_pml
     }.delete_if { |_k,v| v.nil? }
+    # rubocop:enable Layout/MultilineHashBraceLayout
   end
 
   def main_memory
@@ -212,6 +214,7 @@ class MemoryConfig < PMLObject
   end
 
   def to_pml
+    # rubocop:disable Layout/MultilineHashBraceLayout
     { "name" => @name,
       "size" => @size,
       "transfer-size" => @transfer_size,
@@ -222,6 +225,7 @@ class MemoryConfig < PMLObject
       "min-burst-size" => @min_burst_size,
       "max-burst-size" => @max_burst_size,
     }.delete_if { |_k,v| v.nil? }
+    # rubocop:enable Layout/MultilineHashBraceLayout
   end
 
   def size=(value)
@@ -469,6 +473,7 @@ class CacheConfig < PMLObject
   end
 
   def to_pml
+    # rubocop:disable Layout/MultilineHashBraceLayout
     { "name" => name,
       "type" => type,
       "policy" => policy,
@@ -477,6 +482,7 @@ class CacheConfig < PMLObject
       "size" => size,
       "attributes" => attributes
     }.delete_if { |_k,v| v.nil? || (v == []) }
+    # rubocop:enable Layout/MultilineHashBraceLayout
   end
 end # class CacheConfig
 
@@ -580,6 +586,7 @@ class MemoryArea < PMLObject
   end
 
   def to_pml
+    # rubocop:disable Layout/MultilineHashBraceLayout
     { "name" => name,
       "type" => type,
       "cache" => cache ? cache.name : nil,
@@ -587,6 +594,7 @@ class MemoryArea < PMLObject
       "address-range" => address_range.to_pml,
       "attributes" => attributes
     }.delete_if { |_k,v| v.nil? || (v == []) }
+    # rubocop:enable Layout/MultilineHashBraceLayout
   end
 end # class MemoryArea
 

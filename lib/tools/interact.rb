@@ -437,9 +437,11 @@ class VisualizeCommand < Command
       machine_entry = pml.machine_functions.by_label(entry_label)
       raise ArgumentError, "No machine function to label #{machine_entry}" if machine_entry.nil?
       bitcode_entry = pml.bitcode_functions.by_name(entry_label)
+      # rubocop:disable Layout/MultilineHashBraceLayout
       entry = { 'machinecode' => machine_entry,
                 'bitcode' => bitcode_entry,
               }
+      # rubocop:enable Layout/MultilineHashBraceLayout
 
       graph = nil
 

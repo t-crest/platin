@@ -39,6 +39,9 @@ Metrics/CyclomaticComplexity:
 Metrics/PerceivedComplexity:
   Enabled: false
 
+Metrics/BlockNesting:
+  Enabled: false
+
 Layout/IndentationWidth:
   IgnoredPatterns: ['^\s*module']
 

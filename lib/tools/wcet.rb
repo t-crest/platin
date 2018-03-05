@@ -521,9 +521,9 @@ class WcetTool
 end
 
 if __FILE__ == $PROGRAM_NAME
-  synopsis = <<EOF
-platin WCET tool
-EOF
+  synopsis = <<-EOF
+    platin WCET tool
+  EOF
   options, args = PML::optparse([], "", synopsis) do |opts|
     opts.needs_pml
     WcetTool.add_options(opts)

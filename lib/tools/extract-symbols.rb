@@ -62,7 +62,7 @@ class ExtractSymbols
   def update_pml
     @pml.machine_functions.each do |function|
       addr = @text_symbols[function.label] || @text_symbols[function.blocks.first.label]
-      (warn("No symbol for machine function #{function.to_s}");next) unless addr
+      (warn("No symbol for machine function #{function.to_s}"); next) unless addr
       ins_index = 0
       function.blocks.each do |block|
         if (block_addr = @text_symbols[block.label])
@@ -169,11 +169,11 @@ class ExtractSymbolsTool
 end
 
 if __FILE__ == $PROGRAM_NAME
-  SYNOPSIS = <<EOF
-Extract Symbol Addresses from ELF file. It is possible to specify the same file
-for input and output; as long as the ELF file does not change, this is an
-idempotent transformation.
-EOF
+  SYNOPSIS = <<-EOF
+    Extract Symbol Addresses from ELF file. It is possible to specify the same file
+    for input and output; as long as the ELF file does not change, this is an
+    idempotent transformation.
+  EOF
 
   options, args = PML::optparse([:binary_file], "program.elf", SYNOPSIS) do |opts|
     opts.needs_pml

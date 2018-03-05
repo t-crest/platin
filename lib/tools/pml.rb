@@ -197,8 +197,10 @@ class PMLTool
     opts.on("--print-timings", "print timings in PML file") { opts.options.print_timings = true }
     opts.on("--print-profiles", "print timing profiles in PML file") { opts.options.print_profiles = true }
     opts.on("--print-all", "print all analysis results stored in PML file") do
-      opts.options.print_markers = opts.options.print_flowfacts =
-        opts.options.print_valuefacts = opts.options.print_timing = true
+      opts.options.print_markers    = true
+      opts.options.print_flowfacts  = true
+      opts.options.print_valuefacts = true
+      opts.options.print_timing     = true
     end
   end
 end

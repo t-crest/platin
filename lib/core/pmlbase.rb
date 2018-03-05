@@ -208,6 +208,7 @@ module PML
   module PMLListGen
     def pml_list(element_type, unique_indices = [], indices = [])
       all_indices = unique_indices + indices
+      # rubocop:disable Layout/SpaceInsideStringInterpolation
       module_eval <<-"_end_eval", __FILE__, __LINE__
         def initialize(list, existing_data = nil)
           assert("#{self.class}#initialize: list must not be nil") { list }
@@ -255,6 +256,7 @@ module PML
            end
          _end_eval
       end
+      # rubocop:enable Layout/SpaceInsideStringInterpolation
     end
 
     def pml_name_index_list(element_type, unique_indices = [], indices = [])

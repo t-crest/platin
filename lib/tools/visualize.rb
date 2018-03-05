@@ -245,12 +245,14 @@ class FlowGraphVisualizer < Visualizer
               #      We might need to merge differently depending on origin!!
               #      In that case, ask the ext plugins (aiT,..) to do the work.
               freq, cycles, wcet, crit = profile.inject([0,0,0,0]) do |v,e|
+                # rubocop:disable Layout/MultilineArrayBraceLayout
                 freq, cycles, wcet, crit = v
                 [freq + e.wcetfreq,
                  [cycles, e.cycles].max,
                  wcet + e.wcet_contribution,
                  [crit, e.criticality || 1].max
                 ]
+                # rubocop:enable Layout/MultilineArrayBraceLayout
               end
               # Avoid overlapping of the first character and the edge by starting
               # the label with a space

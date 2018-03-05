@@ -182,9 +182,9 @@ private
 end
 
 if __FILE__ == $PROGRAM_NAME
-  SYNOPSIS = <<EOF if __FILE__ == $PROGRAM_NAME
-Transform Program according to the global control flow graph
-EOF
+  SYNOPSIS = <<-EOF
+    Transform Program according to the global control flow graph
+  EOF
   options, args = PML::optparse([],"", SYNOPSIS) do |opts|
     opts.needs_pml
     opts.writes_pml

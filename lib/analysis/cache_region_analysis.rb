@@ -187,12 +187,14 @@ class CacheAnalysisBase
       known += freqs[me] || 0 if li.known?
       unknown += freqs[me] || 0 if li.unknown?
     end
+    # rubocop:disable Layout/MultilineHashBraceLayout
     { "cache-max-cycles" => cycles, "cache-min-hits" => hits, "cache-max-misses" => misses,
       "cache-max-stores" => stores, "cache-max-bypass" => bypasses,
       "cache-known-address" => known, "cache-unknown-address" => unknown
     }.select { |k,v| (v > 0) || %w[cache-max-cycles cache-max-misses cache-min-hits].include?(k) }.map do |k,v|
       [k,v.to_i]
     end
+    # rubocop:enable Layout/MultilineHashBraceLayout
   end
 end
 
