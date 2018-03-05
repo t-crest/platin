@@ -68,10 +68,10 @@ class WCA
 
     # flow facts
     flowfacts = @pml.flowfacts.filter(@pml,
-                                     @options.flow_fact_selection,
-                                     @options.flow_fact_srcs,
-                                     ["machinecode"],
-                                     true)
+                                      @options.flow_fact_selection,
+                                      @options.flow_fact_srcs,
+                                      ["machinecode"],
+                                      true)
     ff_levels = ["machinecode"]
 
     # Build IPET using costs from @pml.arch

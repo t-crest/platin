@@ -569,7 +569,7 @@ class RegionGraph
   end
 
   def action_nodes
-    nodes.select { |n | n.kind_of?(ActionNode) }
+    nodes.select { |n| n.kind_of?(ActionNode) }
   end
 
   def subscopes

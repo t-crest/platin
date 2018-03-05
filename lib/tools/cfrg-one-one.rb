@@ -13,7 +13,6 @@ include PML
 begin
   require 'rubygems'
   require 'graphviz'
-
 rescue Exception => details
   warn "Failed to load library graphviz"
   info "  ==> gem1.9.1 install ruby-graphviz"
@@ -112,7 +111,6 @@ class OneOneCheck
     suffix = "." + options.graphviz_format
 
     targets.each do |target|
-
       # Visualize relation graph
       begin
         rg = pml.data['relation-graphs'].find { |f| (f['src']['function'] == target) || (f['dst']['function'] == target) }
@@ -126,7 +124,6 @@ class OneOneCheck
           rgv = RGVisualizer.new(options)
           rgv.generate(rgv.visualize(rg),file)
         end
-
       rescue Exception => detail
         puts "Failed to visualize relation graph of #{target}: #{detail}"
         raise detail if options.raise_on_error

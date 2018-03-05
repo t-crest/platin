@@ -73,14 +73,12 @@ class Templates
                                            , '/static/js/thirdparty/prism.js' \
                                            , '/static/js/thirdparty/jquery-2.2.4.min.js' \
                                            , '/static/js/thirdparty/jquery.qtip.min.js' \
-                                           , '/static/js/sourceviewtooltip.js' \
-])
+                                           , '/static/js/sourceviewtooltip.js'])
     # context.local_variable_set(:cssfiles,  ['/static/css/interactivity.css'])
     context.local_variable_set(:cssfiles,  ['/static/css/thirdparty/jquery.qtip.min.css' \
                                            , '/static/css/thirdparty/prism.css' \
                                            , '/static/css/interactivity.css' \
-                                           , '/static/css/sourceviewtooltip.css' \
-])
+                                           , '/static/css/sourceviewtooltip.css'])
 
     context.local_variable_set(:svgurl, svgurl)
     context.local_variable_set(:constrainturl, constraintsurl)
@@ -116,8 +114,7 @@ class Templates
     context.local_variable_set(:jsscripts, ['/static/js/thirdparty/prism.js' \
                                            , '/static/js/thirdparty/jquery-2.2.4.min.js' \
                                            , '/static/js/thirdparty/jquery.qtip.min.js' \
-                                           , '/static/js/sourceviewtooltip.js' \
-])
+                                           , '/static/js/sourceviewtooltip.js'])
     context.local_variable_set(:cssfiles,  ['/static/css/thirdparty/jquery.qtip.min.css' \
                                            , '/static/css/thirdparty/prism.css'])
 
@@ -381,8 +378,8 @@ if __FILE__ == $PROGRAM_NAME
   assert("Usage: #{$PROGRAM_NAME} srcroot artifactsdir") { ARGV.length == 2 }
   server = Server.new(:ilp, \
                       { \
-                          srcroot: ARGV[0] \
-                        , assets: ARGV[1] \
+                        srcroot: ARGV[0], \
+                        assets:  ARGV[1], \
                       },
                       BindAddress: '127.0.0.1',
                       Port: 8080)

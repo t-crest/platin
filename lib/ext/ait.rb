@@ -25,34 +25,34 @@ class OptionParser
   end
 
   def ait_report_prefix(mandatory = true)
-    on("--ait-report-prefix PREFIX", "Path prefix for aiT's report and XML results") do
-      |f| options.ait_report_prefix = f
+    on("--ait-report-prefix PREFIX", "Path prefix for aiT's report and XML results") do |f|
+      options.ait_report_prefix = f
     end
     add_check { |options| die_usage "Option --ait-report-prefix is mandatory" unless options.ait_report_prefix } if mandatory
   end
 
   def ait_icache_mode
-    on("--ait-icache-mode MODE", "aiT instruction cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do
-      |f| options.ait_icache_mode = case f
-                                    when "normal" then "Normal"
-                                    when "always-miss" then "Always miss"
-                                    when "always-hit" then "Always hit"
-                                    when "miss-if-unknown" then "Miss if unknown"
-                                    when "hit-if-unknown" then "Hit if unknown"
-              else f
+    on("--ait-icache-mode MODE", "aiT instruction cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do |f|
+      options.ait_icache_mode = case f
+                                when "normal" then "Normal"
+                                when "always-miss" then "Always miss"
+                                when "always-hit" then "Always hit"
+                                when "miss-if-unknown" then "Miss if unknown"
+                                when "hit-if-unknown" then "Hit if unknown"
+                                else f
           end
     end
   end
 
   def ait_dcache_mode
-    on("--ait-dcache-mode MODE", "aiT data cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do
-      |f| options.ait_dcache_mode = case f
-                                    when "normal" then "Normal"
-                                    when "always-miss" then "Always miss"
-                                    when "always-hit" then "Always hit"
-                                    when "miss-if-unknown" then "Miss if unknown"
-                                    when "hit-if-unknown" then "Hit if unknown"
-              else f
+    on("--ait-dcache-mode MODE", "aiT data cache analysis mode (normal|always-hit|always-miss|miss-if-unknown|hit-if-unknown)") do |f|
+      options.ait_dcache_mode = case f
+                                when "normal" then "Normal"
+                                when "always-miss" then "Always miss"
+                                when "always-hit" then "Always hit"
+                                when "miss-if-unknown" then "Miss if unknown"
+                                when "hit-if-unknown" then "Hit if unknown"
+                                else f
           end
     end
   end
@@ -68,7 +68,7 @@ class OptionParser
                              when "anno-ptr" # deactivate aiT's internal analysis, do analysis by tracking SC pointers
                                options.ait_disable_internal_sc = true
                                :anno_ptr
-                            else
+                             else
                                die_usage("unknown TYPE: #{t}")
                             end
     end
@@ -383,10 +383,10 @@ class AISExporter
       # (2) generate symbolic expression
       origins.add(ff.origin)
       bound.referenced_vars.each do |v|
-        user_reg = @extracted_arguments[ [loopblock.function,v] ]
+        user_reg = @extracted_arguments[[loopblock.function,v]]
         unless user_reg
           user_reg = "@arg_#{v}"
-          @extracted_arguments[ [loopblock.function,v] ] = user_reg
+          @extracted_arguments[[loopblock.function,v]] = user_reg
           gen_fact("instruction #{loopblock.function.ais_ref} is entered with #{user_reg} = trace(reg #{v})",
                    "extracted argument for symbolic loop bound")
         end
@@ -693,7 +693,7 @@ class AIS2Helper
     s
   end
 
-  def close_n (n)
+  def close_n(n)
     while n > 0 && (s = close)
       n -= 1
     end
@@ -740,8 +740,8 @@ class APXExporter
       end
     end
     add_element(project, "files") do |files|
-      [['executables', binary],  ['ais',aisfile],
-        ['xml_results', results], ['report',report]].each do |k,v|
+      [['executables', binary], ['ais',aisfile],
+       ['xml_results', results], ['report',report]].each do |k,v|
         files << rexml_file(k,v)
       end
     end
@@ -891,15 +891,12 @@ class AitImport
     fact_attrs = { 'level' => 'machinecode', 'origin' => 'aiT' }
 
     analysis_task_elem.each_element("value_analysis/value_accesses/value_access") do |e|
-
       ins = pml.machine_functions.instruction_by_address(Integer(e.attributes['address']))
 
       e.each_element("value_context") do |ce|
-
         context = @contexts[ce.attributes['context']]
 
         ce.each_element("value_step") do |se|
-
           # value_step#index ? value_step#mode?
           # value_area#mod? value_area#rem?
 
@@ -985,7 +982,7 @@ class AitImport
   def read_wcet_analysis_results(wcet_elem, analysis_entry)
     read_contexts(wcet_elem.get_elements("contexts").first)
 
-    @function_count, @function_cost = {} , Hash.new(0)
+    @function_count, @function_cost = {}, Hash.new(0)
 
     # frequency of an edge on worst-case path
     edge_freq = {}
@@ -1017,7 +1014,6 @@ class AitImport
 
         # extract edge cost (relative to LLVM terminology)
         re.each_element("wcet_context") do |ctx_elem|
-
           context = @contexts[ctx_elem.attributes['context']]
 
           # deal with aiT's special nodes
@@ -1060,7 +1056,6 @@ class AitImport
 
           # Now read in the cost for WCET edges
           ctx_elem.each_element("wcet_edge") do |edge|
-
             # skip if no cost associated with edge
             next unless edge.attributes['cycles'] || edge.attributes['path_cycles'] || edge.attributes['count']
 
@@ -1294,4 +1289,3 @@ class AitImport
 end
 
 end # end module PML
-

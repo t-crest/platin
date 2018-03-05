@@ -84,4 +84,3 @@ if __FILE__ == $PROGRAM_NAME
   end
   ToolConfigTool.run(PMLDoc.from_files(options.input, options), options)
 end
-

@@ -248,4 +248,3 @@ if __FILE__ == $PROGRAM_NAME
   outpml = PMLConfigTool.run(pml, options)
   outpml.dump_to_file(options.output, true) if options.output
 end
-

@@ -24,7 +24,7 @@ class SweetImportTool
     parser = SWEET::FlowFactParser.new.parser
     flow_fact_origin = options.flow_fact_output || 'sweet'
     converter = SweetFlowFactImport.new(pml.bitcode_functions, 'level' => 'bitcode',
-                                        'origin' => flow_fact_origin)
+                                                               'origin' => flow_fact_origin)
     ffs = []
     added, skipped, reasons, set = 0,0, Hash.new(0), {}
     File.readlines(options.sweet_flowfact_file).map do |s|
@@ -46,7 +46,7 @@ class SweetImportTool
     end
     if options.stats
       statistics("SWEET", "added flow facts (=>#{flow_fact_origin})" => added,
-                 "skipped flow facts" => skipped)
+                          "skipped flow facts" => skipped)
     end
     debug(options, :sweet) { "Reasons for skipping flow facts: #{reasons.inspect}" }
     pml

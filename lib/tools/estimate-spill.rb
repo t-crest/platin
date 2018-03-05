@@ -13,7 +13,6 @@ include PML
 begin
   require 'rubygems'
   require 'graphviz'
-
 rescue Exception => details
   warn "Failed to load library graphviz"
   info "  ==> gem1.9.1 install ruby-graphviz"

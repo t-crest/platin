@@ -664,7 +664,7 @@ class Parser
   DEBUG_PARSER = false
 
   SPACE      = /[\ \t]*/.r
-  COMMENT    = (seq_('{-', /((?!-}).)+/ ,'-}') \
+  COMMENT    = (seq_('{-', /((?!-}).)+/, '-}') \
                | seq(SPACE.maybe, /--((?!([\r\n]|$)).)+/.r) & (/[\r\n]/.r | ''.r.eof) \
                )
   CSPACE = (seq(SPACE, COMMENT, SPACE) | SPACE)
@@ -674,8 +674,8 @@ class Parser
     symbol(pattern, CSPACE, &p)
   end
 
-  NUM = prim :int64 do
-    |num| ASTNumberLiteral.new Integer(num)
+  NUM = prim :int64 do |num|
+    ASTNumberLiteral.new Integer(num)
   end
   # Magic here: negative lookahead to prohibit keyword/symbol ambiguity
   IDENTIFIER = seq((''.r ^ lazy { KEYWORD }), symbol_(/[a-zA-Z]\w*/)) do |_,id|
@@ -771,10 +771,10 @@ class Parser
                       puts "IF #{cond} then {#{e1}} else {#{e2}}" if DEBUG_PARSER
                       ASTIf.new(cond, e1, e2)
                     end \
-                  | lazy { cond_expr } \
-                  | UNDEF \
-                  | ERROR \
-                  )
+             | lazy { cond_expr } \
+             | UNDEF \
+             | ERROR \
+             )
       @EXPR = expr.fail "expression"
     end
     @EXPR
@@ -834,7 +834,7 @@ class Parser
   end
 
   def program
-    program = (seq_(comment, lazy { program }, skip:/[\r\n]+/)[1] \
+    program = (seq_(comment, lazy { program }, skip: /[\r\n]+/)[1] \
               | seq_(decl, lazy { program }, skip: /[\r\n]+/) \
               | seq_(decl, /[\r\n]+/.r.maybe) { |d, _| [d] } \
               )

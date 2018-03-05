@@ -191,8 +191,8 @@ module PML
       end
 
       @source, @target = source, target
-      @name = "#{source.name}->#{target ? target.name : '' }"
-      @qname = "#{source.qname}->#{target ? target.qname : 'exit' }"
+      @name = "#{source.name}->#{target ? target.name : ''}"
+      @qname = "#{source.qname}->#{target ? target.qname : 'exit'}"
       set_yaml_repr(data)
     end
 
@@ -214,7 +214,7 @@ module PML
 
     def to_pml_ref
       pml = { 'function' => source.function.name,
-        'edgesource' => source.name }
+              'edgesource' => source.name }
       pml['edgetarget'] = target.name if target
       pml
     end

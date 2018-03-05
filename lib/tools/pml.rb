@@ -102,8 +102,8 @@ class PMLTool
       bbstr = bbms.map do |bb,freq|
                  if freq == 1
                    bb.qname.to_s
-                  else
-                    "#{bb.qname} (#{freq})"
+                 else
+                   "#{bb.qname} (#{freq})"
                   end
                end.join(", ")
       puts "  #{marker}: #{bbstr}"

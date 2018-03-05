@@ -443,8 +443,10 @@ class FlowFactTransformation
           # because this is not supported by any of the WCET analyses
           r = ff.local? || ff.scope.function == target_analysis_entry
           unless r
-            debug(options, :transform) do "Skipping unsupported flow fact scope of transformed flow fact #{ff}: " \
-                 "(function: #{ff.scope.function}, local: #{ff.local?})" end
+            debug(options, :transform) do
+              "Skipping unsupported flow fact scope of transformed flow fact #{ff}: " \
+                "(function: #{ff.scope.function}, local: #{ff.local?})"
+            end
           end
           puts "Transformed flowfact #{ff}" if options.verbose
           r
@@ -595,7 +597,6 @@ class SymbolicBoundTransformation
     # resolve CHRs
     # translate blocks and arguments
     ffs.each do |_f,lbs|
-
       # resolve CHR on bitcode level, out loops first
       lbs_resolved = []
       loop_bounds = {}

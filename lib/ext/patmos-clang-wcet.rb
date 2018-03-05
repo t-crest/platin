@@ -151,4 +151,3 @@ unless options.save_temps
   File.unlink(llvminput)
   File.unlink(llvmoutput)
 end
-

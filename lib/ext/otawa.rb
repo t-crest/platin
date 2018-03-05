@@ -19,8 +19,8 @@ class OptionParser
   end
 
   def otawa_report_file(mandatory = true)
-    on("--otawa-report-file FILE", "Filename for OTAWA's result file") do
-      |f| options.otawa_report_file = f
+    on("--otawa-report-file FILE", "Filename for OTAWA's result file") do |f|
+      options.otawa_report_file = f
     end
     add_check { |options| die_usage "Option --otawa-report-file is mandatory" unless options.otawa_report_file } if mandatory
   end
@@ -123,7 +123,6 @@ class OSXExporter
 
   def add_caches(platform)
     add_element(platform, "caches") do |caches|
-
     end
   end
 
@@ -203,4 +202,3 @@ class OtawaImporter
 end
 
 end # end module PML
-

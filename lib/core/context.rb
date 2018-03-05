@@ -322,7 +322,7 @@ class LoopContextEntry < ContextEntry
       []
     elsif o == peel
       [LoopContextEntry.new(@loop,0,peel - 1,@callsite),
-        LoopContextEntry.new(@loop,unroll,peel + unroll - 1,@callsite)]
+       LoopContextEntry.new(@loop,unroll,peel + unroll - 1,@callsite)]
     else
       o2, s2 = check_and_normalize(@offset - 1, @step, peel, unroll)
       [LoopContextEntry.new(@loop, s2, o2, @callsite)]

@@ -175,4 +175,3 @@ if __FILE__ == $PROGRAM_NAME
   updated_pml = PMLModTool.run(PMLDoc.from_files(options.input, options), options)
   updated_pml.dump_to_file(options.output) if options.output
 end
-

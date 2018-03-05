@@ -24,7 +24,7 @@ module PML
     assert("first argument is nil") { r1 }
     r1 = Range.new(r1,r1) unless r1.kind_of?(Range)
     return r1 unless r2
-    [r1.min,r2.min].min .. [r1.max,r2.max].max
+    [r1.min,r2.min].min..[r1.max,r2.max].max
   end
 
   #

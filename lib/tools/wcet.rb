@@ -54,10 +54,10 @@ class WcetTool
   attr_reader :additional_report_info
 
   TOOLS = [ExtractSymbolsTool,
-            AnalyzeTraceTool,
-            WcaTool,
-            AitTool,
-            AlfTool, SweetAnalyzeTool, SweetImportTool]
+           AnalyzeTraceTool,
+           WcaTool,
+           AitTool,
+           AlfTool, SweetAnalyzeTool, SweetImportTool]
   attr_reader :pml, :options
   def initialize(pml, opts)
     @pml, @options = pml, opts.dup
@@ -218,7 +218,6 @@ class WcetTool
   def wcet_analysis_ait(srcs)
     time("run WCET analysis (aiT)") do
       pml.with_temporary_sections([:flowfacts]) do
-
         # Simplify flow facts
         simplify_flowfacts(srcs, options)
         simplified_sources =  srcs.map { |src| src + ".simplified" }
@@ -371,11 +370,11 @@ class WcetTool
       combined_cycles += case te.origin
                          when "aiT"    then te.cycles
                          when "platin" then te.attributes['cache-cycles-instr'] || 0
-          else 0
+                         else 0
       end
       dict = { 'analysis-entry' => options.analysis_entry,
-        'source' => te.origin,
-        'cycles' => te.cycles }
+               'source' => te.origin,
+               'cycles' => te.cycles }
       te.attributes.select { |k,_v| k.start_with? 'memory-' }.each { |k,v| dict[k] = v }
       te.attributes.select { |k,_v| k.start_with? 'cache-' }.each { |k,v| dict[k] = v }
       (additional_info[te.origin] || []).each { |k,v| dict[k] = v }
@@ -384,9 +383,8 @@ class WcetTool
     if options.combine_wca
       wcet_cycles = combined_cycles
       results.push({ 'analysis-entry' => options.analysis_entry,
-                      'source' => 'combined',
-                      'cycles' => combined_cycles
-                    })
+                     'source' => 'combined',
+                     'cycles' => combined_cycles })
     end
     if options.runcheck && !trace_cycles.nil?
       die("wcet check: No timing for simulator trace") unless trace_cycles > 0

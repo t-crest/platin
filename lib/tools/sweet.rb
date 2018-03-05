@@ -100,7 +100,7 @@ class SweetAnalyzeTool
       ae_args.push('pu')
     end
     ff_args = ["-f", "co", "o=#{options.sweet_flowfact_file}"]
-    do_args = ["-do" , "floats=est"] if options.sweet_ignore_volatiles
+    do_args = ["-do", "floats=est"] if options.sweet_ignore_volatiles
     raise MissingToolException, "sweet not found" unless which(options.sweet)
     cmd = ([options.sweet] + i_args + do_args + ae_args + ff_args)
     version, commands, parsed = nil, [], []

@@ -89,7 +89,7 @@ private
   # add LP constraints
   def add_linear_constraints(lp)
     @constraints.each do |constr|
-      v =  lp.add_constraintex(cleanup_name(constr.name), constr.lhs.to_a, lpsolve_op(constr.op), constr.rhs)
+      v = lp.add_constraintex(cleanup_name(constr.name), constr.lhs.to_a, lpsolve_op(constr.op), constr.rhs)
       unless v
         dump($stderr)
         die("constraintex #{constr} failed with return value #{v.inspect}")

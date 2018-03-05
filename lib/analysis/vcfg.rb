@@ -499,7 +499,6 @@ class ExitNode < CfgNode
 
   def successors_with_context(cfmodel, location)
     Enumerator.new do |ss|
-
       # get return context
       return_context, callnode = cfmodel.ctx_manager.pop_call(location.context)
       scope_entry_context = location.context.scope_context

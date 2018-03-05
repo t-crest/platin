@@ -95,7 +95,6 @@ class GCFGTool
       end
     end
     mc_funcs.intersection(bc_funcs).each do |func|
-
     end
   end
 

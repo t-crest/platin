@@ -296,7 +296,7 @@ class FlowGraphVisualizer < Visualizer
         label << "\\l"
       end
       nodes[bid] = g.add_nodes(bid.to_s, label: label,
-                               peripheries: block.loops.length + 1)
+                                         peripheries: block.loops.length + 1)
     end
     function.blocks.each do |block|
       block.successors.each do |s|
@@ -675,14 +675,13 @@ class VisualizeTool
     suffix = "." + options.graphviz_format
     html = HtmlIndexPages.new if options.html
     targets.each do |target|
-
       # Visualize call graph
       cgv = CallGraphVisualizer.new(pml, options)
       begin
         mf = pml.machine_functions.by_label(target)
         graph = cgv.visualize_callgraph(mf)
         file = File.join(outdir, target + ".cg" + suffix)
-        cgv.generate(graph , file)
+        cgv.generate(graph, file)
         html.add(target,"cg",file) if options.html
       rescue Exception => detail
         puts "Failed to visualize callgraph for #{target}: #{detail}"
@@ -695,7 +694,7 @@ class VisualizeTool
         mf = pml.machine_functions.by_label(target)
         graph = sgv.visualize_scopegraph(mf)
         file = File.join(outdir, target + ".sg" + suffix)
-        sgv.generate(graph , file)
+        sgv.generate(graph, file)
         html.add(target,"sg",file) if options.html
       rescue Exception => detail
         puts "Failed to visualize scopegraph for #{target}: #{detail}"
@@ -722,7 +721,7 @@ class VisualizeTool
         end
         graph = fgv.visualize_vcfg(mf, pml.arch, t)
         file = File.join(outdir, target + ".mc" + suffix)
-        fgv.generate(graph , file)
+        fgv.generate(graph, file)
         html.add(target,"mc",file) if options.html
       rescue Exception => detail
         puts "Failed to visualize machinecode function #{target}: #{detail}"

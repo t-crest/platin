@@ -351,9 +351,10 @@ module PML
         assert("guards match on function scope, no function found #{ppref} in #{self}") \
               { ppref.respond_to?(:function) }
         assert("guards set a blockfreq, no block found for #{ppref} in #{self}") \
-              do    ppref.kind_of?(ContextRef) \
-                && ppref.respond_to?("programpoint") \
-                && ppref.programpoint.kind_of?(Block)
+              do
+                ppref.kind_of?(ContextRef) \
+                      && ppref.respond_to?("programpoint") \
+                      && ppref.programpoint.kind_of?(Block)
               end
         assert("guard operate on bitcode level") { level == 'bitcode' }
         fun = ppref.function
@@ -384,9 +385,10 @@ module PML
         assert("lbounds match on function scope, no function found #{ppref} in #{self}") \
               { ppref.respond_to?(:function) }
         assert("lbounds set a blockfreq, no block found for #{ppref} in #{self}") \
-              do    ppref.kind_of?(ContextRef) \
-                && ppref.respond_to?("programpoint") \
-                && ppref.programpoint.kind_of?(Block)
+              do
+                ppref.kind_of?(ContextRef) \
+                      && ppref.respond_to?("programpoint") \
+                      && ppref.programpoint.kind_of?(Block)
               end
 
         # To use Flowfact.loop_bound, we need a scope at the level of our
@@ -417,10 +419,11 @@ module PML
         assert("callee operates on machinecode level") { level == 'machinecode' }
         assert("callee targets call instructions" \
                ", no unresolved call found for #{ppref} in #{self}") \
-              do    ppref.kind_of?(ContextRef) \
-                && ppref.respond_to?("programpoint") \
-                && ppref.programpoint.kind_of?(Instruction) \
-                && ppref.programpoint.calls? && ppref.programpoint.unresolved_call?
+              do
+                ppref.kind_of?(ContextRef) \
+                      && ppref.respond_to?("programpoint") \
+                      && ppref.programpoint.kind_of?(Instruction) \
+                      && ppref.programpoint.calls? && ppref.programpoint.unresolved_call?
               end
 
         # XXX: use model-eval-foo here
@@ -432,7 +435,8 @@ module PML
 
         # If we have a qualified identifier, perform patmos-clang-style
         # namemangling (only for static identifiers)
-        entries.map! do |entry| entry.sub(/^([^:]+):(.+)$/) do
+        entries.map! do |entry|
+          entry.sub(/^([^:]+):(.+)$/) do
           fname = $2; # because, well, fuck you, we are using global variables
                       # for our regex matching. scoping is for loosers.
           $1.gsub(/[^0-9A-Za-z]/, '_') + '_' + fname
@@ -758,7 +762,7 @@ module PML
     attr_reader :reference, :cycles, :wcetfreq, :criticality, :wcet_contribution
     def initialize(reference, cycles, wcetfreq, wcet_contribution, criticality = nil, data = nil)
       @reference, @cycles, @wcetfreq, @wcet_contribution, @criticality =
-       reference,  cycles,  wcetfreq,  wcet_contribution,  criticality
+        reference, cycles, wcetfreq, wcet_contribution, criticality
       set_yaml_repr(data)
     end
 

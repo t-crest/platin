@@ -456,7 +456,7 @@ class IPETBuilder
     end
 
     mf_functions = get_functions_reachable_from_function(@entry['machinecode'])
-    mf_functions.each do |mf_function |
+    mf_functions.each do |mf_function|
       add_function_with_blocks(mf_function, cost_block)
     end
 
@@ -636,7 +636,7 @@ class IPETBuilder
       incoming = e[:in].map { |x| [x, 1] }
       outgoing = e[:out].map { |x| [x, -1] }
       ilp.add_constraint(incoming + outgoing, "equal", 0,
-                       "abb_flux_#{bb.qname}", :structural)
+                         "abb_flux_#{bb.qname}", :structural)
 
       # Override the incoming and outgoing frequencies
       @mc_model.sum_incoming_override[bb] = e[:in]

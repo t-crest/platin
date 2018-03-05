@@ -276,7 +276,6 @@ private
 
       # for all basic blocks
       fun.blocks.each do |block|
-
         # blocks that consist of labels only (used in some benchmarks for flow facts)
         if block.empty?
           (@empty_blocks[block.address] ||= []).push(block)
@@ -679,12 +678,12 @@ class FrequencyRecord
     unless @blockfreqs
       @blockfreqs = {}
       @current_record.each do |bref,count|
-        @blockfreqs[bref] = count .. count
+        @blockfreqs[bref] = count..count
       end
     else
       @current_record.each do |bref,count|
         if !@blockfreqs.include?(bref)
-          @blockfreqs[bref] = 0 .. count
+          @blockfreqs[bref] = 0..count
         else
           @blockfreqs[bref] = merge_ranges(count, @blockfreqs[bref])
         end
@@ -697,7 +696,7 @@ class FrequencyRecord
   end
 
   def dump(io = $DEFAULT_OUTPUT, header = nil)
-    (io.puts "No records";return) unless @blockfreqs
+    (io.puts "No records"; return) unless @blockfreqs
     io.puts "---"
     io.puts header if header
     io.puts "  cycles: #{cycles}"

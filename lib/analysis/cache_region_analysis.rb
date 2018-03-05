@@ -219,7 +219,6 @@ class AlwaysMissCacheAnalysis < CacheAnalysisBase
 
       n.function.blocks.each do |block|
         block.instructions.each do |i|
-
           load_instructions = @cache_properties.load_instructions(i)
           next unless load_instructions
 
@@ -230,7 +229,6 @@ class AlwaysMissCacheAnalysis < CacheAnalysisBase
 
           # add a variable for each load instruction
           load_instructions.each do |li|
-
             ipet_builder.ilp.add_variable(li)
             # load instruction is less equal to instruction frequency
             ipet_builder.mc_model.assert_less_equal({ li => 1 },{ li.insref => 1 },"load_ins_#{li}",:cache)
@@ -293,9 +291,7 @@ class CacheRegionAnalysis < CacheAnalysisBase
 
     # modify IPET
     0.upto(@cache_properties.sets) do |set|
-
       get_all_tags(scopegraph.root, set).each do |tag,load_instructions|
-
         load_instructions = load_instructions.to_a
         debug(options,:cache) { "Load instructions for tag #{tag}: #{load_instructions.join(",")}" }
         debug(options,:cache) do
@@ -303,7 +299,6 @@ class CacheRegionAnalysis < CacheAnalysisBase
         end
         # add a variable for each load instruction
         load_instructions.each do |li|
-
           ipet_builder.ilp.add_variable(li)
           # load instruction is less equal to instruction frequency
           ipet_builder.mc_model.assert_less_equal({ li => 1 },{ li.insref => 1 },"load_ins_#{li}",:cache)

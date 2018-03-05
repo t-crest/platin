@@ -207,7 +207,8 @@ class MemoryConfig < PMLObject
       data['write-transfer-time'],
       data['min-burst-size'],
       data['max-burst-size'],
-      data)
+      data
+    )
   end
 
   def to_pml
@@ -463,7 +464,8 @@ class CacheConfig < PMLObject
       data['associativity'],
       data['block-size'],
       data['size'],
-      data)
+      data
+    )
   end
 
   def to_pml
@@ -573,7 +575,8 @@ class MemoryArea < PMLObject
       data['cache'] ?  caches.by_name(data['cache']) : nil,
       data['memory'] ? memories.by_name(data['memory']) : nil,
       data['address-range'] ? ValueRange.from_pml(nil, data['address-range']) : nil,
-      data)
+      data
+    )
   end
 
   def to_pml
@@ -593,4 +596,3 @@ require 'arch/patmos'
 require 'arch/arm'
 require 'arch/armv6'
 require 'arch/armv7m'
-

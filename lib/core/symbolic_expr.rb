@@ -67,7 +67,7 @@ class SymbolicExpression
 
   def chainOfRecurrences?; false; end
 
-  def +(o);    SEBinary.collect_fold('+',self,o); end
+  def +(o); SEBinary.collect_fold('+',self,o); end
 
   def add(*os); SEBinary.collect_fold('+',self,*os); end
 
@@ -75,7 +75,7 @@ class SymbolicExpression
 
   def *(o);    SEBinary.collect_fold('*',self,o); end
 
-  def -@;    SEBinary.create('*',self,SEInt.new(-1)); end
+  def -@; SEBinary.create('*',self,SEInt.new(-1)); end
 
   def smax(o);  SEBinary.create('smax',self,o); end
 
@@ -110,7 +110,7 @@ class SEInt < SymbolicExpression
 
   def to_s; @num.to_s; end
 
-  def eval(_,_lenv = nil);     @num; end
+  def eval(_,_lenv = nil); @num; end
 
   def resolve_loops(_lenv); self; end
 
@@ -510,4 +510,3 @@ private
 end
 
 end # module PML
-

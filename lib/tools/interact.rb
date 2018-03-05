@@ -355,7 +355,7 @@ end
 
 class VisualizeCommand < Command
   def initialize
-    @tokens = [VisualizeInfoToken.new , MachineFunctionToken.new]
+    @tokens = [VisualizeInfoToken.new, MachineFunctionToken.new]
   end
 
   def help(long = false)
@@ -415,15 +415,15 @@ class VisualizeCommand < Command
       assert("Not a directory #{assetdir}") { File.directory? assetdir }
 
       server = VisualisationServer::Server.new( \
-                          :ilp, \
-                          { \
-                              entrypoint: opts.analysis_entry \
-                            , srcroot: opts.source_path  \
-                            , assets: assetdir \
-                            , data: ilpdata  \
-                          }, \
-                          BindAddress: opts.server_bind_addr, \
-                          Port: opts.server_port \
+        :ilp, \
+        { \
+          entrypoint: opts.analysis_entry \
+          , srcroot: opts.source_path  \
+          , assets: assetdir \
+          , data: ilpdata  \
+        }, \
+        BindAddress: opts.server_bind_addr, \
+        Port: opts.server_port \
       )
 
       # Restore the old value
@@ -480,12 +480,12 @@ class VisualizeCommand < Command
         },
       }
       server = VisualisationServer::Server.new( \
-                          :callgraph, \
-                          { \
-                            data: data  \
-                          }, \
-                          BindAddress: opts.server_bind_addr, \
-                          Port: opts.server_port \
+        :callgraph, \
+        { \
+          data: data  \
+        }, \
+        BindAddress: opts.server_bind_addr, \
+        Port: opts.server_port \
       )
     else
       assert("Unexpected visualisation type: :#{args[0]}") { false }
