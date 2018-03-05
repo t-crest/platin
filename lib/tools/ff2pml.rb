@@ -11,8 +11,7 @@ include PML
 require 'ext/sweet'
 
 class SweetImportTool
-  def self.add_config_options(opts)
-  end
+  def self.add_config_options(opts); end
 
   def self.add_options(opts,exclude = [])
     SweetImportTool.add_config_options(opts)

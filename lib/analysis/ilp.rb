@@ -155,10 +155,10 @@ class IndexedConstraint
     [lhs.to_a, rhs.to_a].map do |ts|
       ts.map do |v,c|
         if v == 0
-          (c == 0) ? nil : c
+          c == 0 ? nil : c
         else
           vname = use_indices ? v.to_s : @ilp.var_by_index(v).to_s
-          (c == 1) ? vname : "#{c} #{vname}"
+          c == 1 ? vname : "#{c} #{vname}"
         end
       end.compact.join(" + ")
     end.map { |s| s.empty? ? "0" : s }.join(@op == "equal" ? " = " : " <= ")
@@ -307,8 +307,8 @@ private
     constr
   end
 
-  SLACK = 10000000
-  BIGM = 10000000
+  SLACK = 10_000_000
+  BIGM = 10_000_000
   def diagnose_unbounded(problem, _freqmap)
     debug(options, :ilp) { "#{problem} PROBLEM - starting diagnosis" }
     @do_diagnose = false
@@ -318,7 +318,7 @@ private
     @eps = 1.0
     cycles,freq = solve_max
     unbounded = freq.map do |v,k|
-      (k >= BIGM - 1.0) ? v : nil
+      k >= BIGM - 1.0 ? v : nil
     end.compact
     unbounded_functions, unbounded_loops = Set.new, Set.new
     unbounded.each do |v|

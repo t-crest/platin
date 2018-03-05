@@ -564,9 +564,7 @@ class RegionGraph
     arg
   end
 
-  def entry_node=(entry_node)
-    @entry_node = entry_node
-  end
+  attr_writer :entry_node
 
   def action_nodes
     nodes.select { |n| n.kind_of?(ActionNode) }

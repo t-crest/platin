@@ -226,7 +226,7 @@ module PML
         private
         def add_index(item)
           #{(unique_indices.map do |index|
-             %Q&
+             %&
                k = item.send(:#{index})
                if k
                  if duplicate = @index_#{index}[k]

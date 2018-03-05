@@ -39,7 +39,7 @@ class GCFGTool
       mapping[gcfg_node] = [rg_region, bc_region, mc_region]
     end
 
-    exit_node = rg.add_node(RelationNode.new(rg, { 'name' => 'RG_exit', 'type' => 'exit' }))
+    exit_node = rg.add_node(RelationNode.new(rg, 'name' => 'RG_exit', 'type' => 'exit'))
     # Connect Regions according to the GCFG Edges
     mapping.each do |source, value|
       src_rg, src_bc, src_mc = value
@@ -109,7 +109,7 @@ private
     machine_region = abb.get_region(:dst)
 
     # Copy Blocks to new Functions
-    name_mapper = lambda { |name| "#{gcfg_node.qname}_#{name}" }
+    name_mapper = ->(name) { "#{gcfg_node.qname}_#{name}" }
     new_bc_region = copy_region_to_function(name_mapper, bitcode_region, bitcode_function, Block)
     new_mc_region = copy_region_to_function(name_mapper, machine_region, machine_function, Block)
     new_rg_region = copy_region_to_function(name_mapper, rg_region, rg_graph, RelationNode)
@@ -125,8 +125,8 @@ private
         end
         # Copy and rename subfunction to machien_code function
         data = subfunction.data.dup
-        data['name'] = name_mapper.(data['name'])
-        data['blocks'] = data['blocks'].map { |x| name_mapper.(x) }
+        data['name'] = name_mapper.call(data['name'])
+        data['blocks'] = data['blocks'].map { |x| name_mapper.call(x) }
         machine_function.add_subfunction(data)
       end
     })
@@ -141,27 +141,27 @@ private
     region.nodes.each do |bb_in|
       data = Marshal.load(Marshal.dump(bb_in.data))
       ['name', 'mapsto', 'src-block', 'dst-block'].each do |key|
-        data[key] = name_mapper.(data[key]) if data[key]
+        data[key] = name_mapper.call(data[key]) if data[key]
       end
 
       map_sequence = lambda { |seq|
         seq \
           # Select only labels that are within the current region
           .select { |name| blocks_within.include? name } \
-          .map    { |name| name_mapper.(name) }
+          .map    { |name| name_mapper.call(name) }
       }
 
       ['successors', 'predecessors', 'src-successors', 'dst-successors', 'loops'].each do |key|
-        data[key] = map_sequence.(data[key]) if data[key]
+        data[key] = map_sequence.call(data[key]) if data[key]
       end
 
       if data["instructions"]
         data["instructions"].each do |instr|
           if instr["branch-targets"]
             if bb_in == region.exit_node
-              instr["branch-targets"] = map_sequence.(instr["branch-targets"]) + [:next_node]
+              instr["branch-targets"] = map_sequence.call(instr["branch-targets"]) + [:next_node]
             else
-              instr["branch-targets"] = map_sequence.(instr["branch-targets"])
+              instr["branch-targets"] = map_sequence.call(instr["branch-targets"])
             end
           end
         end
@@ -195,7 +195,7 @@ if __FILE__ == $PROGRAM_NAME
   address = 0
   pml_in.global_cfgs.each do |gcfg|
     rewriter.transform_gcfg(gcfg, address)
-    address += 100000
+    address += 100_000
   end
 
   # gcfg = pml_in.global_cfgs.by_name("system")

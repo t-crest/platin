@@ -29,7 +29,7 @@ class ToolConfigTool
     case options.tool
     when 'clang'
       opts = pml.arch.config_for_clang(options)
-      roots = pml.analysis_configurations.map { |cs| cs.program_entry }.inject(Set.new) { |s,v| s.add(v) if v; s }.to_a
+      roots = pml.analysis_configurations.map { |cs| cs.program_entry }.each_with_object(Set.new) { |v,s| s.add(v) if v;  }.to_a
       opts.push("-mserialize=#{options.output.to_s}") if options.output
       opts.push("-mserialize-roots=#{roots.join(",")}") unless roots.empty?
       tc = pml.tool_configurations.by_name('clang')

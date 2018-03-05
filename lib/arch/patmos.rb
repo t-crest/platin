@@ -384,14 +384,12 @@ class Architecture < PML::Architecture
         patmos_options << sc_option
         sc_size = "0x0"
       else
-        sc_size = sprintf("0x%x", sc.size)
+        sc_size = format("0x%x", sc.size)
       end
       sc_option = REXML::Element.new("stack_cache_size")
       sc_option << REXML::Text.new(sc_size)
       patmos_options << sc_option
       patmos_options
-    else
-      nil
     end
   end
 

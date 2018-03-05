@@ -37,7 +37,7 @@ class CacheAnalysis
       else
         @sca = StackCacheAnalysis.new(sc, @pml, @options)
       end
-      @sca.analyze_nonscope()
+      @sca.analyze_nonscope
       @sca.extend_ipet(ipet_builder)
     end
     if (dm = @pml.arch.data_memory) && !dm.ideal? && !@options.disable_dca
@@ -137,7 +137,7 @@ class LoadInstruction
   end
 
   def inspect
-    sprintf("#<LoadInstruction:0x%8x %s>",object_id, to_s)
+    format("#<LoadInstruction:0x%8x %s>",object_id, to_s)
   end
 end
 
@@ -1215,7 +1215,7 @@ class StackCacheAnalysisGraphBased < StackCacheAnalysis
     cycles = 0
     misses = 0
     @spills.values.flat_map { |i| i }.each do |v|
-      puts "  sc spill #{v}: #{freqs[v]} (#{cost[v]} cyc)" if freqs[v] && (freqs[v] > 0) if options.verbose
+      puts "  sc spill #{v}: #{freqs[v]} (#{cost[v]} cyc)" if options.verbose && freqs[v] && (freqs[v] > 0)
       cycles += cost[v] || 0
       misses += freqs[v] || 0
     end

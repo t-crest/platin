@@ -189,7 +189,7 @@ module SWEET
 
     def quantifier
       range   = seq_(int,'..'.r,int).map { |lb,_,ub| [lb,ub] }
-      foreach = paren(range.maybe,'<','>').map { |p| if p.empty? then :foreach else p.first end }
+      foreach = paren(range.maybe,'<','>').map { |p| p.empty? ? :foreach : p.first }
       total   =  (symbol('[') << symbol(']')).map { :total }
       quantifier = foreach | total
     end
@@ -360,8 +360,8 @@ class SweetFlowFactImport
     end
     op =
       case ffsrc.constraint.op
-      when "<="; "less-equal"
-      when "="; "equal"
+      when "<=" then "less-equal"
+      when "=" then "equal"
       else; raise Exception, "Bad constraint op: #{ffsrc.constraint.op}"
       end
     flowfact = FlowFact.new(scope, TermList.new(terms), op, ffsrc.constraint.rhs,

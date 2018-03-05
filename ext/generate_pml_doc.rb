@@ -90,9 +90,7 @@ private
 
   def generate_code
     @io.puts @preamble
-    until @worklist.empty?
-      generate_klass(@worklist.pop)
-    end
+    generate_klass(@worklist.pop) until @worklist.empty?
     @io.puts <<-EOF.indent_doc(MODULE_INDENT)
       end # module PML
     EOF
@@ -121,8 +119,6 @@ private
     return item['class'] if item['class']
     if item['type'] == 'seq' && (elemklass = item['sequence'].first['class'])
       elemklass + "List"
-    else
-      nil
     end
   end
 

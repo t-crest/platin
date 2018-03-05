@@ -158,9 +158,7 @@ module PML
       @loopheader.loops
     end
 
-    def blocks
-      @blocks
-    end
+    attr_reader :blocks
 
     def add_block(b)
       @blocks.push(b)
@@ -575,23 +573,17 @@ module PML
     end
 
     # set the block directly succeeding this one in the binary layout
-    def layout_successor=(block)
-      @layout_successor = block
-    end
+    attr_writer :layout_successor
 
     # return a successor which is (might) be reached via fallthrough
     # NOTE: this is a heuristic at the moment
     def fallthrough_successor
-      if successors.include?(@layout_successor)
-        @layout_successor
-      else
-        nil
-      end
+      @layout_successor if successors.include?(@layout_successor)
     end
 
     # the unique successor, if there is one
     def next
-      (successors.length == 1) ? successors.first : nil
+      successors.length == 1 ? successors.first : nil
     end
 
     # true if this is a loop header

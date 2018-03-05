@@ -112,8 +112,7 @@ class FFXExportTool
 end
 
 class OSXExportTool
-  def self.add_config_options(opts)
-  end
+  def self.add_config_options(opts); end
 
   def self.add_options(opts, mandatory = true)
     opts.analysis_entry

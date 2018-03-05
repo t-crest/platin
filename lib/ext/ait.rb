@@ -105,7 +105,7 @@ class ValueRange
   end
 
   def self.range_to_ais(range)
-    sprintf("0x%08x .. 0x%08x",range.min,range.max)
+    format("0x%08x .. 0x%08x",range.min,range.max)
   end
 end
 
@@ -306,7 +306,7 @@ class AISExporter
     end
 
     @pml.arch.config.memory_areas.each do |area|
-      kw = if area.type == 'code' then 'code' else 'data' end
+      kw = area.type == 'code' ? 'code' : 'data'
       tt_read_first_beat = area.memory.read_latency + area.memory.read_transfer_time
       tt_write_first_beat = area.memory.write_latency + area.memory.write_transfer_time
       properties = ["#{kw} read transfer-time = [#{tt_read_first_beat},#{area.memory.read_transfer_time}]"]
@@ -410,11 +410,11 @@ class AISExporter
 
     assert("Cannot find address for #{loopblock.name}") { addr != nil }
 
-    warn("#{loopblock.name} is in #{func} at 0x#{"%x" % addr}")
+    warn("#{loopblock.name} is in #{func} at 0x#{format("%x", addr)}")
 
     # [loopblock.function])
     loopname = loopblock.instructions[0].address
-    gen_fact("loop 0x#{"%x" % addr} max #{bound} end",
+    gen_fact("loop 0x#{format("%x", addr)} max #{bound} end",
              "global loop header bound (source: #{origins.to_a.join(", ")})")
   end
 
@@ -487,7 +487,7 @@ class AISExporter
     scope = scope.function.blocks.first
     terms.push(Term.new(scope,-rhs)) if rhs != 0
     terms.each do |t|
-      set = (t.factor < 0) ? terms_rhs : terms_lhs
+      set = t.factor < 0 ? terms_rhs : terms_lhs
       set.push("#{t.factor.abs} (#{t.programpoint.block.ais_ref})")
     end
     cmp_op = "<="
@@ -843,7 +843,7 @@ class AitImport
         @blocks[be.attributes['id']] = ins
       end
     end
-    @routine_names = @routines.values.inject({}) { |memo,r| memo[r.name] = r; memo }
+    @routine_names = @routines.values.each_with_object({}) { |r,memo| memo[r.name] = r;  }
   end
 
   def read_contexts(contexts_element)
@@ -861,7 +861,7 @@ class AitImport
             if $2
               peel,last = $2.to_i, $3.to_i
               loopoffset = peel - 1
-              loopstep = (peel == last && $3) ? 1 : 0
+              loopstep = peel == last && $3 ? 1 : 0
               LoopContextEntry.new(routine.loop, loopstep, loopoffset, site)
             else
               CallContextEntry.new(site)
@@ -928,7 +928,7 @@ class AitImport
             end
             if unpredictable
               debug(options,:ait) do
-                sprintf("- %s 0x%08x..0x%08x (%d bytes), mod=0x%x rem=0x%x\n",
+                format("- %s 0x%08x..0x%08x (%d bytes), mod=0x%x rem=0x%x\n",
                         se.attributes['type'],min,max,max - min,mod || -1,rem || -1)
               end
             end
@@ -1216,7 +1216,7 @@ class AitImport
         freq = edge_freq[e] ? edge_freq[e][ctx] : 0
         contrib = freq * cycles # edge_contrib[e][ctx]
         debug(options,:ait) do
-          sprintf(" -- %s: %d * %d (%d)\n",ctx.to_s, cycles, freq, contrib)
+          format(" -- %s: %d * %d (%d)\n",ctx.to_s, cycles, freq, contrib)
         end
         profile_list.push(ProfileEntry.new(ref, cycles, freq, contrib))
       end

@@ -62,7 +62,9 @@ class LateBypassTool
       vf.programpoint.address
     end.to_set
 
-    unless addresses.empty?
+    if addresses.empty?
+      info "No instructions to rewrite"
+    else
       # if we have a list of addresses of instructions to rewrite,
       # we first backup the binary if desired
       FileUtils.cp(options.binary_file, "#{options.binary_file}.bak") if options.backup
@@ -72,8 +74,6 @@ class LateBypassTool
       IO.popen(["#{File.dirname(__FILE__)}/../ext/patch_loads", options.binary_file], 'w') do |f|
         addresses.each { |addr| f.puts(addr) }
       end
-    else
-      info "No instructions to rewrite"
     end
 
     if options.stats

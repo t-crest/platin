@@ -33,7 +33,7 @@ class AlfTool
     cmd.push("-alf-ignore-definitions=#{alf_opts[:ignored_definitions].join(",")}") if alf_opts[:ignored_definitions]
     if alf_opts[:memory_areas]
       areas = alf_opts[:memory_areas].map do |mem_area|
-        sprintf("0x%x-0x%x",mem_area.min, mem_area.max)
+        format("0x%x-0x%x",mem_area.min, mem_area.max)
       end.join(",")
       cmd.push("-alf-memory-areas=#{areas}")
     end

@@ -65,12 +65,10 @@ class WcetTool
   end
 
   def time(descr)
-    begin
-      t1 = Time.now
-      yield
-      t2 = Time.now
-      info("Finished #{descr.ljust(35)} in #{((t2 - t1) * 1000).to_i} ms")
-    end
+    t1 = Time.now
+    yield
+    t2 = Time.now
+    info("Finished #{descr.ljust(35)} in #{((t2 - t1) * 1000).to_i} ms")
   end
 
   # replace this method in a benchmark subclass
@@ -268,7 +266,7 @@ class WcetTool
     cycles = timing.cycles
     wcet_cycles = timing.cycles
     round, found_new_edge = 0, true
-    while true
+    loop do
       info("Criticality Iteration #{round += 1}: #{cycles} (blockmode=#{!missing_blocks.nil?})")
       if cycles < 0
         if missing_blocks
@@ -382,9 +380,9 @@ class WcetTool
     end
     if options.combine_wca
       wcet_cycles = combined_cycles
-      results.push({ 'analysis-entry' => options.analysis_entry,
+      results.push( 'analysis-entry' => options.analysis_entry,
                      'source' => 'combined',
-                     'cycles' => combined_cycles })
+                     'cycles' => combined_cycles )
     end
     if options.runcheck && !trace_cycles.nil?
       die("wcet check: No timing for simulator trace") unless trace_cycles > 0
@@ -415,7 +413,7 @@ class WcetTool
   def run_in_outdir
     begin
       outdir, tmpdir = options.outdir, nil
-      tmpdir = outdir = options.outdir = Dir.mktmpdir() unless options.outdir
+      tmpdir = outdir = options.outdir = Dir.mktmpdir unless options.outdir
       mod = File.basename(options.binary_file, ".elf")
 
       configure_ait_files(options, outdir, mod, false) unless options.disable_ait

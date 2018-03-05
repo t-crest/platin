@@ -26,7 +26,7 @@ module PML
       # context-independent block infeasibility
       c.is_infeasible = !ff.get_block_infeasible.empty?
       # context-independent calltarget restriction
-      (_,cs,_) = ff.get_calltargets
+      (_,cs) = ff.get_calltargets
       c.is_indirect_calltarget = cs && cs.programpoint.unresolved_call?
 
       # rt: involves machine-code only function (usually from compiler-rt or operating system)
@@ -264,9 +264,9 @@ module PML
     include ProgramInfoObject
 
     def initialize(ppref, type, expr, attrs, mode, data = nil)
-      assert("ModelFact#initialize: program point reference has wrong type (#{ppref.class})") {
+      assert("ModelFact#initialize: program point reference has wrong type (#{ppref.class})") do
         ppref.kind_of?(ContextRef)
-      }
+      end
       @ppref, @type, @expr = ppref, type, expr
       @attributes = attrs
       @mode = mode
@@ -296,7 +296,7 @@ module PML
     end
 
     def to_source
-      @ppref.programpoint.block.src_hint + ": " +
+      @ppref.programpoint.block.src_hint + ": " \
         "#pragma platina " + type + " " + '"' + expr + '"'
     end
 
@@ -363,7 +363,7 @@ module PML
 
         # When the guardexpression is false, then this path is infeasible
         guardexpr = Peaches::evaluate_expression(model.context, expr, :boolean)
-        unless guardexpr then
+        unless guardexpr
           # FlowFact.block_frequency(scoperef, blockref, freq, attrs)
           fact = FlowFact.block_frequency(fun, ppref.programpoint, [SEInt.new(0)], attributes)
           fact.origin = 'model.bc'
@@ -682,7 +682,7 @@ module PML
     def initialize(min, max, symbol, data = nil)
       @min, @max, @symbol = min, max, symbol
       set_yaml_repr(data)
-      raise Exception, "Bad ValueRange: #{self}" unless @min <= @max if @min
+      raise Exception, "Bad ValueRange: #{self}" if @min && @min > @max
     end
 
     def inspect
@@ -717,9 +717,9 @@ module PML
     attr_reader :attributes, :ppref, :variable, :width, :values
     include ProgramInfoObject
     def initialize(ppref, variable, width, values, attrs, data = nil)
-      assert("ValueFact#initialize: program point reference has wrong type (#{ppref.class})") {
+      assert("ValueFact#initialize: program point reference has wrong type (#{ppref.class})") do
         ppref.kind_of?(ContextRef)
-      }
+      end
       @ppref, @variable, @width, @values = ppref, variable, width, values
       @attributes = attrs
       set_yaml_repr(data)

@@ -33,7 +33,7 @@ module PML
   #
   class WorkList
     def initialize(queue = nil)
-      @todo = queue || Array.new
+      @todo = queue || []
       @enqueued  = Set.new
       @processed = Set.new
     end
@@ -165,9 +165,9 @@ module PML
     internal_error "file_open: nil" unless path
     if path == "-"
       case mode
-      when "r"; yield $stdin
-      when "w"; yield $stdout
-      when "a"; yield $stdout
+      when "r" then yield $stdin
+      when "w" then yield $stdout
+      when "a" then yield $stdout
       else; die "Cannot open stdout in mode #{mode}"
       end
     else

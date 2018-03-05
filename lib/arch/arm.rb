@@ -101,14 +101,11 @@ class Architecture < PML::Architecture
     @triple, @config = triple, config
   end
 
-  def self.simulator_options(opts)
-  end
+  def self.simulator_options(opts); end
 
-  def config_for_clang(options)
-  end
+  def config_for_clang(options); end
 
-  def config_for_simulator
-  end
+  def config_for_simulator; end
 
   def simulator_trace(options, _watchpoints)
     M5SimulatorTrace.new(options.binary_file, self, options)

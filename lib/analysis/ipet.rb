@@ -73,7 +73,7 @@ class ControlFlowRefinement
 
     dict = @calltargets[callsite]
     global_set = @calltargets[callsite][Context.empty] if dict
-    ctx_set    = @calltargets[callsite][context] unless context.empty? if dict
+    ctx_set    = @calltargets[callsite][context] if dict && !context.empty?
     sets = [ctx_set,global_set,static_set].compact
     raise UnresolvedIndirectCall, callsite if sets.empty?
     sets.inject { |a,b| a.intersection(b) }
@@ -467,7 +467,7 @@ class IPETBuilder
 
     @mc_model.add_entry_constraint(@entry['machinecode'])
 
-    add_global_call_constraints()
+    add_global_call_constraints
 
     flowfacts.each do |ff|
       debug(@options,:ipet) { "adding flowfact #{ff}" }
@@ -603,7 +603,7 @@ class IPETBuilder
       (abb_mfs & gcfg_mfs).empty?
     end
 
-    add_global_call_constraints()
+    add_global_call_constraints
 
     die("Bitcode contraints are not implemented yet") if @bc_model
   end
@@ -778,7 +778,7 @@ private
     each_relation_edge(rg) do |edge|
       rg_level = relation_graph_level(edge.level.to_s)
       source_block = edge.source.get_block(rg_level)
-      target_block = (edge.target.type == :exit) ? :exit : edge.target.get_block(rg_level)
+      target_block = edge.target.type == :exit ? :exit : edge.target.get_block(rg_level)
 
       assert("Bad RG: #{edge}") { source_block && target_block }
       # (3),(4)

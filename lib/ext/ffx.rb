@@ -70,7 +70,7 @@ class ValueRange
   end
 
   def self.range_to_ffx(range)
-    sprintf("0x%08x .. 0x%08x",range.min,range.max)
+    format("0x%08x .. 0x%08x",range.min,range.max)
   end
 end
 

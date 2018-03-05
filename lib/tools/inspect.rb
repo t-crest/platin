@@ -22,12 +22,10 @@ class InspectTool
 
   # TODO: same code as in wcet tool, move to library?
   def time(descr)
-    begin
-      t1 = Time.now
-      yield
-      t2 = Time.now
-      info("Finished #{descr.ljust(35)} in #{((t2 - t1) * 1000).to_i} ms")
-    end
+    t1 = Time.now
+    yield
+    t2 = Time.now
+    info("Finished #{descr.ljust(35)} in #{((t2 - t1) * 1000).to_i} ms")
   end
 
   # TODO: same code as in wcet tool, move to library?

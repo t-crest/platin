@@ -95,7 +95,7 @@ class AisExportTool
             end
           end
         end
-        ais.export_stack_cache_annotations()
+        ais.export_stack_cache_annotations
       end
       if options.stats
         statistics("AIS",

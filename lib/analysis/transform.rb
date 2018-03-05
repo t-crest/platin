@@ -73,7 +73,7 @@ class RefSet
 
   def add(cref)
     sz = cref.num_elim_vars
-    list = (@store[sz] ||= Array.new)
+    list = (@store[sz] ||= [])
     list.push(cref)
     @minsz = sz if !@minsz || sz < @minsz
   end
@@ -145,7 +145,7 @@ class VariableElimination
       if constr.lhs.all? { |v,_c| !elim_vids.include?(v) }
         unaffected.add(cref)
       else
-        dict = (constr.op == "equal") ? eq_constraints : bound_constraints
+        dict = constr.op == "equal" ? eq_constraints : bound_constraints
         elimeq_list = []
         constr.lhs.each do |vid,_c|
           dict[vid].add(cref) if dict[vid]
@@ -165,7 +165,7 @@ class VariableElimination
           break
         end
       end
-      elimvar = elim_vids.first unless elimvar
+      elimvar ||= elim_vids.first
 
       # "Eliminating #{var_by_index(elimvar)}: #{eq_constraints[elimvar].size}/#{bound_constraints[elimvar].size}"
 
@@ -582,7 +582,7 @@ class SymbolicBoundTransformation
 
   def transform(flowfacts, target_level)
     new_ffs = []
-    level_source = (target_level == "bitcode") ? "machinecode" : "bitcode"
+    level_source = target_level == "bitcode" ? "machinecode" : "bitcode"
 
     # select all loop bounds at the level we are transforming from
     ffs = {}
@@ -624,11 +624,11 @@ class SymbolicBoundTransformation
         debug(options, :transform) { "Attempting to transform: #{ff}" }
         # translate blocks and variables
         ff_t = translate_blocks_and_variables(ff, target_level)
-        unless ff_t
+        if ff_t
+          debug(options, :transform) { "Translated flow fact:    #{ff_t}" }
+        else
           debug(options, :transform) { "Failed to translate blocks for #{ff}" }
           next
-        else
-          debug(options, :transform) { "Translated flow fact:    #{ff_t}" }
         end
         new_ffs.push(ff_t)
       end

@@ -82,9 +82,7 @@ class PMLDoc
     @text_symbols ||= nil
   end
 
-  def valuefacts
-    @valuefacts
-  end
+  attr_reader :valuefacts
 
   # Name generation scheme
   def qualify_machinefunction_name(file, name)
@@ -400,7 +398,7 @@ class PMLDoc
   end
 
   def to_s
-    sprintf("PMLDoc{bitcode-functions: |%d|, machine-functions: |%d|" \
+    format("PMLDoc{bitcode-functions: |%d|, machine-functions: |%d|" \
             ", flowfacts: |%s|, valuefacts: |%d|, modelfacts: |%d|" \
             ", timings: |%d|, gcfgs:|%d|",
             bitcode_functions.length, machine_functions.length,

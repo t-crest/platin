@@ -110,7 +110,7 @@ class AnalyzeTraceTool
       end
       # Export block frequencies; infeasible blocks are necessary for WCET analysis
       recorder.results.blockfreqs.each do |block_ref,freq|
-        type = (freq.max == 0) ? "infeasible" : "block"
+        type = freq.max == 0 ? "infeasible" : "block"
         next unless recorder.report_block_frequencies || type == "infeasible"
         outpml.flowfacts.add(FlowFact.block_frequency(scope, block_ref, freq, fact_context))
       end

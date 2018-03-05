@@ -40,7 +40,7 @@ class ListToken < Token
   end
 
   def complete(prefix)
-    get_list().grep(/^#{Regexp.escape(prefix)}/i)
+    get_list.grep(/^#{Regexp.escape(prefix)}/i)
   end
 end
 
@@ -52,7 +52,7 @@ end
 
 class CommandToken < ListToken
   def get_list
-    Dispatcher.instance.get_commands()
+    Dispatcher.instance.get_commands
   end
 end
 
@@ -299,9 +299,7 @@ class DebugCommand < Command
       hist = Readline::HISTORY.length
       binding.pry
       # So we restore it
-      while Readline::HISTORY.length != hist
-        Readline::HISTORY.pop
-      end
+      Readline::HISTORY.pop while Readline::HISTORY.length != hist
       Readline.completion_proc = REPLContext.instance.completor
     when 1
       REPLContext.instance.debug = @tokens[0].coerce(args[0])
@@ -385,7 +383,7 @@ class VisualizeCommand < Command
       # Hacky: Because return-info of timing infos travels via pml and we do not
       #        really want our visualisation in there, we pass in a hash by
       #        reference and take output that way... Lovely.
-      visualisation = Hash.new
+      visualisation = {}
       opts.visualize_ilp = visualisation
       opts.debug_type    = [:ilp]
 
@@ -844,7 +842,7 @@ class ResultsCommand < Command
   end
 
   def run(args)
-    raise ArgumentError, "Usage: results" if !args.empty?
+    raise ArgumentError, "Usage: results" unless args.empty?
 
     puts "Analysis results:"
     REPLContext.instance.timing.each do |k,v|
@@ -1034,7 +1032,7 @@ class Dispatcher
         else
           out << "   "
         end
-        out << ("%#{maxlength}d: " % (idx + from + 1))
+        out << format("%#{maxlength}d: ", (idx + from + 1))
         out << line
       end
       puts out

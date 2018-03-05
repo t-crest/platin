@@ -185,7 +185,6 @@ class SEBinary < SymbolicExpression
     when '+'; then 0
     when '*'; then 1
     when 'umax'; then 0
-    else; nil
     end
   end
 
@@ -202,7 +201,7 @@ class SEBinary < SymbolicExpression
   end
 
   def self.zero(op)
-    if op == '*' then 0 else nil end
+    op == '*' ? 0 : nil
   end
 
   # true for operators that are associative and commutative
@@ -213,7 +212,7 @@ class SEBinary < SymbolicExpression
 
   def self.fold(op, *args)
     args = args.map do |arg|
-      if arg.kind_of?(Integer) then SEInt.new(arg) else arg end
+      arg.kind_of?(Integer) ? SEInt.new(arg) : arg
     end
     args = args.select { |e| e.constant? } + args.reject { |e| e.constant? } if SEBinary.commutative?(op)
     fst = args.shift

@@ -261,9 +261,7 @@ private
   end
 
   def exit_loops_downto(nest)
-    while nest < @loopstack.length
-      publish(:loopexit, @loopstack.pop, @cycles)
-    end
+    publish(:loopexit, @loopstack.pop, @cycles) while nest < @loopstack.length
   end
 
   def build_watchpoints
@@ -506,8 +504,7 @@ class RecorderScheduler
 
   def eof; end
 
-  def method_missing(event, *args)
-  end
+  def method_missing(event, *args); end
 end
 
 # Recorder for a function (intra- or interprocedural)
@@ -675,12 +672,7 @@ class FrequencyRecord
   def stop(cycles)
     die "Recorder: stop without start: #{@name}" unless @current_record
     @cycles = merge_ranges(cycles - @cycles_start, @cycles)
-    unless @blockfreqs
-      @blockfreqs = {}
-      @current_record.each do |bref,count|
-        @blockfreqs[bref] = count..count
-      end
-    else
+    if @blockfreqs
       @current_record.each do |bref,count|
         if !@blockfreqs.include?(bref)
           @blockfreqs[bref] = 0..count
@@ -690,6 +682,11 @@ class FrequencyRecord
       end
       @blockfreqs.each do |bref,count|
         @blockfreqs[bref] = merge_ranges(count, 0..0) unless @current_record.include?(bref)
+      end
+    else
+      @blockfreqs = {}
+      @current_record.each do |bref,count|
+        @blockfreqs[bref] = count..count
       end
     end
     @current_record, @current_loops = nil, nil
@@ -714,10 +711,10 @@ class FrequencyRecord
 private
 
   def merge_loop_bound(key,bound)
-    unless @loopbounds[key]
-      @loopbounds[key] = bound..bound
-    else
+    if @loopbounds[key]
       @loopbounds[key] = merge_ranges(bound, @loopbounds[key])
+    else
+      @loopbounds[key] = bound..bound
     end
   end
 end

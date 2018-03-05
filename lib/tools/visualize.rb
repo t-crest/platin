@@ -186,7 +186,7 @@ class FlowGraphVisualizer < Visualizer
         block = node.block
         instr = block.instructions[node.first_index]
         addr = instr ? instr.address : block.address
-        label += sprintf("0x%x: ",addr) if addr
+        label += format("0x%x: ",addr) if addr
         label += block.name.to_s
         label << "(#{block.mapsto})" if block.mapsto
         label << " [#{node.first_index}..#{node.last_index}]"
@@ -583,7 +583,7 @@ class ILPVisualisation < Visualizer
     format ||= :svg
 
     assert("Graph has to be drawn first drawn") { !@graph.nil? }
-    @graph.output({ format => String })
+    @graph.output(format => String)
   end
 
   def visualize(_title, opts = {})
@@ -635,7 +635,7 @@ private
   def type_index(selected_target, selected_type, io)
     io.puts("<div>")
     @targets[selected_target].each do |type,_image|
-      style = if type == selected_type then "background-color: lightblue;" else "" end
+      style = type == selected_type ? "background-color: lightblue;" : ""
       io.puts("<span style=\"#{style}\"><a href=\"#{link(selected_target,type)}\">#{type}</a></span>")
     end
     io.puts("</div>")
@@ -645,7 +645,7 @@ private
     io.puts("<div>")
     @targets.each do |target,images|
       type, image = images.find { |type,_image| type == selected_type } || images.to_a.first
-      style = if target == selected_target then "background-color: lightblue;" else "" end
+      style = target == selected_target ? "background-color: lightblue;" : ""
       io.puts("<span style=\"#{style}\"><a href=\"#{link(target,type)}\">#{target}</a></span>")
     end
     io.puts("</div>")
