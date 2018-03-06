@@ -6,6 +6,9 @@ gem "ruby-graphviz"
 gem "rsec"
 gem "kwalify"
 
-gem "lpsolve", git: 'git@gitlab.cs.fau.de:SWAN/rb-lpsolve.git'
+gem "lpsolve", git: 'https://gitlab.cs.fau.de/aorta-public/rb-lpsolve.git'
 
+gem 'pronto', group: :development
+gem 'pronto-rubocop', group: :development
 gem 'pry-byebug', group: :development
+gem 'rubocop', group: :development

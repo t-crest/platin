@@ -66,9 +66,6 @@ Style/NonNilCheck:
 Style/NilComparison:
   Enabled: false
 
-Style/TrailingCommaInLiteral:
-  Enabled: false
-
 Style/FormatStringToken:
   Enabled: false
 
@@ -123,9 +120,6 @@ Style/ConditionalAssignment:
   Enabled: false
 
 Style/Next:
-  Enabled: false
-
-Performance/HashEachMethods:
   Enabled: false
 
 # Enable one-day(tm)
