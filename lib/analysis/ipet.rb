@@ -8,8 +8,6 @@ require 'core/pml'
 require 'analysis/ilp'
 require 'set'
 
-require 'pry'
-
 module PML
 
 # This exception is raised if indirect calls could not be resolved

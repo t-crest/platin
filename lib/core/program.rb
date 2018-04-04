@@ -1431,7 +1431,6 @@ private
 
     # customized constructor
     def initialize(data, pml)
-      binding.pry
       @list = data.map { |g|
         GCFG.new(g, pml)
       }

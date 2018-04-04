@@ -162,7 +162,7 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
                                      true)
 
     # units
-    info ("Assuming time per cycle: #{TIME_PER_CYCLE} second")
+    # info ("Assuming time per cycle: #{TIME_PER_CYCLE} second")
 
     # Build IPET using costs from @pml.arch
     local_builder = nil
@@ -270,7 +270,7 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
 
         else
           # this should never happen
-          assert("Fuck off") {false}
+          assert("No microstructure and no ABB: this should never happen!") {false}
         end
 
         local_builder.build_gcfg(fragment, flowfacts) do |edge|
@@ -278,7 +278,10 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
         end
 
         cycles, freqs = local_ilp.solve_max
-        info("WCET(#{wcet_for_obj}): #{cycles} cy (#{two_decimals(cycles * TIME_PER_CYCLE*1e6)} us)")
+        #info("WCET(#{wcet_for_obj}): #{cycles} cy (#{two_decimals(cycles * TIME_PER_CYCLE*1e6)} us)")
+        statistics("WCEC/nodes/cycles",
+                   "#{wcet_for_obj}" => cycles)
+
         wcet[wcet_for_obj] = [cycles, power_states.to_a]
       end
       t_wcrt_all2 = Time.now

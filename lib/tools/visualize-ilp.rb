@@ -132,7 +132,6 @@ class ILPVisualisation < Visualizer
     str = l.join("<BR/>");
     # return "unknown" if str.empty?
     if str.empty?
-      # binding.pry
       # return var.class.name
       return var.to_s
     end

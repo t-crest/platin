@@ -108,8 +108,9 @@ class GurobiILP < ILP
     lp.puts("Bounds")
 
     # we are in big numeric trouble if we do not put any bounds at all
+	maximum_count = 100000
     @variables.each do |v|
-      lp.puts(" #{varname(index(v))} <= 100000")
+      lp.puts(" #{varname(index(v))} <= #{maximum_count}")
     end
 
     @constraints.each do |constr|
