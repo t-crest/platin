@@ -194,7 +194,7 @@ class WcetTool
     else
       descr = "WCA"
     end
-    time("run WCET analysis (platin)", descr) do
+    time("run WCET/WCEC analysis (platin)", descr) do
       opts = options.dup
       opts.import_block_timing = true if opts.compute_criticalities
       opts.timing_output = [opts.timing_output,'platin'].compact.join("/")
