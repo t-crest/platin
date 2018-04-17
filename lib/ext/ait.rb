@@ -240,15 +240,13 @@ class AISExporter
     @outfile.puts 'compiler "arm-gcc";'
     @outfile.puts ''
 
-    export_machine_description
+    export_machine_description unless @options.ais_disable_export.include?('machine-description')
 
     @outfile.puts(File.read(@options.ais_header_file)) if @options.ais_header_file
     @outfile.puts
   end
 
   def export_machine_description
-    return if @pml.arch.triple[0] == 'armv7m'
-
     @pml.arch.config.caches.each do |cache|
       case cache.name
       when 'data-cache'
