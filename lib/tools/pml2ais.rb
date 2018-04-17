@@ -9,7 +9,7 @@ require 'English'
 include PML
 
 class AisExportTool
-  AIS_EXPORT_TYPES = %w{header jumptables loop-bounds symbolic-loop-bounds} +
+  AIS_EXPORT_TYPES = %w{header machine-description jumptables loop-bounds symbolic-loop-bounds} +
                      %w{flow-constraints infeasible-code call-targets mem-addresses stack-cache}
 
   def self.add_config_options(opts)
@@ -36,6 +36,7 @@ class AisExportTool
         including one or more of the following types of information:
 
         header               ... specification of the compiler
+        machine-description  ... description of available memories and caches
         jumptables           ... targets of indirect branches
         loop-bounds          ... all loop bound specifications
         symbolic-loop-bounds ... loop bounds that depend on the value of an argument/register
