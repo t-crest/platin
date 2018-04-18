@@ -6,6 +6,10 @@
 require 'platin'
 include PML
 
+require 'thwait'
+require 'thread'
+require 'pry'
+
 # Simple interface to gurobi_cl
 class GurobiILP < ILP
   # Tolarable floating point error in objective
@@ -39,7 +43,7 @@ class GurobiILP < ILP
     # solve
     debug(options, :ilp) { self.dump(DebugIO.new) }
     start = Time.now
-    err = solve_lp(lp_name, sol_name)
+    err, sol_name = solve_lp(lp_name, sol_name)
     @solvertime += (Time.now - start)
 
     # Throw exception on error (after setting solvertime)
@@ -108,7 +112,7 @@ class GurobiILP < ILP
     lp.puts("Bounds")
 
     # we are in big numeric trouble if we do not put any bounds at all
-	maximum_count = 100000
+    maximum_count = 100000
     @variables.each do |v|
       lp.puts(" #{varname(index(v))} <= #{maximum_count}")
     end
@@ -130,8 +134,8 @@ class GurobiILP < ILP
     vmap = {}
     sol.readlines.each { |line|
       if line =~ /# Objective value = ([0-9][0-9.+e]*)/
-	# Need to convert to float first, otherwise very large results that are printed in exp format
-	# are truncated to the first digit.
+    # Need to convert to float first, otherwise very large results that are printed in exp format
+    # are truncated to the first digit.
         obj = $1.to_f.to_i
       elsif line =~ /v_([0-9]*) ([0-9]*)/
         vmap[var_by_index($1.to_i)] = $2.to_i
@@ -166,12 +170,14 @@ class GurobiILP < ILP
     while line = out.gets do
       @lines_thread0.push(line)
       if @lines_thread0.length > 10 or @options.verbose
-        while backlock_idx < @lines_thread0.length do
+        while backlock_idx0 < @lines_thread0.length do
           puts(@lines_thread0[backlock_idx0])
           backlock_idx0 += 1
         end
       end
     end
+    $queue << [@lines_thread0, sol]
+    @lines_thread0
   end
 
   def thread1(lp, sol)
@@ -181,12 +187,14 @@ class GurobiILP < ILP
     while line = out.gets do
       @lines_thread1.push(line)
       if @lines_thread1.length > 40 or @options.verbose
-        while backlock_idx < @lines_thread1.length do
+        while backlock_idx1 < @lines_thread1.length do
           puts(@lines_thread1[backlock_idx1])
           backlock_idx1 += 1
         end
       end
     end
+    $queue << [@lines_thread1, sol]
+    @lines_thread1
   end
 
   def thread2(lp, sol)
@@ -196,12 +204,14 @@ class GurobiILP < ILP
     while line = out.gets do
       @lines_thread2.push(line)
       if @lines_thread2.length > 40 or @options.verbose
-        while backlock_idx < @lines_thread2.length do
+        while backlock_idx2 < @lines_thread2.length do
           puts(@lines_thread2[backlock_idx2])
           backlock_idx2 += 1
         end
       end
     end
+    $queue << [@lines_thread2, sol]
+    @lines_thread2
   end
 
   def solve_lp(lp, sol)
@@ -211,78 +221,51 @@ class GurobiILP < ILP
     # MIPFocus=3: focus on improving the bound
     # (unused: MIPGap=0.03  => stop at 3% gap between incubent and best bound)
     # (unused: TimeLimit=600 => terminate after 600 seconds)
-    out = IO.popen("gurobi_cl MIPFocus=2 ResultFile=#{sol} #{lp}")
-    backlock_idx = 0
-    while line = out.gets do
-      lines.push(line)
-      if lines.length > 40 or @options.verbose
-        while backlock_idx < lines.length do
-          puts(lines[backlock_idx])
-          backlock_idx += 1
-        end
-      end
-    end
+    #out = IO.popen("gurobi_cl MIPFocus=2 ResultFile=#{sol} #{lp}")
+    #out = IO.popen("gurobi_cl Heuristics=0 Method=0 MIPFocus=2 ResultFile=#{sol} #{lp}")
+    #out = IO.popen("gurobi_cl AggFill=1000 ResultFile=#{sol} #{lp}")
+    #backlock_idx = 0
+    #while line = out.gets do
+      #lines.push(line)
+      #if lines.length > 40 or @options.verbose
+        #while backlock_idx < lines.length do
+          #puts(lines[backlock_idx])
+          #backlock_idx += 1
+        #end
+      #end
+    #end
 
-#    th0 = Thread.new { thread0(lp, sol) }
-#    th1 = Thread.new { thread1(lp, sol) }
-#    th2 = Thread.new { thread2(lp, sol) }
+    $queue = Queue.new
+    sol0 = "#{sol}_th0.sol"
+    sol1 = "#{sol}_th1.sol"
+    sol2 = "#{sol}_th2.sol"
+    th0 = Thread.new { thread0(lp, sol0) }
+    th1 = Thread.new { thread1(lp, sol1) }
+    #th2 = Thread.new { thread2(lp, sol2) }
 
-#    th0.run
-#    th1.run
-#    th2.run
-#    while true
-#      if th0.status == false
-#        # thread 0 terminated normally
-#        puts "th1 won!"
-#        Thread.kill(th1)
-#        # th1.exit
-#        Thread.kill(th2)
-##        th2.exit
-##        th1.join
-##        th2.join
-#        lines = @lines_thread0
-#        break
-#      end
-#      if th1.status == false
-#        puts "th1 won!"
-#        Thread.kill(th0)
-#        #th0.exit
-#        Thread.kill(th2)
-#        #th1.exit
-##        th0.join
-##        th2.join
-#        lines = @lines_thread1
-#        break
-#      end
-#      if th2.status == false
-#        puts "th2 won!"
-#        Thread.kill(th0)
-#        th0.exit
-#        Thread.kill(th1)
-#        th1.exit
-##        th0.join
-##        th1.join
-#        lines = @lines_thread2
-#        break
-#      end
-
-#      # TODO condition variables would be better here
-#      # sleep 1
-#    end
+    (lines, sol) = $queue.pop
+    sol_name = sol
+    th0.kill
+    th1.kill
+    #th2.kill
 
     # Detect error messages
-    return "Gurobi terminated unexpectedly (#{$?.exitstatus})" if $? and $?.exitstatus > 0
+    if $? and $?.exitstatus > 0
+      return "Gurobi terminated unexpectedly (#{$?.exitstatus})", sol_name 
+    end
+
     lines.each do |line|
       if line =~ /Model is infeasible/ || line =~ /Model is unbounded/
-        while backlock_idx < lines.length do
-          puts(lines[backlock_idx])
-          backlock_idx += 1
-        end
+        #while backlock_idx < lines.length do
+          #puts(lines[backlock_idx])
+          #backlock_idx += 1
+        #end
         return line
       end
-      return nil if line =~ /Optimal solution found/
+      return nil, sol_name if line =~ /Optimal solution found/
     end
-    nil # No error
+    #nil # No error
+    return nil, sol_name
   end
   def gurobi_error(msg)
     raise Exception.new("Gurobi Error: #{msg}")
