@@ -281,6 +281,8 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
         #info("WCET(#{wcet_for_obj}): #{cycles} cy (#{two_decimals(cycles * TIME_PER_CYCLE*1e6)} us)")
         statistics("WCEC/nodes/cycles",
                    "#{wcet_for_obj}" => cycles)
+        statistics("WCEC/nodes/freqs",
+                   "#{wcet_for_obj}" => freqs)
 
         wcet[wcet_for_obj] = [cycles, power_states.to_a]
       end
