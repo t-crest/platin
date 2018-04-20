@@ -303,7 +303,8 @@ class Architecture < PML::Architecture
       1 + PIPELINE_REFILL
     when 't2LDMIA_RET', 't2STRi8', 't2STRBi8', 't2STRHi8', 't2STRBi12', 't2STRHi12'
       2 + FLASH_WAIT_CYCLES
-    when 't2LDRi8', 't2LDRi12', 't2LDRBi12', 't2LDRSBi12', 't2LDRSHi12', 't2LDRSHi12'
+    when 't2LDRi8', 't2LDRi12', 't2LDRBi12', 't2LDRSBi12', 't2LDRSHi12',
+         't2LDRSHi12', 't2LDRs'
       2 + FLASH_WAIT_CYCLES
     when /^t2LDRHi[0-9]+$/
       2 + FLASH_WAIT_CYCLES
@@ -321,7 +322,7 @@ class Architecture < PML::Architecture
          't2ORNrr', 't2BICrr', 't2MVNrr', 't2TSTrr', 't2TEQrr', 't2EORrs', 't2BICri', 't2ORNri'
       1
     # bitwise shifts
-    when 't2LSLri', 't2LSLri', 't2LSRri', 't2LSRri', 't2ASRri', 't2ASRri'
+    when 't2LSLri', 't2LSLrr', 't2LSRri', 't2LSRrr', 't2ASRri', 't2ASRrr'
       1
     # subtract
     when 't2SUBrr', 't2SUBri', 't2SUBrs', 't2SBCrr', 't2SBCri', 't2RSBrs', 't2RSBri', 't2SUBri12'
