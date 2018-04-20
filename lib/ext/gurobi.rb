@@ -169,7 +169,7 @@ class GurobiILP < ILP
     backlock_idx0 = 0
     while line = out.gets do
       @lines_thread0.push(line)
-      if @lines_thread0.length > 10 or @options.verbose
+      if @lines_thread0.length > 40 and @options.verbose
         while backlock_idx0 < @lines_thread0.length do
           puts(@lines_thread0[backlock_idx0])
           backlock_idx0 += 1
@@ -186,7 +186,7 @@ class GurobiILP < ILP
     backlock_idx1 = 0
     while line = out.gets do
       @lines_thread1.push(line)
-      if @lines_thread1.length > 40 or @options.verbose
+      if @lines_thread1.length > 40 and @options.verbose
         while backlock_idx1 < @lines_thread1.length do
           puts(@lines_thread1[backlock_idx1])
           backlock_idx1 += 1
@@ -203,7 +203,7 @@ class GurobiILP < ILP
     backlock_idx2 = 0
     while line = out.gets do
       @lines_thread2.push(line)
-      if @lines_thread2.length > 40 or @options.verbose
+      if @lines_thread2.length > 40 and @options.verbose
         while backlock_idx2 < @lines_thread2.length do
           puts(@lines_thread2[backlock_idx2])
           backlock_idx2 += 1

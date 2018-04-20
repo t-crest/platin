@@ -311,7 +311,9 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
       freqs.each do |variable, value|
         if builder.ilp.costs[variable] > 0 || /global/ =~ variable.to_s
           costs = value * builder.ilp.costs[variable]
-          info("WCEC: #{variable} => #{costs} mA*cy (freq=#{value})")
+          if @options.verbose
+            info("WCEC: #{variable} => #{costs} mA*cy (freq=#{value})")
+          end
           statistics("WCEC", variable => costs)
         end
       end
