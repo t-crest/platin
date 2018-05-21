@@ -64,13 +64,6 @@ class WcetTool
     @additional_report_info = {}
   end
 
-  def time(descr)
-    t1 = Time.now
-    yield
-    t2 = Time.now
-    info("Finished #{descr.ljust(35)} in #{((t2 - t1) * 1000).to_i} ms")
-  end
-
   # replace this method in a benchmark subclass
   def run_analysis
     # Comment out for transformed GCFG
@@ -117,7 +110,7 @@ class WcetTool
     if pml.text_symbols
       puts("Using cached text-symbols")
     else
-      time("read symbols") do
+      time("Read Symbols") do
         ExtractSymbolsTool.run(pml,options)
       end
     end
@@ -458,7 +451,9 @@ class WcetTool
       # Hacky: Extracttool modifys bitcode_functions, so the
       # with_temporary_sections below would tigger an invalid caching in the
       # second run. Therefore run the ExtractSymbolsTool ahead of time.
-      ExtractSymbolsTool.run(pml,options)
+      time("Read Symbols") do
+        ExtractSymbolsTool.run(pml,options)
+      end
 
       pml.with_temporary_sections([:flowfacts, :valuefacts]) do
         if model.nil?
@@ -469,7 +464,9 @@ class WcetTool
           end
         end
         begin
-          model.evaluate(pml, pml.modelfacts)
+          time("Evaluating Model") do
+            model.evaluate(pml, pml.modelfacts)
+          end
           WcetTool.new(pml,options).run_in_outdir
         ensure
           # ALWAYS undo mutations, even in case of errors (such as unresolved

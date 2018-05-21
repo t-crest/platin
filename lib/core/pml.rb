@@ -481,19 +481,21 @@ class PMLDoc
   end
 
   def self.from_files(filenames, options)
-    streams = filenames.inject([]) do |list,f|
-      begin
-        fstream = File.open(f) do |fh|
-          stream = YAML::load_stream(fh)
-          stream.documents if stream.respond_to?(:documents) # ruby 1.8 compat
-          [[f, stream]]
+    time("Parsing PML Files") do
+      streams = filenames.inject([]) do |list,f|
+        begin
+          fstream = File.open(f) do |fh|
+            stream = YAML::load_stream(fh)
+            stream.documents if stream.respond_to?(:documents) # ruby 1.8 compat
+            [[f, stream]]
+          end
+          list + fstream
+        rescue Exception => detail
+          die("Failed to load PML document: #{detail}")
         end
-        list + fstream
-      rescue Exception => detail
-        die("Failed to load PML document: #{detail}")
       end
+      PMLDoc.new(streams, options)
     end
-    PMLDoc.new(streams, options)
   end
 
   def self.merge_stream(stream)

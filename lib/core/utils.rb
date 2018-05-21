@@ -15,6 +15,14 @@ module PML
     '"' + str + '"'
   end
 
+  def time(descr)
+    t1 = Time.now
+    val = yield
+    t2 = Time.now
+    info("Finished #{descr.ljust(35)} in #{((t2 - t1) * 1000).to_i} ms")
+    val
+  end
+
   def div_ceil(num, denom)
     raise Exception, "div_ceil: negative numerator or denominator" unless num >= 0 && denom > 0
     (num + denom - 1) / denom
