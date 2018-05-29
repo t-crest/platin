@@ -8,7 +8,6 @@ include PML
 
 require 'thwait'
 require 'thread'
-require 'pry'
 
 # Simple interface to gurobi_cl
 class GurobiILP < ILP
