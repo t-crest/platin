@@ -70,6 +70,10 @@ class ExtractSymbols
           # Migh be different from current addr, as subfunctions require the emitter
           # to insert additional text between blocks.
           addr = block_addr
+        elsif block.label.end_with? "_0" and (func_addr = @text_symbols[function.label])
+          # For LLVM3.8 there is no extra label for the entry block,
+          # we use the function block address instead.
+          addr = func_addr
         elsif ! @instruction_addresses[function.label]
           if @instruction_addresses.empty?
             die("There is no symbol for basic block #{block.label} (function: #{function.label}) in the binary")
