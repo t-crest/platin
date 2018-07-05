@@ -322,10 +322,10 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
       report = TimingEntry.new(machine_entry, cycles, nil,
                                'level' => 'machinecode',
                                'origin' => @options.timing_output || 'platin')
-      # info "best WCEC bound: #{cycles} mA*cy"
+      info "best WCEC bound: #{cycles} mA*cy"
       # 1e3 => uJ => mJ
-      # mJ = cycles * TIME_PER_CYCLE * 3.3
-      # info "best WCEC bound: #{mJ.round(3)} mJ (@3.3V)"
+      mJ = cycles * TIME_PER_CYCLE * 3.3
+      info "best WCEC bound: #{mJ.round(3)} mJ (@3.3V)"
 
       # baseline (all always on):
       power_all_on = 0
@@ -352,6 +352,7 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
       statistics("WCEC",
                  "wcec" => cycles,
                  "max_power" => power_all_on) if @options.stats
+
 
       return report
     else # @options.wcec == false
