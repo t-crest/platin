@@ -211,7 +211,7 @@ class ILP
   end
 
   # add a new variable
-  def add_variable(v, vartype= :machinecode)
+  def add_variable(v, vartype= :machinecode, upper_bound= 1000_0000)
     raise Exception.new("Duplicate variable: #{v}") if @indexmap[v]
     assert("ILP#add_variable: type is not a symbol") { vartype.kind_of?(Symbol) }
     debug(@options, :ilp) { "Adding variable #{v} :: #{vartype.inspect}" }
@@ -221,7 +221,13 @@ class ILP
     @indexmap[v] = index
     @vartype[v] = vartype
     @eliminated.delete(v)
-    add_indexed_constraint({index => -1},"less-equal",0,"non_negative_v_#{index}",Set.new([:positive]))
+    add_constraint([[v, -1]], 'less-equal', 0,
+                   "lower_bound_v_#{index}", :range)
+    if upper_bound != :unbounded
+      add_constraint([[v, 1]], 'less-equal', upper_bound,
+                     "upper_bound_v_#{index}", :range)
+    end
+    # add_indexed_constraint({index => -1},"less-equal",0,,Set.new([:positive]))
     index
   end
 

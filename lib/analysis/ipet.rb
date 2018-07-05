@@ -467,7 +467,7 @@ class GCFGIPETModel
 
   def add_entry_constraint(gcfg)
     @wcet_variable = GlobalProgramPoint.new(gcfg.name)
-    @ilp.add_variable(@wcet_variable, :gcfg)
+    @ilp.add_variable(@wcet_variable, :gcfg, 10_000_000)
 
     # Entry variables must add up to 1
     lhs = @entry_edges.map {|e| [e, 1]}
@@ -701,9 +701,6 @@ class GCFGIPETModel
     # either use the costs (array of WCETs from WCEC analysis) or the ilp.costs
     rhs = (costs || @ilp.costs).map {|e, f| [e, f] }
     @ilp.add_constraint(lhs+rhs, "equal", 0, "global_wcet_equality", :gcfg)
-    if @ilp.kind_of?(LpSolveILP)
-      @ilp.add_constraint([[@wcet_variable, 1]], "less-equal", 1 << 32, "global_wcet_happy_lp_solve", :gcfg)
-    end
   end
 
   def global_program_point(pp, factor=1)

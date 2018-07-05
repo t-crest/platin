@@ -111,7 +111,7 @@ class GurobiILP < ILP
     lp.puts("Bounds")
 
     # we are in big numeric trouble if we do not put any bounds at all
-    maximum_count = 100000
+    maximum_count = 1000_0000_0000
     @variables.each do |v|
       lp.puts(" #{varname(index(v))} <= #{maximum_count}")
     end
@@ -185,7 +185,7 @@ class GurobiILP < ILP
     backlock_idx1 = 0
     while line = out.gets do
       @lines_thread1.push(line)
-      if @lines_thread1.length > 40 and @options.verbose
+      if @lines_thread1.length > 10 and @options.verbose
         while backlock_idx1 < @lines_thread1.length do
           puts(@lines_thread1[backlock_idx1])
           backlock_idx1 += 1
@@ -202,7 +202,7 @@ class GurobiILP < ILP
     backlock_idx2 = 0
     while line = out.gets do
       @lines_thread2.push(line)
-      if @lines_thread2.length > 40 and @options.verbose
+      if @lines_thread2.length > 10 and @options.verbose
         while backlock_idx2 < @lines_thread2.length do
           puts(@lines_thread2[backlock_idx2])
           backlock_idx2 += 1
@@ -250,7 +250,7 @@ class GurobiILP < ILP
 
     # Detect error messages
     if $? and $?.exitstatus > 0
-      return "Gurobi terminated unexpectedly (#{$?.exitstatus})", sol_name 
+      return "Gurobi terminated unexpectedly (#{$?.exitstatus})", sol_name
     end
 
     lines.each do |line|
