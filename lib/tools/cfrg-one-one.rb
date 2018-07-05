@@ -7,12 +7,12 @@
 require 'set'
 require 'platin'
 require 'analysis/scopegraph'
+require 'English'
 include PML
 
 begin
   require 'rubygems'
   require 'graphviz'
-
 rescue Exception => details
   warn "Failed to load library graphviz"
   info "  ==> gem1.9.1 install ruby-graphviz"
@@ -24,15 +24,15 @@ class RGVisualizer
 
   def generate(g,outfile)
     debug(options, :visualize) { "Generating #{outfile}" }
-    g.output( options.graphviz_format.to_sym => "#{outfile}" )
+    g.output(options.graphviz_format.to_sym => outfile.to_s)
     info("#{outfile} ok") if options.verbose
   end
 
-  def initialize(options) ; @options = options ; end
+  def initialize(options); @options = options; end
 
   def visualize(rg)
     nodes = {}
-    g = GraphViz.new( :G, :type => :digraph )
+    g = GraphViz.new(:G, type: :digraph)
     g.node[:shape] = "rectangle"
 
     # XXX: update me
@@ -44,15 +44,15 @@ class RGVisualizer
       label = "#{bid} #{node['type']}"
       label << " #{node['src-block']}" if node['src-block']
       label << " #{node['dst-block']}" if node['dst-block']
-      nodes[bid] = g.add_nodes(bid.to_s, :label => label)
+      nodes[bid] = g.add_nodes(bid.to_s, label: label)
     end
     rg['nodes'].each do |node|
       bid = node['name']
-      (node['src-successors']||[]).each do |sid|
+      (node['src-successors'] || []).each do |sid|
         g.add_edges(nodes[bid],nodes[sid])
       end
-      (node['dst-successors']||[]).each do |sid|
-        g.add_edges(nodes[bid],nodes[sid], :style => 'dotted')
+      (node['dst-successors'] || []).each do |sid|
+        g.add_edges(nodes[bid],nodes[sid], style: 'dotted')
       end
     end
     g
@@ -65,16 +65,16 @@ class OneOneCheck
   #                                                        graphviz >= 1.2.2              graphviz < 1.2.2
   VALID_FORMATS = defined?(GraphViz::Constants::FORMATS) ? GraphViz::Constants::FORMATS : Constants::FORMATS
 
-  def OneOneCheck.default_targets(pml)
-    entry = pml.machine_functions.by_label("main")
-    pml.machine_functions.reachable_from(entry.name).first.reject { |f|
+  def self.default_targets(pml, entryfunc)
+    entry = pml.machine_functions.by_label(entryfunc)
+    pml.machine_functions.reachable_from(entry.name).first.reject do |f|
       f.label =~ /printf/
-    }.map { |f|
+    end.map do |f|
       f.label
-    }
+    end
   end
 
-  def OneOneCheck.is_one_one(rg)
+  def self.is_one_one(rg)
     nodes = {}
 
     # XXX: update me
@@ -83,45 +83,47 @@ class OneOneCheck
     rg['nodes'].each do |node|
       bid = node['name']
 
-      srcsucc = node['src-successors']||[]
-      dstsucc = node['dst-successors']||[]
+      srcsucc = node['src-successors'] || []
+      dstsucc = node['dst-successors'] || []
 
       # if the number of successors does not match, we're not having a 1:1 mapping
       # this might be the case for if-conversions etc.
       return false if srcsucc.count != dstsucc.count
 
-      (node['src-successors']||[]).each do |ssid|
+      (node['src-successors'] || []).each do |ssid|
         found = false
-        (node['dst-successors']||[]).each do |dsid|
-          found = true if ssid == dsid 
+        (node['dst-successors'] || []).each do |dsid|
+          found = true if ssid == dsid
         end
 
-        return false if !found
+        return false unless found
       end
     end
 
     true
   end
 
-  def OneOneCheck.run(pml, options)
-    targets = options.functions || OneOneCheck.default_targets(pml)
-    outdir = options.outdir || "."
+  def self.run(pml, options)
+    outdir  = options.outdir || "."
+    entry   = options.entry || "main"
+    targets = options.functions || OneOneCheck.default_targets(pml, entry)
     options.graphviz_format ||= "png"
     suffix = "." + options.graphviz_format
 
     targets.each do |target|
-
       # Visualize relation graph
       begin
-        rg = pml.data['relation-graphs'].find { |f| f['src']['function'] == target or f['dst']['function'] == target }
-        raise Exception.new("Relation Graph not found") unless rg
+        rg = pml.data['relation-graphs'].find { |f| (f['src']['function'] == target) || (f['dst']['function'] == target) }
+        raise Exception, "Relation Graph not found" unless rg
 
-        file = File.join(outdir, target + ".rg" + suffix)
-        rgv = RGVisualizer.new(options)
-        rgv.generate(rgv.visualize(rg),file)
+        is11 = is_one_one(rg)
+        puts "[OneOneCheck] #{target}: #{is11}"
 
-        puts "[OneOneCheck] #{target}: #{is_one_one(rg)}"
-
+        unless is11
+          file = File.join(outdir, target + ".rg.non11" + suffix)
+          rgv = RGVisualizer.new(options)
+          rgv.generate(rgv.visualize(rg),file)
+        end
       rescue Exception => detail
         puts "Failed to visualize relation graph of #{target}: #{detail}"
         raise detail if options.raise_on_error
@@ -130,20 +132,23 @@ class OneOneCheck
     statistics("ONEONECHECK","Generated rg graphs" => targets.length) if options.stats
   end
 
-  def OneOneCheck.add_options(opts)
-    opts.on("-f","--function FUNCTION,...","Name of the function(s) to check") { |f| opts.options.functions = f.split(/\s*,\s*/) }
+  def self.add_options(opts)
+    opts.on("-f","--function FUNCTION,...","Name of the function(s) to check") do |f|
+      opts.options.functions = f.split(/\s*,\s*/)
+    end
     opts.on("-O","--outdir DIR","Output directory for image files") { |d| opts.options.outdir = d }
+    opts.on("-e","--entry FUNC","PML entry function") { |f| opts.options.entry = f }
   end
 end
 
-if __FILE__ == $0
-SYNOPSIS=<<EOF if __FILE__ == $0
-Check if the control-flow relation graph is a 1:1 mapping between bc and mc
-EOF
+if __FILE__ == $PROGRAM_NAME
+  SYNOPSIS = <<-EOF
+  Check if the control-flow relation graph is a 1:1 mapping between bc and mc
+  EOF
   options, args = PML::optparse([],"", SYNOPSIS) do |opts|
     opts.needs_pml
     opts.callstring_length
     OneOneCheck.add_options(opts)
   end
-  OneOneCheck.run(PMLDoc.from_files(options.input), options)
+  OneOneCheck.run(PMLDoc.from_files(options.input, options), options)
 end

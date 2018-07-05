@@ -13,8 +13,14 @@ module PML
 # This exception is raised if indirect calls could not be resolved
 # during analysis
 class UnresolvedIndirectCall < Exception
+  attr_reader :src_hint, :callsite
   def initialize(callsite)
-    super("Unresolved Indirect Call: #{callsite.inspect}")
+    info = callsite.inspect.to_s
+    if callsite.respond_to?(:block)
+      info << " in block " << callsite.block.qname << " at " << callsite.block.src_hint
+      @src_hint = callsite.block.src_hint
+    end
+    super("Unresolved Indirect Call: #{info}")
     @callsite = callsite
   end
 end
@@ -44,13 +50,11 @@ class ControlFlowRefinement
     return unless flowfact.globally_valid?(@entry)
     # add calltargets
     scope,cs,targets = flowfact.get_calltargets
-    if scope
-      add_calltargets(ContextRef.new(cs.instruction, scope.context), targets.map { |t| t.function})
-    end
+    add_calltargets(ContextRef.new(cs.instruction, scope.context), targets.map { |t| t.function }) if scope
     # set infeasible blocks
-    scope,bref = flowfact.get_block_infeasible
-    if scope
-      set_infeasible(ContextRef.new(bref.block, scope.context))
+    infeasibleblocks = flowfact.get_block_infeasible
+    infeasibleblocks.each do |scope,bref|
+      set_infeasible(ContextRef.new(bref.block, scope.context)) if scope
     end
   end
 
@@ -59,7 +63,7 @@ class ControlFlowRefinement
   def infeasible_block?(block, context = Context.empty)
     dict = @infeasible[block]
     return false unless dict
-    dict[Context.empty] || (! context.empty? && dict[context])
+    dict[Context.empty] || (!context.empty? && dict[context])
   end
 
   # returns the set of possible calltargets for +callsite+ in +context+
@@ -70,31 +74,31 @@ class ControlFlowRefinement
 
     dict = @calltargets[callsite]
     global_set = @calltargets[callsite][Context.empty] if dict
-    ctx_set    = @calltargets[callsite][context] unless context.empty? if dict
+    ctx_set    = @calltargets[callsite][context] if dict && !context.empty?
     sets = [ctx_set,global_set,static_set].compact
-    raise UnresolvedIndirectCall.new(callsite) if sets.empty?
+    raise UnresolvedIndirectCall, callsite if sets.empty?
     sets.inject { |a,b| a.intersection(b) }
   end
 
-  def dump(io=$stderr)
+  def dump(io = $stderr)
     io.puts "INFEASIBLE"
     io.puts
-    @infeasible.each { |ref,val|
+    @infeasible.each do |ref,val|
       io.puts "#{ref.inspect} #{val.inspect}"
-    }
+    end
     io.puts "CALLTARGETS"
     io.puts
-    @calltargets.each { |cs,ts|
+    @calltargets.each do |cs,ts|
       io.puts "#{cs}: #{ts}"
-    }
+    end
   end
 
 private
 
   def add_calltargets(callsite_ref, targets)
-    add_refinement(callsite_ref, Set[targets], @calltargets) { |oldval,newval|
+    add_refinement(callsite_ref, Set[targets], @calltargets) do |oldval,newval|
       oldval.intersection(newval)
-    }
+    end
   end
 
   # set block infeasible, and propagate infeasibility
@@ -102,35 +106,32 @@ private
   def set_infeasible(block_ref)
     block, ctx = block_ref.programpoint, block_ref.context
     worklist = [block]
-    while ! worklist.empty?
+    until worklist.empty?
       block = worklist.pop
-      add_refinement(ContextRef.new(block, ctx), true, @infeasible) { |oldval, _| true }
-      block.successors.each { |bsucc|
+      add_refinement(ContextRef.new(block, ctx), true, @infeasible) { |_oldval, _| true }
+      block.successors.each do |bsucc|
         next if infeasible_block?(bsucc, ctx)
         if bsucc.predecessors.all? { |bpred| infeasible_block?(bpred, ctx) || bsucc.backedge_target?(bpred) }
           worklist.push(bsucc)
         end
-      }
-      block.predecessors.each { |bpred|
+      end
+      block.predecessors.each do |bpred|
         next if infeasible_block?(bpred, ctx)
-        if bpred.successors.all? { |bsucc| infeasible_block?(bsucc, ctx) }
-          worklist.push(bpred)
-        end
-      }
+        worklist.push(bpred) if bpred.successors.all? { |bsucc| infeasible_block?(bsucc, ctx) }
+      end
     end
   end
 
   def add_refinement(reference, value, dict)
     pp_dict    = (dict[reference.programpoint] ||= {})
     ctx        = reference.context
-    newval = if oldval = pp_dict[ctx]
+    newval = if (oldval = pp_dict[ctx])
                yield [oldval, value]
              else
                value
              end
     pp_dict[ctx] = newval
   end
-
 end
 
 #
@@ -153,7 +154,9 @@ class IPETEdge
     @qname = "#{fname}#{arrow}#{tname}||#{power_state}"
     # The context is a object that has a static_context attribute (e.g., an Atomic Basic Block)
     @static_context = nil
+    assert ("Not a real GCFG edge #{self}") { gcfg_edge? } if @level == :gcfg
   end
+
   def backedge?
     return false if target == :exit
     # If we look at a GCFG edge, the backedge property is defined by
@@ -165,13 +168,14 @@ class IPETEdge
     end
     target.backedge_target?(source)
   end
+
   def cfg_edge?
     return false unless source.kind_of?(Block)
     return false unless :exit == target || target.kind_of?(Block)
     true
   end
   def gcfg_edge?
-    if source.kind_of?(GCFGNode) and (target == :exit || target.kind_of?(GCFGNode))
+    if (source == :entry || source.kind_of?(GCFGNode)) and (target == :exit || target.kind_of?(GCFGNode))
       return true
     end
   end
@@ -179,17 +183,19 @@ class IPETEdge
   def function
     source.function
   end
+
   def cfg_edge
     assert("IPETEdge#cfg_edge: not a edge between blocks") { cfg_edge? }
-    (:exit == target) ? source.edge_to_exit : source.edge_to(target)
+    :exit == target ? source.edge_to_exit : source.edge_to(target)
   end
   def gcfg_edge
-    assert("IPETEdge#cfg_edge: not a edge between blocks") { gcfg_edge? }
+    assert("IPETEdge#cfg_edge: not a edge between blocks #{self}") { gcfg_edge? }
     (:exit == target) ? source.edge_to_exit : source.edge_to(target)
   end
   def call_edge?
     source.kind_of?(Instruction) || target.kind_of?(Function)
   end
+
   def relation_graph_edge?
     source.kind_of?(RelationNode) || target.kind_of?(RelationNode)
   end
@@ -208,17 +214,20 @@ class IPETEdge
   end
 
   def to_s
-    arrow = {:bitcode => "~>", :machinecode => "->", :gcfg=>"+>"}[@level]
+    arrow = { bitcode: "~>", machinecode: "->", gcfg: "+>" }[@level]
     "#{@source}#{arrow}#{:exit == @target ? 'exit' : @target}"
   end
+
   def inspect
     to_s
   end
-  def hash;  @qname.hash ; end
-  def ==(other); qname == other.qname ; end
+
+  def hash; @qname.hash; end
+
+  def ==(other); qname == other.qname; end
+
   def eql?(other); self == other; end
 end
-
 
 class IPETModel
   attr_reader :builder, :ilp, :level
@@ -242,32 +251,34 @@ class IPETModel
   def assert_less_equal(lhs, rhs, name, tag)
     assert(lhs, "less-equal", rhs, name, tag)
   end
+
   def assert_equal(lhs, rhs, name, tag)
     assert(lhs, "equal", rhs, name, tag)
   end
+
   def assert(lhs, op, rhs, name, tag)
     terms = Hash.new(0)
     rhs_const = 0
-    [[lhs,1],[rhs,-1]].each { |ts,sgn|
-      ts.to_a.each { |pp, c|
+    [[lhs,1],[rhs,-1]].each do |ts,sgn|
+      ts.to_a.each do |pp, c|
         case pp
         when Instruction
-          block_frequency(pp.block, c*sgn).each { |k,v| terms[k]+=v }
+          block_frequency(pp.block, c * sgn).each { |k,v| terms[k] += v }
         when Block
-          block_frequency(pp, c*sgn).each { |k,v| terms[k]+=v }
+          block_frequency(pp, c * sgn).each { |k,v| terms[k] += v }
         when Edge
-          edge_frequency(pp, c*sgn).each { |k,v| terms[k] += v }
+          edge_frequency(pp, c * sgn).each { |k,v| terms[k] += v }
         when Function
-          function_frequency(pp, c*sgn).each { |k,v| terms[k] += v}
+          function_frequency(pp, c * sgn).each { |k,v| terms[k] += v }
         when Loop
-          sum_loop_entry(pp,c*sgn).each { |k,v| terms[k] += v }
+          sum_loop_entry(pp,c * sgn).each { |k,v| terms[k] += v }
         when Integer
-          rhs_const += pp*(-sgn)
+          rhs_const += pp * -sgn
         else
-          terms[pp] += c*sgn
+          terms[pp] += c * sgn
         end
-      }
-    }
+      end
+    end
     c = ilp.add_constraint(terms, op, rhs_const, name, tag)
   end
 
@@ -282,7 +293,7 @@ class IPETModel
     # the sum of all calledge frequencies is (less than or) equal to the callsite frequency
     # Note: less-than in the presence of predicated calls
     calledges = []
-    lhs = [ [callsite, -1] ]
+    lhs = [[callsite, -1]]
     fs.each do |f|
       calledge = IPETEdge.new(callsite, f, level)
       ilp.add_variable(calledge, level.to_sym)
@@ -300,7 +311,7 @@ class IPETModel
     # variable for instruction
     ilp.add_variable(instruction, level.to_sym)
     # frequency of instruction = frequency of block
-    lhs = [ [instruction,1] ] + block_frequency(instruction.block,-1)
+    lhs = [[instruction,1]] + block_frequency(instruction.block,-1)
     ilp.add_constraint(lhs, "equal", 0, "instruction_#{instruction.qname}",:instruction)
   end
 
@@ -318,9 +329,9 @@ class IPETModel
 
   # add cost to basic block
   def add_block_cost(block, cost)
-    block_frequency(block).each { |edge,c|
+    block_frequency(block).each do |edge,c|
       ilp.add_cost(edge, c * cost)
-    }
+    end
   end
 
   # frequency of incoming is frequency of outgoing edges
@@ -368,16 +379,16 @@ class IPETModel
   end
 
   def edge_frequency(edge, factor = 1)
-    [[IPETEdge.new(edge.source, edge.target ? edge.target : :exit, level), factor ]]
+    [[IPETEdge.new(edge.source, edge.target ? edge.target : :exit, level), factor]]
   end
 
   def sum_incoming(block, factor=1)
     if @sum_incoming_override.has_key?(block)
       return @sum_incoming_override[block].map {|e| [e, factor] }
     end
-    block.predecessors.map { |pred|
+    block.predecessors.map do |pred|
       [IPETEdge.new(pred,block,level), factor]
-    }
+    end
   end
 
   def sum_outgoing(block, factor=1)
@@ -385,15 +396,15 @@ class IPETModel
       return @sum_outgoing_override[block].map {|e| [e, factor] }
     end
 
-    block.successors.map { |succ|
+    block.successors.map do |succ|
       [IPETEdge.new(block,succ,level), factor]
-    }
+    end
   end
 
-  def sum_loop_entry(loop, factor=1)
-    sum_incoming(loop.loopheader,factor).reject { |edge,factor|
+  def sum_loop_entry(loop, factor = 1)
+    sum_incoming(loop.loopheader,factor).reject do |edge,_factor|
       edge.backedge?
-    }
+    end
   end
 
 
@@ -404,9 +415,7 @@ class IPETModel
       bb.successors.each do |bb2|
         yield IPETEdge.new(bb,bb2,level)
       end
-      if bb.may_return?
-        yield IPETEdge.new(bb,:exit,level)
-      end
+      yield IPETEdge.new(bb,:exit,level) if bb.may_return?
     end
   end
 
@@ -719,7 +728,7 @@ class IPETBuilder
 
     if options.use_relation_graph
       @bc_model = IPETModel.new(self, @ilp, 'bitcode')
-      @pml_level = { :src => 'bitcode', :dst => 'machinecode' }
+      @pml_level = { src: 'bitcode', dst: 'machinecode' }
       @relation_graph_level = { 'bitcode' => :src, 'machinecode' => :dst }
     end
 
@@ -742,13 +751,13 @@ class IPETBuilder
     reachable_set(function) do |mf_function|
       # inspect callsites in the current function
       succs = Set.new
-      mf_function.callsites.each { |cs|
+      mf_function.callsites.each do |cs|
         next if @mc_model.infeasible?(cs.block)
-        @mc_model.calltargets(cs).each { |f|
-          assert("calltargets(cs) is nil") { ! f.nil? }
+        @mc_model.calltargets(cs).each do |f|
+          assert("calltargets(cs) is nil") { !f.nil? }
           succs.add(f)
-        }
-      }
+        end
+      end
       succs
     end
   end
@@ -882,9 +891,9 @@ class IPETBuilder
     build_refinement(@entry, flowfacts)
 
     mf_functions = get_functions_reachable_from_function(@entry['machinecode'])
-    mf_functions.each { |mf_function |
+    mf_functions.each do |mf_function|
       add_function_with_blocks(mf_function, cost_block)
-    }
+    end
 
     mf_functions.each do |f|
       add_bitcode_constraints(f) if @bc_model
@@ -893,12 +902,12 @@ class IPETBuilder
 
     @mc_model.add_entry_constraint(@entry['machinecode'])
 
-    add_global_call_constraints()
+    add_global_call_constraints
 
-    flowfacts.each { |ff|
+    flowfacts.each do |ff|
       debug(@options,:ipet) { "adding flowfact #{ff}" }
       add_flowfact(ff)
-    }
+    end
   end
 
   def add_function_with_blocks(mf_function, cost_block)
@@ -913,9 +922,7 @@ class IPETBuilder
     end
 
     # bitcode variables and markers
-    if @bc_model
-      add_bitcode_variables(mf_function)
-    end
+    add_bitcode_variables(mf_function) if @bc_model
 
     # Add block constraints
     mf_function.blocks.each_with_index do |block, ix|
@@ -925,9 +932,7 @@ class IPETBuilder
         next
       end
       @mc_model.add_block_constraint(block)
-      if @options.mbb_variables
-        @mc_model.add_block(block)
-      end
+      @mc_model.add_block(block) if @options.mbb_variables
     end
 
     # Return number of added basic blocks
@@ -958,7 +963,7 @@ class IPETBuilder
     end
   end
 
-  def add_global_call_constraints()
+  def add_global_call_constraints
     @mf_function_callers.each do |f,ces|
       @mc_model.add_function_constraint(f, ces)
     end
@@ -1401,7 +1406,7 @@ class IPETBuilder
     operator = ff.op
     const = 0
 
-    ff.lhs.each { |term|
+    ff.lhs.each do |term|
       unless term.context.empty?
         warn("IPETBuilder#add_flowfact: context sensitive program points not supported: #{ff}")
         return false
@@ -1430,9 +1435,9 @@ class IPETBuilder
         warn("IPETBuilder#add_flowfact: references instruction, not block or edge: #{ff}")
         return false
       else
-        raise Exception.new("IPETBuilder#add_flowfact: Unknown programpoint type: #{term.programpoint.class}")
+        raise Exception, "IPETBuilder#add_flowfact: Unknown programpoint type: #{term.programpoint.class}"
       end
-    }
+    end
     scope = ff.scope
     unless scope.context.empty?
       warn("IPETBUilder#add_flowfact: context sensitive scopes not supported: #{ff}")
@@ -1447,7 +1452,7 @@ class IPETBuilder
     elsif scope.programpoint.kind_of?(GlobalProgramPoint)
       rhs += model.global_program_point(scope.programpoint, -1)
     else
-      raise Exception.new("IPETBuilder#add_flowfact: Unknown scope type: #{scope.programpoint.class}")
+      raise Exception, "IPETBuilder#add_flowfact: Unknown scope type: #{scope.programpoint.class}"
     end
 
     begin
@@ -1479,8 +1484,6 @@ class IPETBuilder
     end
   end
 
-private
-
   # build the control-flow refinement (which provides additional
   # flow information used to prune the callgraph/CFG)
   def build_refinement(gcfg_or_hash, ffs)
@@ -1488,15 +1491,17 @@ private
 
     entry = gcfg_or_hash.kind_of?(Hash) ? gcfg_or_hash: gcfg_or_hash.get_entry
 
-    entry.each { |level,functions|
+    entry.each do |level,functions|
       cfr = ControlFlowRefinement.new(functions[0], level)
-      ffs.each { |ff|
+      ffs.each do |ff|
         next if ff.level != level
         cfr.add_flowfact(ff)
-      }
+      end
       @refinement[level] = cfr
-    }
+    end
   end
+
+private
 
   # add variables for bitcode basic blocks and relation graph
   # (only if relation graph is available)
@@ -1512,31 +1517,29 @@ private
       @ilp.add_variable(edge, :relationgraph)
     end
     # record markers
-    bitcode_function.blocks.each { |bb|
-        bb.instructions.each { |i|
-            if i.marker
-              (@markers[i.marker]||=[]).push(i)
-            end
-        }
-    }
+    bitcode_function.blocks.each do |bb|
+      bb.instructions.each do |i|
+        (@markers[i.marker] ||= []).push(i) if i.marker
+      end
+    end
   end
 
   # replace markers by instructions
   def replace_markers(ff)
     new_lhs = TermList.new([])
-    ff.lhs.each { |term|
+    ff.lhs.each do |term|
         if term.programpoint.kind_of?(Marker)
           factor = term.factor
-          if ! @markers[term.programpoint.name]
-            raise Exception.new("No instructions corresponding to marker #{term.programpoint.name.inspect}")
+          unless @markers[term.programpoint.name]
+            raise Exception, "No instructions corresponding to marker #{term.programpoint.name.inspect}"
           end
-          @markers[term.programpoint.name].each { |instruction|
+          @markers[term.programpoint.name].each do |instruction|
               new_lhs.push(Term.new(instruction.block, factor))
-            }
+            end
         else
           new_lhs.push(term)
         end
-      }
+      end
     FlowFact.new(ff.scope, new_lhs, ff.op, ff.rhs, ff.attributes)
   end
 
@@ -1548,25 +1551,25 @@ private
     return unless rg.accept?(@options)
 
     bitcode_function = rg.get_function(:src)
-    bitcode_function.blocks.each { |block|
+    bitcode_function.blocks.each do |block|
       @bc_model.add_block_constraint(block)
-    }
+    end
     # Our LCTES 2013 paper describes 5 sets of constraints referenced below
     # map from src/dst edge to set of corresponding relation edges (constraint set (3) and (4))
-    rg_edges_of_edge   = { :src => {}, :dst => {} }
+    rg_edges_of_edge = { src: {}, dst: {} }
     # map from progress node to set of outgoing src/dst edges (constraint set (5))
-    rg_progress_edges = { }
+    rg_progress_edges = {}
     each_relation_edge(rg) do |edge|
       rg_level = relation_graph_level(edge.level.to_s)
       source_block = edge.source.get_block(rg_level)
-      target_block = (edge.target.type == :exit) ? :exit : (edge.target.get_block(rg_level))
+      target_block = edge.target.type == :exit ? :exit : edge.target.get_block(rg_level)
 
       assert("Bad RG: #{edge}") { source_block && target_block }
       # (3),(4)
-      (rg_edges_of_edge[rg_level][IPETEdge.new(source_block,target_block,edge.level)] ||=[]).push(edge)
+      (rg_edges_of_edge[rg_level][IPETEdge.new(source_block,target_block,edge.level)] ||= []).push(edge)
       # (5)
       if edge.source.type == :entry || edge.source.type == :progress
-        rg_progress_edges[edge.source] ||= { :src => [], :dst => [] }
+        rg_progress_edges[edge.source] ||= { src: [], dst: [] }
         rg_progress_edges[edge.source][rg_level].push(edge)
       end
     end
@@ -1586,16 +1589,14 @@ private
 
   # return all relation-graph edges
   def each_relation_edge(rg)
-    rg.nodes.each { |node|
-      [:src,:dst].each { |rg_level|
+    rg.nodes.each do |node|
+      [:src,:dst].each do |rg_level|
         next unless node.get_block(rg_level)
-        node.successors(rg_level).each { |node2|
-          if node2.type == :exit || node2.get_block(rg_level)
-            yield IPETEdge.new(node,node2,pml_level(rg_level))
-          end
-        }
-      }
-    }
+        node.successors(rg_level).each do |node2|
+          yield IPETEdge.new(node,node2,pml_level(rg_level)) if node2.type == :exit || node2.get_block(rg_level)
+        end
+      end
+    end
   end
 end # IPETModel
 

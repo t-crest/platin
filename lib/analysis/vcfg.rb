@@ -14,24 +14,25 @@ module PML
 
 # Necessary flow information to build control-flow model
 class FlowInformation
-  def is_infeasible(block, context = nil)
+  def is_infeasible(_block, _context = nil)
     false
   end
-  def get_calltargets(callsite, context = nil)
+
+  def get_calltargets(callsite, _context = nil)
     if callsite.unresolved_call?
-      raise Exception.new("Unresolved call")
+      raise Exception, "Unresolved call"
     else
       callsite.callees
     end
   end
 end
 
-
 # Flat Control-Flow Model, consists of a set of virtual CFGs
 class ControlFlowModel
   attr_reader :ctx_manager, :vcfgs
   def initialize(function_list, entry, flowfacts, ctx_manager, arch, opts = {})
-    @function_list, @entry, @flowfacts, @ctx_manager, @arch, @opts = function_list, entry, flowfacts, ctx_manager, arch, opts.dup
+    @function_list, @entry, @flowfacts = function_list, entry, flowfacts
+    @ctx_manager, @arch, @opts         = ctx_manager, arch, opts.dup
     @vcfgs = { @entry => VCFG.new(@entry, arch) }
     @locations, @scope_entries, @scope_exits = {}, {}, {}
     extract_flow_refinements
@@ -48,14 +49,13 @@ class ControlFlowModel
       # node.context_tree.dump($stdout,1)
     end
   end
+
   #
   # get or create the VCFG for the given function
   #
   def get_vcfg(f)
     vcfg = @vcfgs[f]
-    unless vcfg
-      vcfg = @vcfgs[f] = VCFG.new(f, @arch)
-    end
+    vcfg ||= @vcfgs[f] = VCFG.new(f, @arch)
     vcfg
   end
 
@@ -66,14 +66,12 @@ class ControlFlowModel
     get_vcfg(@function_list.by_label(label))
   end
 
-
   #
   # get location object (unique)
   #
   def location(node, ctx)
-    (@locations[node]||={})[ctx]||=Location.new(self, node,ctx)
+    (@locations[node] ||= {})[ctx] ||= Location.new(self, node,ctx)
   end
-
 
   #
   # record scope entry (lazy scope-graph construction)
@@ -96,17 +94,17 @@ class ControlFlowModel
   def record_scope_entry(scope_node, scope_context_entry, scope_context_before)
     dict = (@scope_entries[scope_node] ||= {})
     (dict[scope_context_entry] ||= Set.new).add(scope_context_before)
-    #puts "Recording scope entry:"
-    #puts " scope node: #{scope_node}"
-    #puts " scope context entry: #{scope_context_entry}"
-    #puts " scope context before:#{scope_context_before}"
+    # puts "Recording scope entry:"
+    # puts " scope node: #{scope_node}"
+    # puts " scope context entry: #{scope_context_entry}"
+    # puts " scope context before:#{scope_context_before}"
   end
 
   def matching_scope_entries(scope_node, scope_context_entry)
-    #puts "Match scope entry:"
-    #puts " scope node: #{scope_node}"
-    #puts " scope context entry: #{scope_context_entry}"
-    #puts " matching scope contexts before: #{@scope_entries[scope_node][scope_context_entry].to_a.join(", ")}"
+    # puts "Match scope entry:"
+    # puts " scope node: #{scope_node}"
+    # puts " scope context entry: #{scope_context_entry}"
+    # puts " matching scope contexts before: #{@scope_entries[scope_node][scope_context_entry].to_a.join(", ")}"
     @scope_entries[scope_node][scope_context_entry]
   end
 
@@ -117,24 +115,26 @@ class ControlFlowModel
     dict = (@scope_exits[scope_node] ||= {})
     dict[scope_context_entry] ||= Set.new
     dict[scope_context_entry].add(exit_location)
-    #puts "Recording scope exit:"
-    #puts " scope node: #{scope_node}"
-    #puts " scope context entry: #{scope_context_entry}"
-    #puts " exit location: #{exit_location}"
+    # puts "Recording scope exit:"
+    # puts " scope node: #{scope_node}"
+    # puts " scope context entry: #{scope_context_entry}"
+    # puts " exit location: #{exit_location}"
   end
 
   def matching_scope_exits(scope_node, scope_context_entry)
-    #puts "Match scope exits:"
-    #puts " scope node: #{scope_node}"
-    if ! @scope_exits[scope_node] || ! @scope_exits[scope_node][scope_context_entry]
-      #puts " No exits recorded"
+    # puts "Match scope exits:"
+    # puts " scope node: #{scope_node}"
+    if !@scope_exits[scope_node] || !@scope_exits[scope_node][scope_context_entry]
+      # puts " No exits recorded"
       return []
     end
-    #puts " scope context entry: #{scope_context_entry}"
-    #puts " matching scope exit locations: #{@scope_exits[scope_node][scope_context_entry].to_a.join(", ")}"
+    # puts " scope context entry: #{scope_context_entry}"
+    # puts " matching scope exit locations: #{@scope_exits[scope_node][scope_context_entry].to_a.join(", ")}"
     @scope_exits[scope_node][scope_context_entry]
   end
+
 private
+
   #
   # Refine control-flow model using infeasible/calltarget flowfact information
   #
@@ -152,15 +152,19 @@ private
         get_callnode(cs.instruction).refine_calltargets(to_bounded_stack(cs.context), target_vcfgs)
       end
       # set infeasible blocks
-      scope,bref = ff.get_block_infeasible
-      if scope && scope.programpoint.kind_of?(Function) && scope.programpoint == @entry && scope.any_context?
-        get_vcfg(bref.function).get_blockstart(bref.block).set_infeasible(to_bounded_stack(bref.context))
+      infeasibleblocks = ff.get_block_infeasible
+      infeasibleblocks.each do |scope,bref|
+        if scope && scope.programpoint.kind_of?(Function) && scope.programpoint == @entry && scope.any_context?
+          get_vcfg(bref.function).get_blockstart(bref.block).set_infeasible(to_bounded_stack(bref.context))
+        end
       end
     end
   end
+
   def get_callnode(cs)
     get_vcfg(cs.function).get_callnode(cs)
   end
+
   def to_bounded_stack(callstring)
     BoundedStack.create(callstring.callsites.map { |csref| get_callnode(csref.instruction) })
   end
@@ -186,9 +190,9 @@ class VCFG
     # Link nodes in the VCFG
     @entry.add_successor(@blockstart[function.blocks.first])
     function.blocks.each do |succblock|
-      succnode  = @blockstart[succblock]
+      succnode = @blockstart[succblock]
       assert("No node matching block #{succblock}") { succnode }
-      (block_predecessors[succblock]||[]).each do |prednode|
+      (block_predecessors[succblock] || []).each do |prednode|
         predblock = prednode.block
         # if successors is in a different loop then predecessor, we need to insert loop exit nodes
         if predblock.loopnest > 0 && succblock.loops.first != predblock.loops.first
@@ -211,21 +215,25 @@ class VCFG
       end
     end
   end
+
   def get_callnode(callsite)
     assert("expecting instruction, not #{callsite.class}") { callsite.kind_of?(Instruction) }
     @callnodes[callsite]
   end
+
   def get_blockstart(block)
     assert("expecting block, not #{block.class}") { block.kind_of?(Block) }
     @blockstart[block]
   end
+
 private
-  def build_basic_block_nodes(function, arch)
+
+  def build_basic_block_nodes(function, _arch)
     first_nodes = {}
     block_predecessors = {}
     callnodes = {}
     function.blocks.each do |block|
-      if(block.instructions.size == 0)
+      if block.instructions.empty?
         first_nodes[block] = blocknode = BlockSliceNode.new(self, block, 0, -1)
         block.successors.each { |b| add_block_predecessor(block_predecessors, b, blocknode) }
         next
@@ -234,7 +242,7 @@ private
       split_node, index = nil, 0
       current_node = BlockSliceNode.new(self, block, 0)
       first_nodes[block] = current_node
-      while(index < block.instructions.size)
+      while index < block.instructions.size
         current_instruction = block.instructions[index]
         if split_node
           current_node = BlockSliceNode.new(self, block, index)
@@ -255,33 +263,33 @@ private
           has_branchtarget = true
           index = get_split_index(current_node, block, index)
           split_node = current_node
-          current_instruction.branch_targets.each { |succblock|
+          current_instruction.branch_targets.each do |succblock|
             add_block_predecessor(block_predecessors,succblock,split_node)
-          }
+          end
         else
           index += 1
         end
       end
       if block.successors.empty?
         # Either return or stuck node (should never be emitted by the compiler)
-	# SH: could be a tail call to a noreturn function; check if node has a call
-        if ! has_return
+        # SH: could be a tail call to a noreturn function; check if node has a call
+        unless has_return
           # warn("Block with empty successors but without return information - adding exit edge")
           current_node.add_successor(@exit)
         end
-      elsif ! has_branchtarget
+      elsif !has_branchtarget
         # Either no branch information available or no branches in the block
         # warn("No branch-target information available") if block.successors.size != 1
-        block.successors.each { |b|
+        block.successors.each do |b|
           add_block_predecessor(block_predecessors, b, current_node)
-        }
-      elsif b = block.fallthrough_successor
+        end
+      elsif (b = block.fallthrough_successor)
         # There was branch information available, and the block is fall-through
         add_block_predecessor(block_predecessors,b,current_node)
       end
       current_node.last_index = block.instructions.size - 1
     end
-    return [first_nodes, block_predecessors, callnodes]
+    [first_nodes, block_predecessors, callnodes]
   end
 
   # compute index of instruction that should be the start of a new block after
@@ -291,7 +299,7 @@ private
     delay_slots_left = ins.delay_slots
 
     # find the bundle in the last delay slot
-    while(delay_slots_left > 0)
+    while delay_slots_left > 0
       # find next bundle
       current_index += 1
       current_index += 1 while block.instructions[current_index].bundled?
@@ -301,11 +309,11 @@ private
 
     # current index now points at the bundle for the last delay slot
     # find the last instruction in this bundle
-    while (current_index+1) < block.instructions.length && block.instructions[current_index+1].bundled?
+    while (current_index + 1) < block.instructions.length && block.instructions[current_index + 1].bundled?
       current_index += 1
     end
     current_node.last_index = current_index
-    return (current_node.last_index + 1)
+    (current_node.last_index + 1)
   end
 
   def add_block_predecessor(dict, succblock, prednode)
@@ -320,12 +328,10 @@ private
   end
 end
 
-
 # VCFG Nodes
 #  For efficiency reasons, we do not use qnames here
 #  That is, CfgNodes are compared by pointer equality
 class CfgNode
-
   attr_reader :vcfg, :nid, :successors, :predecessors, :context_tree
 
   def initialize(vcfg)
@@ -345,21 +351,30 @@ class CfgNode
   end
 
   # if this is a scope entry (call, loop-enter), matching scope exits in the given context
-  def matching_scope_exits(cfmodel, location); [] ; end
-  def callnode? ; false ; end
-  def instructions ; [] ; end
-  def entry? ; false ; end
-  def exit? ; false ; end
-  def block ; nil ; end
-  def block_start? ; false ; end
+  def matching_scope_exits(_cfmodel, _location); []; end
+
+  def callnode?; false; end
+
+  def instructions; []; end
+
+  def entry?; false; end
+
+  def exit?; false; end
+
+  def block; nil; end
+
+  def block_start?; false; end
 end
 
 class EntryNode < CfgNode
-  def initialize(vcfg) ; super(vcfg); end
-  def entry? ; true ; end
+  def initialize(vcfg); super(vcfg); end
+
+  def entry?; true; end
+
   def to_s
     "#<EntryNode #{vcfg.function}>"
   end
+
   def successors_with_context(cfmodel, location)
     Enumerator.new do |ss|
       @successors.each { |s| ss << cfmodel.location(s, location.context) }
@@ -375,9 +390,11 @@ class BlockSliceNode < CfgNode
     @block, @first_index, @last_index = block, first_ins, last_ins
     @infeasible = ContextTree.new
   end
+
   def set_infeasible(callstring)
     @infeasible.set(callstring.to_a, true)
   end
+
   def successors_with_context(cfmodel, location)
     # check infeasibility
     return [] if @infeasible.path_find_first(location.context.callstring.to_a)
@@ -385,12 +402,15 @@ class BlockSliceNode < CfgNode
       @successors.each { |s| ss << cfmodel.location(s, cfmodel.ctx_manager.blockslice(location.context, self)) }
     end
   end
+
   def instructions
     @block.instructions[@first_index..@last_index]
   end
+
   def block_start?
     @first_index == 0
   end
+
   def to_s
     "#<BlockSliceNode #{block} #{first_index} #{last_index}>"
   end
@@ -407,6 +427,7 @@ class CallNode < CfgNode
   def block
     @callsite.block
   end
+
   def block_start?
     # SH: Call nodes are always preceded by a BlockSliceNode.. (I think)
     false
@@ -425,10 +446,10 @@ class CallNode < CfgNode
       callee_context = cfmodel.ctx_manager.push_call(location.context, self)
 
       # yield locations at callee's entries
-      callees(location).each { |vcfg|
+      callees(location).each do |vcfg|
         cfmodel.record_scope_entry(vcfg.entry, callee_context.scope_context, location.context)
         ss << cfmodel.location(vcfg.entry, callee_context)
-      }
+      end
     end
   end
 
@@ -439,11 +460,11 @@ class CallNode < CfgNode
       # add call to context
       scope_entry_context = cfmodel.ctx_manager.push_call(location.context, self).scope_context
 
-      callees(location).each { |vcfg|
-        cfmodel.matching_scope_exits(vcfg.entry, scope_entry_context).each { |location|
+      callees(location).each do |vcfg|
+        cfmodel.matching_scope_exits(vcfg.entry, scope_entry_context).each do |location|
           ss << location
-        }
-      }
+        end
+      end
     end
   end
 
@@ -451,48 +472,51 @@ class CallNode < CfgNode
   # return VCFGs of functions possible called at this location
   #
   def callees(location)
-    if ts = @targets.path_find_last(location.context.callstring.to_a)
+    if (ts = @targets.path_find_last(location.context.callstring.to_a))
       return ts
     end
     if location.node.callsite.unresolved_call?
-      raise Exception.new("Indirect calls not yet supported: #{location.node.callsite}")
+      raise Exception, "Indirect calls not yet supported: #{location.node.callsite}"
     end
     Enumerator.new do |ss|
-      callsite.callees.each { |flabel|
+      callsite.callees.each do |flabel|
         ss << location.cfmodel.by_label(flabel)
-      }
+      end
     end
   end
 
-  def callnode? ; true; end
+  def callnode?; true; end
+
   def to_s
     "#<CallNode #{callsite}>"
   end
 end
 
 class ExitNode < CfgNode
-  def initialize(vcfg) ; super(vcfg) ; end
-  def exit? ; true ; end
+  def initialize(vcfg); super(vcfg); end
+
+  def exit?; true; end
+
   def successors_with_context(cfmodel, location)
     Enumerator.new do |ss|
-
       # get return context
       return_context, callnode = cfmodel.ctx_manager.pop_call(location.context)
       scope_entry_context = location.context.scope_context
 
       # handle program exit
-      next if ! return_context
+      next unless return_context
 
       # record scope exit
       cfmodel.record_scope_exit(vcfg.entry, scope_entry_context, location)
 
       # for all registered scope entry contexts
-      cfmodel.matching_scope_entries(vcfg.entry, scope_entry_context).each { |scope_context_before|
+      cfmodel.matching_scope_entries(vcfg.entry, scope_entry_context).each do |scope_context_before|
         refined_context = return_context.with_scope_context(scope_context_before)
         callnode.successors.each { |s| ss << cfmodel.location(s, refined_context) }
-      }
+      end
     end
   end
+
   def to_s
     "#<ExitNode #{vcfg.function}>"
   end
@@ -524,15 +548,16 @@ class LoopStateNode < CfgNode
         # record scope exit
         cfmodel.record_scope_exit(loopnode, scope_entry_context, location)
         # for all registered scope entry contexts
-        cfmodel.matching_scope_entries(loopnode, scope_entry_context).each { |scope_context_before|
+        cfmodel.matching_scope_entries(loopnode, scope_entry_context).each do |scope_context_before|
           refined_context = exit_context.with_scope_context(scope_context_before)
           successors.each { |s| ss << cfmodel.location(s, refined_context) }
-        }
+        end
       else
-        raise Exception.new("Bad loop state action")
+        raise Exception, "Bad loop state action"
       end
     end
   end
+
   def matching_scope_exits(cfmodel, location)
     return [] unless @action == :enter
     Enumerator.new do |ss|
@@ -541,11 +566,11 @@ class LoopStateNode < CfgNode
       cfmodel.matching_scope_exits(self, scope_entry_context).each { |location| ss << location }
     end
   end
+
   def to_s
     "#<LoopStateNode #{loop} #{action}>"
   end
 end
-
 
 # Locations are pairs of VCFG nodes and context
 class Location
@@ -553,25 +578,32 @@ class Location
   def initialize(cfmodel, node, context)
     @cfmodel, @node, @context = cfmodel, node, context
   end
+
   def successors
     @node.successors_with_context(@cfmodel, self)
   end
+
   def matching_scope_exits
     @node.matching_scope_exits(@cfmodel, self)
   end
+
   def to_s
     "#<Location #{@node} #{@context}>"
   end
+
   def ==(other)
     return false if other.nil?
     return false unless other.kind_of?(Location)
     @node == other.node && @context == other.context
   end
-  def eql?(other); self == other ; end
+
+  def eql?(other); self == other; end
+
   def hash
     return @hash if @hash
-    @hash=@node.hash ^ @context.hash
+    @hash = @node.hash ^ @context.hash
   end
+
   def <=>(other)
     hash <=> other.hash
   end
@@ -589,23 +621,24 @@ class Interpreter
     @semantics, @cfmodel, @ctx_manager = semantics, cfmodel, cfmodel.ctx_manager
     @steps = 0
   end
+
   def interpret(initial_node, start_value)
     @in = {}
     @callcontexts, @returncontexts, @loopcontexts = {}, {}, {}
     initial_loc = Location.new(@cfmodel, initial_node, @ctx_manager.initial)
     @in[initial_loc] = start_value
     @queue = [initial_loc]
-    while ! @queue.empty?
+    until @queue.empty?
       @steps += 1
       loc = @queue.pop
       inval = @in[loc]
-      outval  = @semantics.transfer_value(loc.node, inval)
-      loc.successors.each { |loc|
-        if change = @semantics.merge(@in[loc],outval)
+      outval = @semantics.transfer_value(loc.node, inval)
+      loc.successors.each do |loc|
+        if (change = @semantics.merge(@in[loc],outval))
           @in[loc] = change[1]
           @queue.unshift(loc)
         end
-      }
+      end
       # enqueue matching scope exit nodes (lazy construction of context-sensitive callgraph)
       loc.matching_scope_exits.each { |loc| @queue.unshift(loc) }
     end
@@ -613,18 +646,18 @@ class Interpreter
   end
 
   def inputs_by_node
-    by_node= {}
-    @in.each { |loc,value| (by_node[loc.node] ||={})[loc.context] = value }
+    by_node = {}
+    @in.each { |loc,value| (by_node[loc.node] ||= {})[loc.context] = value }
     by_node
   end
 
-  def stats(io=$stdout)
+  def stats(io = $stdout)
     io.puts "Nodes: #{@cfmodel.vcfgs.values.map { |cfg| cfg.nodes.length }.inject(0,:+)}"
     io.puts "Locations: #{@in.keys.size}"
     io.puts "Steps: #{steps}"
   end
 
-  def dump(io=$stdout)
+  def dump(io = $stdout)
     inputs_by_node.each do |node,ctxs|
       io.puts " NODE: #{node}#{" #{node.block}" if node.respond_to?(:block)}"
       ctxs.each do |ctx,val|
@@ -636,12 +669,13 @@ class Interpreter
 end
 
 # Top / Bottom
-TOP=:top
-BOTTOM=:bottom
+TOP = :top
+BOTTOM = :bottom
 
 # reachability semantics (trivial)
 class ReachabilitySemantics
-  def transfer_value(node, inval) ; inval ; end
+  def transfer_value(_node, inval); inval; end
+
   def merge(oldval, newval)
     if oldval
       false # no change
@@ -650,6 +684,5 @@ class ReachabilitySemantics
     end
   end
 end
-
 
 end # module PML

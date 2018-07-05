@@ -20,13 +20,15 @@ class AnalysisConfig < PMLObject
       name, program_entry, analysis_entry, tool_configurations
     set_yaml_repr(data)
   end
-  def AnalysisConfig.from_pml(pml, data)
+
+  def self.from_pml(pml, data)
     AnalysisConfig.new(data['name'],data['program-entry'],data['analysis-entry'],
                        ToolConfigList.from_pml(pml, data['tool-configurations'] || []),data)
   end
+
   def to_pml
     { 'name' => @name, 'program-entry' => @program_entry, 'analysis-entry' => @analysis_entry,
-      'tool-configurations' => @tool_configurations }.delete_if { |k,v| v.nil? }
+      'tool-configurations' => @tool_configurations }.delete_if { |_k,v| v.nil? }
   end
 end
 
@@ -41,12 +43,14 @@ class ToolConfig < PMLObject
     @name, @configuration, @options = name, configuration, options
     set_yaml_repr(data)
   end
-  def ToolConfig.from_pml(pml, data)
+
+  def self.from_pml(_pml, data)
     ToolConfig.new(data['name'],data['configuration'],data['options'], data)
   end
+
   def to_pml
-    { 'name' => @name, 'configuration' => @configuration, 
-      'options' => @options }.delete_if { |k,v| v.nil? }
+    { 'name' => @name, 'configuration' => @configuration,
+      'options' => @options }.delete_if { |_k,v| v.nil? }
   end
 end
 

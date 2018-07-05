@@ -15,29 +15,29 @@
 
 require 'platin'
 require 'tools/extract-symbols.rb'
+require 'English'
 include PML
 
 class AnalyzeTraceTool
   def initialize(pml, options, entry)
     @pml, @options, @entry = pml, options, entry
   end
+
   def analyze_trace
     tm = MachineTraceMonitor.new(@pml, @options)
-    debug(@options, :trace) {
+    debug(@options, :trace) do
       tm.subscribe(VerboseRecorder.new(DebugIO.new))
       "Starting trace analysis"
-    }
+    end
     @main_recorder = RecorderScheduler.new(@options.recorders, @entry, @options)
     tm.subscribe(@main_recorder)
     trace = @pml.arch.simulator_trace(@options, tm.watchpoints)
     tm.run(trace)
 
-    if(@main_recorder.runs == 0)
-      die "Analysis entry '#{@options.analysis_entry}' (pc: #{@entry.address}) never executed"
-    end
+    die "Analysis entry '#{@options.analysis_entry}' (pc: #{@entry.address}) never executed" if @main_recorder.runs == 0
     @executed_blocks = @main_recorder.executed_blocks
     @infeasible_functions = Set.new
-    @executed_blocks.each do |function,bset|
+    @executed_blocks.each do |function,_bset|
       function.callsites.each do |cs|
         next if cs.unresolved_call?
         cs.callees.each do |callee|
@@ -48,6 +48,7 @@ class AnalyzeTraceTool
     end
     statistics("TRACE", "simulator trace length" => trace.stats_num_items) if @options.stats
   end
+
   def console_output
     # Verbose Output
     if @options.verbose || @options.console_output
@@ -62,14 +63,12 @@ class AnalyzeTraceTool
     end
     @executed_blocks.each do |function,bset|
       function.loops.each do |loop|
-        unless bset.include?(loop.loopheader)
-          warn "Loop #{loop} not executed by trace"
-        end
+        warn "Loop #{loop} not executed by trace" unless bset.include?(loop.loopheader)
       end
     end
     # # Console Output
     # if ! @options.output
-    #   $stdout.puts "=== Summary of '#{@options.analysis_entry}' observed during " + 
+    #   $stdout.puts "=== Summary of '#{@options.analysis_entry}' observed during " +
     #                "execution of '#{@options.trace_entry}' ==="
     #   loops_by_fun = Hash.new
     #   @loops.results.each { |loop, r| (loops_by_fun[loop.function]||=[]).push([loop,r]) }
@@ -86,18 +85,18 @@ class AnalyzeTraceTool
   def export_facts
     outpml = @pml
 
-    fact_context = { 'level' => 'machinecode', 'origin' => @options.flow_fact_output || 'trace'}
+    fact_context = { 'level' => 'machinecode', 'origin' => @options.flow_fact_output || 'trace' }
 
     # if we have a global recorder, add timing extracted from trace
     global_recorders = @main_recorder.global_recorders
-    if ! global_recorders.empty?
+    unless global_recorders.empty?
       global = global_recorders.first
       outpml.timing.add(TimingEntry.new(global.scope,global.results.cycles.max,nil,fact_context))
     end
 
     flowfacts_before = @pml.flowfacts.length
 
-    @main_recorder.recorders.each { |recorder|
+    @main_recorder.recorders.each do |recorder|
       scope = recorder.scope
       suffix = recorder.type
       # Export call targets (mandatory for WCET analysis)
@@ -111,7 +110,7 @@ class AnalyzeTraceTool
       end
       # Export block frequencies; infeasible blocks are necessary for WCET analysis
       recorder.results.blockfreqs.each do |block_ref,freq|
-        type = (freq.max == 0) ? "infeasible" : "block"
+        type = freq.max == 0 ? "infeasible" : "block"
         next unless recorder.report_block_frequencies || type == "infeasible"
         outpml.flowfacts.add(FlowFact.block_frequency(scope, block_ref, freq, fact_context))
       end
@@ -121,46 +120,50 @@ class AnalyzeTraceTool
           outpml.flowfacts.add(FlowFact.loop_bound(loop_ref, bound.max, fact_context))
         end
       end
-    }
-    statistics("TRACE", "extracted flow-flact hypotheses" => outpml.flowfacts.length - flowfacts_before) if @options.stats
+    end
+    if @options.stats
+      statistics("TRACE", "extracted flow-flact hypotheses" =>
+                 outpml.flowfacts.length - flowfacts_before)
+    end
     outpml
   end
 
   # The default recorder record loop bounds, infeasibles and calltargets globally, and
   # intraprocedural block frequencies
-  DEFAULT_RECORDER_SPEC="g:lic,f:b/0"
+  DEFAULT_RECORDER_SPEC = "g:lic,f:b/0"
 
-  def AnalyzeTraceTool.add_config_options(opts)
+  def self.add_config_options(opts)
     Architecture.simulator_options(opts)
     opts.trace_entry
     opts.callstring_length
     opts.target_callret_costs
-    opts.on("--recorders LIST", "recorder specification (=#{DEFAULT_RECORDER_SPEC}; see --help=recorders)") { |recorder_spec|
+    opts.on("--recorders LIST",
+            "recorder specification (=#{DEFAULT_RECORDER_SPEC}; see --help=recorders)") do |recorder_spec|
       opts.options.recorder_spec = recorder_spec
-    }
+    end
     opts.on("--max-cycles NUM", Integer,
-            "consider only the first NUM cycles of the trace") { |num|
+            "consider only the first NUM cycles of the trace") do |num|
       opts.options.max_cycles = num
-    }
+    end
     opts.on("--max-instructions NUM", Integer,
-            "consider only the first NUM instructions of the trace") { |num|
+            "consider only the first NUM instructions of the trace") do |num|
       opts.options.max_instructions = num
-    }
+    end
     opts.on("--max-target-traces NUM", Integer,
-            "maximum number of target function executions to trace (unlimited if not set)") { |num|
+            "maximum number of target function executions to trace (unlimited if not set)") do |num|
       opts.options.max_target_traces = num
-    }
+    end
     opts.on("--sim-input FILE", "Pass file as input to program under test.") { |f| opts.options.sim_input = f }
-    opts.register_help_topic('recorders') { |io|
+    opts.register_help_topic('recorders') do |io|
       RecorderSpecification.help(io)
-    }
-    opts.add_check { |options|
+    end
+    opts.add_check do |options|
       options.recorder_spec = DEFAULT_RECORDER_SPEC unless options.recorder_spec
       options.recorders = RecorderSpecification.parse(options.recorder_spec, options.callstring_length)
-    }
+    end
   end
 
-  def AnalyzeTraceTool.add_options(opts)
+  def self.add_options(opts)
     ExtractSymbolsTool.add_config_options(opts)
     AnalyzeTraceTool.add_config_options(opts)
     opts.binary_file(true)
@@ -169,12 +172,10 @@ class AnalyzeTraceTool
     opts.generates_flowfacts
   end
 
-  def AnalyzeTraceTool.run(pml,options)
+  def self.run(pml,options)
     needs_options(options, :analysis_entry, :trace_entry, :binary_file, :recorder_spec)
-    entry  = pml.machine_functions.by_label(options.analysis_entry, true)
-    if ! entry
-      die("Analysis entry (ELF label #{options.analysis_entry}) not found")
-    end
+    entry = pml.machine_functions.by_label(options.analysis_entry, true)
+    die("Analysis entry (ELF label #{options.analysis_entry}) not found") unless entry
 
     unless entry.blocks.first.address
       warn("No addresses in PML file, trying to extract from ELF file")
@@ -185,22 +186,21 @@ class AnalyzeTraceTool
     tool.console_output
     tool.export_facts
   end
-
 end
 
-if __FILE__ == $0
-SYNOPSIS=<<EOF
-Run simulator (patmos: pasim --debug-fmt trace), record execution frequencies
-of instructions and generate flow facts. Also records indirect call targets.
-EOF
-  # FIXME: binary file is passed as positional argument, and thus should not be shown
-  # as option argument in usage
-  options, args = PML::optparse( [], "", SYNOPSIS) do |opts|
+if __FILE__ == $PROGRAM_NAME
+  SYNOPSIS = <<-EOF
+  Run simulator (patmos: pasim --debug-fmt trace), record execution frequencies
+  of instructions and generate flow facts. Also records indirect call targets.
+  EOF
+    # FIXME: binary file is passed as positional argument, and thus should not be shown
+    # as option argument in usage
+  options, args = PML::optparse([], "", SYNOPSIS) do |opts|
     opts.needs_pml
     opts.writes_pml
     AnalyzeTraceTool.add_options(opts)
   end
   options.console_output = true unless options.output
-  pml = AnalyzeTraceTool.run(PMLDoc.from_files(options.input), options)
+  pml = AnalyzeTraceTool.run(PMLDoc.from_files(options.input, options), options)
   pml.dump_to_file(options.output) if options.output
 end

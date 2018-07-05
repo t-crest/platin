@@ -3,6 +3,7 @@ require 'pathname'
 require 'json'
 require 'erb'
 require 'pp'
+require 'English'
 
 module VisualisationServer
 
@@ -52,7 +53,8 @@ class Templates
 
   def view_source(file)
     context = binding
-    context.local_variable_set(:title,    "#{file}: Sourceview")
+
+    context.local_variable_set(:title, "#{file}: Sourceview")
     context.local_variable_set(:sourcecode, File.read(file))
     bodytemplate = %{<pre id="l" data-line=" " class="language-c line-numbers"><code><%= h(sourcecode) %></code></pre>}
     context.local_variable_set(:jsscripts, ['/static/js/thirdparty/prism.js'])
@@ -64,22 +66,20 @@ class Templates
 
   def view_ilp(entrypoint, svgurl, constraintsurl, srchintsurl, srcviewurl)
     context = binding
-    context.local_variable_set(:title,    "#{entrypoint}: ILP")
-    #context.local_variable_set(:jsscripts, [ '/static/js/interactivity.js' \
-                                           #, '/static/js/thirdparty/seedrandom.min.js'])
-    context.local_variable_set(:jsscripts, [ '/static/js/interactivity.js' \
+    context.local_variable_set(:title, "#{entrypoint}: ILP")
+    # context.local_variable_set(:jsscripts, [ '/static/js/interactivity.js' \
+                                           # , '/static/js/thirdparty/seedrandom.min.js'])
+    context.local_variable_set(:jsscripts, ['/static/js/interactivity.js' \
                                            , '/static/js/thirdparty/seedrandom.min.js' \
                                            , '/static/js/thirdparty/prism.js' \
                                            , '/static/js/thirdparty/jquery-2.2.4.min.js' \
                                            , '/static/js/thirdparty/jquery.qtip.min.js' \
-                                           , '/static/js/sourceviewtooltip.js' \
-                                           ])
-    #context.local_variable_set(:cssfiles,  ['/static/css/interactivity.css'])
-    context.local_variable_set(:cssfiles,  [ '/static/css/thirdparty/jquery.qtip.min.css' \
+                                           , '/static/js/sourceviewtooltip.js'])
+    # context.local_variable_set(:cssfiles,  ['/static/css/interactivity.css'])
+    context.local_variable_set(:cssfiles,  ['/static/css/thirdparty/jquery.qtip.min.css' \
                                            , '/static/css/thirdparty/prism.css' \
                                            , '/static/css/interactivity.css' \
-                                           , '/static/css/sourceviewtooltip.css' \
-                                           ])
+                                           , '/static/css/sourceviewtooltip.css'])
 
     context.local_variable_set(:svgurl, svgurl)
     context.local_variable_set(:constrainturl, constraintsurl)
@@ -111,13 +111,12 @@ class Templates
 
   def tooltip_test
     context = binding
-    context.local_variable_set(:title,    "tooltiptest")
-    context.local_variable_set(:jsscripts, [ '/static/js/thirdparty/prism.js' \
+    context.local_variable_set(:title, "tooltiptest")
+    context.local_variable_set(:jsscripts, ['/static/js/thirdparty/prism.js' \
                                            , '/static/js/thirdparty/jquery-2.2.4.min.js' \
                                            , '/static/js/thirdparty/jquery.qtip.min.js' \
-                                           , '/static/js/sourceviewtooltip.js' \
-                                           ])
-    context.local_variable_set(:cssfiles,  [ '/static/css/thirdparty/jquery.qtip.min.css' \
+                                           , '/static/js/sourceviewtooltip.js'])
+    context.local_variable_set(:cssfiles,  ['/static/css/thirdparty/jquery.qtip.min.css' \
                                            , '/static/css/thirdparty/prism.css'])
 
     bodytemplate = <<-EOS
@@ -190,12 +189,10 @@ class Server
       begin
         realbase = Pathname.new(basedir).realpath.to_path
         realfile = Pathname.new(File.join(basedir, path)).realpath.to_path
-        if realfile.start_with? realbase
-          return realfile
-        end
-      rescue
+        return realfile if realfile.start_with? realbase
+      rescue StandardError
       end
-      return nil
+      nil
     end
 
     def number_or_nil(string)
@@ -203,7 +200,6 @@ class Server
       num if num.to_s == string
     end
   end
-
 
   class SourceInfoServlet < SourceServlet
     def do_GET(req, resp)
@@ -227,7 +223,7 @@ class Server
       end
 
       begin
-      code = File.read(realfile).split("\n")
+        code = File.read(realfile).split("\n")
       rescue Errno
         resp.body = "Failed to open file"
         raise WEBrick::HTTPStatus::BadRequest
@@ -237,22 +233,20 @@ class Server
         to   = code.length - 1
         out  = code.join("\n")
       else
-        from = [0, realline - realrange-1].max
+        from = [0, realline - realrange - 1].max
         to   = [code.length - 1, realline + realrange].min
         out = code[from, to - from].join("\n")
       end
       resp.content_type = 'application/json'
-      resp.body = JSON.generate({:from => from, :to => to, :code => out})
+      resp.body = JSON.generate(from: from + 1, to: to + 1, code: out)
       raise WEBrick::HTTPStatus::OK
     end
   end
 
   class SourceViewServlet < SourceServlet
     def do_GET(req, resp)
-      file  = req.query["file"]
-      if file
-        realfile = resolve_file(@srcroot, file)
-      end
+      file = req.query["file"]
+      realfile = resolve_file(@srcroot, file) if file
 
       if realfile.nil?
         resp.body = 'Illegal parameters, expecting filepath file and numbers line, range'
@@ -270,7 +264,7 @@ class Server
   end
 
   class ToolTipTest < WEBrick::HTTPServlet::AbstractServlet
-    def do_GET(req, resp)
+    def do_GET(_req, resp)
       resp.content_type = 'text/html'
       begin
         resp.body = Templates.new.tooltip_test
@@ -282,14 +276,13 @@ class Server
   end
 
   class ILPServlet < WEBrick::HTTPServlet::AbstractServlet
-
     def initialize(server, entrypoint, svgurl, constraintsurl, srchinturl, srcviewurl)
       super server
       @entrypoint, @svgurl, @constraintsurl, @srchinturl = entrypoint, svgurl, constraintsurl, srchinturl
       @srcviewurl = srcviewurl
     end
 
-    def do_GET(req, resp)
+    def do_GET(_req, resp)
       resp.content_type = 'text/html'
       begin
         resp.body = Templates.new.view_ilp(@entrypoint, @svgurl, @constraintsurl, @srchinturl, @srcviewurl)
@@ -310,7 +303,7 @@ class Server
     def do_GET(req, resp)
       effpath = req.path_info.gsub(/^\/+/, '')
 
-      raise WEBrick::HTTPStatus::NotFound unless @data.has_key?(effpath)
+      raise WEBrick::HTTPStatus::NotFound unless @data.key?(effpath)
 
       data = @data[effpath]
       if data.is_a?(Hash)
@@ -337,10 +330,9 @@ class Server
 
       raise WEBrick::HTTPStatus::NotFound unless effpath.empty?
 
-      resp.set_redirect(WEBrick::HTTPStatus::TemporaryRedirect, @url);
+      resp.set_redirect(WEBrick::HTTPStatus::TemporaryRedirect, @url)
   end
   end
-
 
   def initialize(mode, opts, **webrick_opts)
     @server = WEBrick::HTTPServer.new webrick_opts
@@ -349,7 +341,7 @@ class Server
 
     # Sourceinfo servlets
     if [:ilp].include?(mode)
-      assert("No source-root given") { opts.has_key?(:srcroot) }
+      assert("No source-root given") { opts.key?(:srcroot) }
       assert("#{opts[:srcroot]}: No such directory") { File.directory?(opts[:srcroot]) }
       @server.mount '/api/srcinfo', SourceInfoServlet, opts[:srcroot]
       @server.mount '/sourceview', SourceViewServlet, opts[:srcroot]
@@ -357,24 +349,27 @@ class Server
 
     case mode
     when :ilp
-      assert("HashServlet expects an Hash") { \
-        opts.is_a?(Hash) && opts.has_key?(:data) && opts[:data].is_a?(Hash) \
-      }
+      assert("HashServlet expects an Hash") do \
+        opts.is_a?(Hash) && opts.key?(:data) && opts[:data].is_a?(Hash) \
+      end
       @server.mount '/api/data', HashServlet, opts[:data]
-      @server.mount '/', ILPServlet, opts[:entrypoint], '/api/data/ilp.svg', '/api/data/constraints.json', '/api/data/srchints.json', '/sourceview'
+      @server.mount '/', ILPServlet, opts[:entrypoint], '/api/data/ilp.svg',
+                    '/api/data/constraints.json', '/api/data/srchints.json', '/sourceview'
     when :callgraph
-      assert("HashServlet expects an Hash") { \
-        opts.is_a?(Hash) && opts.has_key?(:data) && opts[:data].is_a?(Hash) \
-      }
+      assert("HashServlet expects an Hash") do \
+        opts.is_a?(Hash) && opts.key?(:data) && opts[:data].is_a?(Hash) \
+      end
       @server.mount '/api/data', HashServlet, opts[:data]
       @server.mount '/', RedirectServlet, '/api/data/callgraph.svg'
     else
-      raise ArgumentError.new "No such server mode: #{mode}"
+      raise ArgumentError, "No such server mode: #{mode}"
     end
   end
 
   def start
+    # rubocop:disable Style/BlockDelimiter
     old = trap 'INT' do @server.shutdown end
+    # rubocop:enable Style/BlockDelimiter
     @server.start
     trap 'INT', old
   end
@@ -383,13 +378,13 @@ end
 end # module
 
 if __FILE__ == $PROGRAM_NAME
-  assert ("Usage: #{$PROGRAM_NAME} srcroot artifactsdir") {ARGV.length == 2}
+  assert("Usage: #{$PROGRAM_NAME} srcroot artifactsdir") { ARGV.length == 2 }
   server = Server.new(:ilp, \
                       { \
-                          :srcroot => ARGV[0] \
-                        , :assets  => ARGV[1] \
+                        srcroot: ARGV[0], \
+                        assets:  ARGV[1], \
                       },
-                      :BindAddress => '127.0.0.1',
-                      :Port => 8080)
+                      BindAddress: '127.0.0.1',
+                      Port: 8080)
   server.start
 end

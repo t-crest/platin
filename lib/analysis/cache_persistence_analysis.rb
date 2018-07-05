@@ -12,7 +12,6 @@ require 'set'
 # Inspired by the global analysis of [Hyunh et.al 2012]
 #
 class PersistenceDataFlowAnalysis
-
   # for each cache tag T possibly accessed in the scope, compute
   #
   #  NO set:   other tags possibly accessed on paths where T is not accessed at all
@@ -26,19 +25,27 @@ class PersistenceDataFlowAnalysis
   end
 
   class ZeroTagSet < TagSet
-    def access(t); self;     end
-    def concat(set); self ; end
-    def join(other); other ; end
+    def access(_t); self; end
+
+    def concat(_set); self; end
+
+    def join(other); other; end
+
     def to_s; "0"; end
-    def dup ; self ; end
+
+    def dup; self; end
   end
 
   class TopTagSet < TagSet
-    def access(t);   self ; end
-    def concat(set); (set == ZERO) ? ZERO : self; end
-    def join(other); self ; end
+    def access(_t);   self; end
+
+    def concat(set); set == ZERO ? ZERO : self; end
+
+    def join(_other); self; end
+
     def to_s; "1"; end
-    def dup; self ; end
+
+    def dup; self; end
   end
 
   class TagSet
@@ -49,10 +56,12 @@ class PersistenceDataFlowAnalysis
       @set = initial_set
       @check_conflict = check_conflict
     end
+
     def create(set)
       return TOP if @check_conflict.call(set)
       TagSet.new(set, @check_conflict)
     end
+
     def access(t)
       if self == ZERO
         self
@@ -62,27 +71,32 @@ class PersistenceDataFlowAnalysis
         create(@set + Set[t])
       end
     end
+
     def concat(set)
-      if set == ZERO || set == TOP
+      if [ZERO, TOP].include?(set)
         set.concat(self)
       else
         create(@set + set.set)
       end
     end
+
     def join(other)
-      return other.join(self) if  other == ZERO || other == TOP
+      return other.join(self) if [ZERO, TOP].include?(other)
       create(@set + other.set)
     end
+
     def dup
       TagSet.new(@set.dup, @check_conflict)
     end
+
     def to_s
       "{#{@set.to_a.join(",")}}"
     end
+
     def ==(other)
-      return (self.equal?(ZERO)) if other.equal?(ZERO)
-      return (self.equal?(TOP)) if other.equal?(TOP)
-      return @set == other.set
+      return equal?(ZERO) if other.equal?(ZERO)
+      return equal?(TOP) if other.equal?(TOP)
+      @set == other.set
     end
   end
 
@@ -90,28 +104,31 @@ class PersistenceDataFlowAnalysis
     def initialize(active_tags, check_conflict)
       @active_tags, @check_conflict = active_tags, check_conflict
       @no_map, @in_map, @out_map = {}, {}, {}
-      @active_tags.each { |t|
+      @active_tags.each do |t|
         @no_map[t]  = new_tag_set(t)
         @in_map[t]  = TagSet::ZERO
         @out_map[t] = TagSet::ZERO
-      }
+      end
     end
 
     # if t is not active in this scope, any of the active tags might
     # have been accessed without accessing t
-    def no(t) ; @no_map[t] || new_tag_set(t, @active_tags); end
-    def in(t) ; @in_map[t] || TagSet::ZERO; end
-    def out(t) ; @out_map[t] || TagSet::ZERO; end
+    def no(t); @no_map[t] || new_tag_set(t, @active_tags); end
+
+    def in(t); @in_map[t] || TagSet::ZERO; end
+
+    def out(t); @out_map[t] || TagSet::ZERO; end
 
     def new_tag_set(t, initial_set = nil)
-      t_metric = Proc.new { |set|
+      t_metric = proc do |set|
         @check_conflict.call(set + Set[t])
         # info("Conflicting?(#{t} -> #{set.to_a})=#{r}")
-      }
+      end
       TagSet.new(initial_set || Set.new, t_metric)
     end
+
     def access(x)
-      @active_tags.each { |t|
+      @active_tags.each do |t|
         old_no_map = @no_map[t]
         @no_map[t] = if t == x
                        TagSet::ZERO
@@ -128,34 +145,34 @@ class PersistenceDataFlowAnalysis
                       else
                         @out_map[t].access(x)
                       end
-      }
+      end
       self
     end
 
     def join_with(*others)
       changed = false
-      @active_tags.each { |t|
-        [[@no_map,:no],[@in_map,:in],[@out_map,:out]].each { |m,sym|
+      @active_tags.each do |t|
+        [[@no_map,:no],[@in_map,:in],[@out_map,:out]].each do |m,sym|
           inval = m[t]
           joinval = inval
-          others.each { |other|
+          others.each do |other|
             joinval = joinval.join(other.send(sym,t))
-          }
+          end
           if inval != joinval
             changed = true
             m[t] = joinval
           end
-        }
-      }
+        end
+      end
       [self, changed]
     end
 
     def call(results)
-      @active_tags.each { |t|
+      @active_tags.each do |t|
         @in_map[t] = @in_map[t].join(@no_map[t].concat(results.in(t)))
         @no_map[t] = @no_map[t].concat(results.no(t))
         @out_map[t] = @out_map[t].concat(results.no(t)).join(results.out(t))
-      }
+      end
       self
     end
 
@@ -164,18 +181,18 @@ class PersistenceDataFlowAnalysis
     end
 
     def copy_from(other)
-      @active_tags.each { |t|
+      @active_tags.each do |t|
         @no_map[t]  = other.no(t).dup
         @in_map[t]  = other.in(t).dup
         @out_map[t] = other.out(t).dup
-      }
+      end
       self
     end
 
-    def dump(io=$stdout)
-      @active_tags.each { |t|
+    def dump(io = $stdout)
+      @active_tags.each do |t|
         io.printf("  -- %5s: no=%s,in=%s,out=%s\n",t,@no_map[t].to_s, @in_map[t].to_s, @out_map[t].to_s)
-      }
+      end
     end
   end
 
@@ -200,7 +217,6 @@ class PersistenceDataFlowAnalysis
   #
   #
   class PersistenceInfo
-
     attr_reader :final_state, :active_tags
 
     def initialize(rg, results, scope_node, set, active_tags, analysis)
@@ -220,21 +236,22 @@ class PersistenceDataFlowAnalysis
 
     def subscope_persistent?(t, results)
       return false unless locally_persistent?(t)
-      return results.out(t).join(@final_state.in(t)) != TagSet::TOP
+      results.out(t).join(@final_state.in(t)) != TagSet::TOP
     end
 
     def dump(io = $stdout)
       io.puts "Persistence Info for #{@scope_node} (set #{@set})"
-      io.puts " - Active Tags: #{active_tags}"      
+      io.puts " - Active Tags: #{active_tags}"
       io.puts " - Local Persistence"
-      active_tags.each { |t|
+      active_tags.each do |t|
         io.puts "  -- #{t}: #{locally_persistent?(t)}"
-      }
+      end
       io.puts " - Final State"
       final_state.dump(io)
     end
 
-    private
+  private
+
     #
     # for each node in the region graph
     #  - if it is an access node, check local persistence for the accessed tag
@@ -243,22 +260,21 @@ class PersistenceDataFlowAnalysis
     #
     def build(region_graph, results)
       @persistent = Hash.new(true)
-      region_graph.nodes.each { |n|
+      region_graph.nodes.each do |n|
         case n
         when RegionGraph::ActionNode
           t = n.action.tag
           @persistent[t] &&= results[n].out(t) != TagSet::TOP
         when RegionGraph::SubScopeNode
           subresults = @analysis.analyze(n.scope_node, @set)
-          subresults.active_tags.each { |t|
+          subresults.active_tags.each do |t|
             @persistent[t] &&= subresults.subscope_persistent?(t, results[n])
-          }
+          end
         when RegionGraph::ExitNode
           @final_state = results[n]
         end
-      }
+      end
     end
-
   end
 
   def initialize(persistence_analysis, check_conflict)
@@ -274,8 +290,8 @@ class PersistenceDataFlowAnalysis
   # run data flow analysis, and compute persistence
   def analyze(scope_node, set)
     return @results[[scope_node,set]] if @results[[scope_node,set]]
-    # HACK (indirect calls not yet supported)
-    if(scope_node.kind_of?(ScopeGraph::CallNode))
+    # HACK: (indirect calls not yet supported)
+    if scope_node.kind_of?(ScopeGraph::CallNode)
       assert("persistence analysis does not support indirect calls yet") { scope_node.successors.length == 1 }
       return @results[[scope_node,set]] = analyze(scope_node.successors.first, set)
     end
@@ -299,7 +315,7 @@ class PersistenceDataFlowAnalysis
     begin
       # info("Starting next iteration of persistence analysis for #{scope_node} (set #{set})")
       restart = false
-      topological_sort(rg.entry_node).each { |node|
+      topological_sort(rg.entry_node).each do |node|
         ticks += 1
         state = out_state = @inval[node]
         case node
@@ -314,7 +330,7 @@ class PersistenceDataFlowAnalysis
           new_state, changed = @inval[rg.entry_node].join_with(out_state)
           restart = true if changed
         end
-        node.successors.each { |succ|
+        node.successors.each do |succ|
           if @inval[succ]
             new_state, changed = @inval[succ].join_with(out_state)
             restart = true if changed
@@ -322,8 +338,8 @@ class PersistenceDataFlowAnalysis
             @inval[succ] = out_state.dup
             restart = true
           end
-        }
-      }
+        end
+      end
       # reiterate if something changed
     end while restart
 
@@ -337,7 +353,6 @@ class PersistenceDataFlowAnalysis
 end
 
 class PersistenceAnalysis
- 
   attr_reader :options
 
   def initialize(cache_analysis, options)
@@ -345,9 +360,9 @@ class PersistenceAnalysis
   end
 
   def get_check_conflict
-    Proc.new { |tagset|
-      ! @analysis.cache_properties.conflict_free?(tagset)
-    }
+    proc do |tagset|
+      !@analysis.cache_properties.conflict_free?(tagset)
+    end
   end
 
   # delegator to CacheRegionAnalysis#get_all_tags
@@ -373,30 +388,28 @@ class PersistenceAnalysis
     @pdfa = PersistenceDataFlowAnalysis.new(self, get_check_conflict)
     @persistent = {}
     @conflict_free = {}
-    scopegraph.bottom_up.each { |node|
-      get_all_tags(node, set).each { |tag, load_instructions|        
+    scopegraph.bottom_up.each do |node|
+      get_all_tags(node, set).each do |tag, _load_instructions|
         if persistent?(node, tag)
           # if the tag is persistent in the node, just mark it (unless it is the root)
           debug(options, :cache) { "Persistent in Scope: #{tag} in #{node}" }
-          if node == scopegraph.root
-            @analysis.add_scope_for_tag(node, tag)
-          end
+          @analysis.add_scope_for_tag(node, tag) if node == scopegraph.root
         else
           # analyze conflict scope
-          self.analyze_conflict_scope(node, tag)
+          analyze_conflict_scope(node, tag)
         end
-      }
-    }
+      end
+    end
   end
 
   #
   # decide whether a tag is potentiall accessed in a scope
   #
   def accessed?(node, tag)
-    all_tags = @analysis.get_all_tags(node,@analysis.cache_properties.set_of(tag)).keys        
+    all_tags = @analysis.get_all_tags(node,@analysis.cache_properties.set_of(tag)).keys
     all_tags.include?(tag)
   end
-    
+
   #
   # decide whether a tag is persistent in a scope
   #
@@ -406,28 +419,28 @@ class PersistenceAnalysis
   end
 
   def check_persistence(node, tag)
-    node.successors.each { |subnode|
+    node.successors.each do |subnode|
       return false unless persistent?(subnode, tag)
-    }
+    end
     analysis_results = @pdfa.analyze(node, @analysis.cache_properties.set_of(tag))
     analysis_results.locally_persistent?(tag)
   end
+
   #
   # Find persistent sub scopes in a scope with conflicts
   #
   def analyze_conflict_scope(node, tag)
-
     debug(options, :cache) { "Tag #{tag} is not persistent in #{node}" }
     # for call nodes, subscopes have been taken care of
     unless node.kind_of?(ScopeGraph::CallNode)
       rg = get_region_graph(node)
-      rg.action_nodes.each { |action_node|
+      rg.action_nodes.each do |action_node|
         load_instruction = action_node.action
         accessed_tag = load_instruction.tag
         if accessed_tag == tag
           @analysis.add_scope_for_tag(ScopeGraph::BlockNode.new(action_node.block, node.context), tag)
         end
-      }
+      end
     end
     add_persistent_subscopes(node, tag)
   end
@@ -435,10 +448,8 @@ class PersistenceAnalysis
   # account for persistent tags in subscope of conflicting scope
   def add_persistent_subscopes(node, tag)
     # add scope constraints for all conflict-free successors
-    node.successors.each { |snode|
-      if accessed?(snode, tag) && persistent?(snode, tag)
-        @analysis.add_scope_for_tag(snode, tag)
-      end
-    }
+    node.successors.each do |snode|
+      @analysis.add_scope_for_tag(snode, tag) if accessed?(snode, tag) && persistent?(snode, tag)
+    end
   end
 end

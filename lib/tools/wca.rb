@@ -7,70 +7,71 @@
 require 'platin'
 require 'analysis/wca'
 require 'mkmf'
+require 'English'
 include PML
 
 class WcaTool
-
-  def WcaTool.add_config_options(opts)
-    opts.on("--[no-]wca-cache-regions","use single-entry cache regions (=true)") { |b|
+  def self.add_config_options(opts)
+    opts.on("--[no-]wca-cache-regions","use single-entry cache regions (=true)") do |b|
       opts.options.wca_cache_regions = b
-    }
-    opts.on("--[no-]wca-persistence-analysis","use (more expensive) persistence DFA for LRU caches (=false)") { |b|
+    end
+    opts.on("--[no-]wca-persistence-analysis","use (more expensive) persistence DFA for LRU caches (=false)") do |b|
       opts.options.wca_persistence_analysis = b
-    }
-    opts.on("--wca-ideal-cache","assume each cache block is loaded at most once (=false)") { |b|
+    end
+    opts.on("--wca-ideal-cache","assume each cache block is loaded at most once (=false)") do |b|
       opts.options.wca_ideal_cache = b
-    }
-    opts.on("--wca-minimal-cache","assume there is only one cache block (=false)") { |b|
+    end
+    opts.on("--wca-minimal-cache","assume there is only one cache block (=false)") do |b|
       opts.options.wca_minimal_cache = b
-    }
-    opts.on("--wca-data-cache-analysis ANALYSIS","data cache analysis type (scope,always-hit,=always-miss)") { |v|
+    end
+    opts.on("--wca-data-cache-analysis ANALYSIS","data cache analysis type (scope,always-hit,=always-miss)") do |v|
       opts.options.wca_data_cache_analysis = v
-    }
-    opts.on("--wca-write-lp-file FILE", "write the ILP problem to an .lp file") { |f|
-      # TODO Set wca_write_lp, and set options.write_lp only when invoking the ILP solver.
+    end
+    opts.on("--wca-write-lp-file FILE", "write the ILP problem to an .lp file") do |f|
+      # TODO: Set wca_write_lp, and set options.write_lp only when invoking the ILP solver.
       #      Or only set a dir and prefix here and create unique filenames per ILP invocation.
       opts.options.write_lp = f
-    }
-    opts.on("--wca-use-gurobi", "use Gurobi solver instead of lp_solve") { |v|
+    end
+    opts.on("--wca-use-gurobi", "use Gurobi solver instead of lp_solve") do |v|
       opts.options.use_gurobi = v
-    }
-    opts.on("--wca-detect-gurobi", "use Gurobi solver if possible") { |v|
+    end
+    opts.on("--wca-detect-gurobi", "use Gurobi solver if possible") do |v|
       if find_executable0 'gurobi_cl'
         opts.options.use_gurobi = v
       end
-    }
+    end
+
     # Disable all cache related costs.
-    opts.on("--wca-disable-cache", "disable all cache related  costs") { |f|
+    opts.on("--wca-disable-cache", "disable all cache related  costs") do |_f|
       opts.options.disable_dca = true
       opts.options.disable_sca = true
       opts.options.disable_ica = true
-    }
+    end
     # Disable all cache related costs.
-    opts.on("--wca-count-instructions", "count only instructions (caches disabled") { |f|
+    opts.on("--wca-count-instructions", "count only instructions (caches disabled") do |f|
       opts.options.disable_dca = true
       opts.options.disable_sca = true
       opts.options.disable_ica = true
       opts.options.wca_count_instructions = true
-    }
+    end
     # ILP visualization
-    opts.on("--wca-visualize-ilp", "visualize the ILP (.svg and .dot)") { |v|
+    opts.on("--wca-visualize-ilp", "visualize the ILP (.svg and .dot)") do |v|
       opts.options.visualize_ilp = v
-    }
+    end
     # WCEC
-    opts.on("--wcec", "make WCEC analysis") { |v|
+    opts.on("--wcec", "make WCEC analysis") do |v|
       opts.options.wcec = v
-    }
-    opts.add_check { |options|
+    end
+    opts.add_check do |options|
       options.wca_cache_regions = true if options.wca_cache_regions.nil?
-      # TODO change this default to 'scope' once the scope analysis works properly
+      # TODO: change this default to 'scope' once the scope analysis works properly
       options.wca_data_cache_analysis = 'always-miss' if options.wca_data_cache_analysis.nil?
-    }
+    end
     opts.stack_cache_analysis
     opts.target_callret_costs
   end
 
-  def WcaTool.add_options(opts)
+  def self.add_options(opts)
     WcaTool.add_config_options(opts)
     opts.analysis_entry
     opts.flow_fact_selection
@@ -79,7 +80,7 @@ class WcaTool
     opts.stack_cache_analysis
   end
 
-  def WcaTool.run(pml,options)
+  def self.run(pml,options)
     needs_options(options, :analysis_entry, :flow_fact_selection, :flow_fact_srcs, :timing_output)
     wca = WCA.new(pml, options)
     report = wca.analyze(options.analysis_entry)
@@ -88,14 +89,14 @@ class WcaTool
   end
 end
 
-if __FILE__ == $0
-SYNOPSIS=<<EOF if __FILE__ == $0
-Calculate WCET using lp_solve and a simple timing model
-EOF
+if __FILE__ == $PROGRAM_NAME
+  SYNOPSIS = <<-EOF
+  Calculate WCET using lp_solve and a simple timing model
+  EOF
   options, args = PML::optparse(0, "", SYNOPSIS) do |opts|
     opts.needs_pml
     opts.writes_pml
     WcaTool.add_options(opts)
   end
-  WcaTool.run(PMLDoc.from_files(options.input), options).dump_to_file(options.output)
+  WcaTool.run(PMLDoc.from_files(options.input, options), options).dump_to_file(options.output)
 end

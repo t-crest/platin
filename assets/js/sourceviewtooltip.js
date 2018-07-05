@@ -67,7 +67,8 @@ function add_source_hints(svg, srchinturl, srcviewurl) {
               pre  = elem.find("pre");
               pre.attr('data-start', content.from);
               pre.addClass("line-numbers");
-              pre.attr('data-line', linerange + 1);
+              pre.attr('data-line-offset', content.from - 1);
+              pre.attr('data-line', srcinfo.line);
               code = pre.find("code");
               Prism.highlightElement(code[0]);
             }, function(xhr, status, error) {

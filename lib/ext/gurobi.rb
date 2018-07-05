@@ -4,6 +4,7 @@
 # Bindings for Gurobi
 #
 require 'platin'
+require 'English'
 include PML
 
 require 'thwait'
@@ -11,6 +12,9 @@ require 'thread'
 
 # Simple interface to gurobi_cl
 class GurobiILP < ILP
+  INFEASIBLE = :GB_INFEASIBLE
+  UNBOUNDED  = :GB_UNBOUNDED
+
   # Tolarable floating point error in objective
   def initialize(options = nil)
     super(options)
@@ -24,12 +28,14 @@ class GurobiILP < ILP
     @lines_thread2 = []
     @backlock_idx2 = 0
   end
+
   # run solver to find maximum cost
   def solve_max
     # create LP problem (maximize)
     lp_name = options.write_lp
-    lp_name = File.join(options.outdir, "model.lp") unless lp_name
+    lp_name ||= File.join(options.outdir, "model.lp")
     sol_name = File.join(options.outdir, "model.sol")
+    ilp_name = File.join(options.outdir, "model.ilp")
     lp = File.open(lp_name, "w")
 
     # set objective and add constraints
@@ -40,15 +46,20 @@ class GurobiILP < ILP
     lp.close
 
     # solve
-    debug(options, :ilp) { self.dump(DebugIO.new) }
+    debug(options, :ilp) { dump(DebugIO.new) }
     start = Time.now
     err, sol_name = solve_lp(lp_name, sol_name)
     @solvertime += (Time.now - start)
 
-    # Throw exception on error (after setting solvertime)
-    if err
-      gurobi_error(err)
+    unbounded = nil
+    freqmap = nil
+    if err == INFEASIBLE
+      diagnose_infeasible(errmsg, freqmap) if @do_diagnose
+    elsif err == UNBOUNDED
+      unbounded, freqmap = diagnose_unbounded(errmsg, freqmap) if @do_diagnose
     end
+    # Throw exception on error (after setting solvertime)
+    raise ILPSolverException.new(gurobi_error_msg(errmsg), nil, freqmap, unbounded) unless err == nil
 
     # read solution
     sol = File.open(sol_name, "r")
@@ -58,24 +69,25 @@ class GurobiILP < ILP
     # close temp files
     sol.close
 
-    if obj.nil?
-      gurobi_error("Could not read objective value from result file #{sol_name}")
-    end
+    gurobi_error("Could not read objective value from result file #{sol_name}") if obj.nil?
     if freqmap.length != @variables.length
       gurobi_error("Read #{freqmap.length} variables, expected #{@variables.length}")
     end
 
-    [obj.round, freqmap ]
+    [obj.round, freqmap, unbounded]
   end
 
-  private
+private
+
   # Remove characters from constraint names that are not allowed in an .lp file
   def cleanup_name(name)
     name.gsub(/[\@\: \/\(\)\-\>]/, "_")
   end
+
   def varname(vi)
     "v_#{vi}"
   end
+
   # create an LP with variables
   def add_variables(lp)
     lp.puts("Generals")
@@ -94,12 +106,14 @@ class GurobiILP < ILP
     }
     lp.puts("End")
   end
+
   # set LP ovjective
   def add_objective(lp)
     lp.puts("Maximize")
     @costs.each { |v,c| lp.print(" #{lp_term(c,index(v))}") }
     lp.puts
   end
+
   # add LP constraints
   def add_linear_constraints(lp)
     lp.puts("Subject To")
@@ -127,27 +141,32 @@ class GurobiILP < ILP
     end
     lp.puts
   end
+
   # extract solution vector
   def read_results(sol)
     obj = nil
     vmap = {}
-    sol.readlines.each { |line|
+    sol.readlines.each do |line|
       if line =~ /# Objective value = ([0-9][0-9.+e]*)/
-    # Need to convert to float first, otherwise very large results that are printed in exp format
-    # are truncated to the first digit.
+        # Need to convert to float first, otherwise very large results
+        # that are printed in exp format are truncated to the first
+        # digit.
         obj = $1.to_f.to_i
       elsif line =~ /v_([0-9]*) ([0-9]*)/
         vmap[var_by_index($1.to_i)] = $2.to_i
       end
-    }
+    end
     [obj, vmap]
   end
+
   def lp_term(c,vi)
     "#{c < 0 ? '-' : '+'} #{c.abs} #{varname(vi)}"
   end
+
   def lp_lhs(lhs)
     lhs.map { |vi,c| " #{lp_term(c,vi)}" }.join
   end
+
   # lp comparsion operators
   def lp_op(op)
     case op
@@ -162,6 +181,7 @@ class GurobiILP < ILP
     end
   end
 
+  # FIXME: THIS IS UGLY
   def thread0(lp, sol)
     out = IO.popen("gurobi_cl MIPFocus=1 ResultFile=#{sol} #{lp}")
     @lines_thread0 = []
@@ -254,19 +274,18 @@ class GurobiILP < ILP
     end
 
     lines.each do |line|
-      if line =~ /Model is infeasible/ || line =~ /Model is unbounded/
-        #while backlock_idx < lines.length do
-          #puts(lines[backlock_idx])
-          #backlock_idx += 1
-        #end
-        return line
-      end
-      return nil, sol_name if line =~ /Optimal solution found/
+      return [INFEASIBLE, line] if line =~ /Model is infeasible/
+      return [UNBOUNDED, line] if line =~ /Model is unbounded/
+      return [nil, sol_name] if line =~ /Optimal solution found/
     end
-    #nil # No error
-    return nil, sol_name
+    [nil, nil]
   end
+
+  def gurobi_error_msg(msg)
+    "Gurobi Error: #{msg}"
+  end
+
   def gurobi_error(msg)
-    raise Exception.new("Gurobi Error: #{msg}")
+    raise Exception, gurobi_error_msg(msg)
   end
 end

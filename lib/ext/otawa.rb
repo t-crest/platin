@@ -12,16 +12,19 @@ module PML
 
 # option extensions for ffx
 class OptionParser
-  def otawa_platform_file(mandatory=true)
-    self.on("--otawa-platform-file FILE", "Platform description file for OTAWA") { |f| options.otawa_platform_file = f }
-    self.add_check { |options| die_usage "Option --otawa-platform-file is mandatory" unless options.otawa_platform_file } if mandatory
+  # rubocop:disable Metrics/LineLength
+  def otawa_platform_file(mandatory = true)
+    on("--otawa-platform-file FILE", "Platform description file for OTAWA") { |f| options.otawa_platform_file = f }
+    add_check { |options| die_usage "Option --otawa-platform-file is mandatory" unless options.otawa_platform_file } if mandatory
   end
-  def otawa_report_file(mandatory=true)
-    self.on("--otawa-report-file FILE", "Filename for OTAWA's result file") {
-      |f| options.otawa_report_file = f
-    }
-    self.add_check { |options| die_usage "Option --otawa-report-file is mandatory" unless options.otawa_report_file } if mandatory
+
+  def otawa_report_file(mandatory = true)
+    on("--otawa-report-file FILE", "Filename for OTAWA's result file") do |f|
+      options.otawa_report_file = f
+    end
+    add_check { |options| die_usage "Option --otawa-report-file is mandatory" unless options.otawa_report_file } if mandatory
   end
+  # rubocop:enable Metrics/LineLength
 end
 
 # Features not supported by the Otawa module
@@ -31,10 +34,8 @@ class OtawaUnsupportedFeatureException < Exception
   end
 end
 
-
 # class to export PML machine information to OSX
 class OSXExporter
-
   attr_reader :options
 
   def initialize(pml, options)
@@ -101,29 +102,28 @@ class OSXExporter
     tt_write_first_beat = area.memory.write_latency + area.memory.write_transfer_time
 
     address_range = area.address_range
-    address_range = ValueRange.new(0,0xFFFFFFFF,nil) unless address_range
+    address_range ||= ValueRange.new(0,0xFFFFFFFF,nil)
 
-    add_element(banks, "bank") { |bank|
+    add_element(banks, "bank") do |bank|
       bank << rexml_str("name", "RAM")
-      
+
       bank << rexml_bool("cached", true) if area.cache
-    }
+    end
   end
 
   def add_memory(platform)
-    add_element(platform, "memory") { |mem|
-      add_element(mem, "banks") { |banks|
-        @pml.arch.config.memory_areas.each { |area|
-	  add_bank(banks, area)
-	}
-      }
-    }
+    add_element(platform, "memory") do |mem|
+      add_element(mem, "banks") do |banks|
+        @pml.arch.config.memory_areas.each do |area|
+          add_bank(banks, area)
+        end
+      end
+    end
   end
 
   def add_caches(platform)
-    add_element(platform, "caches") { |caches|
-
-    }
+    add_element(platform, "caches") do |caches|
+    end
   end
 
   def export_platform(outfile)
@@ -158,10 +158,11 @@ class OSXExporter
 #      }
 #    }
 
-    REXML::Formatters::Transitive.new( 2, false ).write(doc, outfile)
+    REXML::Formatters::Transitive.new(2, false).write(doc, outfile)
   end
 
-  private
+private
+
   def add_element(parent, name)
     el = REXML::Element.new(name, parent)
     yield el
@@ -184,7 +185,6 @@ class OSXExporter
 end
 
 class OtawaAnalyzer
-
 end
 
 class OtawaImporter
@@ -195,14 +195,10 @@ class OtawaImporter
   end
 
   def run
-    analysis_entry  = pml.machine_functions.by_label(options.analysis_entry, true)
+    analysis_entry = pml.machine_functions.by_label(options.analysis_entry, true)
 
-    # TODO Implement .. 
-
-
+    # TODO: Implement ..
   end
 end
 
-
 end # end module PML
-

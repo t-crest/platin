@@ -4,6 +4,8 @@
 # Patmos specific functionality
 #
 
+require 'English'
+
 #
 # pasim traces
 #
@@ -22,8 +24,9 @@ class SimulatorTrace
     @elf, @arch, @options, @watchpoints = elf, arch, options, watchpoints
     @stats_num_items = 0
   end
+
   def each
-    die("File '#{@elf}' (ELF) not found") unless File.exist?("#{@elf}")
+    die("File '#{@elf}' (ELF) not found") unless File.exist?(@elf.to_s)
     if @options.trace_file
       fh = $stdin
       begin
@@ -33,62 +36,63 @@ class SimulatorTrace
         elsif @options.trace_file != '-'
           fh = File.open(@options.trace_file, "r")
         end
-        fh.each_line { |line|
+        fh.each_line do |line|
           yield parse(line)
           @stats_num_items += 1
-        }
+        end
       ensure
         fh.close
       end
     else
       begin
-	wpfile = build_wp_file
+        wpfile = build_wp_file
         needs_options(@options, :pasim)
-        pasim_options="--debug=0 --debug-fmt=trace -b #{@elf} --wpfile=#{wpfile.path}"
-	pasim_options+=" -I #{@options.sim_input}" if @options.sim_input
+        pasim_options = "--debug=0 --debug-fmt=trace -b #{@elf} --wpfile=#{wpfile.path}"
+        pasim_options += " -I #{@options.sim_input}" if @options.sim_input
         cmd = "#{@options.pasim} #{arch.config_for_simulator.join(" ")} #{pasim_options} 2>&1 1>/dev/null"
         debug(@options, :patmos) { "Running pasim: #{cmd}" }
-        IO.popen("#{cmd}") do |io|
-          while item=parse(io.gets)
+        IO.popen(cmd.to_s) do |io|
+          while (item = parse(io.gets))
             yield item
-            @stats_num_items+=1
+            @stats_num_items += 1
           end
         end
       ensure
-        status = $?.exitstatus
-	wpfile.unlink unless @options.outdir
-        if status == 127
-          die("Running the simulator '#{@options.pasim}' failed: Program not found (exit status 127)")
-        end
+        status = $CHILD_STATUS.exitstatus
+        wpfile.unlink unless @options.outdir
+        die("Running the simulator '#{@options.pasim}' failed: Program not found (exit status 127)") if status == 127
       end
     end
   end
-  private
+
+private
+
   def build_wp_file
     if @options.outdir
       file = File.open(File.join(@options.outdir, 'watchpoints.txt'), 'w')
     else
       file = Tempfile.new('wp')
     end
-    @watchpoints.each { |wp,_|
+    @watchpoints.each do |wp,_|
       file.puts(wp.to_s)
-    }
+    end
     file.close
     file
   end
+
   def parse(line)
-    return nil unless line and not line.chomp.empty?
+    return nil unless line && !line.chomp.empty?
     pc, cyc, instr = line.split(' ',3)
     begin
-      [ Integer("0x#{pc}"), Integer(cyc), Integer(instr) ]
+      [Integer("0x#{pc}"), Integer(cyc), Integer(instr)]
     rescue Exception => e
-      raise Exception.new("Patmos::SimulatorTrace: bad line (\"#{line.chomp}\")")
+      raise Exception, "Patmos::SimulatorTrace: bad line (\"#{line.chomp}\")"
     end
   end
 end
 
 class ExtractSymbols
-  def ExtractSymbols.run(extractor,pml,options)
+  def self.run(extractor,pml,options)
     r = IO.popen("#{options.objdump} -d '#{options.binary_file}'") do |io|
       current_label, current_ix, current_function = nil, 0, nil
       last_addr, last_size = nil, nil
@@ -104,8 +108,8 @@ class ExtractSymbols
           cond, instr, args = $3, $4, $5
           size = opcode.length / 2
 
-          if(last_addr and (addr != last_addr + last_size))
-              die ("Cannot parse objdump. Last address (#{last_addr} #{addr}).")
+          if last_addr && (addr != last_addr + last_size)
+            die "Cannot parse objdump. Last address (#{last_addr} #{addr})."
           end
 
           # Update counters for next round
@@ -113,62 +117,58 @@ class ExtractSymbols
 
           if current_function
             instr = build_instruction(addr, cond, size, instr, args)
-            extractor.add_instruction(current_label, addr, instr)
+            extractor.add_instruction(current_label, addr, instr) if instr
           end
         else
-          assert("objdump parsing failed: #{line}") {
-            line[0] == "." or line == "\n" or /Disassembly of section/ =~ line
-          }
+          assert("objdump parsing failed: #{line}") do
+            (line[0] == ".") || (line == "\n") || /Disassembly of section/ =~ line
+          end
         end
       end
     end
-    die "The objdump command '#{options.objdump}' exited with status #{$?.exitstatus}" unless $?.success?
+    unless $CHILD_STATUS.success?
+      die "The objdump command '#{options.objdump}'" \
+          " exited with status #{$CHILD_STATUS.exitstatus}"
+    end
   end
-  private
-  def ExtractSymbols.build_instruction(addr, cond, size, instr, args)
-    ret = {'address' => addr, 'size' => size, 'source' => 'objdump', 'opcode' => instr}
+
+private
+
+  def self.build_instruction(addr, _cond, size, instr, args)
+    ret = { 'address' => addr, 'size' => size, 'source' => 'objdump', 'opcode' => instr }
     reg_args = args.scan('$r').length
     case instr
     when "add", "sub", "and"
-      ret['opcode'] = instr.upcase + ( reg_args == 3 ? "r" : "i")
-      ret
+      ret['opcode'] = instr.upcase + (reg_args == 3 ? "r" : "i")
     when "li"
       ret['opcode'] = (size == 8 ? "LIl" : "LIi")
-      ret
     when "clr", "mov"
       ret['opcode'] = "MOV"
-      ret
     when "nop", "mfs", "mts"
       ret['opcode'] = instr.upcase
-      ret
     when "sws", "swm", "swl", "swc", "lwl", "lwm", "lwc"
       ret['opcode'] = instr.upcase
       ret['memode'] = {"s"=> "store", "l"=>"load"}[instr[0]]
       ret['memtype'] = {"l"=> "local", "m"=>"memory", "s"=>"stack", "c"=>"cache"}[instr[2]]
-      ret
     when "ret", "retnd", "xret", "xretnd"
       ret['opcode'] = instr.upcase
       ret['branch-type'] = "return"
-      ret
     when "call", "callnd"
       ret['opcode'] = instr.upcase
       ret['branch-type'] = "call"
       # FIXME: call target
       # p args.strip # <- function call
-      ret
     when "sspill", "sens"
       ret['opcode'] = instr.upcase + (reg_args == 1 ? "r" : "i")
-      ret
     when "trap"
       ret['opcode'] = "TRAP"
-      ret
     else
       ret['opcode'] = [instr, args]
       ret['invalid'] = true
-      ret
     end
+    ret
   end
-  RE_HEX=/[0-9A-Fa-f]/
+  RE_HEX = /[0-9A-Fa-f]/
   RE_FUNCTION_LABEL = %r{ ^
     ([^.: ][^: ]*):             # label
   }x
@@ -188,30 +188,33 @@ class Architecture < PML::Architecture
   attr_reader :triple, :config
   def initialize(triple, config)
     @triple, @config = triple, config
-    @config = self.class.default_config unless @config
+    @config ||= self.class.default_config
   end
-  def Architecture.simulator_options(opts)
+
+  def self.simulator_options(opts)
     opts.on("--pasim-command FILE", "path to pasim (=pasim)") { |f| opts.options.pasim = f }
     opts.add_check do |options|
       options.pasim = "pasim" unless options.pasim || options.trace_file
     end
   end
-  def Architecture.default_instr_cache(type)
+
+  def self.default_instr_cache(type)
     if type == 'method-cache'
       PML::CacheConfig.new('method-cache','method-cache','fifo',16,8,4096)
     else
       PML::CacheConfig.new('instruction-cache','instruction-cache','dm',1,16,4096)
     end
   end
-  def Architecture.default_config
-    memories = PML::MemoryConfigList.new([PML::MemoryConfig.new('main',2*1024*1024,16,0,21,0,21)])
+
+  def self.default_config
+    memories = PML::MemoryConfigList.new([PML::MemoryConfig.new('main',2 * 1024 * 1024,16,0,21,0,21)])
     caches = PML::CacheConfigList.new([Architecture.default_instr_cache('method-cache'),
-                                  PML::CacheConfig.new('stack-cache','stack-cache','block',nil,4,2048),
-                                  PML::CacheConfig.new('data-cache','set-associative','dm',nil,16,2048) ])
+                                       PML::CacheConfig.new('stack-cache','stack-cache','block',nil,4,2048),
+                                       PML::CacheConfig.new('data-cache','set-associative','dm',nil,16,2048)])
     full_range = PML::ValueRange.new(0,0xFFFFFFFF,nil)
     memory_areas =
       PML::MemoryAreaList.new([PML::MemoryArea.new('code','code',caches.list[0], memories.first, full_range),
-                               PML::MemoryArea.new('data','data',caches.list[2], memories.first, full_range) ])
+                               PML::MemoryArea.new('data','data',caches.list[2], memories.first, full_range)])
     PML::MachineConfig.new(memories,caches,memory_areas)
   end
 
@@ -223,7 +226,7 @@ class Architecture < PML::Architecture
     ExtractSymbols.run(extractor, pml, options)
   end
 
-  def return_stall_cycles(ret_instruction, ret_latency)
+  def return_stall_cycles(_ret_instruction, ret_latency)
     ret_latency - 1
   end
 
@@ -242,7 +245,7 @@ class Architecture < PML::Architecture
   end
 
   def main_memory(area_name)
-    if area = @config.memory_areas.by_name(area_name)
+    if (area = @config.memory_areas.by_name(area_name))
       area.memory
     else
       @config.main_memory
@@ -251,7 +254,7 @@ class Architecture < PML::Architecture
 
   def method_cache
     mc = @config.caches.by_name('method-cache')
-    return nil if mc.nil? or mc.type == 'none'
+    return nil if mc.nil? || (mc.type == 'none')
     mc
   end
 
@@ -282,21 +285,21 @@ class Architecture < PML::Architecture
 
   def stack_cache
     sc = @config.caches.by_name('stack-cache')
-    return nil if sc.nil? or sc.type == 'none'
+    return nil if sc.nil? || (sc.type == 'none')
     sc
   end
 
   def data_cache
-    # TODO check if this is consistent with what is configured in the
+    # TODO: check if this is consistent with what is configured in the
     #      data memory-area (but check only once!)
     dc = @config.caches.by_name('data-cache')
-    return nil if dc.nil? or dc.type == 'none'
+    return nil if dc.nil? || (dc.type == 'none')
     dc
   end
 
   def instruction_cache
     ic = @config.caches.by_name('instruction-cache')
-    return nil if ic.nil? or ic.type == 'none'
+    return nil if ic.nil? || (ic.type == 'none')
     ic
   end
 
@@ -342,16 +345,14 @@ class Architecture < PML::Architecture
     cost = ilist.reduce(0) do |cycles, instr|
       flushes = 0
       if instr.delay_slots == 0
-        if instr.branch_type == 'call'
-          flushes = 3
-        end
+        flushes = 3 if instr.branch_type == 'call'
       end
       cycles + (instr.bundled? ? 0 : 1) + flushes
     end
     cost
   end
 
-  def edge_wcet(ilist,index,edge)
+  def edge_wcet(ilist,index,_edge)
     cost = 0
     if index
       instr = ilist[index]
@@ -367,7 +368,7 @@ class Architecture < PML::Architecture
   end
 
   def config_for_apx(options)
-    if sc = stack_cache
+    if (sc = stack_cache)
       patmos_options = REXML::Element.new("patmos_options")
       # workaround sets SC size and base address to 0
       if options.ait_disable_internal_sc
@@ -376,14 +377,12 @@ class Architecture < PML::Architecture
         patmos_options << sc_option
         sc_size = "0x0"
       else
-        sc_size = sprintf("0x%x", sc.size)
+        sc_size = format("0x%x", sc.size)
       end
       sc_option = REXML::Element.new("stack_cache_size")
       sc_option << REXML::Text.new(sc_size)
       patmos_options << sc_option
       patmos_options
-    else
-      nil
     end
   end
 
@@ -401,19 +400,19 @@ class Architecture < PML::Architecture
 
   def config_for_clang(options)
     opts = []
-    if mc = method_cache
+    if (mc = method_cache)
       opts.push("-mpatmos-method-cache-size=#{mc.size}")
-      if pref_sf_size = method_cache.get_attribute("preferred-subfunction-size")
+      if (pref_sf_size = method_cache.get_attribute("preferred-subfunction-size"))
         opts.push("-mpatmos-preferred-subfunction-size=#{pref_sf_size}")
       end
-      if max_sf_size = method_cache.get_attribute("max-subfunction-size")
+      if (max_sf_size = method_cache.get_attribute("max-subfunction-size"))
         opts.push("-mpatmos-max-subfunction-size=#{max_sf_size}")
       end
     else
       opts.push("-mpatmos-disable-function-splitter")
       # opts.push("-mpatmos-basicblock-align=8")
     end
-    if sc = stack_cache
+    if (sc = stack_cache)
       if options.sca
         opts.push("-mpatmos-enable-stack-cache-analysis")
         # we need to specify a solver
@@ -423,27 +422,25 @@ class Architecture < PML::Architecture
       end
       opts.push("-mpatmos-stack-cache-block-size=#{sc.block_size}")
       opts.push("-mpatmos-stack-cache-size=#{sc.size}")
-      if sc.policy == 'ablock'
-        opts.push("-mpatmos-enable-block-aligned-stack-cache")
-      end
+      opts.push("-mpatmos-enable-block-aligned-stack-cache") if sc.policy == 'ablock'
     else
       opts.push("-mpatmos-disable-stack-cache")
     end
-    @config.memory_areas.each { |c|
+    @config.memory_areas.each do |c|
       heap_end = c.get_attribute('heap-end')
       opts.push("-mpatmos-heap-end=#{heap_end}") if heap_end
       stack_base = c.get_attribute('stack-base')
       opts.push("-mpatmos-stack-base=#{stack_base}") if stack_base
       shadow_stack_base = c.get_attribute('shadow-stack-base')
       opts.push("-mpatmos-shadow-stack-base=#{shadow_stack_base}") if shadow_stack_base
-    }
+    end
     opts
   end
 
   def config_for_simulator
     opts = []
 
-    if main_memory = @config.main_memory
+    if (main_memory = @config.main_memory)
       if main_memory.size
         opts.push("--gsize")
         opts.push(main_memory.size)
@@ -465,28 +462,28 @@ class Architecture < PML::Architecture
     #   -l [ --lsize ] arg (=2k)  local memory size in bytes
 
     def get_cache_kind(cache)
-      if cache.policy && [ "dm", "ideal", "no" ].include?(cache.policy.downcase)
+      if cache.policy && ["dm", "ideal", "no"].include?(cache.policy.downcase)
         # Ignore associativity here
-	cache.policy.downcase
-      elsif not cache.fully_assoc?
+        cache.policy.downcase
+      elsif !cache.fully_assoc?
         if cache.policy && cache.policy.downcase == 'lru'
           "lru#{cache.associativity}"
         elsif cache.policy && cache.policy.downcase == 'fifo'
           "fifo#{cache.associativity}"
         else
-          warn("Patmos simulator configuration: the only supported cache replacement "+
+          warn("Patmos simulator configuration: the only supported cache replacement " \
                "policies with associativity >= 1 are LRU and FIFO")
-	  "no"
+          "no"
         end
-      elsif cache.policy && [ "lru", "fifo" ].include?(cache.policy.downcase)
+      elsif cache.policy && ["lru", "fifo"].include?(cache.policy.downcase)
         # If no associativity is given, use fully-associative caches
-	cache.policy.downcase
+        cache.policy.downcase
       else
         "no"
       end
     end
 
-    if dc = data_cache
+    if (dc = data_cache)
       opts.push("--dcsize")
       opts.push(dc.size)
       opts.push("--dlsize")
@@ -494,25 +491,25 @@ class Architecture < PML::Architecture
       opts.push("--dckind")
       # Note: 'ideal' is not the same as mapping all data accesses to
       # an ideal memory; bypasses still have a latency.
-      opts.push( get_cache_kind(dc) )
+      opts.push(get_cache_kind(dc))
     else
       # if data is mapped to single-cycle access memory,
       # use an 'ideal' data cache
       data_area = @config.memory_areas.by_name('data')
       if data_area.memory.ideal?
-        # FIXME This is incorrect for bypasses, but simulator does
-	# not support different timings based on access type yet.
-	warn("Bypass data loads and data stores are configured to be single cycle, but this "+
-	     "is not supported by pasim at the moment.")
+        # FIXME: This is incorrect for bypasses, but simulator does
+        # not support different timings based on access type yet.
+        warn("Bypass data loads and data stores are configured to be single cycle, but this " \
+             "is not supported by pasim at the moment.")
         opts.push("--dckind")
         opts.push("ideal")
       else
-	# In case no D$ is specified, disable the data cache
+        # In case no D$ is specified, disable the data cache
         opts.push("--dckind")
         opts.push("no")
       end
     end
-    if sc = stack_cache
+    if (sc = stack_cache)
       warn("Cache named 'stack-cache' is not of type 'stack-cache'") unless sc.type == "stack-cache"
       opts.push("--scsize")
       opts.push(sc.size)
@@ -523,7 +520,7 @@ class Architecture < PML::Architecture
       opts.push("--sckind")
       opts.push("dcache")
     end
-    if mc = method_cache
+    if (mc = method_cache)
       warn("Cache named 'method-cache' is not of type 'method-cache'") unless mc.type == "method-cache"
       opts.push("--icache")
       opts.push("mcache")
@@ -535,7 +532,7 @@ class Architecture < PML::Architecture
       opts.push(mc.associativity)
       opts.push("--mckind")
       opts.push((mc.policy || "fifo").downcase)
-    elsif ic = instruction_cache
+    elsif (ic = instruction_cache)
       warn("Cache named 'instruction-cache' must not be of type 'method-cache'") if ic.type == "method-cache"
       opts.push("--icache")
       opts.push("icache")
@@ -544,7 +541,7 @@ class Architecture < PML::Architecture
       opts.push("--ilsize")
       opts.push(ic.block_size)
       opts.push("--ickind")
-      opts.push( get_cache_kind(ic) )
+      opts.push(get_cache_kind(ic))
     else
       # if code is mapped to single-cycle access memory,
       # use an 'ideal' instruction cache
@@ -563,86 +560,87 @@ class Architecture < PML::Architecture
 
   # Update the configuration using the given options
   def update_cache_config(options)
-
    # Update data cache
-    if options.data_cache_size or options.data_cache_policy
+    if options.data_cache_size || options.data_cache_policy
       dc_policy = options.data_cache_policy[:policy] if options.data_cache_policy
       dc_assoc  = options.data_cache_policy[:assoc]  if options.data_cache_policy
       # We are not using self.data_cache here because it would return
       # null if the type is set to 'none', even if the entry exists.
       dc = @config.caches.by_name('data-cache')
-      if dc.nil? and (dc_policy != "no")
+      if dc.nil? && (dc_policy != "no")
         dc = self.class.default_config.caches.by_name('data-cache')
-	@config.caches.add(dc)
+        @config.caches.add(dc)
       end
       if dc
-	dc.size = options.data_cache_size if options.data_cache_size
-	# We are not deleting the cache entry here, partly because it
-	# allows the user to easily edit the generated config manually,
-	# partly because it is easier to implement.
-	dc.type = 'set-associative' if dc_policy
-	dc.type = 'none' if dc_policy == 'no'
-	dc.policy = dc_policy if dc_policy and dc_policy != 'no'
-	# Set the associativiy whenever we set a policy
-	dc.associativity = dc_assoc if dc_policy
+        dc.size = options.data_cache_size if options.data_cache_size
+        # We are not deleting the cache entry here, partly because it
+        # allows the user to easily edit the generated config manually,
+        # partly because it is easier to implement.
+        dc.type = 'set-associative' if dc_policy
+        dc.type = 'none' if dc_policy == 'no'
+        dc.policy = dc_policy if dc_policy && (dc_policy != 'no')
+        # Set the associativiy whenever we set a policy
+        dc.associativity = dc_assoc if dc_policy
 
-	# Update the data memory area
-	dma = @config.memory_areas.by_name('data')
-	dma.cache = (dc.type != 'none' ? dc : nil) if dma
+        # Update the data memory area
+        dma = @config.memory_areas.by_name('data')
+        dma.cache = (dc.type != 'none' ? dc : nil) if dma
       end
     end
 
    # Update stack cache
-    if options.stack_cache_size or options.stack_cache_type
+    if options.stack_cache_size || options.stack_cache_type
       # We are not using self.stack_cache here because it would return
       # null if the type is set to 'none', even if the entry exists.
       sc = @config.caches.by_name('stack-cache')
-      if dc.nil? and options.stack_cache_type != 'no'
-	sc = self.class.default_config.caches.by_name('stack-cache')
-	@config.caches.add(sc)
+      if dc.nil? && (options.stack_cache_type != 'no')
+        sc = self.class.default_config.caches.by_name('stack-cache')
+        @config.caches.add(sc)
       end
       if sc
-	sc.size = options.stack_cache_size if options.stack_cache_size
-	sc.type = 'stack-cache' if options.stack_cache_type
-	sc.type = 'none' if options.stack_cache_type == 'no'
-	sc.policy = options.stack_cache_type if options.stack_cache_type and options.stack_cache_type != 'no'
+        sc.size = options.stack_cache_size if options.stack_cache_size
+        sc.type = 'stack-cache' if options.stack_cache_type
+        sc.type = 'none' if options.stack_cache_type == 'no'
+        sc.policy = options.stack_cache_type if options.stack_cache_type && (options.stack_cache_type != 'no')
       end
     end
 
    # Update instruction cache / method cache
-    if options.instr_cache_kind or options.instr_cache_size or options.instr_cache_policy or options.instr_cache_line_size
+    if options.instr_cache_kind || options.instr_cache_size ||
+       options.instr_cache_policy || options.instr_cache_line_size
+
       ic_policy = options.instr_cache_policy[:policy] if options.instr_cache_policy
       ic_assoc  = options.instr_cache_policy[:assoc]  if options.instr_cache_policy
       if options.instr_cache_kind
         ic_key = options.instr_cache_kind == 'icache' ? "instruction-cache" : "method-cache"
       elsif instruction_cache
-	ic_key = "instruction-cache"
+        ic_key = "instruction-cache"
       else
-	ic_key = "method-cache"
+        ic_key = "method-cache"
       end
       # Get or create the active cache
       ic = @config.caches.by_name(ic_key)
-      if ic.nil? and ic_policy != 'no'
-	ic = self.class.default_instr_cache(ic_key)
-	@config.caches.add(ic)
+      if ic.nil? && (ic_policy != 'no')
+        ic = self.class.default_instr_cache(ic_key)
+        @config.caches.add(ic)
       end
       # Deactivate the other instruction caches
-      @config.caches.each { |cache|
+      @config.caches.each do |cache|
         next if cache.name == ic_key
-	cache.type = 'none' if ['instruction-cache','method-cache'].include?(cache.name)
-      }
+        cache.type = 'none' if ['instruction-cache','method-cache'].include?(cache.name)
+      end
       if ic
-	ic.size = options.instr_cache_size if options.instr_cache_size
-	# We are not deleting the cache entry here, partly because it
-	# allows the user to easily edit the generated config manually,
-	# partly because it is easier to implement.
-	ic.type = (ic_key == 'method-cache' ? 'method-cache' : 'set-associative') if ic_policy
-	ic.type = 'none' if ic_policy == 'no'
-	ic.policy = ic_policy if ic_policy and ic_policy != 'no'
-	# Set the associativiy whenever we set a policy
-	ic.associativity = ic_assoc if ic_policy
+        ic.size = options.instr_cache_size if options.instr_cache_size
+        # We are not deleting the cache entry here, partly because it
+        # allows the user to easily edit the generated config manually,
+        # partly because it is easier to implement.
+        ic.type = (ic_key == 'method-cache' ? 'method-cache' : 'set-associative') if ic_policy
+        ic.type = 'none' if ic_policy == 'no'
+        ic.policy = ic_policy if ic_policy && (ic_policy != 'no')
+        # Set the associativiy whenever we set a policy
+        ic.associativity = ic_assoc if ic_policy
 
-	# Update the code memory area
+        # Update the code memory area
         cma = @config.memory_areas.by_name('code')
         cma.cache = (ic.type != 'none' ? ic : nil) if cma
       end
@@ -659,7 +657,6 @@ class Architecture < PML::Architecture
     dma.set_attribute('shadow-stack-base', memsize - stack_size)
     dma.set_attribute('heap-end', memsize - stack_size * num_stacks * 2)
   end
-
 end
 
 end # module patmos

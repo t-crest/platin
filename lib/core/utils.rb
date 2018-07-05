@@ -7,6 +7,7 @@ require 'yaml'
 require 'set'
 require 'tsort'
 require 'core/options'
+require 'English'
 
 module PML
 
@@ -14,16 +15,24 @@ module PML
     '"' + str + '"'
   end
 
-  def div_ceil(num, denom)
-    raise Exception.new("div_ceil: negative numerator or denominator") unless num >= 0 && denom > 0
-    (num+denom-1) / denom
+  def time(descr)
+    t1 = Time.now
+    val = yield
+    t2 = Time.now
+    info("Finished #{descr.ljust(35)} in #{((t2 - t1) * 1000).to_i} ms")
+    val
   end
 
-  def merge_ranges(r1,r2=nil)
+  def div_ceil(num, denom)
+    raise Exception, "div_ceil: negative numerator or denominator" unless num >= 0 && denom > 0
+    (num + denom - 1) / denom
+  end
+
+  def merge_ranges(r1,r2 = nil)
     assert("first argument is nil") { r1 }
-    r1=Range.new(r1,r1) unless r1.kind_of?(Range)
+    r1 = Range.new(r1,r1) unless r1.kind_of?(Range)
     return r1 unless r2
-    [r1.min,r2.min].min .. [r1.max,r2.max].max
+    [r1.min,r2.min].min..[r1.max,r2.max].max
   end
 
   #
@@ -32,7 +41,7 @@ module PML
   #
   class WorkList
     def initialize(queue = nil)
-      @todo = queue || Array.new
+      @todo = queue || []
       @enqueued  = Set.new
       @processed = Set.new
     end
@@ -50,7 +59,7 @@ module PML
     # process queue until empty
     #
     def process
-      while ! @todo.empty?
+      until @todo.empty?
         item = @todo.pop
         @enqueued.delete(item)
         yield item
@@ -74,15 +83,15 @@ module PML
       @excluded_edge_targets = Set[*excluded_edge_targets]
       @nodeset = Set[*nodelist]
     end
+
     def tsort_each_node
       @nodelist.each { |node| yield node }
     end
+
     def tsort_each_child(node)
-      node.successors.each { |succnode|
-        if @nodeset.include?(succnode) && ! @excluded_edge_targets.include?(succnode)
-          yield succnode
-        end
-      }
+      node.successors.each do |succnode|
+        yield succnode if @nodeset.include?(succnode) && !@excluded_edge_targets.include?(succnode)
+      end
     end
   end
 
@@ -100,18 +109,18 @@ module PML
     topo = []
     worklist = WorkList.new([entry])
     vpcount = Hash.new(0)
-    worklist.process { |node|
+    worklist.process do |node|
       topo.push(node)
       succs = graph_trait ? graph_trait.successors(node) : node.successors
-      succs.each { |succ|
+      succs.each do |succ|
         vc = (vpcount[succ] += 1)
         preds = graph_trait ? graph_trait.predecessors(succ) : succ.predecessors
         if vc == preds.length
           vpcount.delete(succ)
           worklist.enqueue(succ)
         end
-      }
-    }
+      end
+    end
     assert("topological_order: not all nodes marked") { vpcount.empty? }
     topo
   end
@@ -126,7 +135,7 @@ module PML
     else
       todo = [entry]
     end
-    while !todo.empty?
+    until todo.empty?
       item = todo.pop
       next if reachable.include?(item)
       reachable.add(item)
@@ -143,15 +152,15 @@ module PML
   # credits go to: http://stackoverflow.com/questions/2108727/which-in-ruby-checking-if-program-exists-in-path-from-ruby
   #
   def which(cmd)
-    return nil unless cmd && cmd.length > 0
+    return nil unless cmd && !cmd.empty?
     if cmd.include?(File::SEPARATOR)
       return cmd if File.executable? cmd
     end
     ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
-      binary = File.join(path, "#{cmd}")
+      binary = File.join(path, cmd.to_s)
       return binary if File.executable? binary
     end
-    return nil
+    nil
   end
 
   class MissingToolException < Exception
@@ -160,19 +169,19 @@ module PML
     end
   end
 
-  def file_open(path,mode="r")
+  def file_open(path,mode = "r")
     internal_error "file_open: nil" unless path
-    if(path=="-")
+    if path == "-"
       case mode
-      when "r" ; yield $stdin
-      when "w" ; yield $stdout
-      when "a" ; yield $stdout
-      else ; die "Cannot open stdout in mode #{mode}"
+      when "r" then yield $stdin
+      when "w" then yield $stdout
+      when "a" then yield $stdout
+      else; die "Cannot open stdout in mode #{mode}"
       end
     else
-      File.open(path,mode) { |fh|
+      File.open(path,mode) do |fh|
         yield fh
-      }
+      end
     end
   end
 
@@ -198,20 +207,20 @@ module PML
     end
     Process.wait(pids.first)
     trap(0, "DEFAULT")
-    $? == 0
+    $CHILD_STATUS == 0
   end
 
   def assert(msg)
     unless yield
       pnt = Thread.current.backtrace[1]
-      $stderr.puts ("#{$0}: Assertion failed in #{pnt}: #{msg}")
-      puts "    "+Thread.current.backtrace[1..-1].join("\n    ")
-      exit 1
+      $stderr.puts "#{$PROGRAM_NAME}: Assertion failed in #{pnt}: #{msg}"
+      puts "    " + Thread.current.backtrace[1..-1].join("\n    ")
+      raise Exception, "Assertion Error"
     end
   end
 
   def internal_error(msg)
-    raise Exception.new(format_msg("INTERNAL ERROR", msg))
+    raise Exception, format_msg("INTERNAL ERROR", msg)
   end
 
   def die(msg)
@@ -219,7 +228,7 @@ module PML
     $stderr.puts(format_msg("FATAL","At #{pos}"))
     $stderr.puts(format_msg("FATAL",msg))
     # $stderr.puts Thread.current.backtrace
-    exit 1
+    raise Exception, "I desire to die"
   end
 
   def die_usage(msg)
@@ -238,19 +247,20 @@ module PML
   #  debug(@options,'ipet') { |&msgs| constraints.each { |c| msgs.call("Constraint: #{c}") } }
   #
   def debug(options, *type, &block)
-    return unless (options.debug_type||[]).any?{ |t| t == :all || type.include?(t) }
+    return unless (options.debug_type || []).any? { |t| t == :all || type.include?(t) }
     msgs = []
     r = block.call { |m| msgs.push(m) }
     msgs.push(r) if msgs.empty?
-    msgs.compact.each { |msg|
+    msgs.compact.each do |msg|
       $stderr.puts(format_msg("DEBUG",msg))
-    }
+    end
   end
 
   class DebugIO
-    def initialize(io=$stderr)
+    def initialize(io = $stderr)
       @io = io
     end
+
     def puts(str)
       @io.puts(format_msg("DEBUG",str))
     end
@@ -260,13 +270,15 @@ module PML
     $stderr.puts(format_msg("WARNING",msg))
   end
 
-  def warn_once(msg,detail=nil)
+  # rubocop:disable Style/GlobalVars
+  def warn_once(msg,detail = nil)
     $warn_once ||= {}
     return if $warn_once[msg]
     detail = ": #{detail}" if detail
-    warn(msg+detail.to_s)
-    $warn_once[msg]=true
+    warn(msg + detail.to_s)
+    $warn_once[msg] = true
   end
+  # rubocop:enable Style/GlobalVars
 
   def info(msg)
     $stderr.puts(format_msg("INFO",msg))
@@ -298,7 +310,7 @@ module PML
 
   end
 
-  def format_msg(tag,msg,align=-1)
+  def format_msg(tag,msg,_align = -1)
     "[platin] #{tag}: #{msg}"
   end
 
@@ -313,10 +325,10 @@ class String
   # Inspired by ActiveSupport's strip_heredoc.
   def strip_heredoc
     first_indent = 0
-    self.sub(/\A(\s*)/) {
+    sub(/\A(\s*)/) do
       first_indent = $1.length
       $2
-    }.gsub!(/^[ \t]{0,#{first_indent}}/,'')
+    end.gsub!(/^[ \t]{0,#{first_indent}}/,'')
   end
 end
 
@@ -331,8 +343,8 @@ end
 
 # Development helpers
 class Hash
-  def dump(io=$>)
-    self.each do |k,v|
+  def dump(_io = $DEFAULT_OUTPUT)
+    each do |k,v|
       puts "#{k.to_s.ljust(24)} #{v}"
     end
   end

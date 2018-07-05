@@ -8,12 +8,12 @@ require 'core/pmlbase'
 require 'core/context'
 require 'core/program'
 require 'core/symbolic_expr'
+require 'core/model'
 
 module PML
 
   # Flow fact classification and selection
   class FlowFactClassifier
-
     def initialize(pml)
       @pml = pml
     end
@@ -22,11 +22,11 @@ module PML
     def classify(ff)
       c = OpenStruct.new
       # context-independent loop bound
-      c.is_loop_bound = ! ff.get_loop_bound.nil?
+      c.is_loop_bound = !ff.get_loop_bound.nil?
       # context-independent block infeasibility
-      c.is_infeasible = ! ff.get_block_infeasible.nil?
+      c.is_infeasible = !ff.get_block_infeasible.empty?
       # context-independent calltarget restriction
-      (_,cs,_) = ff.get_calltargets
+      (_,cs) = ff.get_calltargets
       c.is_indirect_calltarget = cs && cs.programpoint.unresolved_call?
 
       # rt: involves machine-code only function (usually from compiler-rt or operating system)
@@ -34,7 +34,7 @@ module PML
         mcofs = @pml.machine_code_only_functions
         c.is_rt = ff.lhs.any? { |term|
                     term.programpoint.function &&
-                    mcofs.include?(term.programpoint.function.label)
+                      mcofs.include?(term.programpoint.function.label)
                   }
       else
         c.is_rt = false
@@ -76,7 +76,7 @@ module PML
       when "rt-support-all"   then c.is_rt || c.is_indirect_calltarget
       when "rt-support-local" then (c.is_rt && (c.is_local || c.is_minimal)) || c.is_indirect_calltarget
       when "rt-support-minimal" then (c.is_rt && c.is_minimal) || c.is_indirect_calltarget
-      else raise Exception.new("Bad Flow-Fact Selection Profile: #{profile}")
+      else raise Exception, "Bad Flow-Fact Selection Profile: #{profile}"
       end
     end
   end
@@ -96,47 +96,51 @@ module PML
 
     def add_copies(flowfacts, new_origin)
       copies = []
-      flowfacts.each { |ff|
+      flowfacts.each do |ff|
         ff_copy = ff.deep_clone
         ff_copy.origin = new_origin
         add(ff_copy)
         copies.push(ff_copy)
-      }
+      end
       copies
     end
 
     def reject!
       rejects = []
-      @list.reject! { |ff| r = yield ff ; rejects.push(r); r }
-      data.reject! { |ff| rejects.shift }
+      @list.reject! do |ff|
+        r = yield ff
+        rejects.push(r)
+        r
+      end
+      data.reject! { |_ff| rejects.shift }
     end
 
-    def filter(pml, ff_selection, ff_srcs, ff_levels, exclude_symbolic = false)
+    def filter(pml, ff_selection, ff_srcs, _ff_levels, _exclude_symbolic = false)
       classifier = FlowFactClassifier.new(pml)
-      @list.select { |ff|
+      @list.select do |ff|
         # skip if level does not match
-        if ! ff_levels.include?(ff.level)
-          false
+        # if ! ff_levels.include?(ff.level)
+        #  false
         # skip if source is not included
-        elsif ff_srcs != "all" && ! ff_srcs.include?(ff.origin)
+        if ff_srcs != "all" && !ff_srcs.include?(ff.origin)
           false
-        elsif ! classifier.included?(ff, ff_selection)
+        elsif !classifier.included?(ff, ff_selection)
           false
-        elsif exclude_symbolic && ! ff.rhs.constant?
+        # elsif exclude_symbolic && ! ff.rhs.constant?
+        #  false
+        # always filter unknown bounds since we cannot handle them in the analyses
+        elsif ff.rhs.kind_of?(SEUnknown)
           false
-	# always filter unknown bounds since we cannot handle them in the analyses
-	elsif ff.rhs.kind_of?(SEUnknown)
-	  false
         else
           true
         end
-      }
+      end
     end
 
     def stats(pml)
       classifier = FlowFactClassifier.new(pml)
       by_level = {}
-      @list.each { |ff|
+      @list.each do |ff|
         klass = classifier.classification_group(ff)
         by_origin = (by_level[ff.level] ||= {})
         by_origin[:cnt] = (by_origin[:cnt] || 0) + 1
@@ -144,23 +148,23 @@ module PML
         by_group[:cnt] = (by_group[:cnt] || 0) + 1
         by_klass = (by_group[klass] ||= {})
         by_klass[:cnt] = (by_klass[:cnt] || 0) + 1
-      }
+      end
       by_level
     end
 
-    def dump_stats(pml, io=$stderr)
+    def dump_stats(pml, io = $stderr)
       io.puts "Flow-Facts, classified"
-      stats(pml).each { |level,by_group|
+      stats(pml).each do |level,by_group|
         io.puts " #{level.to_s.ljust(39)} #{by_group[:cnt]}"
-        by_group.each { |group,by_klass|
+        by_group.each do |group,by_klass|
           next if group == :cnt
           io.puts "   #{group.to_s.ljust(37)} #{by_klass[:cnt]}"
-          by_klass.each { |klass,stats|
+          by_klass.each do |klass,stats|
             next if klass == :cnt
             io.puts "     #{klass.to_s.ljust(35)} #{stats[:cnt]}"
-          }
-        }
-      }
+          end
+        end
+      end
     end
   end
 
@@ -174,16 +178,18 @@ module PML
   # Immutable
   class Term < PMLObject
     attr_reader :factor, :ppref
-    def initialize(pp,factor,data=nil)
+    def initialize(pp,factor,data = nil)
       pp = ContextRef.new(pp, Context.empty) if pp.kind_of?(ProgramPoint)
       assert("Term#initialize: pp not a programpoint reference") { pp.kind_of?(ContextRef) }
       assert("Term#initialize: not a context-sensitive reference: #{pp} :: #{pp.class}") { pp.kind_of?(ContextRef) }
       @ppref, @factor = pp,factor
       set_yaml_repr(data)
     end
+
     def context
       @ppref.context
     end
+
     def programpoint
       @ppref.programpoint
     end
@@ -196,11 +202,261 @@ module PML
     def to_s
       "#{@factor} #{ppref}"
     end
+
     def to_pml
       { 'factor' => @factor, 'program-point' => @ppref.data }
     end
-    def Term.from_pml(mod,data)
+
+    def self.from_pml(mod,data)
       Term.new(ContextRef.from_pml(mod,data['program-point']), data['factor'])
+    end
+  end
+
+  # List of modelfacts (modifiable)
+  class ModelFactList < PMLList
+    extend PMLListGen
+    # pml_list(element_type, unique_indices = [], indices = [])
+    pml_list(:ModelFact,[],[:origin,:type])
+    # customized by_origin implementation
+    def by_origin(origin)
+      if origin.kind_of?(String)
+        @list.select { |mf| origin == mf.origin }
+      else
+        @list.select { |mf| origin.include?(mf.origin) }
+      end
+    end
+
+    def add_copies(flowfacts, new_origin)
+      copies = []
+      flowfacts.each do |mf|
+        mf_copy = mf.deep_clone
+        mf_copy.origin = new_origin
+        add(mf_copy)
+        copies.push(mf_copy)
+      end
+      copies
+    end
+
+    def reject!
+      rejects = []
+      @list.reject! do |mf|
+        r = yield mf
+        rejects.push(r)
+        r
+      end
+      data.reject! { |_mf| rejects.shift }
+    end
+
+    def stats(_pml)
+      assert("Unimplemented") { false }
+    end
+
+    def dump_stats(_pml, _io = $stderr)
+      assert("Unimplemented") { false }
+    end
+
+    def to_set
+      set = Set.new
+      each do |mf|
+        set.add(mf)
+      end
+      set
+    end
+  end
+
+  # Model Fact utility class
+  # Kind of flow facts of interest
+  # guard:    * boolexpr         ... specifies code (blocks) not executed
+  class ModelFact < PMLObject
+    attr_reader :attributes, :ppref, :type, :expr, :mode
+    include ProgramInfoObject
+
+    def initialize(ppref, type, expr, attrs, mode, data = nil)
+      assert("ModelFact#initialize: program point reference has wrong type (#{ppref.class})") do
+        ppref.kind_of?(ContextRef)
+      end
+      @ppref, @type, @expr = ppref, type, expr
+      @attributes = attrs
+      @mode = mode
+      set_yaml_repr(data)
+    end
+
+    def programpoint
+      @ppref.programpoint
+    end
+
+    def self.from_pml(pml, data, mode = 'platin')
+      fs = pml.functions_for_level(data['level'])
+      ModelFact.new(ContextRef.from_pml(fs,data['program-point']),
+                    data['type'], data['expression'],
+                    ProgramInfoObject.attributes_from_pml(pml, data),
+                    mode,
+                    data)
+    end
+
+    def to_pml
+       # rubocop:disable Layout/MultilineHashBraceLayout
+      { 'program-point' => @ppref.data,
+        'type' => @type,
+        'expression' => @expr
+      }.merge(attributes)
+       # rubocop:enable Layout/MultilineHashBraceLayout
+    end
+
+    def to_source
+      @ppref.programpoint.block.src_hint + ": " \
+        "#pragma platina " + type + " " + '"' + expr + '"'
+    end
+
+    # string representation of the value fact
+    def to_s
+      "#<ModelFact #{attributes.map { |k,v| "#{k}=#{v}" }.join(",")}, #{type} at #{ppref}: #{expr}>"
+    end
+
+    # deep clone: clone flow fact, lhs and attributes
+    def deep_clone
+      ModelFact.new(ppref.dup, type.dup, expr.dup, attributes.dup)
+    end
+
+    def ==(other)
+      return false if other.nil?
+      return false unless other.kind_of?(ModelFact)
+      @ppref == other.ppref && @type == other.type && @expr == other.expr
+    end
+
+    def eql?(other); self == other; end
+
+    def hash
+      return @hash if @hash
+      @hash = @ppref.hash ^ @expr.hash ^ @type.hash
+    end
+
+    def <=>(other)
+      hash <=> other.hash
+    end
+
+    def to_fact(pml, model)
+      case @type
+        # "Never go into the Dark Wood, my friend.", said Ratty Rupert. "There
+        # are bad things in there"     -- Mr Bunnsy has an adventure
+      when "guard"
+
+                                # We aim for the following kind of flowfact
+        # - scope:
+        #     function: snd_ac97_pcm_open
+        #     loop: for.body80
+        #   lhs:
+        #   - factor: 1
+        #     program-point:
+        #       function: snd_ac97_pcm_open
+        #       block: for.body80
+        #   op: less-equal
+        #   rhs: '0'
+        #   level: bitcode
+        #   origin: model.bc
+
+        # We do not deal with markers and declare our guard at function level
+        # Ugly as hell, but use reflection to check for the :function attr
+        # accessor
+        assert("guards match on function scope, no function found #{ppref} in #{self}") \
+              { ppref.respond_to?(:function) }
+        assert("guards set a blockfreq, no block found for #{ppref} in #{self}") \
+              do
+                ppref.kind_of?(ContextRef) \
+                      && ppref.respond_to?("programpoint") \
+                      && ppref.programpoint.kind_of?(Block)
+              end
+        assert("guard operate on bitcode level") { level == 'bitcode' }
+        fun = ppref.function
+
+        # When the guardexpression is false, then this path is infeasible
+        guardexpr = Peaches::evaluate_expression(model.context, expr, :boolean)
+        unless guardexpr
+          # FlowFact.block_frequency(scoperef, blockref, freq, attrs)
+          fact = FlowFact.block_frequency(fun, ppref.programpoint, [SEInt.new(0)], attributes)
+          fact.origin = 'model.bc'
+          fact
+        end
+
+        # "The important thing about adventures, thought Mr Bunnsy, was that
+        # they shouldn't be so long as to make you miss mealtimes"
+        #                                   -- Mr Bunnsy has an adventure
+      when "lbound"
+        # modelfacts:
+        #   - program-point:
+        #       function:        c_entry
+        #       block:           while.body
+        #     origin:          platina.bc
+        #     level:           bitcode
+        #     type:            lbound
+        #     expression:      '10'
+
+        assert("lbound operates on bitcode level") { level == 'bitcode' }
+        assert("lbounds match on function scope, no function found #{ppref} in #{self}") \
+              { ppref.respond_to?(:function) }
+        assert("lbounds set a blockfreq, no block found for #{ppref} in #{self}") \
+              do
+                ppref.kind_of?(ContextRef) \
+                      && ppref.respond_to?("programpoint") \
+                      && ppref.programpoint.kind_of?(Block)
+              end
+
+        # To use Flowfact.loop_bound, we need a scope at the level of our
+        # programpoint easiest way to achieve this is to use ProgramPoint.from_pml...
+        # Therefore, we fake the appropriate input here:
+        fs = pml.functions_for_level(level)
+        data = {}
+        data['function'] = ppref.function.name
+        data['loop']     = ppref.programpoint.block.name
+        scope = ContextRef.from_pml(fs, data)
+        assert("lbounds operate on loops, no loop found for #{ppref} in #{self}") \
+              { scope != nil && scope.programpoint.kind_of?(Loop) }
+        # XXX: use model-eval-foo here
+        bound = Peaches::evaluate_expression(model.context, expr, :number)
+        assert("lbounds operate on positive integers, but (#{expr}) evaluates to #{bound}") do
+          bound >= 0
+        end
+
+        fact = FlowFact.loop_bound(scope, SEInt.new(bound + 1), attributes)
+        fact.origin = 'model.bc'
+        fact
+
+        # "And because of Olly the Snake's trick with the road sign, Mr Bunnsy
+        # did not know that he had lost his way. He wasn't going to Howard the
+        # Stoat's tea party. He was heading into the Dark Wood."
+        #                                   -- Mr Bunnsy has an adventure
+      when "callee"
+        assert("callee operates on machinecode level") { level == 'machinecode' }
+        assert("callee targets call instructions" \
+               ", no unresolved call found for #{ppref} in #{self}") \
+              do
+                ppref.kind_of?(ContextRef) \
+                      && ppref.respond_to?("programpoint") \
+                      && ppref.programpoint.kind_of?(Instruction) \
+                      && ppref.programpoint.calls? && ppref.programpoint.unresolved_call?
+              end
+
+        # XXX: use model-eval-foo here
+        listfields = /\[(.*)\]/.match(expr)
+        assert("Not a list: #{expr}") { listfields != nil }
+        entries = listfields[1].split(",")
+        # Remove whitespace
+        entries.map! { |entry| entry.strip }
+
+        # If we have a qualified identifier, perform patmos-clang-style
+        # namemangling (only for static identifiers)
+        entries.map! do |entry|
+          entry.sub(/^([^:]+):(.+)$/) do
+          fname = $2; # because, well, fuck you, we are using global variables
+                      # for our regex matching. scoping is for loosers.
+          $1.gsub(/[^0-9A-Za-z]/, '_') + '_' + fname
+        end end
+
+        mutation = PMLMachineCalleeMutation.new(ppref.programpoint, entries)
+        mutation
+      else
+        assert("Cannot translate type #{@type} to a fact") { false }
+      end
     end
   end
 
@@ -228,18 +484,18 @@ module PML
       @scope, @lhs, @op, @rhs = scope, lhs, op, rhs
       @rhs = SEInt.new(@rhs) if rhs.kind_of?(Integer)
       @attributes = attributes
-      raise Exception.new("No level attribute!") unless level
+      raise Exception, "No level attribute!" unless level
       set_yaml_repr(data)
     end
 
     # whether this flow fact has a symbolic constant (not fully supported)
     def symbolic_bound?
-      ! @rhs.constant?
+      !@rhs.constant?
     end
 
     # string representation of the flow fact
     def to_s
-      "#<FlowFact #{attributes.map {|k,v| "#{k}=#{v}"}.join(",")}, in #{scope}: #{lhs} #{op} #{rhs}>"
+      "#<FlowFact #{attributes.map { |k,v| "#{k}=#{v}" }.join(",")}, in #{scope}: #{lhs} #{op} #{rhs}>"
     end
 
     # deep clone: clone flow fact, lhs and attributes
@@ -251,44 +507,45 @@ module PML
       FlowFactClassifier.new(pml).classification_group(self)
     end
 
-    def FlowFact.from_pml(pml, data)
+    def self.from_pml(pml, data)
       mod = pml.toplevel_objects_for_level(data['level'])
       scope = ContextRef.from_pml(mod,data['scope'])
       lhs = TermList.new(data['lhs'].map { |t| Term.from_pml(mod,t) })
       attrs = ProgramInfoObject.attributes_from_pml(pml, data)
       rhs = SymbolicExpression.parse(data['rhs'])
-      rhs = rhs.map_names { |ty,name|
+      rhs = rhs.map_names do |ty,name|
         if ty == :variable # ok
           name
         elsif ty == :loop
           b = scope.function.blocks.by_name(name[1..-1]).loop
-          unless b
-            raise Exception.new("Unable to lookup loop: #{name} in #{b}")
-          end
+          raise Exception, "Unable to lookup loop: #{name} in #{b}" unless b
           b
         end
-      }
+      end
       ff = FlowFact.new(scope, lhs, data['op'], rhs, attrs, data)
+      ff
     end
 
     def to_pml
+      # rubocop:disable Layout/MultilineHashBraceLayout
       assert("no 'level' attribute for flow-fact") { level }
       { 'scope' => scope.data,
         'lhs' => lhs.data,
         'op' => op,
         'rhs' => rhs.to_s,
       }.merge(attributes)
+      # rubocop:enable Layout/MultilineHashBraceLayout
     end
 
     # Flow fact builders
-    def FlowFact.block_frequency(scoperef, blockref, freq, attrs)
-      terms = [ Term.new(blockref, 1) ]
+    def self.block_frequency(scoperef, blockref, freq, attrs)
+      terms = [Term.new(blockref, 1)]
       flowfact = FlowFact.new(scoperef, TermList.new(terms),'less-equal',freq.max, attrs.dup)
       flowfact
     end
 
-    def FlowFact.calltargets(scoperef, csref, receivers, attrs)
-      terms = [ Term.new(csref,1) ]
+    def self.calltargets(scoperef, csref, receivers, attrs)
+      terms = [Term.new(csref,1)]
       receivers.each do |fref|
         terms.push(Term.new(fref,-1))
       end
@@ -296,14 +553,14 @@ module PML
       flowfact
     end
 
-    def FlowFact.loop_bound(scope, bound, attrs)
+    def self.loop_bound(scope, bound, attrs)
       blockref = ContextRef.new(scope.programpoint.loopheader, Context.empty)
       flowfact = FlowFact.new(scope, TermList.new([Term.new(blockref,1)]), 'less-equal',
                               bound, attrs.dup)
       flowfact
     end
 
-    def FlowFact.inner_loop_bound(scoperef, blockref, bound, attrs)
+    def self.inner_loop_bound(scoperef, blockref, bound, attrs)
       flowfact = FlowFact.new(scoperef, TermList.new([Term.new(blockref,1)]), 'less-equal',
                               bound, attrs.dup)
       flowfact
@@ -361,20 +618,20 @@ module PML
       # local relative flow facts are globally valid
       return true if local? && rhs.constant? && rhs.to_i == 0
       # otherwise, the scoep has to be the entry function
-      return scope.programpoint.kind_of?(Function) &&
-             scope.function == entry_function &&
-             scope.context.empty?
+      scope.programpoint.kind_of?(Function) &&
+        scope.function == entry_function &&
+        scope.context.empty?
     end
 
     def local?
-      lhs.all? { |term|
+      lhs.all? do |term|
         pp = term.programpoint
         pp.kind_of?(ConstantProgramPoint) || (pp.function && pp.function == scope.function)
-      }
+      end
     end
 
     def loop_bound?
-      ! get_loop_bound.nil?
+      !get_loop_bound.nil?
     end
 
     def loop_scope?
@@ -382,8 +639,8 @@ module PML
     end
 
     def context_sensitive?
-      return true if lhs.any? { |term| ! term.context.empty? }
-      return ! scope.context.empty?
+      return true if lhs.any? { |term| !term.context.empty? }
+      !scope.context.empty?
     end
 
     def references_empty_block?
@@ -408,12 +665,26 @@ module PML
     end
 
     # if this constraints marks a block infeasible,
-    # return [scope,block]
+    # return [[scope,block]]
     def get_block_infeasible
-      s,b,rhs = get_block_frequency_bound
-      return nil unless s
-      return nil unless rhs.constant? && rhs.to_i == 0
-      return [scope,b]
+      # Terms for infeasible blocks have a specific structure:
+      #   \sum_{i = 0}^{n} c_i * block_i <= 0 mit c_i \in \mathbb{N}
+      # This is what we match for below
+
+      return [] unless rhs.constant? && rhs.to_i == 0
+      infeasible_blocks = []
+      lhs.list.each do |term|
+        factor,ppref,pp = term.factor,term.ppref,term.programpoint
+        return [] unless factor.to_i >= 0
+        return [] unless pp.kind_of?(Block)
+        # Note: this allows (factor = 0) without marking them infeasible. No
+        #       This is intentional, as those blocks are _not_ infeasible from
+        #       this formula
+        infeasible_blocks << [scope, ppref] if factor.to_i > 0
+      end
+      require 'pp'
+      pp infeasible_blocks
+      infeasible_blocks
     end
 
     # if this is a flowfact constraining the frequency of a single block,
@@ -432,19 +703,19 @@ module PML
     #   cs      ... ContextRef <Instruction>
     #   targets ... [Function]
     def get_calltargets
-      callsite_candidate = lhs.list.select { |term|
+      callsite_candidate = lhs.list.select do |term|
         term.factor == 1 && term.programpoint.kind_of?(Instruction)
-      }
+      end
       return nil unless callsite_candidate.length == 1
       callsite_ref = callsite_candidate.first.ppref
       opposite_factor = -1
       targets = []
-      lhs.each { |term|
+      lhs.each do |term|
         next if term == callsite_candidate.first
         return nil unless term.factor == opposite_factor
         return nil unless term.programpoint.kind_of?(Function)
         targets.push(term.programpoint)
-      }
+      end
       [scope, callsite_ref, targets]
     end
   end
@@ -465,24 +736,29 @@ module PML
 
   class ValueRange < PMLObject
     attr_reader :symbol, :min, :max
-    def initialize(min, max, symbol, data =nil)
+    def initialize(min, max, symbol, data = nil)
       @min, @max, @symbol = min, max, symbol
       set_yaml_repr(data)
-      raise Exception.new("Bad ValueRange: #{self}") unless @min <= @max if @min
+      raise Exception, "Bad ValueRange: #{self}" if @min && @min > @max
     end
+
     def inspect
       "ValueRange<min=#{min.inspect},max=#{max.inspect},symbol=#{symbol}>"
     end
+
     def to_s
       symbol.to_s + (range ? range.to_s : '')
     end
+
     def range
       return nil unless max
       Range.new(min,max)
     end
-    def ValueRange.from_pml(_,data)
+
+    def self.from_pml(_,data)
       ValueRange.new(data['min'],data['max'],data['symbol'],data)
     end
+
     def to_pml
       { 'min' => @min, 'max' => @max, 'symbol' => @symbol }.delete_if { |_,v| v.nil? }
     end
@@ -498,15 +774,19 @@ module PML
     attr_reader :attributes, :ppref, :variable, :width, :values
     include ProgramInfoObject
     def initialize(ppref, variable, width, values, attrs, data = nil)
-      assert("ValueFact#initialize: program point reference has wrong type (#{ppref.class})") { ppref.kind_of?(ContextRef) }
+      assert("ValueFact#initialize: program point reference has wrong type (#{ppref.class})") do
+        ppref.kind_of?(ContextRef)
+      end
       @ppref, @variable, @width, @values = ppref, variable, width, values
       @attributes = attrs
       set_yaml_repr(data)
     end
+
     def programpoint
       @ppref.programpoint
     end
-    def ValueFact.from_pml(pml, data)
+
+    def self.from_pml(pml, data)
       fs = pml.toplevel_objects_for_level(data['level'])
       ValueFact.new(ContextRef.from_pml(fs,data['program-point']),
                     data['variable'], data['width'],
@@ -514,6 +794,7 @@ module PML
                     ProgramInfoObject.attributes_from_pml(pml, data),
                     data)
     end
+
     def to_pml
       { 'program-point' => @ppref.data,
         'variable' => @variable,
@@ -524,9 +805,9 @@ module PML
     # string representation of the value fact
     def to_s
       vs = values.map { |vr| vr.to_s }.join(", ")
-      "#<ValueFact #{attributes.map {|k,v| "#{k}=#{v}"}.join(",")}, at #{ppref}: #{variable}#{"[width=#{width}]" if width} \\in {#{vs}}>"
+      "#<ValueFact #{attributes.map { |k,v| "#{k}=#{v}" }.join(",")}, " \
+        "at #{ppref}: #{variable}#{"[width=#{width}]" if width} \\in {#{vs}}>"
     end
-
   end
 
   # List of timing entries (modifiable)
@@ -542,21 +823,25 @@ module PML
     attr_reader :reference, :cycles, :wcetfreq, :criticality, :wcet_contribution
     def initialize(reference, cycles, wcetfreq, wcet_contribution, criticality = nil, data = nil)
       @reference, @cycles, @wcetfreq, @wcet_contribution, @criticality =
-       reference,  cycles,  wcetfreq,  wcet_contribution,  criticality
+        reference, cycles, wcetfreq, wcet_contribution, criticality
       set_yaml_repr(data)
     end
-    def ProfileEntry.from_pml(fs, data)
+
+    def self.from_pml(fs, data)
       ProfileEntry.new(ContextRef.from_pml(fs,data['reference']), data['cycles'],
                        data['wcet-frequency'], data['wcet-contribution'], data['criticality'], data)
     end
+
     def criticality=(c)
       @criticality = c
       @data['criticality'] = c if @data
     end
+
     def to_pml
       { 'reference' => reference.data, 'cycles' => cycles, 'wcet-frequency' => wcetfreq,
-        'criticality' => criticality, 'wcet-contribution' => wcet_contribution }.delete_if {|k,v| v.nil? }
+        'criticality' => criticality, 'wcet-contribution' => wcet_contribution }.delete_if { |_k,v| v.nil? }
     end
+
     def to_s
       data
     end
@@ -577,17 +862,20 @@ module PML
       @attributes = attrs
       set_yaml_repr(data)
     end
+
     def profile=(p)
       @profile = p
       @data['profile'] = @profile.data if @data
     end
-    def TimingEntry.from_pml(pml, data)
+
+    def self.from_pml(pml, data)
       fs = pml.toplevel_objects_for_level(data['level'])
       profile = data['profile'] ? Profile.from_pml(fs, data['profile']) : nil
       TimingEntry.new(ContextRef.from_pml(fs,data['scope']), data['cycles'],
                       profile,
                       ProgramInfoObject.attributes_from_pml(pml,data), data)
     end
+
     def to_pml
       pml = { 'scope' => @scope.data, 'cycles' => @cycles }.merge(attributes)
       pml['profile'] = @profile.data if @profile
@@ -595,7 +883,7 @@ module PML
     end
 
     def to_s
-      "#<TimingEntry #{attributes.map {|k,v| "#{k}=#{v}"}.join(",")}, in #{scope}: #{cycles} cycles>"
+      "#<TimingEntry #{attributes.map { |k,v| "#{k}=#{v}" }.join(",")}, in #{scope}: #{cycles} cycles>"
     end
   end
 
@@ -624,7 +912,7 @@ module PML
   class SCAEdgeList < PMLList
     extend PMLListGen
     pml_name_index_list(:SCANode)
-    def initialize(data, tree)
+    def initialize(data, _tree)
       @list = data.map { |n| SCAEdge.new(n) }
       set_yaml_repr(data)
     end
@@ -639,11 +927,13 @@ module PML
       @function = pml.machine_functions.by_label(data['function'])
       @size = data['spillsize']
     end
+
     def to_s
       "#{id}:#{function}:#{size}"
     end
+
     def qname
-      return @id
+      @id
     end
   end
 
@@ -657,6 +947,7 @@ module PML
       @block = data['callblock']
       @inst = data['callindex']
     end
+
     def to_s
       "#{src}:#{block}:#{inst}->#{dst}"
     end

@@ -10,7 +10,7 @@ require 'core/utils'
 module PML
 
   # FIXME: move the utility stuff to a file on its own
-  RE_HEX=/[0-9A-Fa-f]/
+  RE_HEX = /[0-9A-Fa-f]/
 
   # Mixin for entities which are identified by a qualified name (qname), and use this
   # identifier for comparison and hashing
@@ -19,16 +19,20 @@ module PML
       assert("QNameObject: @qname not set (fatal)") { @qname }
       @qname
     end
+
     def ==(other)
       return false if other.nil?
       return false unless other.respond_to?(:qname)
       qname == other.qname
     end
-    def eql?(other); self == other ; end
+
+    def eql?(other); self == other; end
+
     def hash
       return @hash if @hash
-      @hash=qname.hash
+      @hash = qname.hash
     end
+
     def <=>(other)
       qname <=> other.qname
     end
@@ -39,10 +43,11 @@ module PML
   # at a specific representation level, stored in (attr_reader) 'attributes'
   #
   module ProgramInfoObject
-    def ProgramInfoObject.attribute_list
+    def self.attribute_list
       %w{origin level}
     end
-    def ProgramInfoObject.attributes_from_pml(_,data)
+
+    def self.attributes_from_pml(_,data)
       if data.nil?
         {}
       else
@@ -51,22 +56,28 @@ module PML
         attrs
       end
     end
+
     def attributes_to_pml(data)
       attributes.each { |k| data[k] = attributes[k] if attributes[k] }
     end
+
     def add_attribute(k,v)
       attributes[k] = v
       data[k] = v if data
     end
+
     def origin
       attributes['origin']
     end
+
     def origin=(origin)
       add_attribute('origin', origin)
     end
+
     def level
       attributes['level']
     end
+
     def level=(level)
       add_attribute('level', level)
     end
@@ -78,10 +89,9 @@ module PML
   # Additionally, every PML object needs to implement to_pml (to generate the YAML representation),
   # and must keep YAML and instance variables in sync at all times.
   class PMLObject
-
     def data
       # on-demand construction of the YAML representation
-      @data = to_pml unless @data
+      @data ||= to_pml
       @data
     end
 
@@ -94,6 +104,7 @@ module PML
       super(new_obj)
       new_obj.reset_yaml_repr
     end
+
     def initialize_clone(new_obj)
       super(new_obj)
       new_obj.reset_yaml_repr
@@ -101,15 +112,14 @@ module PML
 
     # avoid recursive calls when printing an object
     # subclasses should override to_s/inspect if needed
-    def to_s ; @qname || "#<#{self.class}:#{self.object_id}>" ; end
-    def inspect ; to_s ; end
+    def to_s; @qname || "#<#{self.class}:#{object_id}>"; end
 
-
+    def inspect; to_s; end
 
     def to_pml
       # return cached YAML representation, if available
       return @data if @data
-      raise Exception.new("#{self.class}: to_pml not implemented")
+      raise Exception, "#{self.class}: to_pml not implemented"
     end
 
     # set YAML representation, if not nil
@@ -126,48 +136,65 @@ module PML
     def to_s
       list.to_s
     end
+
     def to_pml
       list.map { |t| t.data }
     end
+
     def add(item)
       list.push(item)
-      if @data ; data.push(item.data) ; end
+      data.push(item.data) if @data
       add_index(item)
     end
+
     def clear!
       @list = []
       @data = [] if @data
     end
+
     # basic list operations (delegators)
-    def first ; list.first ; end
-    def last ; list.last ; end
-    def length ; list.length ; end
-    def size ; length ; end
-    def empty? ; list.empty? ; end
-    def include?(x) ; list.include?(x) ; end
-    def [](index) ; list[index]; end
-    def each(&block) ; list.each(&block) ; end
-    def each_with_index(&block) ; list.each_with_index(&block) ; end
+    def first; list.first; end
+
+    def last; list.last; end
+
+    def length; list.length; end
+
+    def size; length; end
+
+    def empty?; list.empty?; end
+
+    def [](index); list[index]; end
+
+    def each(&block); list.each(&block); end
+
+    def delete_if(&block); list.delete_if(&block); end
+
+    def each_with_index(&block); list.each_with_index(&block); end
 
     def push(item); add(item); end
+
     def dup
       self.class.new(@list.dup, data.dup)
     end
+
     def deep_clone
       self.class.new(@list.map { |item| item.deep_clone }, nil)
     end
-    def lookup(dict,key,name,error_if_missing=true)
+
+    def lookup(dict,key,name,error_if_missing = true)
       v = dict[key]
-      if ! v && error_if_missing
-        raise Exception.new("#{self.class}#by_#{name}: No object with key '#{key}' in #{dict.inspect}")
+      if !v && error_if_missing
+        raise Exception, "#{self.class}#by_#{name}: No object with key '#{key}' in #{dict.inspect}"
       end
       v
     end
-    private
-    def add_lookup(dict,key,val,name,opts={})
-      return if ! key && opts[:ignore_if_missing]
+
+  private
+
+    def add_lookup(dict,key,val,name,opts = {})
+      return if !key && opts[:ignore_if_missing]
       if dict[key]
-        raise Exception.new("#{self.class}#by_#{name}: Duplicate object with key #{key}: #{val} and #{dict[key]}")
+        raise Exception, "#{self.class}#by_#{name}: Duplicate object with key #{key}: #{val} and #{dict[key]}"
       end
       dict[key] = val
     end
@@ -179,7 +206,8 @@ module PML
   module PMLListGen
     def pml_list(element_type, unique_indices = [], indices = [])
       all_indices = unique_indices + indices
-      module_eval %Q$
+      # rubocop:disable Layout/SpaceInsideStringInterpolation
+      module_eval <<-"_end_eval", __FILE__, __LINE__ + 1
         def initialize(list, existing_data = nil)
           assert("#{self.class}#initialize: list must not be nil") { list }
           @list = list
@@ -190,43 +218,52 @@ module PML
           self.new(data.map { |d| #{element_type}.from_pml(ctx,d) }, data)
         end
         def build_index
-          #{all_indices.map { |index| "@index_#{index} = {}"}.join("; ") }
+          #{all_indices.map { |index| "@index_#{index} = {}" }.join("; ")}
           @list.each { |item| add_index(item) }
         end
         private
         def add_index(item)
-          #{(unique_indices.map { |index|
-            %Q&
-              k = item.send(:#{index})
-              if k
-                if duplicate = @index_#{index}[k]
-                  raise Exception.new("#{self.class}#add_index(\#{item.inspect}): duplicate index #{index}: \#{duplicate.inspect}")
-                end
-                @index_#{index}[k] = item
-              end
-            &
-           } +
-           indices.map { |index|
+          #{(unique_indices.map do |index|
+             %&
+               k = item.send(:#{index})
+               if k
+                 if duplicate = @index_#{index}[k]
+                   raise Exception.new("#{self.class}#add_index(\#{item.inspect}): duplicate index #{index}: \#{duplicate.inspect}")
+                 end
+                 @index_#{index}[k] = item
+               end
+             &
+           end +
+           indices.map do |index|
              "(@index_#{index}[item.send(:#{index})]||=[]).push(item)"
-           }).join(";")
+           end).join(";")
           }
         end
-      $
-      all_indices.each { |index|
-         module_eval %Q$
+      _end_eval
+      all_indices.each do |index|
+        module_eval <<-"_end_eval", __FILE__, __LINE__ + 1
            def by_#{index}(key, error_if_missing = false)
                lookup(@index_#{index}, key, "#{index}", error_if_missing)
            end
-         $
-      }
+         _end_eval
+      end
+      all_indices.each do |index|
+        module_eval <<-"_end_eval", __FILE__, __LINE__ + 1
+           def keys_#{index}()
+               @index_#{index}.keys
+           end
+         _end_eval
+      end
+      # rubocop:enable Layout/SpaceInsideStringInterpolation
     end
+
     def pml_name_index_list(element_type, unique_indices = [], indices = [])
       pml_list(element_type, [:name,:qname] + unique_indices, indices)
-      module_eval %Q!
+      module_eval <<-"_end_eval", __FILE__, __LINE__ + 1
         def [](arg)
           by_name(arg)
         end
-      !
+      _end_eval
     end
   end
 end # end module pml

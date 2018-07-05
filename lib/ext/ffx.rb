@@ -16,12 +16,11 @@ module PML
 
 # option extensions for f4/ffx
 class OptionParser
-  def ff_file(mandatory=true)
-    self.on("--ff FILE", "Path to F4/FFX file") { |f| options.ff_file = f }
-    self.add_check { |options| die_usage "Option --ff is mandatory" unless options.ff_file } if mandatory
+  def ff_file(mandatory = true)
+    on("--ff FILE", "Path to F4/FFX file") { |f| options.ff_file = f }
+    add_check { |options| die_usage "Option --ff is mandatory" unless options.ff_file } if mandatory
   end
 end
-
 
 # Features not supported by the FFX export module
 class F4UnsupportedFeatureException < Exception
@@ -53,26 +52,25 @@ class FFXUnsupportedProgramPoint < FFXUnsupportedFeatureException
   end
 end
 
-
 #
 # Extend ValueRange with +#to_ffx+
 #
 class ValueRange
   # Either the symbol this range references (double quoted), or a numeric range
   def to_f4
-    if s = self.symbol
+    if (s = symbol)
       dquote(s)
     else
-      raise Exception.new("#{self.class}#to_f4: no translation available")
+      raise Exception, "#{self.class}#to_f4: no translation available"
     end
   end
 
   def to_ffx
-    raise Exception.new("#{self.class}#to_ffx: no translation available")
+    raise Exception, "#{self.class}#to_ffx: no translation available"
   end
 
-  def ValueRange.range_to_ffx(range)
-    sprintf("0x%08x .. 0x%08x",range.min,range.max)
+  def self.range_to_ffx(range)
+    format("0x%08x .. 0x%08x",range.min,range.max)
   end
 end
 
@@ -81,30 +79,34 @@ end
 #
 class SymbolicExpression
   def to_f4
-    raise Exception.new("#{self.class}#to_f4: no translation available")
+    raise Exception, "#{self.class}#to_f4: no translation available"
   end
+
   def to_ffx
-    raise Exception.new("#{self.class}#to_ffx: no translation available")
+    raise Exception, "#{self.class}#to_ffx: no translation available"
   end
 end
 
 class SEInt
-  def to_f4  ; self.to_s ; end
-  def to_ffx ; self.to_s ; end
+  def to_f4; to_s; end
+
+  def to_ffx; to_s; end
 end
 
 # Variables always reference arguments of functions
 class SEVar
-  def to_f4  ; "@arg_#{self}" ; end
-  def to_ffx ; "@arg_#{self}" ; end
+  def to_f4; "@arg_#{self}"; end
+
+  def to_ffx; "@arg_#{self}"; end
 end
 
 class SEBinary
   def to_f4
-    raise Exception.new("#{self.class}#to_f4: no translation available")
+    raise Exception, "#{self.class}#to_f4: no translation available"
   end
+
   def to_ffx
-    raise Exception.new("#{self.class}#to_ffx: no translation available")
+    raise Exception, "#{self.class}#to_ffx: no translation available"
 #    left,right = self.a, self.b
 #    if SEBinary.commutative?(op) && left.constant? && ! right.constant?
 #      left, right = right, left
@@ -134,52 +136,54 @@ class SEBinary
   end
 end
 
-
 #
 # Extend program points with +#ffx_ref+
 #
 
 class Function
   def f4_ref
-    if self.label && !EXPORT_ADDR
-      dquote(self.label)
-    elsif self.address
-      "0x#{address.to_s(16)}"
-    else
-      raise F4UnsupportedProgramPoint.new(self, "neither address nor label available (forgot 'platin extract-symbols'?)")
-    end
-  end
-  def ffx_ref
-    raise Exception.new("#{self.class}#to_ffx: no translation available")
-  end
-end
-
-class Block
-  def f4_ref
-    if instructions.empty?
-      raise F4UnsupportedProgramPoint.new(self, "impossible to reference an empty block")
-    end
     if label && !EXPORT_ADDR
       dquote(label)
     elsif address
       "0x#{address.to_s(16)}"
     else
-      raise F4UnsupportedProgramPoint.new(self, "neither address nor label available (forgot 'platin extract-symbols'?)")
+      raise F4UnsupportedProgramPoint.new(self, "neither address nor label " \
+                                                "available (forgot 'platin extract-symbols'?)")
     end
   end
+
   def ffx_ref
-    raise Exception.new("#{self.class}#to_ffx: no translation available")
+    raise Exception, "#{self.class}#to_ffx: no translation available"
+  end
+end
+
+class Block
+  def f4_ref
+    raise F4UnsupportedProgramPoint.new(self, "impossible to reference an empty block") if instructions.empty?
+    if label && !EXPORT_ADDR
+      dquote(label)
+    elsif address
+      "0x#{address.to_s(16)}"
+    else
+      raise F4UnsupportedProgramPoint.new(self, "neither address nor label " \
+                                                "available (forgot 'platin extract-symbols'?)")
+    end
+  end
+
+  def ffx_ref
+    raise Exception, "#{self.class}#to_ffx: no translation available"
   end
 end
 
 class Instruction
-  def f4_ref(opts = {})
+  def f4_ref(_opts = {})
     if address && block.label && !EXPORT_ADDR
-      "#{block.f4_ref} + #{self.address - block.address}"
+      "#{block.f4_ref} + #{address - block.address}"
     elsif address
       "0x#{address.to_s(16)}"
     else
-      raise F4UnsupportedProgramPoint.new(self, "neither address nor symbolic offset available (forgot 'platin extract-symbols'?)")
+      raise F4UnsupportedProgramPoint.new(self, "neither address nor symbolic offset " \
+                                                "available (forgot 'platin extract-symbols'?)")
     end
   end
 end
@@ -187,27 +191,27 @@ end
 class Loop
   # no automatic translation for loops
   def f4_ref
-    raise F4UnsupportedProgramPoint.new(self)
+    raise F4UnsupportedProgramPoint, self
   end
+
   def ffx_ref
-    raise FFXUnsupportedProgramPoint.new(self)
+    raise FFXUnsupportedProgramPoint, self
   end
 end
 
 class Edge
   def f4_ref
-    raise F4UnsupportedProgramPoint.new(self)
+    raise F4UnsupportedProgramPoint, self
   end
+
   def ffx_ref
-    raise FFXUnsupportedProgramPoint.new(self)
+    raise FFXUnsupportedProgramPoint, self
   end
 end
 
-
 # class to export PML information to FFX
 class F4Exporter
-
-  attr_reader :stats_generated_facts,  :stats_skipped_flowfacts
+  attr_reader :stats_generated_facts, :stats_skipped_flowfacts
   attr_reader :outfile, :options
 
   def initialize(pml, f4_file, options)
@@ -218,13 +222,13 @@ class F4Exporter
     @stats_generated_facts, @stats_skipped_flowfacts = 0, 0
   end
 
-  def gen_fact(f4_fact, descr, derived_from=nil)
+  def gen_fact(f4_fact, descr, derived_from = nil)
     @stats_generated_facts += 1
-    @outfile.puts(f4_fact+";" +" // "+descr)
-    debug(@options,:ffx) {
+    @outfile.puts(f4_fact + ";" + " // " + descr)
+    debug(@options,:ffx) do
       s = " derived from #{derived_from}" if derived_from
       "Wrote F4 instruction: #{f4_fact}#{s}"
-    }
+    end
     true
   end
 
@@ -240,11 +244,11 @@ class F4Exporter
         branches += 1 if ins.branch_type && ins.branch_type != "none"
         if ins.branch_type == 'indirect'
           successors = ins.branch_targets ? ins.branch_targets : mbb.successors
-          targets = successors.uniq.map { |succ|
+          targets = successors.uniq.map do |succ|
             succ.f4_ref
-          }.join(", ")
-	  # TODO where does the flow fact actually come from?
-          gen_fact("multibranch #{ins.f4_ref(:branch_index => branches)} to #{targets}","jumptable (source: llvm)",ins)
+          end.join(", ")
+          # TODO: where does the flow fact actually come from?
+          gen_fact("multibranch #{ins.f4_ref(branch_index: branches)} to #{targets}","jumptable (source: llvm)",ins)
         end
       end
     end
@@ -267,7 +271,6 @@ class F4Exporter
 
   # export loop bounds
   def export_loopbounds(scope, bounds_and_ffs)
-
     # context-sensitive facts not yet supported
     unless scope.context.empty?
       warn("F4: callcontext-sensitive loop bounds not implemented")
@@ -276,52 +279,52 @@ class F4Exporter
     loopblock = scope.programpoint.loopheader
     loopname = loopblock.f4_ref
 
-    bounds_and_ffs.each { |bound,ff|
+    bounds_and_ffs.each do |bound,ff|
       if bound.referenced_vars.empty?
         gen_fact("loop #{loopname} #{bound.to_f4}",
                  "global loop header bound (source: #{ff.origin})")
       else
-	warn("F4: symbolic loop bound #{bound} not supported")
-        @stats_skipped_flowfacts += 1 
+        warn("F4: symbolic loop bound #{bound} not supported")
+        @stats_skipped_flowfacts += 1
       end
-    }
+    end
   end
 
   # export global infeasibles
-  def export_infeasible(ff, scope, pp)
+  def export_infeasible(ff, infeasibleblocks)
     # We let the analysis worry about that ..
   end
 
   def export_linear_constraint(ff)
     warn("F4: no support for linear constraints: #{ff}")
-    return false
+    false
   end
 
   # export set of flow facts (minimum of loop bounds)
   def export_flowfacts(ffs)
     loop_bounds = {}
 
-    ffs.each { |ff|
-      if scope_bound = ff.get_loop_bound
+    ffs.each do |ff|
+      if (scope_bound = ff.get_loop_bound)
         scope,bound = scope_bound
         next if options.ff_disable_export.include?('loop-bounds')
-        next if ! bound.constant? && options.ff_disable_export.include?('symbolic-loop-bounds')
-        (loop_bounds[scope]||=[]).push([bound,ff])
+        next if !bound.constant? && options.ff_disable_export.include?('symbolic-loop-bounds')
+        (loop_bounds[scope] ||= []).push([bound,ff])
       else
         supported = export_flowfact(ff)
         @stats_skipped_flowfacts += 1 unless supported
       end
-    }
-    loop_bounds.each { |scope,bounds_and_ffs|
+    end
+    loop_bounds.each do |scope,bounds_and_ffs|
       export_loopbounds(scope, bounds_and_ffs)
-    }
+    end
   end
 
   # export linear-constraint flow facts
   def export_flowfact(ff)
     assert("export_flowfact: loop bounds need to be exported separately") { ff.get_loop_bound.nil? }
 
-    if (! ff.local?) && ff.scope.function != @entry
+    if !ff.local? && ff.scope.function != @entry
       warn("F4: non-local flow fact in scope #{ff.scope} not supported")
       false
 
@@ -329,13 +332,13 @@ class F4Exporter
       debug(options, :ffx) { "Symbolic Bounds only supported for loop bounds" }
       false
 
-    elsif scope_cs_targets = ff.get_calltargets
+    elsif (scope_cs_targets = ff.get_calltargets)
       return false if options.ff_disable_export.include?('call-targets')
       export_calltargets(ff,*scope_cs_targets)
 
-    elsif scope_pp = ff.get_block_infeasible
+    elsif (infeasibleblocks = ff.get_block_infeasible) && !infeasibleblocks.empty?
       return false if options.ff_disable_export.include?('infeasible-code')
-      export_infeasible(ff,*scope_pp)
+      export_infeasible(ff,infeasibleblocks)
 
     elsif ff.blocks_constraint? || ff.scope.programpoint.kind_of?(Function)
       return false if options.ff_disable_export.include?('flow-constraints')
@@ -349,38 +352,38 @@ class F4Exporter
 
   # export value facts
   def export_valuefact(vf)
-    assert("F4Exporter#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") { vf.programpoint.kind_of?(Instruction) }
-    if ! vf.ppref.context.empty?
+    assert("F4Exporter#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") do
+      vf.programpoint.kind_of?(Instruction)
+    end
+    unless vf.ppref.context.empty?
       warn("F4Exporter#export_valuefact: cannot export context-sensitive program point")
       return false
     end
     rangelist = vf.values.map { |v| v.to_f4 }.join(", ")
 
-    # TODO not yet supported
-    #gen_fact("instruction #{vf.programpoint.ffx_ref}" + " accesses #{rangelist}",
+    # TODO: not yet supported
+    # gen_fact("instruction #{vf.programpoint.ffx_ref}" + " accesses #{rangelist}",
     #         "Memory address (source: #{vf.origin})", vf)
   end
 
   # export stack cache instruction annotation
-  def export_stack_cache_annotation(type, ins, value)
+  def export_stack_cache_annotation(type, ins, _value)
     assert("cannot annotate stack cache instruction w/o instruction addresses") { ins.address }
-    if(type == :fill)
+    if type == :fill
       feature = "stack_cache_fill_count"
-    elsif(type == :spill)
+    elsif type == :spill
       feature = "stack_cache_spill_count"
     else
       die("F4: unknown stack cache annotation")
     end
 
-    # TODO not yet supported
-    #gen_fact("instruction #{ins.ffx_ref} features \"#{feature}\" = #{value}", "SC blocks (source: llvm sca)")
+    # TODO: not yet supported
+    # gen_fact("instruction #{ins.ffx_ref} features \"#{feature}\" = #{value}", "SC blocks (source: llvm sca)")
   end
 end
 
-
 class FFXExporter
-
-  attr_reader :stats_generated_facts,  :stats_skipped_flowfacts
+  attr_reader :stats_generated_facts, :stats_skipped_flowfacts
   attr_reader :options
 
   def initialize(pml, options)
@@ -404,10 +407,11 @@ class FFXExporter
         branches += 1 if ins.branch_type && ins.branch_type != "none"
         if ins.branch_type == 'indirect'
           successors = ins.branch_targets ? ins.branch_targets : mbb.successors
-          targets = successors.uniq.map { |succ|
+          targets = successors.uniq.map do |succ|
             succ.f4_ref
-          }.join(", ")
-          #gen_fact("multibranch #{ins.f4_ref(:branch_index => branches)} to #{targets}","jumptable (source: llvm)",ins)
+          end.join(", ")
+          # gen_fact("multibranch #{ins.f4_ref(:branch_index => branches)} to #{targets}",
+          #          "jumptable (source: llvm)",ins)
         end
       end
     end
@@ -424,13 +428,12 @@ class FFXExporter
     end
 
     called = targets.map { |f| f.f4_ref }.join(", ")
-    #gen_fact("multicall #{callsite.f4_ref} to #{called}",
+    # gen_fact("multicall #{callsite.f4_ref} to #{called}",
     #         "global indirect call targets (source: #{ff.origin})",ff)
   end
 
   # export loop bounds
-  def export_loopbounds(scope, bounds_and_ffs)
-
+  def export_loopbounds(scope, _bounds_and_ffs)
     # context-sensitive facts not yet supported
     unless scope.context.empty?
       warn("F4: callcontext-sensitive loop bounds not implemented")
@@ -464,39 +467,39 @@ class FFXExporter
   end
 
   # export global infeasibles
-  def export_infeasible(ff, scope, pp)
+  def export_infeasible(ff, infeasibleblocks)
     # We let the analysis worry about that ..
   end
 
   def export_linear_constraint(ff)
     warn("FFX: no support for linear constraints: #{ff}")
-    return false
+    false
   end
 
   # export set of flow facts (minimum of loop bounds)
   def export_flowfacts(ffs)
     loop_bounds = {}
-    ffs.each { |ff|
-      if scope_bound = ff.get_loop_bound
+    ffs.each do |ff|
+      if (scope_bound = ff.get_loop_bound)
         scope,bound = scope_bound
         next if options.ff_disable_export.include?('loop-bounds')
-        next if ! bound.constant? && options.ff_disable_export.include?('symbolic-loop-bounds')
-        (loop_bounds[scope]||=[]).push([bound,ff])
+        next if !bound.constant? && options.ff_disable_export.include?('symbolic-loop-bounds')
+        (loop_bounds[scope] ||= []).push([bound,ff])
       else
         supported = export_flowfact(ff)
         @stats_skipped_flowfacts += 1 unless supported
       end
-    }
-    loop_bounds.each { |scope,bounds_and_ffs|
+    end
+    loop_bounds.each do |scope,bounds_and_ffs|
       export_loopbounds(scope, bounds_and_ffs)
-    }
+    end
   end
 
   # export linear-constraint flow facts
   def export_flowfact(ff)
     assert("export_flowfact: loop bounds need to be exported separately") { ff.get_loop_bound.nil? }
 
-    if (! ff.local?) && ff.scope.function != @entry
+    if !ff.local? && ff.scope.function != @entry
       warn("F4: non-local flow fact in scope #{ff.scope} not supported")
       false
 
@@ -504,13 +507,13 @@ class FFXExporter
       debug(options, :ffx) { "Symbolic Bounds only supported for loop bounds" }
       false
 
-    elsif scope_cs_targets = ff.get_calltargets
+    elsif (scope_cs_targets = ff.get_calltargets)
       return false if options.ff_disable_export.include?('call-targets')
       export_calltargets(ff,*scope_cs_targets)
 
-    elsif scope_pp = ff.get_block_infeasible
+    elsif (infeasibleblocks = ff.get_block_infeasible) && !infeasibleblocks.empty?
       return false if options.ff_disable_export.include?('infeasible-code')
-      export_infeasible(ff,*scope_pp)
+      export_infeasible(ff,infeasibleblocks)
 
     elsif ff.blocks_constraint? || ff.scope.programpoint.kind_of?(Function)
       return false if options.ff_disable_export.include?('flow-constraints')
@@ -524,40 +527,42 @@ class FFXExporter
 
   # export value facts
   def export_valuefact(vf)
-    assert("F4Exporter#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") { vf.programpoint.kind_of?(Instruction) }
-    if ! vf.ppref.context.empty?
+    assert("F4Exporter#export_valuefact: programpoint is not an instruction (#{vf.programpoint.class})") do
+      vf.programpoint.kind_of?(Instruction)
+    end
+    unless vf.ppref.context.empty?
       warn("F4Exporter#export_valuefact: cannot export context-sensitive program point")
       return false
     end
     rangelist = vf.values.map { |v| v.to_f }.join(", ")
 
-    # TODO not yet supported
-    #gen_fact("instruction #{vf.programpoint.ffx_ref}" + " accesses #{rangelist}",
+    # TODO: not yet supported
+    # gen_fact("instruction #{vf.programpoint.ffx_ref}" + " accesses #{rangelist}",
     #         "Memory address (source: #{vf.origin})", vf)
   end
 
   # export stack cache instruction annotation
-  def export_stack_cache_annotation(type, ins, value)
+  def export_stack_cache_annotation(type, ins, _value)
     assert("cannot annotate stack cache instruction w/o instruction addresses") { ins.address }
-    if(type == :fill)
+    if type == :fill
       feature = "stack_cache_fill_count"
-    elsif(type == :spill)
+    elsif type == :spill
       feature = "stack_cache_spill_count"
     else
       die("F4: unknown stack cache annotation")
     end
 
-    # TODO not yet supported
-    #gen_fact("instruction #{ins.ffx_ref} features \"#{feature}\" = #{value}", "SC blocks (source: llvm sca)")
+    # TODO: not yet supported
+    # gen_fact("instruction #{ins.ffx_ref} features \"#{feature}\" = #{value}", "SC blocks (source: llvm sca)")
   end
-
 
   def write(outfile)
     # Mandatory to use transitive formatter
-    REXML::Formatters::Transitive.new( 2, false ).write(@doc, outfile)
+    REXML::Formatters::Transitive.new(2, false).write(@doc, outfile)
   end
 
-  private
+private
+
   def add_element(parent, name)
     el = REXML::Element.new(name, parent)
     yield el
@@ -580,4 +585,3 @@ class FFXExporter
 end
 
 end # end module PML
-

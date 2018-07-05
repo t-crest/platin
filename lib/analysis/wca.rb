@@ -10,12 +10,13 @@ require 'analysis/cache_region_analysis'
 require 'analysis/vcfg'
 require 'ext/lpsolve'
 require 'ext/gurobi'
-
-#require 'tools/visualize-ilp'
+require 'tools/visualize'
+require 'json'
 
 module PML
 
 class WCA
+  TIME_PER_CYCLE=(1e-6) # 1MHz => 1us
 
   def initialize(pml, options)
     @pml, @options = pml, options
@@ -40,27 +41,25 @@ class WCA
             src = edge.source
             dst = edge.target
           end
-          src.instructions.each_with_index { |ins,ix|
+          src.instructions.each_with_index do |ins,ix|
             if ins.returns? && (dst == :exit || edge.level == :gcfg)
               branch_index = ix # last instruction that returns
-            elsif ! ins.branch_targets.empty? && ins.branch_targets.include?(dst)
+            elsif !ins.branch_targets.empty? && ins.branch_targets.include?(dst)
               branch_index = ix # last instruction that branches to the target
-            elsif ! ins.branch_targets.empty? && edge.level == :gcfg && dst != :exit
+            elsif !ins.branch_targets.empty? && edge.level == :gcfg && dst != :exit
               branch_index = ix
             end
-          }
-          if ! branch_index
+          end
+          if !branch_index
             src.instructions
           else
             slots = src.instructions[branch_index].delay_slots
             slot_end = branch_index
-            instr = src.instructions[slot_end+1]
+            instr = src.instructions[slot_end + 1]
             while slots > 0 || (instr && instr.bundled?)
-              if ! (instr && instr.bundled?)
-                slots = slots - 1
-              end
-              slot_end = slot_end + 1
-              instr = src.instructions[slot_end+1]
+              slots -= 1 unless instr && instr.bundled?
+              slot_end += 1
+              instr = src.instructions[slot_end + 1]
             end
             src.instructions[0..slot_end]
           end
@@ -74,6 +73,50 @@ class WCA
       end
       debug(@options,:costs) { "WCET edge costs for #{edge}: #{path_wcet} block, #{edge_wcet} edge" }
       path_wcet + edge_wcet
+  end
+
+  def run_solver(ilp)
+    begin
+      cycles, freqs, unbounded = ilp.solve_max
+      vcycles, vfreqs, vunbounded = cycles, freqs, unbounded
+    rescue ILPSolverException => ex
+      warn("WCA: ILP failed: #{ex}") unless @options.disable_ipet_diagnosis
+      vcycles, vfreqs, vunbounded = ex.cycles, ex.freqs, ex.unbounded
+      cycles,freqs = -1, {}
+    end
+
+    if @options.visualize_ilp
+      vis = ILPVisualisation.new(builder.ilp, [:bitcode, :machinecode, :relationgraph, :gcfg])
+      vfreqs = builder.ilp.debug_bound_frequencies(vfreqs)
+      svg = vis.visualize("ILP: #{@options.analysis_entry}", unbounded: vunbounded, freqmap: vfreqs)
+      dot = vis.output(format: :dot)
+      constraints = vis.get_constraints
+      srchints    = vis.get_srchints
+
+      # Hacky, but a passable work-around for returning this metadata for
+      # visualisation interact.rb...
+      if @options.visualize_ilp.is_a?(Hash)
+        @options.visualize_ilp[:ilp] = {
+          svg: svg,
+          dot: dot,
+          constraints: constraints,
+          srchints: srchints,
+        }
+      else
+        assert("Visualizing ILPs requires the outdir parameter") { @options.outdir != nil }
+        File.write("#{@options.outdir}/ilp.svg", svg)
+        File.write("#{@options.outdir}/constraints.json", JSON.generate(constraints))
+        File.write("#{@options.outdir}/srchints.json", JSON.generate(srchints))
+      end
+    end
+
+    if @options.verbose
+      freqs.each {|edge, freq|
+        next if freq * ilp.get_cost(edge) == 0
+        info [edge, :freq, freq, :cost, ilp.get_cost(edge)]
+      }
+    end
+    [cycles, freqs, unbounded]
   end
 
   def analyze_fragment(entries, exists, blocks, &cost)
@@ -96,21 +139,7 @@ class WCA
     ilp.add_constraint([[x.blocks.first, 1]], "equal", 0, "no_unexpected_interrupts", :archane)
 
 
-    # Solve ILP
-    begin
-      cycles, freqs = ilp.solve_max
-    rescue Exception => ex
-      warn("WCA: ILP failed: #{ex}") unless @options.disable_ipet_diagnosis
-      cycles,freqs = -1, {}
-    end
-
-    if @options.verbose
-      freqs.each {|edge, freq|
-        next if freq * ilp.get_cost(edge) == 0
-        p [edge, freq, ilp.get_cost(edge)]
-      }
-    end
-    cycles
+    run_solver(ilp)
   end
 
   def two_decimals(float_n)
@@ -119,8 +148,6 @@ class WCA
   def three_decimals(float_n)
      float_n.round(4).to_s[0..4].to_f
   end
-
-TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
 
   def analyze(entry_label)
 
@@ -166,6 +193,7 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
 
     # Build IPET using costs from @pml.arch
     local_builder = nil
+    ## FIXME: FIXME: UGLY
     if @options.wcec
       # We calculate WCETs for each ABB and every function that is
       # directly called
@@ -318,7 +346,6 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
         end
       end
 
-
       report = TimingEntry.new(machine_entry, cycles, nil,
                                'level' => 'machinecode',
                                'origin' => @options.timing_output || 'platin')
@@ -362,29 +389,21 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
 
 
       # run cache analyses
-      # FIXME
+      # FIXME: Cache analysis
       ca = CacheAnalysis.new(builder.refinement['machinecode'], @pml, @options)
       #ca.analyze(entry['machinecode'], builder)
 
       # END: remove me soon
+    end
 
+    if @options.stats
       statistics("WCA",
                  "flowfacts" => flowfacts.length,
                  "ipet variables" => builder.ilp.num_variables,
-                 "ipet constraints" => builder.ilp.constraints.length) if @options.stats
-
-      # Solve ILP
-      begin
-        cycles, freqs = builder.ilp.solve_max
-      rescue Exception => ex
-        warn("WCA: ILP failed: #{ex}") unless @options.disable_ipet_diagnosis
-        cycles,freqs = -1, {}
-      end
+                 "ipet constraints" => builder.ilp.constraints.length)
     end
 
-    if @options.visualize_ilp
-      run_visualization_server(builder.ilp, @options, freqs)
-    end
+    cycles, freqs, unbounded = run_solver(ilp)
 
     # report result
     profile = Profile.new([])
@@ -393,7 +412,7 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
 
     # collect edge timings
     edgefreqs, edgecosts, totalcosts = {}, Hash.new(0), Hash.new(0)
-    freqs.each { |v,freq|
+    freqs.each do |v,freq|
       edgecost = builder.ilp.get_cost(v)
       freq = freq.to_i
       if edgecost > 0 || (v.kind_of?(IPETEdge) && v.cfg_edge?)
@@ -402,30 +421,32 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
         next if v.kind_of?(IPETEdgeSCA)         # Stack-Cache Cost (graph-based)
         ref = nil
         if v.kind_of?(IPETEdge)
-           if v.level != :gcfg
+          if v.level != :gcfg
             die("ILP cost: source is not a block") unless v.source.kind_of?(Block)
             die("ILP cost: target is not a block") unless v.target == :exit || v.target.kind_of?(Block)
             ref = ContextRef.new(v.cfg_edge, Context.empty)
-            edgefreqs[ref] = freq
           else
+            p [v.class, v, v.level]
             ref = ContextRef.new(v.gcfg_edge, Context.empty)
-            edgefreqs[ref] = freq
           end
+          edgefreqs[ref] = freq
         elsif v.kind_of?(MemoryEdge)
           ref = ContextRef.new(v.edgeref, Context.empty)
         end
         edgecosts[ref] += edgecost
-        totalcosts[ref] += edgecost*freq
+        totalcosts[ref] += edgecost * freq
       end
-    }
-    edgecosts.each { |ref, edgecost|
+    end
+
+    edgecosts.each do |ref, edgecost|
       unless edgefreqs.include?(ref)
         warn("edge cost (#{ref} -> #{edgecost}), but no corresponding IPETEdge variable")
         next
       end
       edgefreq = edgefreqs[ref]
       profile.add(ProfileEntry.new(ref, edgecost, edgefreqs[ref], totalcosts[ref]))
-    }
+    end
+
     ca.summarize(@options, freqs, Hash[freqs.map{ |v,freq| [v,freq * builder.ilp.get_cost(v)] }], report)
 
     def grouped_report_by(ilp, freqs, key, print_activations=true)
@@ -467,7 +488,6 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
                  "interrupt requests" => irqs,
                  "timer ticks" => timers,
                  "alarm activations" => alarms)
-
     end
 
     if @options.verbose
@@ -503,6 +523,7 @@ TIME_PER_CYCLE = 1/(1e6) # 1MHz => 1us
         }
       end
     end
+
     report
   end
 end

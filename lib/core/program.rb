@@ -49,26 +49,26 @@ module PML
     # unresolved .. set of callsites that could not be resolved
     def reachable_from(name)
       unresolved = Set.new
-      rs = reachable_set(by_name(name)) { |f|
+      rs = reachable_set(by_name(name)) do |f|
         callees = []
-        f.callsites.each { |cs|
-          cs.callees.each { |n|
-            if(f = by_label_or_name(n,false))
+        f.callsites.each do |cs|
+          cs.callees.each do |n|
+            if (f = by_label_or_name(n,false))
               callees.push(f)
             else
               unresolved.add(cs)
             end
-          }
-        }
+          end
+        end
         callees
-      }
+      end
       [rs, unresolved]
     end
 
     def instruction_by_address(addr)
-      if ! @instruction_by_address
+      unless @instruction_by_address
         @instruction_by_address = {}
-        self.each { |f| f.instructions.each { |i| @instruction_by_address[i.address] = i } }
+        each { |f| f.instructions.each { |i| @instruction_by_address[i.address] = i } }
       end
       @instruction_by_address[addr]
     end
@@ -80,10 +80,10 @@ module PML
     pml_name_index_list(:Block)
     # customized constructor
     def initialize(function, data)
-       @list = data.map { |b| Block.new(function, b) }
-       @list.each_with_index { |block,ix| block.layout_successor=@list[ix+1] }
-       set_yaml_repr(data)
-       build_index
+      @list = data.map { |b| Block.new(function, b) }
+      @list.each_with_index { |block,ix| block.layout_successor = @list[ix + 1] }
+      set_yaml_repr(data)
+      build_index
     end
   end
 
@@ -96,6 +96,7 @@ module PML
       @list = data.map { |i| Instruction.new(block, i) }
       set_yaml_repr(data)
     end
+
     def [](index)
       index = Integer(index) if index.instance_of? String
       @list[index]
@@ -106,10 +107,11 @@ module PML
   class ProgramPoint < PMLObject
     include QNameObject
     attr_reader :name
-    def address ; data['address'] ; end
+    def address; data['address']; end
+
     def address=(addr); data['address'] = addr; end
 
-    def ProgramPoint.from_pml(mod, data)
+    def self.from_pml(mod, data)
       # markers are special global program points
       if data['constant-value']
         return ConstantProgramPoint.new(data)
@@ -125,19 +127,19 @@ module PML
       fname = data['function']
       assert("ProgramPoint.from_pml: no function attribute: #{data}") { fname }
       function = mod.by_label_or_name(fname)
-      raise UnknownFunctionException.new(fname) unless function
+      raise UnknownFunctionException, fname unless function
 
       bname = data['block']
       lname = data['loop']
       iname = data['instruction']
-      is_edge = ! data['edgesource'].nil?
-      if (lname || bname)
+      is_edge = !data['edgesource'].nil?
+      if lname || bname
         block = function.blocks.by_name(lname || bname)
-        assert("ProgramPoint.from_pml: no such block: #{lname||bname}") {
+        assert("ProgramPoint.from_pml: no such block: #{lname || bname}") do
           block
-        }
+        end
         if iname
-          instruction = block.instructions[iname]
+          instruction = block.instructions[Integer(iname)]
           return instruction
         elsif lname
           return block.loop
@@ -166,13 +168,13 @@ module PML
       @blocks = [] # Initialized by Function
       set_yaml_repr(data)
     end
+
     def loops
       @loopheader.loops
     end
 
-    def blocks
-      @blocks
-    end
+    attr_reader :blocks
+
     def add_block(b)
       @blocks.push(b)
     end
@@ -180,10 +182,12 @@ module PML
     def to_s
       "#<Loop: #{loopheader}>"
     end
+
     def to_pml_ref
       { 'function' => loopheader.function.name, 'loop' => loopheader.name }
     end
-    def Loop.from_qname(functions,qn)
+
+    def self.from_qname(functions,qn)
       fn,bn = qn.split('/',2).map { |n| YAML::load(n) }
       functions.by_name(fn).blocks.by_name(bn).loop
     end
@@ -192,30 +196,36 @@ module PML
   class Edge < ProgramPoint
     attr_reader :source, :target
     def initialize(source, target, data = nil, level = nil)
-      assert("PML::Edge: source and target need to be blocks, not #{source.class}/#{target.class}") {
+      assert("PML::Edge: source and target need to be blocks, not #{source.class}/#{target.class}") do
         (source.kind_of?(Block) && (target.nil? || target.kind_of?(Block))) \
         || (source.kind_of?(GCFGNode) && (target.nil? || target.kind_of?(GCFGNode)))
-      }
-      assert("PML::Edge: source and target function need to match") {
-        level == :gcfg || target.nil? || source.function == target.function}
+      end
+      assert("PML::Edge: source and target function need to match") do
+        level == :gcfg || target.nil? || source.function == target.function
+      end
 
       @source, @target = source, target
-      @name = "#{source.name}->#{target ? target.name : '' }"
-      @qname = "#{source.qname}->#{target ? target.qname : 'exit' }"
+      @name = "#{source.name}->#{target ? target.name : ''}"
+      @qname = "#{source.qname}->#{target ? target.qname : 'exit'}"
       set_yaml_repr(data)
     end
+
     def ref
       self
     end
+
     def exitedge?
       target.nil?
     end
+
     def function
       source.function
     end
+
     def to_s
       "#{source.to_s}->#{target ? target.qname : 'exit'}"
     end
+
     def to_pml_ref
       pml = { 'edgesource' => source.name }
       pml['function'] = source.function.name if source.kind_of?(Block)
@@ -228,18 +238,21 @@ module PML
   class Marker < ProgramPoint
     attr_reader :name
     def initialize(name, data = nil)
-      assert("Marker#new: name must not be nil") { ! name.nil? }
+      assert("Marker#new: name must not be nil") { !name.nil? }
       @name = name
       @qname = "@#{@name}"
       set_yaml_repr(data)
     end
+
     def function
       # no function associated with marker
       nil
     end
+
     def to_s
       @qname
     end
+
     def to_pml_ref
       { 'marker' => @name }
     end
@@ -321,15 +334,19 @@ module PML
       set_yaml_repr(data)
       @function = function
     end
+
     def name
       data['name']
     end
+
     def index
       data['index']
     end
+
     def maps_to_register?
       registers.length == 1
     end
+
     def registers
       data['registers']
     end
@@ -352,28 +369,34 @@ module PML
     attr_reader :name, :blocks
     def initialize(function, data)
       blocknames = data['blocks']
-      assert("subfunction: empty block list") { ! blocknames.empty? }
+      assert("subfunction: empty block list") { !blocknames.empty? }
       @name = data['name']
       @qname = "SF:#{function}/#{name}"
       @function = function
       @blocks = blocknames.map { |bname| function.blocks.by_name(bname) }
       set_yaml_repr(data)
     end
+
     def to_s
       "#{qname}-#{last.name}"
     end
+
     def function
       entry.function
     end
+
     def entry
       @blocks.first
     end
+
     def last
       @blocks.last
     end
+
     def address
       entry.address
     end
+
     def size
       assert("SubFunction#size: no addresses available") { entry.address }
 
@@ -402,9 +425,7 @@ module PML
       @labelkey = opts[:labelkey]
       @blocks = BlockList.new(self, data['blocks'])
       @blocks.each do |block|
-        if(block.loopheader?)
-          @loops.push(block.loop)
-        end
+        @loops.push(block.loop) if block.loopheader?
       end
       @blocks.each do |block|
         block.loops.each do |loop|
@@ -414,33 +435,42 @@ module PML
       @arguments = ArgumentList.new(self, data['arguments'] || [])
       @subfunctions = SubFunctionList.new(self, data['subfunctions'] || [])
     end
+
     def [](k)
-      assert("Function: do not access blocks/loops directly") { k!='blocks'&&k!='loops'}
+      assert("Function: do not access blocks/loops directly") { k != 'blocks' && k != 'loops' }
       data[k]
     end
+
     def mapsto
       data['mapsto']
     end
+
     def to_s
       s = name
       s = "(#{data['mapsto']})#{s}" if data['mapsto']
       s
     end
+
     def to_pml_ref
       { 'function' => name }
     end
+
     def function
       self
     end
+
     def entry_block
       blocks.first
     end
+
     def exit_blocks
       blocks.select {|b| b.may_return? }.to_a
     end
+
     def address
       data['address'] || blocks.first.address
     end
+
     def end_address
       addr = blocks.last.address
       if blocks.last.instructions.last
@@ -448,18 +478,22 @@ module PML
       end
       addr
     end
+
     def label
       data[@labelkey] || blocks.first.label
     end
+
     def static_context
       return {'function'=> label}
     end
+
     def add_node(node)
       @blocks.add(node)
     end
+
     def add_subfunction(subfunc_data)
       # This is a ugly hack that is here, because the PML abstraction is not clean
-      data['subfunctions'] = (data['subfunctions']||[]).push(subfunc_data)
+      data['subfunctions'] = (data['subfunctions'] || []).push(subfunc_data)
       @subfunctions.add(SubFunction.new(self, subfunc_data))
     end
 
@@ -470,22 +504,22 @@ module PML
     # all (intra-procedural) edges in this function
     def edges
       Enumerator.new do |ss|
-        blocks.each { |b|
-          b.outgoing_edges.each { |e|
+        blocks.each do |b|
+          b.outgoing_edges.each do |e|
             ss << e
-          }
-        }
+          end
+        end
       end
     end
 
     # all callsites found in this function
     def callsites
       Enumerator.new do |ss|
-        blocks.each { |b|
-          b.callsites.each { |cs|
+        blocks.each do |b|
+          b.callsites.each do |cs|
             ss << cs
-          }
-        }
+          end
+        end
       end
     end
 
@@ -500,13 +534,13 @@ module PML
 
     # find all instructions that a callee may return to
     def identify_return_sites
-      blocks.each { |b|
-        b.instructions.each { |i|
+      blocks.each do |b|
+        b.instructions.each do |i|
           i.set_return_site(false)
-        }
-      }
-      blocks.each { |b|
-        b.instructions.each { |i|
+        end
+      end
+      blocks.each do |b|
+        b.instructions.each do |i|
           if i.calls?
             return_index = i.index + i.delay_slots + 1
             overflow = return_index - b.instructions.length
@@ -516,8 +550,8 @@ module PML
               b.next.instructions[overflow].set_return_site(true)
             end
           end
-        }
-      }
+        end
+      end
     end
   end # of class Function
 
@@ -532,9 +566,10 @@ module PML
 
       loopnames = data['loops'] || []
       @loopnest = loopnames.length
-      @is_loopheader = loopnames.first == self.name
+      @is_loopheader = loopnames.first == name
       @instructions = InstructionList.new(self, data['instructions'] || [])
     end
+
     def mapsto
       data['mapsto']
     end
@@ -548,17 +583,17 @@ module PML
     # Returns a list of instruction bundles (array of instructions per bundle)
     def bundles
       bundle = 0
-      instructions.chunk { |i|
-	idx = bundle
-	bundle += 1 unless i.bundled?
-	idx
-      }.map{|b| b[1]}
+      instructions.chunk do |i|
+        idx = bundle
+        bundle += 1 unless i.bundled?
+        idx
+      end.map { |b| b[1] }
     end
 
     # loops (not ready at initialization time)
     def loops
       return @loops if @loops
-      @loops = (data['loops']||[]).map { |l| function.blocks.by_name(l).loop }
+      @loops = (data['loops'] || []).map { |l| function.blocks.by_name(l).loop }
     end
 
     # returns true if a CFG edge from the given source node to this block is a back edge
@@ -569,7 +604,7 @@ module PML
       # if the source is in the same loop, our loops are a suffix of theirs
       # as loop nests form a tree, the suffices are equal if there first element is
       source_loop_index = source.loopnest - loopnest
-      source.loops[source_loop_index] == self.loop
+      source.loops[source_loop_index] == loop
     end
 
     # returns true if a CFG edge from this block to the given target is an exit edge
@@ -586,13 +621,13 @@ module PML
     # return true if the block does not contain any actual instructions (labels are ok)
     # FIXME: blocks are currently also considered to be empty if they only contain inline asm
     def empty?
-      instructions.empty? || instructions.all? { |i| i.size == 0 }
+      instructions.empty? || instructions.all? { |i| i.empty? }
     end
 
     # block predecessors (not ready at initialization time)
     def add_predecessor(block)
       assert("Very Bad") { function.blocks.by_name(block.name) }
-      if not data['predecessors'].include?(block.name)
+      unless data['predecessors'].include?(block.name)
         data['predecessors'].push(block.name)
         # Undo Caching
         @predecessors = nil
@@ -601,12 +636,12 @@ module PML
 
     def predecessors
       return @predecessors if @predecessors
-      @predecessors = (data['predecessors']||[]).map { |s| function.blocks.by_name(s) }.uniq.freeze
+      @predecessors = (data['predecessors'] || []).map { |s| function.blocks.by_name(s) }.uniq.freeze
     end
 
     # block successors (not ready at initialization time)
     def add_successor(block)
-      if not data['successors'].include?(block.name)
+      unless data['successors'].include?(block.name)
         data['successors'].push(block.name)
         # Undo Caching
         @successors = nil
@@ -615,7 +650,7 @@ module PML
 
     def successors
       return @successors if @successors
-      @successors = (data['successors']||[]).map { |s| function.blocks.by_name(s) }.uniq.freeze
+      @successors = (data['successors'] || []).map { |s| function.blocks.by_name(s) }.uniq.freeze
     end
 
     # edge to the given target block (reference)
@@ -631,31 +666,25 @@ module PML
     # yields outgoing edges
     def outgoing_edges
       Enumerator.new do |ss|
-        successors.each { |s|
+        successors.each do |s|
           ss << edge_to(s)
-        }
-        ss << edge_to(nil) if self.may_return?
+        end
+        ss << edge_to(nil) if may_return?
       end
     end
 
     # set the block directly succeeding this one in the binary layout
-    def layout_successor=(block)
-      @layout_successor=block
-    end
+    attr_writer :layout_successor
 
     # return a successor which is (might) be reached via fallthrough
     # NOTE: this is a heuristic at the moment
     def fallthrough_successor
-      if successors.include?(@layout_successor)
-        @layout_successor
-      else
-        nil
-      end
+      @layout_successor if successors.include?(@layout_successor)
     end
 
     # the unique successor, if there is one
     def next
-      (successors.length == 1) ? successors.first : nil
+      successors.length == 1 ? successors.first : nil
     end
 
     # true if this is a loop header
@@ -668,17 +697,17 @@ module PML
       return @has_preheader unless @has_preheader.nil?
       return (@has_preheader = false) unless loopheader?
       preheaders = []
-      predecessors.each { |pred|
-        next if self.backedge_target?(pred)
+      predecessors.each do |pred|
+        next if backedge_target?(pred)
         preheaders.push(pred)
-      }
+      end
       @has_preheader = (preheaders.length == 1)
     end
 
     # true if this block may return from the function
     def may_return?
-      @returnsites = instructions.list.select { |i| i.returns? } unless @returnsites
-      ! @returnsites.empty? || must_return?
+      @returnsites ||= instructions.list.select { |i| i.returns? }
+      !@returnsites.empty? || must_return?
     end
 
     def must_return?
@@ -687,13 +716,13 @@ module PML
 
     # whether this block has a call instruction
     def calls?
-      ! callsites.empty?
+      !callsites.empty?
     end
 
     # list of callsites in this block
     def callsites
       return @callsites if @callsites
-      @callsites = instructions.list.select { |i| i.callees.length > 0 }
+      @callsites = instructions.list.reject { |i| i.callees.empty? }
     end
 
     # XXX: LLVM specific/arch specific
@@ -702,7 +731,7 @@ module PML
     end
 
     # XXX: LLVM specific/arch specific
-    def Block.get_label(fname,bname)
+    def self.get_label(fname,bname)
       "LBB#{fname}_#{bname}"
     end
 
@@ -718,12 +747,12 @@ module PML
 
     # reference to the loop represented by the block (needs to be the header of a reducible loop)
     def loop
-      assert("Block#loop: not a loop header") { self.loopheader? }
+      assert("Block#loop: not a loop header") { loopheader? }
       return @loop if @loop
       @loop = Loop.new(self)
     end
 
-    def Block.from_qname(functions,qn)
+    def self.from_qname(functions,qn)
       fn,bn = qn.split('/',2).map { |n| YAML::load(n) }
       functions.by_name(fn).blocks.by_name(bn)
     end
@@ -736,13 +765,13 @@ module PML
     # of the graph is stopped at the argument block. This is useful
     # for single-entry; single-exit regions
     def reachable_till(stop)
-      rs = reachable_set(self) { |block|
+      rs = reachable_set(self) do |block|
         if block != stop
           block.successors
         else
           []
         end
-      }
+      end
       rs
     end
 
@@ -774,9 +803,9 @@ module PML
       { 'function' => function.name, 'block' => block.name, 'instruction' => name }
     end
 
-    def Instruction.from_qname(functions,qn)
+    def self.from_qname(functions,qn)
       fn,bn,iname = qn.split('/',3).map { |n| YAML::load(n) }
-      functions.by_name(fn).blocks.by_name(bn).instructions[iname]
+      functions.by_name(fn).blocks.by_name(bn.to_s).instructions[iname]
     end
 
     def marker
@@ -790,13 +819,13 @@ module PML
 
     # whether this instruction includes a call
     def calls?
-      ! callees.empty?
+      !callees.empty?
     end
 
     # the corresponding return instruction, if this is a call
     def call_return_instruction
       assert("call_return_instruction: not a call") { calls? }
-      r_pre_index = index + self.delay_slots
+      r_pre_index = index + delay_slots
       block.instructions[r_pre_index].next
     end
 
@@ -805,19 +834,26 @@ module PML
       data['callees'] || []
     end
 
+    def update_callees(callees)
+      data['callees'] = callees
+    end
+
     # called functions
     def called_functions
       return nil if unresolved_call?
-      data['callees'].reject { |n|
+      data['callees'].reject do |n|
         # XXX: hackish
         # filter known pseudo functions on bitcode
-
-        # XXX: hashish v2: timing_print in dOSEK is never used within
-        # a circuit, we ignore them.... I feel dirty
-        n =~ /llvm\..*/ or n =~ /timing_print/
-      }.map { |n|
+        n =~ /llvm\..*/ ||
+          n =~ /timing_print/ ||
+          n =~ /__aeabi_uidivmod/ ||
+          n =~ /__aeabi_idivmod/ ||
+          n =~ /__udivsi3/ ||
+          n =~ /__divsi3/ ||
+          n =~ /__udivmodsi4/
+      end.map do |n|
         block.function.module.by_label_or_name(n, true)
-      }
+      end
     end
 
     # whether this instruction is an indirect (unresolved) call
@@ -827,13 +863,13 @@ module PML
 
     # whether this instruction isa branch
     def branches?
-      ! branch_targets.empty?
+      !branch_targets.empty?
     end
 
     # branch targets
     def branch_targets
       return @branch_targets if @branch_targets
-      @branch_targets = (data['branch-targets']||[]).map { |s| function.blocks.by_name(s) }.uniq.freeze
+      @branch_targets = (data['branch-targets'] || []).map { |s| function.blocks.by_name(s) }.uniq.freeze
     end
 
     # whether this instruction returns
@@ -848,7 +884,7 @@ module PML
     end
 
     # mark this is instruction as return point
-    def set_return_site(may_return_to=true)
+    def set_return_site(may_return_to = true)
       @may_return_to = may_return_to
     end
 
@@ -892,12 +928,12 @@ module PML
     # whether the given block is still a successor if we are at this instruction in the current block
     def live_successor?(target)
       ix = index
-      while i = block.instructions[ix]
+      while (i = block.instructions[ix])
         return true if i.branch_targets.include?(target)
-        ix+=1
+        ix += 1
       end
       return true if block.fallthrough_successor == target
-      return false
+      false
     end
 
     # the function corresponding the instruction is contained in
@@ -912,13 +948,13 @@ module PML
 
     # the next instruction in the instruction list, or the first instruction of the only successor block
     def next
-      block.instructions[index+1] || (block.next ? block.next.instructions.first : nil)
+      block.instructions[index + 1] || (block.next ? block.next.instructions.first : nil)
     end
 
     # size of this instruction (binary level)
-    def size   ; data['size'] ; end
+    def size; data['size']; end
 
-    def opcode ; data['opcode'] ; end
+    def opcode; data['opcode']; end
 
     def to_s
       s = qname
@@ -929,7 +965,6 @@ module PML
 
   # List of relation graphs (unmodifiable)
   class RelationGraphList < PMLList
-
     # non-standard pml list
     #
     def initialize(data, srclist, dstlist)
@@ -942,7 +977,7 @@ module PML
     # @name@ on level @level@
     #
     def has_named?(name, level)
-      ! @named[level][name].nil?
+      !@named[level][name].nil?
     end
 
     # get relation graph by function's name on the specified level
@@ -952,15 +987,14 @@ module PML
       lookup(@named[level], name, "#{level}-name", false)
     end
 
-
     # Special Case, because non-standard PML list
     def add(item)
       list.push(item)
-      if @data ; data.push(item.data) ; end
+      data.push(item.data) if @data
     end
 
     def build_lookup
-      @named = { :src => {}, :dst => {} }
+      @named = { src: {}, dst: {} }
       @list.each do |rg|
         add_lookup(@named[:src], rg.src.name, rg, "src-name")
         add_lookup(@named[:dst], rg.dst.name, rg, "dst-name")
@@ -987,9 +1021,10 @@ module PML
       lookup(@basic_block_index[level], bb, "#{level}-block", false) || []
     end
 
-private
+  private
+
     def build_relation_index
-      @basic_block_index = { :src => {}, :dst => {} }
+      @basic_block_index = { src: {}, dst: {} }
       @list.each do |rgn|
         [:src,:dst].each do |level|
           bb = rgn.get_block(level)
@@ -1010,21 +1045,27 @@ private
       @dst = dst_funs.by_name(data['dst']['function'])
       @nodes = RelationNodeList.new(self, data['nodes'])
     end
+
     def status
       data['status']
     end
+
     def accept?(options)
-      status == 'valid' or (options.accept_corrected_rgs and status == 'corrected')
+      (status == 'valid') || (options.accept_corrected_rgs && (status == 'corrected'))
     end
+
     def get_function(level)
       level == :src ? @src : @dst
     end
+
     def add_node(node)
       @nodes.add(node)
     end
+
     def qname
       "#{src.qname}<>#{dst.qname}"
     end
+
     def to_s
       "#{src}<->#{dst}"
     end
@@ -1064,11 +1105,11 @@ private
     end
 
     def successors_matching(block, level)
-      assert("successors_matching: nil argument") { ! block.nil? }
-      successors(level).select { |b|
+      assert("successors_matching: nil argument") { !block.nil? }
+      successors(level).select do |b|
         succblock = b.get_block(level)
-        ! succblock.nil? && succblock == block
-      }
+        !succblock.nil? && succblock == block
+      end
     end
 
     def add_successor(node, level)
@@ -1078,23 +1119,25 @@ private
 
     def successors(level)
       return @successors[level] if @successors[level]
-      @successors[level] = (data["#{level}-successors"]||[]).map { |succ|
+      @successors[level] = (data["#{level}-successors"] || []).map do |succ|
         @rg.nodes.by_name(succ)
-      }.uniq
+      end.uniq
       @successors[level]
     end
+
     # Flooding of the graph is stopped at the argument node. This is useful
     # for single-entry; single-exit regions
     def reachable_till(stop)
-      rs = reachable_set(self) { |node|
+      rs = reachable_set(self) do |node|
         if node != stop
           node.successors(:src) + node.successors(:dst)
         else
           []
         end
-      }
+      end
       rs
     end
+
     def to_s
       "#{type}:#{qname}"
     end
@@ -1117,9 +1160,9 @@ private
     def initialize(relation_graphs, data)
       set_yaml_repr(data)
       @rg = relation_graphs.by_name(data['function'], :src)
-      assert("No relationship graph for #{data['function']} found") {
+      assert("No relationship graph for #{data['function']} found") do
         @rg != nil
-      }
+      end
       @function = @rg.get_function(:src)
       @machine_function = @rg.get_function(:dst)
 
@@ -1133,6 +1176,7 @@ private
       else
         @entry_block = @function.entry_block
       end
+
       if data['exit-block']
         @exit_block  = @function.blocks.by_name(data['exit-block'])
       else
@@ -1141,21 +1185,24 @@ private
         @exit_block = exit_blocks.first
       end
 
-      assert("Could not find ABB Entry/Exit Blocks #{data}") {
+      assert("Could not find ABB Entry/Exit Blocks #{data}") do
         @entry_block != nil or @exit_block != nil
-      }
+      end
       @regions = nil
     end
+
     def static_context
       return { 'subtask'=>data['subtask'], 'function'=>data['function'], 'abb'=>data['name'] }
     end
+
     def qname
       @name
     end
+
     class RegionContainer
       attr_accessor :entry_node, :exit_node, :nodes
 
-      def initialize(entry_node=nil, exit_node=nil)
+      def initialize(entry_node = nil, exit_node = nil)
         if entry_node
           @entry_node, @exit_node = entry_node, exit_node
           @nodes = @entry_node.reachable_till(@exit_node).to_a
@@ -1172,26 +1219,25 @@ private
       exit_rg  = @rg.nodes.by_basic_block(@exit_block, :src)
 
       # Validity Checking on the ABB
-      assert("ABB is not well formed; Entry/Exit BB is not uniquly mappable (#{to_s}, #{entry_rg}, #{exit_rg})") {
-        entry_rg.length == 1 and exit_rg.length == 1
-      }
+      assert("ABB is not well formed; Entry/Exit BB is not uniquly mappable (#{to_s}, #{entry_rg}, #{exit_rg})") do
+        (entry_rg.length == 1) && (exit_rg.length == 1)
+      end
 
       rg_region = RegionContainer.new(entry_rg[0], exit_rg[0])
 
       # Entry and Exit must be progress nodes (or similar)
-      assert("ABB is not well formed; Entry/Exit nodes are of wrong type") {
-        [:progress, :entry, :exit].include?(rg_region.entry_node.type) and
+      assert("ABB is not well formed; Entry/Exit nodes are of wrong type") do
+        [:progress, :entry, :exit].include?(rg_region.entry_node.type) &&
           [:progress, :entry, :exit].include?(rg_region.exit_node.type)
-      }
+      end
 
       # Generate Bitcode and Machine Regions
-      bitcode_region, machine_region = [:src, :dst].map { |type|
+      bitcode_region, machine_region = [:src, :dst].map do |type|
         RegionContainer.new(rg_region.entry_node.get_block(type),
                             rg_region.exit_node.get_block(type))
-      }
+      end
 
-
-      assert("ABB is not well formed; No Single-Entry/Single-Exit region all levels") {
+      assert("ABB is not well formed; No Single-Entry/Single-Exit region all levels") do
         rg_nodes_lhs = Set.new rg_region.nodes.map{|n| n.get_block(:src)} - [nil]
         bitcode_nodes = Set.new bitcode_region.nodes
 
@@ -1199,11 +1245,12 @@ private
         machine_nodes = Set.new machine_region.nodes
 
         rg_nodes_lhs == bitcode_nodes and rg_nodes_rhs == machine_nodes
-      }
+      end
+
       @regions = {
-        :rg => rg_region,
-        :src => bitcode_region,
-        :dst => machine_region,
+        rg: rg_region,
+        src: bitcode_region,
+        dst: machine_region,
       }
       @regions[level]
     end
@@ -1219,11 +1266,11 @@ private
 
     def initialize(functions, abbs, nodes)
       @list = nodes.map { |n| GCFGNode.new(functions, abbs, n) }
-      @list.each_with_index {|item, index|
-        assert("Invalid Indices of GCFG Edges; Nodes are sorted") {
+      @list.each_with_index do |item, index|
+        assert("Invalid Indices of GCFG Edges; Nodes are sorted") do
           item.index == index
-        }
-      }
+        end
+      end
       @list.each { |n| n.connect(@list) }
       set_yaml_repr(data)
       build_index
@@ -1281,6 +1328,7 @@ private
       end
       return @successors[level]
     end
+
     def predecessors(level=nil)
       if level == nil
         return @predecessors[:local] + @predecessors[:global]
@@ -1302,13 +1350,18 @@ private
     def name
       to_s
     end
+
     def qname
       "GCFG:N#{index}"
     end
 
     ### MOCKUP like Block
     def edge_to(target)
-     Edge.new(self, target, nil, :gcfg)
+      Edge.new(self, target, nil, :gcfg)
+    end
+
+    def may_return?
+      @successors.empty?
     end
 
     # edge to the function exit
@@ -1317,6 +1370,7 @@ private
     end
 
     protected
+
     def add_predecessor(node, level)
       @predecessors[level].push(node)
     end
@@ -1411,9 +1465,9 @@ private
 
     # customized constructor
     def initialize(data, pml)
-      @list = data.map { |g|
+      @list = data.map do |g|
         GCFG.new(g, pml)
-      }
+      end
       set_yaml_repr(data)
       build_index
     end
@@ -1424,21 +1478,5 @@ private
       by_name(name)
     end
   end
-
-  # List of used devices
-  class DeviceList < PMLList
-    extend PMLListGen
-    pml_name_index_list(:device, [],[])
-
-    # customized constructor
-    def initialize(data, pml)
-      @list = data.map { |g|
-        GCFG.new(g, pml)
-      }
-      set_yaml_repr(data)
-      build_index
-    end
-  end
-
 
 end # module PML

@@ -5,6 +5,7 @@
 #
 require 'core/utils'
 require 'core/pml'
+require 'English'
 
 module PML
 
@@ -15,9 +16,11 @@ class TraceMonitor
   def initialize
     @observers = []
   end
+
   def subscribe(obj)
     @observers.push(obj)
   end
+
   def publish(msg,*args)
     @observers.each do |obs|
       obs.send(msg,*args)
@@ -36,8 +39,9 @@ class MachineTraceMonitor < TraceMonitor
     super()
     @pml, @options = pml, options
     @program_entry = @pml.machine_functions.by_label(options.trace_entry)
-    if not @program_entry
-      die("Trace Analysis: Could not find trace entry function '#{options.trace_entry}' in PML file. Make sure it is serialized by patmos-clang.")
+    unless @program_entry
+      die("Trace Analysis: Could not find trace entry function '#{options.trace_entry}' " \
+          "in PML file. Make sure it is serialized by patmos-clang.")
     end
     @start = @program_entry.blocks.first.address
     # whether an instruction is a watch point
@@ -54,11 +58,13 @@ class MachineTraceMonitor < TraceMonitor
     # @wp_instr = {}
     build_watchpoints
   end
+
   def watchpoints
     wps = @wp.dup
     wps[@start] = true
     wps
   end
+
   # run monitor
   def run(trace)
     @finished = false # set to true on (observed) program exit
@@ -79,7 +85,7 @@ class MachineTraceMonitor < TraceMonitor
     trace.each do |pc,cycles,instructions|
       break if @options.max_cycles       && @cycles >= @options.max_cycles
       break if @options.max_instructions &&
-                  @executed_instructions >= @options.max_instructions
+               @executed_instructions >= @options.max_instructions
 
       @started = instructions if pc == @start
       next unless @started
@@ -95,8 +101,8 @@ class MachineTraceMonitor < TraceMonitor
       @cycles = cycles
       # Detect return stalls
       if pending_return && pending_return[1] + 1 == @executed_instructions
-	# TODO maybe move this detection entirely into @pml.arch
-	pending_return[3] = @pml.arch.return_stall_cycles(pending_return[0], @cycles - pending_return[2])
+        # TODO: maybe move this detection entirely into @pml.arch
+        pending_return[3] = @pml.arch.return_stall_cycles(pending_return[0], @cycles - pending_return[2])
       end
       # Handle Return (TODO)
       if pending_return && pending_return[1] + pending_return[0].delay_slots + 1 == @executed_instructions
@@ -113,34 +119,34 @@ class MachineTraceMonitor < TraceMonitor
         if fallthrough_instruction && pc == fallthrough_instruction.address
           # debug(@options, :trace) { "Predicated return at #{fallthrough_instruction}" }
         else
-          if ! handle_return(*pending_return)
+          unless handle_return(*pending_return)
             # Finished
             @finished = true
-	    trace_count += 1
-	    if @options.max_target_traces && trace_count >= @options.max_target_traces
-	      break
-	    else
+            trace_count += 1
+            if @options.max_target_traces && trace_count >= @options.max_target_traces
+              break
+            else
               @started = false
-	    end
+            end
           end
           pending_return = nil
         end
       end
 
       # Handle Basic Block
-      if b = @wp_block_start[pc]
+      if (b = @wp_block_start[pc])
         # debug(@options, :trace) { "#{pc}: Block: #{b} / #{b.address}" }
         # function entry
         if b.address == b.function.address
           # call
           if pending_call
             handle_call(*pending_call) if pending_call
-            #puts "Call: #{pending_call.first} -> #{b.function}"
+            # puts "Call: #{pending_call.first} -> #{b.function}"
             pending_call = nil
           else
-            assert("Empty call history at function entry, but not main function (#{b.function},#{@program_entry})") {
+            assert("Empty call history at function entry, but not main function (#{b.function},#{@program_entry})") do
               b.function == @program_entry
-            }
+            end
           end
 
           # set current function
@@ -157,46 +163,50 @@ class MachineTraceMonitor < TraceMonitor
         handle_loopheader(b)
 
         # basic block
-        assert("Current function does not match block: #{@current_function} != #{b}") { @current_function == b.function }
+        assert("Current function does not match block: #{@current_function} != #{b}") do
+          @current_function == b.function
+        end
 
         # Empty blocks are problematic (cannot be distinguished) - what do do?
         # They are rare (only with -O0), so we tolerate some work. An empty block
         # is published only if it is a successor of the last block
-        @empty_blocks[b.address].each { |b0|
-          if ! @last_block || @last_block.successors.include?(b0)
-            while(b0.instructions.size == 0)
-              debug(@options,:trace) { "Publishing empty block #{b0} (<-#{@last_block})" }
-              publish(:block, b0, @cycles)
-              assert("Empty block may only have one successor") { b0.successors.size == 1}
-              @last_block = b0
-              b0 = @last_block.successors.first
+        if @empty_blocks[b.address]
+          @empty_blocks[b.address].each do |b0|
+            if !@last_block || @last_block.successors.include?(b0)
+              while b0.instructions.empty?
+                debug(@options,:trace) { "Publishing empty block #{b0} (<-#{@last_block})" }
+                publish(:block, b0, @cycles)
+                assert("Empty block may only have one successor") { b0.successors.size == 1 }
+                @last_block = b0
+                b0 = @last_block.successors.first
+              end
+              break
             end
-            break
           end
-        } if @empty_blocks[b.address]
+        end
         publish(:block, b, @cycles)
         @last_block = b
       end
 
       # Handle Call
-      if c = @wp_call_instr[pc]
-        assert("Call instruction #{c} does not match current function #{@current_function}") {
+      if (c = @wp_call_instr[pc])
+        assert("Call instruction #{c} does not match current function #{@current_function}") do
           c.function == @current_function
-        }
+        end
         pending_call = [c, @executed_instructions]
-	@finished = false
+        @finished = false
         # debug(@options, :trace) { "#{pc}: Call: #{c} in #{@current_function}" }
       end
 
       # Handle Return Block
       # TODO: in order to handle predicated returns, we need to know where return instructions ar
-      if r = @wp_return_instr[pc]
-	# Format is: <instruction, instruction counter at instruction, cycle counter at instruction, return latency>
+      if (r = @wp_return_instr[pc])
+        # Format is: <instruction, instruction counter at instruction, cycle counter at instruction, return latency>
         pending_return = [r,@executed_instructions,@cycles,0]
         # debug(@options, :trace) { "Scheduling return at #{r}" }
       end
     end
-    if ! @finished
+    unless @finished
       warn("Trace Analysis: did not observe return from program entry #{@program_entry}")
       publish(:stop, @cycles)
     end
@@ -209,7 +219,7 @@ class MachineTraceMonitor < TraceMonitor
     publish(:eof)
   end
 
-  private
+private
 
   def handle_loopheader(b)
     if b.loopheader?
@@ -226,23 +236,23 @@ class MachineTraceMonitor < TraceMonitor
   end
 
   def handle_call(c, call_pc)
-    assert("No call instruction before function entry #{call_pc + 1 + c.delay_slots} != #{@executed_instructions}") {
+    assert("No call instruction before function entry #{call_pc + 1 + c.delay_slots} != #{@executed_instructions}") do
       call_pc + 1 + c.delay_slots == @executed_instructions
-    }
+    end
     @lastblock = nil
     @callstack.push(c)
     # debug(@options, :trace) { "Call from #{@callstack.inspect}" }
   end
 
-  def handle_return(r, ret_exec_counter, ret_cycles, stall_cycles)
+  def handle_return(r, _ret_exec_counter, _ret_cycles, stall_cycles)
     exit_loops_downto(0)
     if @callstack.empty?
       publish(:ret, r, nil, @cycles, stall_cycles)
     else
       publish(:ret, r, @callstack[-1], @cycles, stall_cycles)
     end
-    return nil if(r.function == @program_entry) # intended program exit
-    assert("Callstack empty at return (inconsistent callstack)") { ! @callstack.empty? }
+    return nil if r.function == @program_entry # intended program exit
+    assert("Callstack empty at return (inconsistent callstack)") { !@callstack.empty? }
     c = @callstack.pop
     @last_block = c.block
     @loopstack = c.block.loops.reverse
@@ -251,9 +261,7 @@ class MachineTraceMonitor < TraceMonitor
   end
 
   def exit_loops_downto(nest)
-    while nest < @loopstack.length
-      publish(:loopexit, @loopstack.pop, @cycles)
-    end
+    publish(:loopexit, @loopstack.pop, @cycles) while nest < @loopstack.length
   end
 
   def build_watchpoints
@@ -266,10 +274,9 @@ class MachineTraceMonitor < TraceMonitor
 
       # for all basic blocks
       fun.blocks.each do |block|
-
         # blocks that consist of labels only (used in some benchmarks for flow facts)
         if block.empty?
-          (@empty_blocks[block.address]||=[]).push(block)
+          (@empty_blocks[block.address] ||= []).push(block)
           next
         end
 
@@ -281,24 +288,21 @@ class MachineTraceMonitor < TraceMonitor
 
           # trigger return-instruction event at return instruction
           # CAVEAT: delay slots and predicated returns
-          if instruction.returns?
-            add_watch(@wp_return_instr,instruction.address,instruction)
-          end
+          add_watch(@wp_return_instr,instruction.address,instruction) if instruction.returns?
           # trigger call-instruction event at call instructions
           # CAVEAT: delay slots and predicated calls
-          if ! instruction.callees.empty?
-            add_watch(@wp_call_instr,instruction.address,instruction)
-          end
+          add_watch(@wp_call_instr,instruction.address,instruction) unless instruction.callees.empty?
           abs_instr_index += 1
         end
       end
     end
   end
+
   def add_watch(dict, addr, data)
-    if ! addr
-      warn ("No address for #{data.inspect[0..60]}")
+    if !addr
+      warn "No address for #{data.inspect[0..60]}"
     elsif dict[addr]
-      raise Exception.new("Duplicate watchpoint at address #{addr.inspect}: #{data} already set to #{dict[addr]}")
+      raise Exception, "Duplicate watchpoint at address #{addr.inspect}: #{data} already set to #{dict[addr]}"
     else
       @wp[addr] = true
       dict[addr] = data
@@ -308,9 +312,14 @@ end
 
 # Recorder which just dumps event to the given stream
 class VerboseRecorder
-  def initialize(out=$>)
+  def initialize(out = $DEFAULT_OUTPUT)
     @out = out
   end
+
+  def respond_to_missing?(method_name, include_private = false)
+    super
+  end
+
   def method_missing(event, *args)
     @out.puts("EVENT #{event.to_s.ljust(15)} #{args.join(" ")}")
   end
@@ -332,7 +341,7 @@ class RecorderSpecification
     @entity_types, @entity_context, @calllimit = entity_types, entity_context, calllimit
   end
 
-  def RecorderSpecification.help(out=$stderr)
+  def self.help(out = $stderr)
     out.puts("== Trace Recorder Specification ==")
     out.puts("")
     out.puts("spec              := <spec-item>,...")
@@ -348,31 +357,31 @@ class RecorderSpecification
     out.puts("")
     out.puts("Example: g:lc/1  ==> loop bounds and call targets in global scope using callstring length 1")
     out.puts("         g:b/0   ==> block frequencies in global scope (context insensitive)")
-    out.puts("         f:b     ==> local block frequencies for every executed function (default callstring/virtual inlining)")
+    out.puts("         f:b     ==> local block frequencies for every executed function " \
+             "(default callstring/virtual inlining)")
     out.puts("         f/2:b/1 ==> block frequencies for every executed function (distinguished by callstrings")
     out.puts("                     of length 2), virtually inlining directly called functions")
   end
-  def RecorderSpecification.parse(str, default_callstring_length)
+
+  def self.parse(str, default_callstring_length)
     recorders = []
-    str.split(/\s*,\s*/).each { |recspec|
+    str.split(/\s*,\s*/).each do |recspec|
       if recspec =~ SPEC_RE
         scopestr,scopectx,etypes,ectx,elimit = $1,$2,$3,$4,$5
-        entity_types = etypes.scan(/./).map { |etype|
-          ENTITIES[etype] or die("RecorderSpecification '#{recspec}': Unknown entity type #{etype}")
-        }
+        entity_types = etypes.scan(/./).map do |etype|
+          ENTITIES[etype] || die("RecorderSpecification '#{recspec}': Unknown entity type #{etype}")
+        end
         entity_context = ectx ? ectx.to_i : default_callstring_length
         scope_context = scopectx ? scopectx.to_i : default_callstring_length
         entity_call_limit = nil
-        if scopestr == 'f' # intraprocedural
-          entity_call_limit = entity_context
-        end
+        entity_call_limit = entity_context if scopestr == 'f' # intraprocedural
         spec = RecorderSpecification.new(entity_types, entity_context, entity_call_limit)
-        scope = SCOPES[scopestr] or die("Bad scope type #{scopestr}")
+        (scope = SCOPES[scopestr]) || die("Bad scope type #{scopestr}")
         recorders.push([scope,scope_context,spec])
       else
         die("Bad recorder Specfication '#{recspec}': does not match #{SPEC_RE}")
       end
-    }
+    end
     recorders
   end
 end
@@ -387,7 +396,7 @@ class RecorderScheduler
     @executed_blocks = {}
     @recorder_map = {}
     @global_specs, @function_specs = [], []
-    recorder_specs.each { |type,ctx,spec|
+    recorder_specs.each do |type,ctx,spec|
       if type == :global
         @global_specs.push(spec)
       elsif type == :function
@@ -395,15 +404,18 @@ class RecorderScheduler
       else
         die("RecorderScheduler: Bad recorder scope '#{type}'")
       end
-    }
+    end
     @running = false
   end
+
   def recorders
     @recorder_map.values
   end
+
   def global_recorders
     recorders.select { |r| r.global? }
   end
+
   def function(callee,callsite,cycles)
     if @running
       # adjust callstack
@@ -437,21 +449,25 @@ class RecorderScheduler
   def activate(type, spec_id, scope_entity, scope_context, spec, cycles)
     key = [type, spec_id, scope_entity, scope_context]
     recorder = @recorder_map[key]
-    if ! recorder
+    unless recorder
       rid = @recorder_map.size
       assert("Global recorder must not have a context.") { type != :global || scope_context == nil }
       @recorder_map[key] = recorder = case type
-                                   when :global;   FunctionRecorder.new(self, rid, scope_entity, scope_context, spec, @options)
-                                   when :function; FunctionRecorder.new(self, rid, scope_entity, scope_context, spec, @options)
-                                   end
+                                      when :global
+                                        FunctionRecorder.new(self, rid, scope_entity, scope_context, spec, @options)
+                                      when :function
+                                        FunctionRecorder.new(self, rid, scope_entity, scope_context, spec, @options)
+                                      end
     end
     @active[recorder.rid] = recorder
     recorder.start(scope_entity, cycles)
   end
+
   # NB: deactivate is called by the recorder
   def deactivate(recorder)
     @active.delete(recorder.rid)
   end
+
   def ret(rsite, csite, cycles, stall_cycles)
     if @running
       @active.values.each { |recorder| recorder.ret(rsite,csite,cycles,stall_cycles) }
@@ -463,30 +479,40 @@ class RecorderScheduler
       end
     end
   end
+
   def block(bb, cycles)
     return unless @running
     (@executed_blocks[bb.function] ||= Set.new).add(bb)
     @active.values.each { |recorder| recorder.block(bb, cycles) }
   end
+
   def loopenter(loop, cycles)
     return unless @running
     @active.values.each { |recorder| recorder.loopenter(loop, cycles) }
   end
+
   def loopcont(loop, cycles)
     return unless @running
     @active.values.each { |recorder| recorder.loopcont(loop, cycles) }
   end
+
   def loopexit(loop, cycles)
     return unless @running
     @active.values.each { |recorder| recorder.loopexit(loop, cycles) }
   end
+
   def stop(cycles)
     return unless @running
     @active.values.each { |recorder| recorder.stop(cycles) }
   end
-  def eof ; end
-  def method_missing(event, *args)
+
+  def eof; end
+
+  def respond_to_missing?(method_name, include_private = false)
+    super
   end
+
+  def method_missing(event, *args); end
 end
 
 # Recorder for a function (intra- or interprocedural)
@@ -504,12 +530,15 @@ class FunctionRecorder
     @record_loopheaders = spec.entity_types.include?(:loop_header_bounds)
     @results = FrequencyRecord.new("FunctionRecorder_#{rid}(#{function}, #{context || 'global'})")
   end
+
   def global?
-    ! @context
+    !@context
   end
+
   def type
     global? ? 'global' : 'function'
   end
+
   def scope
     if @context
       ContextRef.new(@function, @context)
@@ -517,68 +546,85 @@ class FunctionRecorder
       @function
     end
   end
+
   def active?
     return true unless @calllimit
     @callstack.length <= @calllimit
   end
+
   def start(function, cycles)
     # puts "#{self}: starting at #{cycles}"
     results.start(cycles)
     @callstack = []
     function.blocks.each { |bb| results.init_block(in_context(bb)) } if @record_block_frequencies
   end
+
   def stop(cycles)
     results.stop(cycles)
     @scheduler.deactivate(self)
   end
-  def function(callee, callsite, cycles)
+
+  def function(callee, callsite, _cycles)
     results.call(in_context(callsite),callee) if active? && @record_calltargets
     @callstack.push(callsite)
     callee.blocks.each { |bb| results.init_block(in_context(bb)) } if active? && @record_block_frequencies
   end
-  def block(bb, cycles)
+
+  def block(bb, _cycles)
     return unless active?
     # puts "#{self}: visiting #{bb} active:#{active?} calllimit:#{@calllimit}"
     results.increment_block(in_context(bb)) if @record_block_frequencies
   end
-  def loopenter(loop, cycles)
+
+  def loopenter(loop, _cycles)
     return unless active?
     assert("loopenter: not a loop") { loop.kind_of?(Loop) }
     results.start_loop(in_context(loop)) if @record_loopheaders
   end
+
   def loopcont(loop, _)
     return unless active?
     assert("loopcont: not a loop") { loop.kind_of?(Loop) }
     results.increment_loop(in_context(loop)) if @record_loopheaders
   end
+
   def loopexit(loop, _)
     return unless active?
     assert("loopexit: not a loop") { loop.kind_of?(Loop) }
     results.stop_loop(in_context(loop)) if @record_loopheaders
   end
-  def ret(rsite, csite, cycles, stall_cycles)
-    if @callstack.length == 0
+
+  def ret(_rsite, _csite, cycles, stall_cycles)
+    if @callstack.empty?
       # puts "#{self}: stopping at #{rsite}->#{csite}"
-      if global? and not @options.target_callret_costs
-	cycles -= stall_cycles
-      end
+      cycles -= stall_cycles if global? && !@options.target_callret_costs
       results.stop(cycles)
       @scheduler.deactivate(self)
     else
       @callstack.pop
     end
   end
-  def eof ; end
+
+  def eof; end
+
+  def respond_to_missing?(method_name, include_private = false)
+    super
+  end
+
   def method_missing(event, *args); end
+
   def to_s
     results.name
   end
-  def dump(io=$stdout)
+
+  def dump(io = $stdout)
     header = "Observations for #{self}\n  function: #{@function}"
-    header += "\n  context: #{@context}" if @context && ! @context.empty?
+    header += "\n  context: #{@context}" if @context && !@context.empty?
     results.dump(io, header)
   end
+
 private
+
   def in_context(pp)
     ctx = Context.callstack_suffix(@callstack, @callstring_length)
     ContextRef.new(pp,ctx)
@@ -595,49 +641,53 @@ class FrequencyRecord
     @loopbounds = {}
     @blockfreqs = nil
   end
+
   def start(cycles)
     @cycles_start = cycles
     @runs += 1
     @current_record = {}
     @current_loops = {}
   end
+
   def init_block(pp)
     assert("pp has wrong type: #{pp.class}") { pp.kind_of?(ContextRef) }
     @current_record[pp] ||= 0 if @current_record
   end
+
   def increment_block(pp)
     @current_record[pp] += 1 if @current_record
   end
+
   def start_loop(hpp)
     return unless @current_loops
     @current_loops[hpp] = 1
   end
+
   def increment_loop(hpp)
     return unless @current_loops
     @current_loops[hpp] += 1
   end
+
   def stop_loop(hpp)
     merge_loop_bound(hpp, @current_loops[hpp])
   end
+
   def to_s
     "FrequencyRecord{ name = #{@name} }"
   end
+
   # add callee as possible target for ContextRef callsite_ref.
   def call(callsite_ref,callee)
-    (@calltargets[callsite_ref]||=Set.new).add(callee) if @current_record && callsite_ref
+    (@calltargets[callsite_ref] ||= Set.new).add(callee) if @current_record && callsite_ref
   end
+
   def stop(cycles)
     die "Recorder: stop without start: #{@name}" unless @current_record
     @cycles = merge_ranges(cycles - @cycles_start, @cycles)
-    unless @blockfreqs
-      @blockfreqs = {}
+    if @blockfreqs
       @current_record.each do |bref,count|
-        @blockfreqs[bref] = count .. count
-      end
-    else
-      @current_record.each do |bref,count|
-        if ! @blockfreqs.include?(bref)
-          @blockfreqs[bref] = 0 .. count
+        if !@blockfreqs.include?(bref)
+          @blockfreqs[bref] = 0..count
         else
           @blockfreqs[bref] = merge_ranges(count, @blockfreqs[bref])
         end
@@ -645,11 +695,20 @@ class FrequencyRecord
       @blockfreqs.each do |bref,count|
         @blockfreqs[bref] = merge_ranges(count, 0..0) unless @current_record.include?(bref)
       end
+    else
+      @blockfreqs = {}
+      @current_record.each do |bref,count|
+        @blockfreqs[bref] = count..count
+      end
     end
     @current_record, @current_loops = nil, nil
   end
-  def dump(io=$>, header=nil)
-    (io.puts "No records";return) unless @blockfreqs
+
+  def dump(io = $DEFAULT_OUTPUT, header = nil)
+    unless @blockfreqs
+      io.puts "No records"
+      return
+    end
     io.puts "---"
     io.puts header if header
     io.puts "  cycles: #{cycles}"
@@ -663,16 +722,17 @@ class FrequencyRecord
       io.puts "  Loop #{loop} in #{bound}"
     end
   end
+
 private
+
   def merge_loop_bound(key,bound)
-    unless @loopbounds[key]
-      @loopbounds[key] = bound..bound
-    else
+    if @loopbounds[key]
       @loopbounds[key] = merge_ranges(bound, @loopbounds[key])
+    else
+      @loopbounds[key] = bound..bound
     end
   end
 end
-
 
 # Records progress node trace
 class ProgressTraceRecorder
@@ -683,35 +743,37 @@ class ProgressTraceRecorder
     @internal_preds, @pred_list = [], []
     @rg_callstack = []
   end
+
   # set current relation graph
   # if there is no relation graph, skip function
-  def function(callee,callsite,cycles)
+  def function(callee,_callsite,_cycles)
     @rg = @pml.relation_graphs.by_name(callee.name, @rg_level)
     debug(@options,:trace) { "Call to rg for #{@rg_level}-#{callee}: #{@rg.nodes.first}" } if rg
     @rg_callstack.push(@node)
     @node = nil
   end
+
   # follow relation graph, emit progress nodes
   def block(bb, _)
     return unless @rg
-    if ! @node
+    unless @node
       first_node = @rg.nodes.first
-      assert("at_entry == at entry RG node") {
+      assert("at_entry == at entry RG node") do
         first_node.type == :entry
-      }
-      assert("at_entry == at first block") {
+      end
+      assert("at_entry == at first block") do
         bb == first_node.get_block(@rg_level)
-      }
+      end
       @node = first_node
       # debug(@options, :trace) { "Visiting first node: #{@node} (#{bb})" }
       return
     end
     # find matching successor progress node
     succs = @node.successors_matching(bb, @rg_level)
-    assert("progress trace: no (unique) successor (but #{succs.length}) at #{@node}, "+
-           "following #{@node.get_block(@rg_level)}->#{bb} (level #{@rg_level})") {
+    assert("progress trace: no (unique) successor (but #{succs.length}) at #{@node}, " \
+           "following #{@node.get_block(@rg_level)}->#{bb} (level #{@rg_level})") do
       succs.length == 1
-    }
+    end
     succ = succs.first
     if succ.type == :progress
       trace.push(succ)
@@ -723,16 +785,22 @@ class ProgressTraceRecorder
     @node = succ
     # debug(@options,:trace) { "Visiting node: #{@node} (#{bb})" }
   end
+
   # set current relation graph
-  def ret(rsite, csite, cycles, stall_cycles)
+  def ret(_rsite, csite, _cycles, _stall_cycles)
     return if csite.nil?
     @rg = @pml.relation_graphs.by_name(csite.function.name, @rg_level)
     @node = @rg_callstack.pop
     debug(@options, :trace) { "Return to rg for #{@rg_level}-#{csite.function}: #{@rg.nodes.first}" } if @rg
   end
-  def eof ; end
+
+  def eof; end
+
+  def respond_to_missing?(method_name, include_private = false)
+    super
+  end
+
   def method_missing(event, *args); end
 end
-
 
 end # module pml

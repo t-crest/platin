@@ -29,15 +29,14 @@ end
 # The syntax used is that of LLVM, as we import their Scalar Evolution
 # expressions
 class SymbolicExpression
-
   # Parse symbolic expression (LLVM 3.4's Scalar Evolution Expression format)
-  def SymbolicExpression.parse(str)
+  def self.parse(str)
     SymbolicExpressionParser.parse(str)
   end
 
   # Convert constant expression to integer. Fails if expression is not #constant?
   def to_i
-    raise Exception.new("SymbolicExpression#to_i: not constant")
+    raise Exception, "SymbolicExpression#to_i: not constant"
   end
 
   # Evaluate the symbolic expression, given the variable environment env
@@ -48,7 +47,7 @@ class SymbolicExpression
   # +lenv+:: a loop environent
   #
   def eval(env, lenv = nil)
-    raise Exception.new("SEAFfineRec#eval: no loop environment given") unless lenv
+    raise Exception, "SEAFfineRec#eval: no loop environment given" unless lenv
     resolve_loops(lenv).eval(env,lenv)
   end
 
@@ -59,47 +58,67 @@ class SymbolicExpression
   #  - +[:loop, l]+     ... Loop block used in a CHR
   #
   def map_names
-    raise Exception.new("map_names not implemented for #{self.class}")
+    raise Exception, "map_names not implemented for #{self.class}"
   end
 
-  def constant;            nil  ; end
+  def constant;            nil; end
+
   def constant?;           false; end
+
   def chainOfRecurrences?; false; end
 
-  def +(o) ;    SEBinary.collect_fold('+',self,o) ; end
-  def add(*os); SEBinary.collect_fold('+',self,*os) ; end
-  def -(o) ;    self + (-o) ; end
-  def *(o) ;    SEBinary.collect_fold('*',self,o) ; end
-  def -@   ;    SEBinary.create('*',self,SEInt.new(-1)) ; end
-  def smax(o);  SEBinary.create('smax',self,o) ; end
-  def umax(o);  SEBinary.create('umax',self,o) ; end
-  def smin(o);  SEBinary.create('smin',self,o) ; end
-  def umin(o);  SEBinary.create('umin',self,o) ; end
-  def sdiv(o);  SEBinary.create('/s',self,o) ; end
+  def +(o); SEBinary.collect_fold('+',self,o); end
+
+  def add(*os); SEBinary.collect_fold('+',self,*os); end
+
+  def -(o);    self + -o; end
+
+  def *(o);    SEBinary.collect_fold('*',self,o); end
+
+  def -@; SEBinary.create('*',self,SEInt.new(-1)); end
+
+  def smax(o);  SEBinary.create('smax',self,o); end
+
+  def umax(o);  SEBinary.create('umax',self,o); end
+
+  def smin(o);  SEBinary.create('smin',self,o); end
+
+  def umin(o);  SEBinary.create('umin',self,o); end
+
+  def sdiv(o);  SEBinary.create('/s',self,o); end
+
   def ==(other)
     return false if other.nil?
-    unless other.kind_of?(SymbolicExpression)
-      raise Exception.new("unexpected comparsion with symbolic expression")
-    end
-    return super(other)
+    raise Exception, "unexpected comparsion with symbolic expression" unless other.kind_of?(SymbolicExpression)
+    super(other)
   end
-  def eql?(other); self == other ; end
+
+  def eql?(other); self == other; end
 end
 
 class SEInt < SymbolicExpression
   def initialize(int)
-    raise Exception.new("Bad integer: #{int}/#{int.class}") unless int.kind_of?(Integer)
+    raise Exception, "Bad integer: #{int}/#{int.class}" unless int.kind_of?(Integer)
     @num = int
   end
+
   def constant; to_i;  end
+
   def constant?; true; end
-  def to_i; @num     ; end
+
+  def to_i; @num; end
+
   def to_s; @num.to_s; end
-  def eval(_,lenv=nil);     @num  ; end
-  def resolve_loops(lenv) ; self ; end
-  def referenced_loops ; Set.new; end
-  def referenced_vars  ; Set.new; end
-  def map_names(&block) ; self ; end
+
+  def eval(_,_lenv = nil); @num; end
+
+  def resolve_loops(_lenv); self; end
+
+  def referenced_loops; Set.new; end
+
+  def referenced_vars; Set.new; end
+
+  def map_names(); self; end
 end
 
 class SEVar < SymbolicExpression
@@ -108,11 +127,11 @@ class SEVar < SymbolicExpression
     @var = str
   end
 
-  def eval(env, lenv)
-    if v = env[@var]
+  def eval(env, _lenv)
+    if (v = env[@var])
       v
     else
-      raise Exception.new("SymbolicExpression#eval: unknown variable #{@var}")
+      raise Exception, "SymbolicExpression#eval: unknown variable #{@var}"
     end
   end
 
@@ -129,7 +148,7 @@ class SEVar < SymbolicExpression
     Set.new
   end
 
-  def resolve_loops(lenv)
+  def resolve_loops(_lenv)
     self
   end
 
@@ -144,7 +163,7 @@ class SEBinary < SymbolicExpression
     @op, @a, @b = op, a, b
   end
 
-  def SEBinary.create(op, a, b)
+  def self.create(op, a, b)
     a = SEInt.new(a) if a.kind_of?(Integer)
     b = SEInt.new(b) if b.kind_of?(Integer)
     expr = SEBinary.new(op, a, b)
@@ -161,57 +180,54 @@ class SEBinary < SymbolicExpression
     end
   end
 
-  def SEBinary.unit(op)
+  def self.unit(op)
     case op
-    when '+' ; then 0
-    when '*' ; then 1
-    when 'umax' ; then 0
-    else ; nil
+    when '+'; then 0
+    when '*'; then 1
+    when 'umax'; then 0
     end
   end
 
-  def SEBinary.lunit(op)
+  def self.lunit(op)
     SEBinary.unit(op)
   end
 
-  def SEBinary.runit(op)
+  def self.runit(op)
     case op
-    when '/s' ; then 1
-    when '/u' ; then 1
-    else ; SEBinary.unit(op)
+    when '/s'; then 1
+    when '/u'; then 1
+    else; SEBinary.unit(op)
     end
   end
 
-  def SEBinary.zero(op)
-    if op == '*' then 0 else nil end
+  def self.zero(op)
+    op == '*' ? 0 : nil
   end
 
   # true for operators that are associative and commutative
   #
-  def SEBinary.commutative?(op)
+  def self.commutative?(op)
     op == '+' || op == '*'
   end
 
-  def SEBinary.fold(op, *args)
-    args = args.map { |arg|
-      if arg.kind_of?(Integer) then SEInt.new(arg) else arg end
-    }
-    if SEBinary.commutative?(op)
-      args = args.select { |e| e.constant? } + args.select { |e| ! e.constant? }
+  def self.fold(op, *args)
+    args = args.map do |arg|
+      arg.kind_of?(Integer) ? SEInt.new(arg) : arg
     end
+    args = args.select { |e| e.constant? } + args.reject { |e| e.constant? } if SEBinary.commutative?(op)
     fst = args.shift
-    raise Exception.new("SEbinary#fold: no arguments") unless fst
-    args.inject(fst) { |a,b|
+    raise Exception, "SEbinary#fold: no arguments" unless fst
+    args.inject(fst) do |a,b|
       SEBinary.create(op,a,b)
-    }
+    end
   end
 
   # optimized creation for commutative operators
   #
-  def SEBinary.collect_fold(op, *args)
+  def self.collect_fold(op, *args)
     assert("SEBinary#collect_fold: #{op} is not commutative") { SEBinary.commutative?(op) }
     todo, done = args, []
-    while ! todo.empty?
+    until todo.empty?
       expr = todo.pop
       if expr.kind_of?(SEBinary) && expr.op == op
         todo.push(expr.a)
@@ -237,7 +253,7 @@ class SEBinary < SymbolicExpression
     when 'smin' then [ae,be].min
     when '/u'   then ae / be
     when '/s'   then ae / be
-    else        raise Exception.new("SymbolicExpression#eval: unknown binary operator #{@op}")
+    else        raise Exception, "SymbolicExpression#eval: unknown binary operator #{@op}"
     end
   end
 
@@ -260,17 +276,16 @@ class SEBinary < SymbolicExpression
 end
 
 class SEAffineRec < SymbolicExpression
-
   attr_reader :loopheader
 
-  def initialize(a,b,loopheader,flags='')
+  def initialize(a,b,loopheader,flags = '')
     @a, @b, @loopheader, @flags = a, b, loopheader, flags
   end
 
   def to_s; "{#{@a},+,#{@b}}<#{@flags}><#{@loopheader}>"; end
 
   def eval(env, lenv = nil)
-    raise Exception.new("SEAFfineRec#eval: no loop environment given") unless lenv
+    raise Exception, "SEAFfineRec#eval: no loop environment given" unless lenv
     resolve_loops(lenv).eval(env,lenv)
   end
 
@@ -358,22 +373,22 @@ class SEAffineRec < SymbolicExpression
   #          where x1,...,xn,xi is the maximum trip count of L1,...,Ln,Li
   def loop_bound_sum(outer_loop_bound)
     x = outer_loop_bound
-    if ! @b.constant? || @b.to_i == 0
-      raise Exception.new("SEAffineRec#loop_bound_sum: not possible to calculate total bound for"+
-                          "non-constant/zero #{@b}::#{@b.class} in #{self}")
+    if !@b.constant? || @b.to_i == 0
+      raise Exception, "SEAffineRec#loop_bound_sum: not possible to calculate total bound for" \
+                          "non-constant/zero #{@b}::#{@b.class} in #{self}"
     end
     if @b.to_i > 0
       lb = @b.add(-@a,-1).sdiv(@b).smax(0)
-      p1 = (x-lb).smax(0) * @a
-      q1 = x * (x-1).smax(0)
-      q2 = lb * (lb-1)
-      p2 = (q1-q2).smax(0).sdiv(2) * @b
-      p1+p2
+      p1 = (x - lb).smax(0) * @a
+      q1 = x * (x - 1).smax(0)
+      q2 = lb * (lb - 1)
+      p2 = (q1 - q2).smax(0).sdiv(2) * @b
+      p1 + p2
     elsif @b.to_i < 0
       ub = @a.add(-@b,-1).sdiv(-@b).add(1)
       ev = ub.smin(x).smax(0)
       p1 = ev * @a
-      p2 = (ev * (ev-1)).sdiv(2) * @b
+      p2 = (ev * (ev - 1)).sdiv(2) * @b
       p1 + p2
     end
   end
@@ -401,8 +416,10 @@ class SEUnknown < SymbolicExpression
   def initialize(str)
     @str = str
   end
-  def to_s; "#{@str}"; end
-  def map_names(&block); self; end
+
+  def to_s; @str.to_s; end
+
+  def map_names(); self; end
 end
 
 class SymbolicExpressionParser
@@ -411,8 +428,9 @@ class SymbolicExpressionParser
   def initialize
     @parser = get_parser
   end
-  def SymbolicExpressionParser.parse(expr_spec)
-    return SEInt.new(expr_spec) if(expr_spec.kind_of?(Integer))
+
+  def self.parse(expr_spec)
+    return SEInt.new(expr_spec) if expr_spec.kind_of?(Integer)
     p = SymbolicExpressionParser.new.parser
     begin
       p.parse!(expr_spec)
@@ -423,62 +441,71 @@ class SymbolicExpressionParser
   end
 
 private
+
   def get_parser
     expr
   end
+
   def expr
     (rchain | composite_expr | variable | int)
   end
+
   def rchain
-    spec = paren(seq(lazy{expr},sym(','),sym('+'),sym(','),lazy{expr}),'{','}').map { |a,_,_,_,b|
+    spec = paren(seq(lazy { expr },sym(','),sym('+'),sym(','),lazy { expr }),'{','}').map do |a,_,_,_,b|
       [a,b]
-    }
+    end
     flags = paren(flag,'<','>')
     loop = paren(loopname,'<','>')
-    seq(spec,flags *(0..5),loop).map { |s,f,l|
+    seq(spec,flags * (0..5),loop).map do |s,f,l|
       a,b = s
       SEAffineRec.new(a,b,l,f)
-    }
+    end
   end
+
   def composite_expr
     arithop = one_of_("+*") | sym('umax') | sym('smax') | sym('/u') | sym('/s')
-    paren(lazy {expr}.join(arithop)).map { |ps|
+    paren(lazy { expr }.join(arithop)).map do |ps|
       stack = []
       last_op = nil
-      while(ps.length>1)
+      while ps.length > 1
         a  = ps.shift
         op = ps.shift
         stack.push([a,op])
-        raise Exception.new("SymbolicExpressionParser: mixed ops without parenthesis") unless ! last_op || op == last_op
+        raise Exception, "SymbolicExpressionParser: mixed ops without parenthesis" unless !last_op || op == last_op
         last_op = op
       end
       expr = ps.first
-      while !stack.empty?
+      until stack.empty?
         a,op = stack.pop
         expr = SEBinary.create(op,a,expr)
       end
       expr
-    }
+    end
   end
-  def paren(p,left='(',right=')')
+
+  def paren(p,left = '(',right = ')')
     left.r >> p << right.r
   end
+
   def flag
     /n[us]?w/.r
   end
+
   def sym(c)
     symbol(c.r)
   end
+
   def int
     /-?\d+/.r.map { |v| SEInt.new(v.to_i) }
   end
+
   def loopname
     /[%@A-Za-z_][A-Za-z\.0-9_]*/.r
   end
+
   def variable
     loopname.map { |v| SEVar.new(v) }
   end
 end
 
 end # module PML
-
