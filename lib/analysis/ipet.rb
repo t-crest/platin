@@ -231,12 +231,8 @@ end
 
 class IPETModel
   attr_reader :builder, :ilp, :level
-  attr_accessor :block_frequency_override, :sum_incoming_override
   def initialize(builder, ilp, level)
     @builder, @ilp, @level = builder, ilp, level
-    @sum_incoming_override = Hash.new {|hsh, key| hsh[key] = [] }
-    @sum_outgoing_override = Hash.new {|hsh, key| hsh[key] = [] }
-    @block_frequency_override = {}
   end
 
   def infeasible?(block, context = Context.empty)
@@ -334,31 +330,42 @@ class IPETModel
     end
   end
 
-  # frequency of incoming is frequency of outgoing edges
-  def add_block_constraint(block)
-    return if block.predecessors.empty?
-    lhs = sum_incoming(block,-1) + sum_outgoing(block)
-    lhs.push [IPETEdge.new(block,:exit,level),1] if block.may_return?
-    ilp.add_constraint(lhs,"equal",0,"structural_#{block.qname}",:structural)
+  # Add a variable that represents the block
+  def add_block(block)
+    return if ilp.has_variable?(block)
+    ilp.add_variable(block)
+  end
+
+
+  # This function adds THE cfg flow constraints for a basic block. We
+  # always relate the flow to the block variable. Incoming and
+  # outgoing edges are calculated with sum_{incoming,outgoing}, iff
+  # not overriden by the arguments
+  def add_block_constraint(block, incoming=nil, outgoing=nil)
+    # Incoming Flow
+    if not incoming
+      incoming = sum_incoming(block)
+    end
+    if incoming.length > 0
+      lhs = incoming + [[block, -1]]
+      ilp.add_constraint(lhs,"equal",0,"block_inflow_#{block.qname}", :structural)
+    end
+
+    # Outgoing Flow
+    if not outgoing
+      outgoing = sum_outgoing(block)
+      outgoing.push [IPETEdge.new(block,:exit,level),1] if block.may_return?
+    end
+    if outgoing.length > 0
+      lhs = outgoing + [[block, -1]]
+      ilp.add_constraint(lhs,"equal",0,"block_outflow_#{block.qname}",:structural)
+    end
   end
 
   # frequency of incoming is frequency of outgoing edges is 0
   def add_infeasible_block_constraint(block)
     add_block_constraint(block)
-    unless block.predecessors.empty?
-      ilp.add_constraint(sum_incoming(block),"equal",0,"structural_#{block.qname}_0in",:infeasible)
-    end
-    unless block.successors.empty?
-      ilp.add_constraint(sum_outgoing(block),"equal",0,"structural_#{block.qname}_0out",:infeasible)
-    end
-  end
-
-  # frequency of incoming edges is frequency of block
-  def add_block(block)
-    return if ilp.has_variable?(block)
-    ilp.add_variable(block)
-    lhs = block_frequency(block) + [[block, -1]]
-    ilp.add_constraint(lhs,"equal",0,"block_#{block.qname}", :structural)
+    ilp.add_constraint(block_frequency(block),"equal",0,"structural_#{block.qname}_infeasible",:infeasible)
   end
 
   def function_frequency(function, factor = 1)
@@ -366,16 +373,7 @@ class IPETModel
   end
 
   def block_frequency(block, factor=1)
-    # if end of ABB => override exists => cut mbb successors
-    # this means that the outgoing frequency is zero (factor: +1/-1 => 0)
-    if @block_frequency_override.has_key?(block)
-      return @block_frequency_override[block].map {|e| [e, factor] }
-    end
-    if block.successors.empty? # return exit edge
-      [[IPETEdge.new(block,:exit,level),factor]]
-    else
-      sum_outgoing(block,factor)
-    end
+    return [[block, factor]]
   end
 
   def edge_frequency(edge, factor = 1)
@@ -383,19 +381,12 @@ class IPETModel
   end
 
   def sum_incoming(block, factor=1)
-    if @sum_incoming_override.has_key?(block)
-      return @sum_incoming_override[block].map {|e| [e, factor] }
-    end
     block.predecessors.map do |pred|
       [IPETEdge.new(pred,block,level), factor]
     end
   end
 
   def sum_outgoing(block, factor=1)
-    if @sum_outgoing_override.has_key?(block)
-      return @sum_outgoing_override[block].map {|e| [e, factor] }
-    end
-
     block.successors.map do |succ|
       [IPETEdge.new(block,succ,level), factor]
     end
@@ -419,7 +410,6 @@ class IPETModel
     end
   end
 
-
 end # end of class IPETModel
 
 
@@ -436,7 +426,13 @@ class GCFGIPETModel
     @mc_model.assert_equal(lhs, rhs, name, tag)
   end
 
-  # returns all edges, plus all return blocks
+  ################################################################
+  # SSTG Nodes
+  ################################################################
+
+  # Return successor nodes of the given SSTG node. Each return value
+  # is [edge, :local_or_:global]. :global means dispatching to another
+  # thread.
   def each_edge(gcfg_node)
     [:local, :global].each {|level|
       gcfg_node.successors(level).each do |n_gcfg_node|
@@ -447,6 +443,7 @@ class GCFGIPETModel
       yield [IPETEdge.new(gcfg_node,:exit,:gcfg), :global]
     end
   end
+
   def edge_costs(gcfg_ipet_edge, cost_block)
     # Costs for the Edge between two GCFG Nodes
     src, dst = gcfg_ipet_edge.source, gcfg_ipet_edge.target
@@ -548,6 +545,14 @@ class GCFGIPETModel
     outgoing
   end
 
+  ################################################################
+  # Atomic Basic Blocks
+  ################################################################
+  def add_abb(abb)
+    debug(builder.options, :ipet) {"Add ABB: #{abb}"}
+    ilp.add_variable(abb)
+  end
+
   def each_intra_abb_edge(abb)
     region = abb.get_region(:dst)
     region.nodes.each do |mbb|
@@ -566,10 +571,8 @@ class GCFGIPETModel
     end
   end
 
-  def add_abb_contents(gcfg, abb_to_power_states, abb, cost_block)
-    edges = Hash.new { |hsh, key| hsh[key]={:in=>[], :out=>[]} }
-
-    # the following call yields new IPETEdges
+  def add_abb_contents(abb, cost_block)
+    # Add Edge variables and their cost
     each_intra_abb_edge(abb) do |ipet_edge|
       # create a new variable in the overall ILP
       @ilp.add_variable(ipet_edge)
@@ -582,28 +585,25 @@ class GCFGIPETModel
       end
 
       debug(builder.options, :ipet) {"Intra-ABB Edge: #{ipet_edge} = #{cost}"}
+    end
 
-      # Collect edges
-      edges[ipet_edge.source][:out].push(ipet_edge)
-      edges[ipet_edge.target][:in].push(ipet_edge)
+    basic_block_region = abb.get_region(:dst)
+    basic_block_region.nodes.each do |mbb|
+      if mbb == basic_block_region.entry_node
+        # ABB freq overrides incoming of ABB n
+        incoming = [[abb, 1]]
+      else
+        incoming = nil
+      end
+      if mbb == basic_block_region.exit_node
+        outgoing = [[IPETEdge.new(mbb, :exit, :machinecode), 1]]
+      else
+        outgoing = nil
+      end
 
-      # Set the static context
-      ipet_edge.static_context = abb
-
-    end # each_intra_abb_edge
-
-    # The first block is activated as often, as the ABB is left
-    edges.each {|bb, e|
-      incoming = e[:in].map {|x| [x, 1]}
-      outgoing = e[:out].map {|x| [x, -1]}
-      # Do not add constraints for entry/exit
-      next if incoming.length == 0 or outgoing.length == 0
-      ilp.add_constraint(incoming+outgoing, "equal", 0,
-                       "abb_flux_#{bb.qname}", :structural)
-    }
-
-    # Return number of edges, and the list of outgoing edges for the ABB entry
-    [edges.keys.length, edges[abb.get_region(:dst).entry_node][:out]]
+      @mc_model.add_block(mbb)
+      @mc_model.add_block_constraint(mbb, incoming, outgoing)
+    end
   end
 
   def flow_into_abb(abb, nodes, prefix="", factor = 1)
@@ -702,6 +702,10 @@ class GCFGIPETModel
     incoming
   end
 
+  ################################################################
+  # Global Program Points and Timing
+  ################################################################
+
   def add_total_time_variable(costs=nil)
     # The gcfg_wcet_constraint assigns the global worst case response
     # time to the @wcet_variable, this variable will hold the maximal
@@ -709,6 +713,7 @@ class GCFGIPETModel
     lhs = [[@wcet_variable, -1]]
     # either use the costs (array of WCETs from WCEC analysis) or the ilp.costs
     rhs = (costs || @ilp.costs).map {|e, f| [e, f] }
+
     @ilp.add_constraint(lhs+rhs, "equal", 0, "global_wcet_equality", :gcfg)
   end
 
@@ -880,13 +885,12 @@ class IPETBuilder
   # yields basic blocks, so the caller can compute their cost
   # This Function is only used in the flow fact transformation
   # entry = {'machinecode'=> foo/1, 'bitcode'=> foo}
-  def build(entry, flowfacts, opts = { :mbb_variables =>  false }, &cost_block)
+  def build(entry, flowfacts, opts = { }, &cost_block)
     assert("IPETBuilder#build called twice") { ! @entry }
     @entry = entry
     @markers = {}
     @call_edges = []
     @mf_function_callers = Hash.new {|hsh, key| hsh[key] = [] }
-    @options.mbb_variables = opts[:mbb_variables]
 
     # build refinement to prune infeasible blocks and calls
     build_refinement(@entry, flowfacts)
@@ -928,12 +932,12 @@ class IPETBuilder
     # Add block constraints
     mf_function.blocks.each_with_index do |block, ix|
       next if block.predecessors.empty? && ix != 0 # exclude data blocks (for e.g. ARM)
+      @mc_model.add_block(block)
       if @mc_model.infeasible?(block)
         @mc_model.add_infeasible_block_constraint(block)
         next
       end
       @mc_model.add_block_constraint(block)
-      @mc_model.add_block(block) if @options.mbb_variables
     end
 
     # Return number of added basic blocks
@@ -973,13 +977,12 @@ class IPETBuilder
   # Build basic IPET Structure, when a GCFG is present
   # TODO: all references to gcfg need to be renamed to stg
   # (all states are present in this structure, nothing is grouped by next ABB)
-  def build_gcfg(gcfg, flowfacts, opts={ :mbb_variables =>  false }, &cost_block)
+  def build_gcfg(gcfg, flowfacts, opts={}, &cost_block)
     # TODO WCEC: we ignore modelling of function calls for now! (duplication discriminating power states necessary)
 
     assert("IPETBuilder#build called twice") { ! @entry }
     @call_edges = []
     @mf_function_callers = Hash.new {|hsh, key| hsh[key] = [] }
-    @options.mbb_variables = opts[:mbb_variables]
 
     # build refinement to prune infeasible blocks and calls
     build_refinement(gcfg, flowfacts)
@@ -1012,7 +1015,6 @@ class IPETBuilder
         if not ipet_edge.target.kind_of?(Symbol) and ipet_edge.target.abb and ipet_edge.source.abb and
           not ipet_edge.target.microstructure and level == :local
           target_bb = ipet_edge.target.abb.get_region(:dst).entry_node
-          @mc_model.sum_incoming_override[target_bb].push(ipet_edge)
         end
 
       }
@@ -1051,6 +1053,8 @@ class IPETBuilder
     toplevel_abb_count = 0 # statistics
 
     abb_to_nodes.each { |abb, nodes|
+      @gcfg_model.add_abb(abb)
+
       # 3.1 All ABBs from nodes that are _not_ marked as microstructure
       microstructure = nodes.map { |x| x.microstructure }
       next if microstructure.all?
@@ -1060,21 +1064,12 @@ class IPETBuilder
       # Add blocks within the ABB
       # TODO WCEC: give add_abb_contents the STG nodes
       # TODO WCEC: implement duplication for each power state
-      basic_blocks, abb_freq = @gcfg_model.add_abb_contents(gcfg,
-                                                            abb_to_power_states,
-                                                            abb,
-                                                            cost_block)
+      @gcfg_model.add_abb_contents(abb, cost_block)
 
       # ABB Freq is the list of edges that have ABB.entry_node as source
       # If this node has an ABB attached, the block frequency of the
       region = abb.get_region(:dst)
-      # abb_freq: the number of edges (addition of states in list) how often the ABB is visited
-      # override: cut last mbb in abb (avoid flow to successors)
-      @mc_model.block_frequency_override[region.entry_node] = abb_freq
-      if region.entry_node != region.exit_node
-        @mc_model.block_frequency_override[region.exit_node] = abb_freq
-      end
-      debug(@options, :ipet_global) { "Added contents: #{abb} (#{basic_blocks} blocks)" }
+      debug(@options, :ipet_global) { "Added contents: #{abb} (#{region.nodes.length} basic blocks)" }
 
       gcfg_mfs.add(abb.function)
 
@@ -1122,7 +1117,6 @@ class IPETBuilder
       # the folowing creates SOSs:
       rhs = @gcfg_model.flow_into_abb(abb, nodes)
 
-      @ilp.add_variable(abb, :gcfg)
       @gcfg_model.assert_equal(lhs, rhs, "abb_influx_#{abb.qname}", :gcfg)
 
       # set abb frequency to 1
@@ -1553,6 +1547,7 @@ private
 
     bitcode_function = rg.get_function(:src)
     bitcode_function.blocks.each do |block|
+      @bc_model.add_block(block)
       @bc_model.add_block_constraint(block)
     end
     # Our LCTES 2013 paper describes 5 sets of constraints referenced below

@@ -307,7 +307,7 @@ class WCA
         end
 
         cycles, freqs = local_ilp.solve_max
-        #info("WCET(#{wcet_for_obj}): #{cycles} cy (#{two_decimals(cycles * TIME_PER_CYCLE*1e6)} us)")
+        # info("WCET(#{wcet_for_obj}): #{cycles} cy (#{two_decimals(cycles * TIME_PER_CYCLE*1e6)} us)")
         statistics("WCEC/nodes/cycles",
                    "#{wcet_for_obj}" => cycles)
         statistics("WCEC/nodes/freqs",
@@ -427,7 +427,6 @@ class WCA
             die("ILP cost: target is not a block") unless v.target == :exit || v.target.kind_of?(Block)
             ref = ContextRef.new(v.cfg_edge, Context.empty)
           else
-            p [v.class, v, v.level]
             ref = ContextRef.new(v.gcfg_edge, Context.empty)
           end
           edgefreqs[ref] = freq
@@ -491,8 +490,9 @@ class WCA
                  "alarm activations" => alarms)
     end
 
+    info "Cycles: #{cycles}"
+
     if @options.verbose
-      puts "Cycles: #{cycles}"
       puts "Subtask Profile:"
       grouped_report_by(builder.ilp, freqs, 'subtask', false) do
         | label, cost, activation_count |

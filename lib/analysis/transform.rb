@@ -509,7 +509,7 @@ private
 
     # Build IPET (no cost) and add flow facts
     ffs = flowfacts.reject { |ff| ff.symbolic_bound? }
-    ipet.build(entry, ffs, mbb_variables: true) { |_edge| 0 }
+    ipet.build(entry, ffs) { |_edge| 0 }
     ipet
   end
 

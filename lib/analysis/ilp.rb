@@ -238,6 +238,7 @@ class ILP
 
   # add cost to the specified variable
   def add_cost(variable, cost)
+    assert("Unknown variable: #{variable}") { not variable.nil? and has_variable?(variable)}
     @costs[variable] += cost
     debug(@options, :ilp) { "Adding costs #{variable} = #{cost}" }
   end
