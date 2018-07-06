@@ -302,7 +302,7 @@ class WCA
           assert("No microstructure and no ABB: this should never happen!") {false}
         end
 
-        local_builder.build_gcfg(fragment, flowfacts) do |edge|
+        local_builder.build_sstg(fragment, flowfacts) do |edge|
           edge_cost(edge)
         end
 
@@ -384,7 +384,7 @@ class WCA
 
       return report
     else # @options.wcec == false
-      builder.build_gcfg(gcfg, flowfacts) do |edge|
+      builder.build_sstg(gcfg, flowfacts) do |edge|
         edge_cost(edge)
       end
 
