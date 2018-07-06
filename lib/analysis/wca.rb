@@ -119,6 +119,7 @@ class WCA
     [cycles, freqs, unbounded]
   end
 
+  # Used in the blocking time analysis
   def analyze_fragment(entries, exists, blocks, &cost)
     # Builder and Analysis Entry
     ilp = GurobiILP.new(@options) if @options.use_gurobi

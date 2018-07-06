@@ -761,7 +761,8 @@ class IPETBuilder
       succs
     end
   end
-  # Build Fragment
+
+  # Build Fragment: Ugly as fuck, used by blocking-time
   def build_fragment(entries, exits, blocks, flow_facts, cost_function)
     @cost_function = cost_function # == edge_cost
     entries = entries.dup

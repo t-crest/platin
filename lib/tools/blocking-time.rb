@@ -85,7 +85,7 @@ class BlockingTimeTool
           break
         end
 
-        if instr.block.mapsto =~ /^switch_context/
+        if not after_switch and instr.block.mapsto =~ /^switch_context/
           region.switch.add(instr)
           after_switch = true
           any_after_switch = true
@@ -150,22 +150,23 @@ class BlockingTimeTool
       end
     }
     r.delete_field("pml")
-    # r.after_switch.each { |b| p [b.object_id, b] }
 
     begin
       tmpdir = nil
       tmpdir = options.outdir = Dir.mktmpdir() unless options.outdir
       wca = WCA.new(pml, options)
 
-      disable_enable = wca.analyze_fragment(r.disable, r.enable, r.blocks) do |a, b|
+      disable_enable, _1, _2 = wca.analyze_fragment(r.disable, r.enable, r.blocks) do |a, b|
         b.index - a.index
       end
       puts "Disable->Enable: #{disable_enable} cycles"
-      disable_switch = wca.analyze_fragment(r.disable, r.switch, r.blocks) do |a, b|
+
+      disable_switch, _1, _2 = wca.analyze_fragment(r.disable, r.switch, r.blocks) do |a, b|
         b.index - a.index
       end
       puts "Disable->Switch: #{disable_switch} cycles"
-      switch_enable = wca.analyze_fragment(r.disable, r.enable, r.blocks) do |a, b|
+
+      switch_enable, _1, _2 = wca.analyze_fragment(r.disable, r.enable, r.blocks) do |a, b|
         if r.after_switch.member?(a)
           b.index - a.index
         else
@@ -196,5 +197,5 @@ EOF
     BlockingTimeTool.add_options(opts)
     WcaTool.add_options(opts)
   end
-  BlockingTimeTool.run(PMLDoc.from_files(options.input), options)
+  BlockingTimeTool.run(PMLDoc.from_files(options.input, options), options)
 end
