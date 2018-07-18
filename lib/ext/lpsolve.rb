@@ -67,7 +67,7 @@ private
 
   # Remove characters from constraint names that are not allowed in an .lp file
   def cleanup_name(name)
-    name.gsub(/[@: \/()->]/, "_")
+    name.gsub(/[: ()\->]/, "_")
   end
 
   # create an LP with variables
