@@ -6,6 +6,7 @@
 
 require 'platin'
 require 'analysis/wca'
+require 'mkmf'
 require 'English'
 include PML
 
@@ -34,11 +35,32 @@ class WcaTool
     opts.on("--wca-use-gurobi", "use Gurobi solver instead of lp_solve") do |v|
       opts.options.use_gurobi = v
     end
+    opts.on("--wca-detect-gurobi", "use Gurobi solver if possible") do |v|
+      if find_executable0 'gurobi_cl'
+        opts.options.use_gurobi = v
+      end
+    end
+
     # Disable all cache related costs.
     opts.on("--wca-disable-cache", "disable all cache related  costs") do |_f|
       opts.options.disable_dca = true
       opts.options.disable_sca = true
       opts.options.disable_ica = true
+    end
+    # Disable all cache related costs.
+    opts.on("--wca-count-instructions", "count only instructions (caches disabled") do |f|
+      opts.options.disable_dca = true
+      opts.options.disable_sca = true
+      opts.options.disable_ica = true
+      opts.options.wca_count_instructions = true
+    end
+    # ILP visualization
+    opts.on("--wca-visualize-ilp", "visualize the ILP (.svg and .dot)") do |v|
+      opts.options.visualize_ilp = v
+    end
+    # WCEC
+    opts.on("--wcec", "make WCEC analysis") do |v|
+      opts.options.wcec = v
     end
     opts.add_check do |options|
       options.wca_cache_regions = true if options.wca_cache_regions.nil?

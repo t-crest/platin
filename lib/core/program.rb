@@ -37,6 +37,13 @@ module PML
       add(Function.new(self, data, @opts))
     end
 
+    def invalidate(scope)
+      # FIXME: generalize this mechanism
+      if scope == :instructions
+        @instruction_by_address = nil
+      end
+    end
+
     # return [rs, unresolved]
     # rs .. list of (known functions) reachable from name
     # unresolved .. set of callsites that could not be resolved
@@ -106,12 +113,20 @@ module PML
 
     def self.from_pml(mod, data)
       # markers are special global program points
-      return Marker.new(data['marker']) if data['marker']
+      if data['constant-value']
+        return ConstantProgramPoint.new(data)
+      elsif data['marker']
+        return Marker.new(data['marker'])
+      elsif data['gcfg']
+        return GlobalProgramPoint.new(data['gcfg'], data)
+      elsif data['frequency-variable']
+        return FrequencyVariable.new(data['frequency-variable'])
+      end
 
       # otherwise, it is a function or part of a function
       fname = data['function']
       assert("ProgramPoint.from_pml: no function attribute: #{data}") { fname }
-      function = mod.by_name(fname)
+      function = mod.by_label_or_name(fname)
       raise UnknownFunctionException, fname unless function
 
       bname = data['block']
@@ -180,12 +195,13 @@ module PML
 
   class Edge < ProgramPoint
     attr_reader :source, :target
-    def initialize(source, target, data = nil)
+    def initialize(source, target, data = nil, level = nil)
       assert("PML::Edge: source and target need to be blocks, not #{source.class}/#{target.class}") do
-        source.kind_of?(Block) && (target.nil? || target.kind_of?(Block))
+        (source.kind_of?(Block) && (target.nil? || target.kind_of?(Block))) \
+        || (source.kind_of?(GCFGNode) && (target.nil? || target.kind_of?(GCFGNode)))
       end
       assert("PML::Edge: source and target function need to match") do
-        target.nil? || source.function == target.function
+        level == :gcfg || target.nil? || source.function == target.function
       end
 
       @source, @target = source, target
@@ -211,8 +227,8 @@ module PML
     end
 
     def to_pml_ref
-      pml = { 'function' => source.function.name,
-              'edgesource' => source.name }
+      pml = { 'edgesource' => source.name }
+      pml['function'] = source.function.name if source.kind_of?(Block)
       pml['edgetarget'] = target.name if target
       pml
     end
@@ -239,6 +255,65 @@ module PML
 
     def to_pml_ref
       { 'marker' => @name }
+    end
+  end
+
+  # Markers; we use @ as marker prefix
+  class FrequencyVariable < ProgramPoint
+    attr_reader :name
+    def initialize(name, data=nil)
+      assert("FrequencyVariable#new: name must not be nil") { ! name.nil? }
+      @name = name
+      @qname = "$#{@name}"
+      set_yaml_repr(nil)
+    end
+    def function
+      # no function associated with marker
+      nil
+    end
+    def to_s
+      @qname
+    end
+    def to_pml_ref
+      { 'frequency-variable' => @name }
+    end
+  end
+
+  # The Global Program Point is valid at all places in a execution
+  class GlobalProgramPoint < ProgramPoint
+    attr_reader :name
+    def initialize(name, data = nil)
+      @name = name
+      @qname = "__global_#{name}"
+      set_yaml_repr(data)
+    end
+    def function
+      # no function associated with global program point
+      nil
+    end
+    def to_s
+      @qname
+    end
+  end
+
+  # The Constant  Program Point is valid at all places in a execution
+  class ConstantProgramPoint < ProgramPoint
+    attr_reader :name, :value
+    def initialize(data = nil)
+      @name = @qname
+      @value = (data and data['constant-value']) ? data['constant-value'] : 0
+      @qname = "__const__(#{@value})"
+      set_yaml_repr(data)
+    end
+    def function
+      # no function associated with global program point
+      nil
+    end
+    def to_s
+      @qname
+    end
+    def to_pml_ref
+      { 'constant-value' => value }
     end
   end
 
@@ -388,12 +463,28 @@ module PML
       blocks.first
     end
 
+    def exit_blocks
+      blocks.select {|b| b.may_return? }.to_a
+    end
+
     def address
       data['address'] || blocks.first.address
     end
 
+    def end_address
+      addr = blocks.last.address
+      if blocks.last.instructions.last
+        addr = [blocks.last.instructions.last.address, addr].max
+      end
+      addr
+    end
+
     def label
       data[@labelkey] || blocks.first.label
+    end
+
+    def static_context
+      return {'function'=> label}
     end
 
     def add_node(node)
@@ -429,6 +520,15 @@ module PML
             ss << cs
           end
         end
+      end
+    end
+
+    # all called functions
+    def callees
+      Enumerator.new do |ss|
+        callsites.each{|cs|
+          cs.callees.each {|c| ss << c}
+        }
       end
     end
 
@@ -477,6 +577,7 @@ module PML
     def instructions=(instruction_list)
       data['instructions'] = instruction_list.data
       @instructions = instruction_list
+      function.module.invalidate(:instructions)
     end
 
     # Returns a list of instruction bundles (array of instructions per bundle)
@@ -744,6 +845,7 @@ module PML
         # XXX: hackish
         # filter known pseudo functions on bitcode
         n =~ /llvm\..*/ ||
+          n =~ /timing_print/ ||
           n =~ /__aeabi_uidivmod/ ||
           n =~ /__aeabi_idivmod/ ||
           n =~ /__udivsi3/ ||
@@ -1054,7 +1156,7 @@ module PML
 
   # Class representing PML Atomic Basic Block
   class ABB < PMLObject
-    attr_reader :name, :function, :machine_function, :entry_block, :exit_block
+    attr_reader :name, :function, :machine_function, :entry_block, :exit_block, :frequency_variable
     def initialize(relation_graphs, data)
       set_yaml_repr(data)
       @rg = relation_graphs.by_name(data['function'], :src)
@@ -1064,18 +1166,39 @@ module PML
       @function = @rg.get_function(:src)
       @machine_function = @rg.get_function(:dst)
 
+      # An ABB can have an attached frequency variable that catches
+      # its (total) internal activation count.
+      @frequency_variable = FrequencyVariable.new(data['frequency-variable']) if data['frequency-variable']
+
       @name = data['name']
-      @entry_block = @function.blocks.by_name(data['entry-block'])
-      @exit_block  = @function.blocks.by_name(data['exit-block'])
+      if data['entry-block']
+        @entry_block = @function.blocks.by_name(data['entry-block'])
+      else
+        @entry_block = @function.entry_block
+      end
+
+      if data['exit-block']
+        @exit_block  = @function.blocks.by_name(data['exit-block'])
+      else
+        exit_blocks = @function.exit_blocks
+        assert("No unique exit block for #{name} (#{exit_blocks})") { exit_blocks.length == 1 }
+        @exit_block = exit_blocks.first
+      end
+
       assert("Could not find ABB Entry/Exit Blocks #{data}") do
-        (@entry_block != nil) && (@exit_block != nil)
+        @entry_block != nil or @exit_block != nil
       end
       @regions = nil
+    end
+
+    def static_context
+      return { 'subtask'=>data['subtask'], 'function'=>data['function'], 'abb'=>data['name'] }
     end
 
     def qname
       @name
     end
+
     class RegionContainer
       attr_accessor :entry_node, :exit_node, :nodes
 
@@ -1115,11 +1238,15 @@ module PML
       end
 
       assert("ABB is not well formed; No Single-Entry/Single-Exit region all levels") do
-        rg_nodes_lhs = Set.new rg_region.nodes.map { |n| n.get_block(:src) }
-        rg_nodes_rhs = Set.new rg_region.nodes.map { |n| n.get_block(:dst) }
+        rg_nodes_lhs = Set.new rg_region.nodes.map{|n| n.get_block(:src)} - [nil]
+        bitcode_nodes = Set.new bitcode_region.nodes
 
-        (rg_nodes_lhs == Set.new(bitcode_region.nodes)) && (rg_nodes_rhs == Set.new(machine_region.nodes))
+        rg_nodes_rhs  = Set.new rg_region.nodes.map{|n| n.get_block(:dst)} - [nil]
+        machine_nodes = Set.new machine_region.nodes
+
+        rg_nodes_lhs == bitcode_nodes and rg_nodes_rhs == machine_nodes
       end
+
       @regions = {
         rg: rg_region,
         src: bitcode_region,
@@ -1137,8 +1264,8 @@ module PML
     extend PMLListGen
     pml_list(:GCFGNode, [:index], [])
 
-    def initialize(abbs, nodes)
-      @list = nodes.map { |n| GCFGNode.new(abbs, n) }
+    def initialize(functions, abbs, nodes)
+      @list = nodes.map { |n| GCFGNode.new(functions, abbs, n) }
       @list.each_with_index do |item, index|
         assert("Invalid Indices of GCFG Edges; Nodes are sorted") do
           item.index == index
@@ -1152,22 +1279,65 @@ module PML
 
   # Class representing PML GCFG Node
   class GCFGNode < PMLObject
-    attr_reader :abb, :successors, :predecessors
-    def initialize(abbs, data)
+    attr_reader :abb, :function, :cost, :frequency_variable, :microstructure, :loops, :devices
+    attr_accessor :is_source, :is_sink
+    def initialize(functions, abbs, data)
       set_yaml_repr(data)
-      @abb = abbs[data['abb']]
-      @predecessors = []
-    end
+      # What does this GCFG Connect to -> What object is executed upon
+      # the execution of this Node?
+      @abb  = abbs[data['abb']] if data['abb']
+      @function  = functions.by_label(data['function']) if data['function']
+      @cost = data['cost']
+      assert("Each GCFG node must either have a cost or an associated abb #{data}") { (!!@abb ^ !!@function) or @cost }
 
-    def function
-      abb.machine_function
+      # An Node can have an attached frequency variable that catches
+      # its (total) activation count.
+      @frequency_variable = FrequencyVariable.new(data['frequency-variable']) if data['frequency-variable']
+
+      # GCFG nodes can also belong to the microstructrue. This means
+      # that their referenced object is included and activated from
+      # another ABB. This node only accounts for the execution of the
+      # referenced object.
+      @microstructure = !!data['microstructure']
+
+      # Is the node a source/sink on the global level
+      @is_source, @is_sink = nil, nil
+
+      # GCFGNode#connect needs a @predecessor hash
+      @predecessors = {:local => [], :global => []}
+
+      @loops = data['loops'] || []
+
+      @devices = data['devices'] || []
     end
 
     def connect(nodes)
-      @successors = data['successors'].map { |i| nodes[i] }
-      data['successors'].each do |i|
-        nodes[i].add_predecessor(self)
+      # GCFG Node Successors: (thread-)local, (system-) global
+      @successors = {:local => (data['local-successors'] || []).map {|i| nodes[i] },
+                     :global=> (data['global-successors']|| []).map {|i| nodes[i] }}
+      @successors.each {|level, succs|
+        succs.each { |successor|
+          successor.add_predecessor(self, level)
+        }
+      }
+    end
+
+    def successors(level=nil)
+      if level == nil
+        return @successors[:local] + @successors[:global]
       end
+      return @successors[level]
+    end
+
+    def predecessors(level=nil)
+      if level == nil
+        return @predecessors[:local] + @predecessors[:global]
+      end
+      return @predecessors[level]
+    end
+
+    def isr_entry?
+      return data['isr_entry']
     end
 
     def index
@@ -1175,50 +1345,112 @@ module PML
     end
 
     def to_s
-      "GCFG:N#{index}(#{@abb.name})"
+      "GCFG:N#{index}(#{@abb.name if abb})"
+    end
+    def name
+      to_s
     end
 
     def qname
       "GCFG:N#{index}"
     end
 
+    ### MOCKUP like Block
+    def edge_to(target)
+      Edge.new(self, target, nil, :gcfg)
+    end
+
     def may_return?
       @successors.empty?
     end
 
-    ### MOCKUP like Block
-    def edge_to(target)
-      Edge.new(abb.get_region(:dst).exit_node, target.abb.get_region(:dst).entry_node)
-    end
-
     # edge to the function exit
     def edge_to_exit
-      Edge.new(abb.get_region(:dst).exit_node, nil)
+     Edge.new(self, nil, :gcfg)
     end
 
-  protected
+    protected
 
-    def add_predecessor(node)
-      @predecessors.push(node)
+    def add_predecessor(node, level)
+      @predecessors[level].push(node)
     end
   end
 
   # Global Control Flow Graph wrapper
   class GCFG < PMLObject
     include QNameObject
-    attr_reader :name, :level, :blocks, :nodes, :entry_node
+    attr_reader :name, :level, :blocks, :nodes, :entry_nodes, :exit_nodes, :device_list
 
-    def initialize(data, relation_graphs)
+    def initialize(data, pml)
       set_yaml_repr(data)
       @name = data['name']
+      @pml = pml
       @qname = "GCFG:#{name}"
       @level = data['level']
-      @blocks = ABBList.new(relation_graphs, data['blocks'])
-      @nodes  = GCFGNodeList.new(@blocks, data['nodes'])
+      @blocks = ABBList.new(pml.relation_graphs, data['blocks'] || [])
+      @nodes  = GCFGNodeList.new(pml.machine_functions, @blocks, data['nodes'])
       # Find the Entry Edge into the system
-      entry_nodes = @nodes.select { |e| e.predecessors.empty? }
-      die("GCFG #{name} is not well formed, multiple entries") unless entry_nodes.length == 1
-      @entry_node = entry_nodes[0]
+      @entry_nodes = data['entry-nodes'].map {|idx| @nodes[idx] }
+      @exit_nodes = data['exit-nodes'].map {|idx| @nodes[idx] }
+
+      @device_list = data['devices']
+
+      # Mark them as source/sink
+      @entry_nodes.each {|n| n.is_source = true }
+      @exit_nodes.each { |n| n.is_sink = true}
+      unless entry_nodes.length > 0 and exit_nodes.length > 0
+        die("GCFG #{name} is not well formed, no entry (#{entry_nodes}), no exit (#{exit_nodes})")
+      end
+    end
+
+    def get_entry
+      entry = {'machinecode' => [], 'bitcode'=> []}
+
+      @entry_nodes.each {|node|
+        if node.abb and not entry['bitcode'].include?(node.abb.function)
+          entry['bitcode'].push(node.abb.function)
+          entry['machinecode'].push(node.abb.machine_function)
+        elsif node.function
+          bf = @pml.relation_graphs.by_name(node.function.name, :dst).get_function(:src)
+          entry['bitcode'].push(bf)
+          entry['machinecode'].push(node.function)
+
+        end
+
+      }
+      assert("Multiple Entry functions, are not supported yet #{entry}") {
+        entry['bitcode'].length == 1
+      }
+      entry
+    end
+
+    def reachable_functions(level, only_called_functions=false)
+      all_functions = (level == "bitcode") ? @pml.bitcode_functions : @pml.machine_functions
+      superstructure_funcs = Set.new
+      @nodes.each {|node|
+        if node.abb
+          superstructure_funcs.add( level == "bitcode" ? node.abb.function :  node.abb.machine_function)
+        elsif node.function
+          if level == "machinecode"
+            superstructure_funcs.add(node.function)
+          else
+            bf = @pml.relation_graphs.by_name(node.function.name, :dst).get_function(:src)
+            superstructure_funcs.add(bf)
+          end
+        end
+      }
+      rs, unresolved = Set.new, Set.new
+      superstructure_funcs.each {|f|
+        a, b = all_functions.reachable_from(f.name)
+        rs |= a
+        unresolved |= b
+      }
+
+      if only_called_functions
+        rs -= superstructure_funcs
+      end
+
+      return [rs, unresolved]
     end
 
     def to_s
@@ -1232,12 +1464,18 @@ module PML
     pml_name_index_list(:GCFG, [],[])
 
     # customized constructor
-    def initialize(data, relation_graphs)
+    def initialize(data, pml)
       @list = data.map do |g|
-        GCFG.new(g, relation_graphs)
+        GCFG.new(g, pml)
       end
       set_yaml_repr(data)
       build_index
+    end
+    def by_label_or_name(name)
+      if name =~ /^GCFG:(.*)/
+        name = $1
+      end
+      by_name(name)
     end
   end
 

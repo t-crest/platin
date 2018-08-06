@@ -116,8 +116,6 @@ module PML
 
     def inspect; to_s; end
 
-  private
-
     def to_pml
       # return cached YAML representation, if available
       return @data if @data

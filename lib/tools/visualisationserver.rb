@@ -53,6 +53,7 @@ class Templates
 
   def view_source(file)
     context = binding
+
     context.local_variable_set(:title, "#{file}: Sourceview")
     context.local_variable_set(:sourcecode, File.read(file))
     bodytemplate = %{<pre id="l" data-line=" " class="language-c line-numbers"><code><%= h(sourcecode) %></code></pre>}
@@ -100,7 +101,7 @@ class Templates
     context.local_variable_set(:bodytemplate, bodytemplate)
 
     jsinit = %{
-                  init('<%= u(constrainturl) %>', 'ilpcanvas', '/static/css/ilp.svg.css');
+		  init('<%= u(constrainturl) %>', 'ilpcanvas', '/static/css/ilp.svg.css');
       sourceview_init('ilpcanvas', '<%= u(srchinturl) %>', '<%= u(srcviewurl) %>');
     }
     context.local_variable_set(:jsinit, jsinit)

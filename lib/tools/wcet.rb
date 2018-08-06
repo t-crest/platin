@@ -68,7 +68,7 @@ class WcetTool
   def run_analysis
     # Comment out for transformed GCFG
     prepare_pml
-    unless pml.analysis_entry(options)
+    unless pml.analysis_gcfg(options)
       die("Analysis entry '#{options.analysis_entry}' not found (check for typos, " \
           "inlined functions or code not reachable from program entry)")
     end
@@ -102,8 +102,8 @@ class WcetTool
     # Sanity check and address extraction
     rgs = pml.relation_graphs.list.select { |rg| rg.data['status'] != 'valid' && rg.src.name != "abort" }
     unless rgs.empty?
-      warn("Problematic Relation Graphs: " \
-           "#{rgs.map { |rg| "#{rg.qname} / #{rg.data['status']}" }.join(", ")}")
+      msg = rgs.map { |rg| "#{rg.qname} / #{rg.data['status']}" }.join(", ")
+      warn("Problematic Relation Graphs: #{msg}")
     end
 
     # Extract Symbols
@@ -114,6 +114,13 @@ class WcetTool
         ExtractSymbolsTool.run(pml,options)
       end
     end
+
+    # Load Flow Facts from command Line
+    (options.user_flowfacts || []).each { |ff|
+      ff = FlowFact.from_string(@pml, ff)
+      @pml.flowfacts.push(ff)
+    }
+
   end
 
   def trace_analysis
@@ -184,7 +191,12 @@ class WcetTool
   end
 
   def wcet_analysis_platin(srcs)
-    time("run WCET analysis (platin)") do
+    if options.wcec
+      descr = "WCEC/WCA"
+    else
+      descr = "WCA"
+    end
+    time("run #{descr} analysis (platin)") do
       opts = options.dup
       opts.import_block_timing = true if opts.compute_criticalities
       opts.timing_output = [opts.timing_output,'platin'].compact.join("/")
@@ -207,7 +219,7 @@ class WcetTool
   end
 
   def wcet_analysis_ait(srcs)
-    time("run WCET analysis (aiT)") do
+    time("run WCET analysis (aiT)", "AIT") do
       pml.with_temporary_sections([:flowfacts]) do
         # Simplify flow facts
         simplify_flowfacts(srcs, options)
@@ -399,7 +411,11 @@ class WcetTool
         end
       end
     end
-    info "#{"Trace analysis: #{trace_cycles} cycles; " if trace_cycles}best WCET bound: #{wcet_cycles} cycles"
+    if options.wcec
+      # reported above
+    elsif trace_cycles
+      info "Trace analysis: #{trace_cycles} cycles; "
+    end
     results
   end
 
@@ -423,6 +439,7 @@ class WcetTool
     pml
   end
 
+
   # Configure files for aiT export
   def configure_ait_files(opts, outdir, basename, overwrite = true)
     opts.ais_file = File.join(outdir, "#{basename}.ais") unless !overwrite && opts.ais_file
@@ -440,9 +457,14 @@ class WcetTool
     # that are shared between configurations are run only once (like address
     # extraction or trace analysis).
     config = pml.analysis_configurations.by_name('default')
-
-    options.analysis_entry = config.analysis_entry if config && !options.analysis_entry
-    unless options.analysis_entry
+    if config and not options.analysis_entry
+      options.analysis_entry = config.analysis_entry
+    end
+    if options.analysis_entry == "GCFG:timing-"
+      warn("Defaulting to GCFG:timing-0.")
+      options.analysis_entry = "GCFG:timing-0"
+    end
+    if not options.analysis_entry
       warn("Analysis entry not specified, falling back to 'main'.") if config
       options.analysis_entry = "main"
     end
@@ -498,8 +520,11 @@ class WcetTool
     opts.on("--[no-]enable-wca", "run platin WCA calculator") { |b| opts.options.enable_wca = b }
     opts.on("--combine-wca", "run both aiT and WCA and combine cache analysis results") { |_d| opts.options.combine_wca = true }
     opts.on("--compute-criticalities", "calculate block criticalities") { opts.options.compute_criticalities = true }
-    opts.on("--enable-sweet", "run SWEET bitcode analyzer") { |_d| opts.options.enable_sweet = true }
+    opts.on("--enable-sweet", "run SWEET bitcode analyzer") { |d| opts.options.enable_sweet = true }
     opts.on("--visualize-ilp", "display an graphical representation of the geneated ILP") { opts.options.visualize_ilp = true }
+    opts.on("--add-flowfact FLOWFACT", "Add Flow Facts to the analysis") do |v|
+      (opts.options.user_flowfacts ||= []).push(v)
+    end
     # rubocop:enable Metrics/LineLength
     use_sweet = proc { |options| options.enable_sweet }
     opts.bitcode_file(use_sweet)

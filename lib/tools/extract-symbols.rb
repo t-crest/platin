@@ -32,6 +32,11 @@ class ExtractSymbols
   end
 
   def analyze
+    if @pml.machine_functions.first.address
+      info("Skip read symbols")
+      return self
+    end
+
     elf = @options.binary_file
     die "The binary file '#{elf}' does not exist" unless File.exist?(elf)
 
@@ -60,6 +65,9 @@ class ExtractSymbols
   end
 
   def update_pml
+    if @pml.machine_functions.first.address
+      return
+    end
     @pml.machine_functions.each do |function|
       addr = @text_symbols[function.label] || @text_symbols[function.blocks.first.label]
       unless addr
@@ -72,7 +80,11 @@ class ExtractSymbols
           # Migh be different from current addr, as subfunctions require the emitter
           # to insert additional text between blocks.
           addr = block_addr
-        elsif !@instruction_addresses[function.label]
+        elsif block.label.end_with? "_0" and (func_addr = @text_symbols[function.label])
+          # For LLVM3.8 there is no extra label for the entry block,
+          # we use the function block address instead.
+          addr = func_addr
+        elsif ! @instruction_addresses[function.label]
           if @instruction_addresses.empty?
             die("There is no symbol for basic block #{block.label} (function: #{function.label}) in the binary")
           else

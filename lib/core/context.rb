@@ -500,7 +500,11 @@ class ContextRef < PMLObject
   end
 
   def function
-    programpoint.function
+    if programpoint.kind_of?(Function)
+      programpoint
+    else
+      programpoint.function
+    end
   end
 
   def block

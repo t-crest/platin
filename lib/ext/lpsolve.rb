@@ -37,10 +37,10 @@ class LpSolveILP < ILP
     # solve
     lp.set_add_rowmode(false)
     lp.print_lp if options.lp_debug
-    lp.write_lp(options.write_lp) if options.write_lp
-    lp.set_verbose(0)
+    lp.write_lp(options.write_lp) if options.write_lp and @do_diagnose
+    lp.set_verbose(1)
 
-    debug(options, :ilp) { dump(DebugIO.new) }
+    debug(options, :ilp) { self.dump(DebugIO.new) }
     start = Time.now
     r = lp.solve
     @solvertime += (Time.now - start)
@@ -78,6 +78,11 @@ private
       lp.set_col_name(ix, "v_#{ix}")
       lp.set_int(ix, true)
     end
+    sos1.each { |name, sos|
+      vars, card = sos
+      variables = vars.map { |v| [index(v), 1] }
+      lp.add_SOS(cleanup_name(name), 1, 1, variables.to_a)
+    }
     lp
   end
 

@@ -284,12 +284,30 @@ module PML
     $stderr.puts(format_msg("INFO",msg))
   end
 
-  def statistics(mod,vs,align = 47)
-    vs.each do |k,v|
-      key = "#{mod}: #{k}".ljust(align)
-      msg = "#{key} #{v}"
-      $stderr.puts(format_msg("STAT",msg))
+  def statistics(mod,vs,align=47)
+    def recursive(prefix, vs, &block)
+      vs.each { |k,v|
+        if v.kind_of?(Hash)
+          recursive("#{prefix}/#{k}", v, &block)
+        else
+          yield "#{prefix}/#{k}", v
+        end
+      }
     end
+
+    if @options.print_stats
+      recursive("", vs) do |key, value|
+        $stderr.puts(format_msg("STAT", "#{mod}: #{key.ljust(align)} #{value}"))
+      end
+    end
+    if @options.dref_stats
+      File.open(@options.dref_stats, "a+") { |fh|
+        recursive("", vs) do |key, value|
+          fh.write("\\drefset{/#{mod}#{key}}{#{value}}\n")
+        end
+      }
+    end
+
   end
 
   def format_msg(tag,msg,_align = -1)

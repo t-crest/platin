@@ -508,7 +508,7 @@ module PML
     end
 
     def self.from_pml(pml, data)
-      mod = pml.functions_for_level(data['level'])
+      mod = pml.toplevel_objects_for_level(data['level'])
       scope = ContextRef.from_pml(mod,data['scope'])
       lhs = TermList.new(data['lhs'].map { |t| Term.from_pml(mod,t) })
       attrs = ProgramInfoObject.attributes_from_pml(pml, data)
@@ -566,6 +566,54 @@ module PML
       flowfact
     end
 
+    def FlowFact.from_string(pml, ff)
+      x = ff.split(/\s*:\s*/)
+      assert("Invalid Flow Fact format #{ff} ( <scope> : <context> : <fact> = <const> )") {
+        x.length == 3
+      }
+      scope, context, fact = x
+      assert("Only the foreach context supported ( '<>' )") {
+        context == "<>"
+      }
+      m = /\s*([^<=]*?)\s*(=|<=)\s*([0-9]*)/.match(fact)
+      lhs, op, rhs = m[1..3]
+
+      if lhs[0] != "-"
+        lhs = "+ " + lhs
+      end
+      terms = []
+      mf_scope = pml.machine_functions.by_label(scope)
+      while lhs != "" do
+        m = /(?<sign>[+-])\s*((?<factor>[0-9]+)\s*)?(?<pp>[^+-]*)\s*(?<lhs>.*)/.match(lhs)
+
+        if m[:pp][0] == "/"
+          reg = Regexp.new m[:pp][1..-2]
+          functions = pml.machine_functions\
+                      .select {|mf| mf.label =~ reg  && mf_scope.callees.member?(mf.label) }\
+                      .map {|mf| mf.label}
+        else
+          functions = [m[:pp]]
+        end
+        functions.each {|mf_label|
+          factor = (m[:factor] || "1").to_i
+          factor *= {"+"=>1, "-"=>-1}[m[:sign]]
+          terms.push ({"factor"=>factor,
+                       "program-point"=> {"function"=>mf_label}})
+        }
+        lhs = m[:lhs]
+      end
+
+      flowfact = {'scope'=> {'function'=> scope},
+                  'level'=> 'machinecode',
+                  'origin'=> 'user',
+                  'op' => {"=" => "equal", "<=" => "less-equal"}[op],
+                  'rhs' => rhs.to_i,
+                  'lhs' => terms,
+                 }
+
+      FlowFact.from_pml(pml, flowfact)
+    end
+
     def globally_valid?(entry_function)
       # local relative flow facts are globally valid
       return true if local? && rhs.constant? && rhs.to_i == 0
@@ -577,7 +625,8 @@ module PML
 
     def local?
       lhs.all? do |term|
-        term.programpoint.function && term.programpoint.function == scope.function
+        pp = term.programpoint
+        pp.kind_of?(ConstantProgramPoint) || (pp.function && pp.function == scope.function)
       end
     end
 
@@ -738,7 +787,7 @@ module PML
     end
 
     def self.from_pml(pml, data)
-      fs = pml.functions_for_level(data['level'])
+      fs = pml.toplevel_objects_for_level(data['level'])
       ValueFact.new(ContextRef.from_pml(fs,data['program-point']),
                     data['variable'], data['width'],
                     ValueSet.from_pml(fs,data['values']),
@@ -820,7 +869,7 @@ module PML
     end
 
     def self.from_pml(pml, data)
-      fs = pml.functions_for_level(data['level'])
+      fs = pml.toplevel_objects_for_level(data['level'])
       profile = data['profile'] ? Profile.from_pml(fs, data['profile']) : nil
       TimingEntry.new(ContextRef.from_pml(fs,data['scope']), data['cycles'],
                       profile,

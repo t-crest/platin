@@ -7,6 +7,7 @@ require 'core/utils'
 require 'core/pml'
 require 'analysis/ilp'
 require 'set'
+
 module PML
 
 # This exception is raised if indirect calls could not be resolved
@@ -139,25 +140,45 @@ end
 # - call edges
 # - edges between relation graph nodes
 class IPETEdge
-  attr_reader :qname,:source,:target, :level
-  def initialize(edge_source, edge_target, level)
+  attr_reader :qname,:source,:target,:level
+  attr_writer :static_context
+  attr_accessor :power_state
+
+  def initialize(edge_source, edge_target, level, power_state = nil)
     @source,@target,@level = edge_source, edge_target, level.to_sym
-    arrow = { bitcode: "~>", machinecode: "->", gcfg: "+>" }[@level]
-    @qname = "#{@source.qname}#{arrow}#{:exit == @target ? 'exit' : @target.qname}"
+    @power_state = nil
+    arrow = {:bitcode => "~>", :machinecode => "->", :gcfg=>"+>"}[@level]
+    fname, tname = [@source, @target].map {|n|
+      n.kind_of?(Symbol) ? n.to_s : n.qname
+    }
+    @qname = "#{fname}#{arrow}#{tname}||#{power_state}"
+    # The context is a object that has a static_context attribute (e.g., an Atomic Basic Block)
+    @static_context = nil
+    assert ("Not a real GCFG edge #{self}") { gcfg_edge? } if @level == :gcfg
   end
 
   def backedge?
     return false if target == :exit
+    # If we look at a GCFG edge, the backedge property is defined by
+    # the underlying machine basic block structure
+    if gcfg_edge?
+      t = target.abb.get_region(:dst).entry_node
+      s = source.abb.get_region(:dst).exit_node
+      return t.backedge_target?(s)
+    end
     target.backedge_target?(source)
   end
 
   def cfg_edge?
-    return true if source.kind_of?(GCFGNode) && (target == :exit || target.kind_of?(GCFGNode))
     return false unless source.kind_of?(Block)
     return false unless :exit == target || target.kind_of?(Block)
     true
   end
-
+  def gcfg_edge?
+    if (source == :entry || source.kind_of?(GCFGNode)) and (target == :exit || target.kind_of?(GCFGNode))
+      return true
+    end
+  end
   # function of source
   def function
     source.function
@@ -167,13 +188,29 @@ class IPETEdge
     assert("IPETEdge#cfg_edge: not a edge between blocks") { cfg_edge? }
     :exit == target ? source.edge_to_exit : source.edge_to(target)
   end
-
+  def gcfg_edge
+    assert("IPETEdge#cfg_edge: not a edge between blocks #{self}") { gcfg_edge? }
+    (:exit == target) ? source.edge_to_exit : source.edge_to(target)
+  end
   def call_edge?
     source.kind_of?(Instruction) || target.kind_of?(Function)
   end
 
   def relation_graph_edge?
     source.kind_of?(RelationNode) || target.kind_of?(RelationNode)
+  end
+  def static_context(key = nil)
+    return @static_context.static_context[key] if @static_context and key
+    return @static_context.static_context if @static_context
+    return nil
+  end
+  def is_entry_in_static_context(key)
+    if key == "function" and not self.source.kind_of?(Symbol)
+      return self.source == self.function.entry_block if function
+    elsif key == "abb"
+      return gcfg_edge?
+    end
+
   end
 
   def to_s
@@ -194,11 +231,8 @@ end
 
 class IPETModel
   attr_reader :builder, :ilp, :level
-  attr_accessor :sum_incoming_override, :sum_outgoing_override
   def initialize(builder, ilp, level)
     @builder, @ilp, @level = builder, ilp, level
-    @sum_incoming_override = {}
-    @sum_outgoing_override = {}
   end
 
   def infeasible?(block, context = Context.empty)
@@ -244,6 +278,7 @@ class IPETModel
     c = ilp.add_constraint(terms, op, rhs_const, name, tag)
   end
 
+
   # FIXME: we do not have information on predicated calls ATM.
   # Therefore, we use <= instead of = for call equations
   def add_callsite(callsite, fs)
@@ -281,11 +316,6 @@ class IPETModel
     ilp.add_constraint(function_frequency(entry_function),"equal",1,"structural_entry",:structural)
   end
 
-  # frequency of analysis entry is 1
-  def add_gcfg_entry_constraint(entry_gcfg_edge)
-    ilp.add_constraint(block_frequency(entry_gcfg_edge),"equal",1,"structural_entry",:structural)
-  end
-
   # frequency of function is equal to sum of all callsite frequencies
   def add_function_constraint(function, calledges)
     lhs = calledges.map { |e| [e,-1] }
@@ -300,59 +330,63 @@ class IPETModel
     end
   end
 
-  # frequency of incoming is frequency of outgoing edges
-  def add_block_constraint(block)
-    return if block.predecessors.empty?
-    lhs = sum_incoming(block,-1) + sum_outgoing(block)
-    lhs.push [IPETEdge.new(block,:exit,level),1] if block.may_return?
-    ilp.add_constraint(lhs,"equal",0,"structural_#{block.qname}",:structural)
+  # Add a variable that represents the block
+  def add_block(block)
+    return if ilp.has_variable?(block)
+    ilp.add_variable(block)
+  end
+
+
+  # This function adds THE cfg flow constraints for a basic block. We
+  # always relate the flow to the block variable. Incoming and
+  # outgoing edges are calculated with sum_{incoming,outgoing}, iff
+  # not overriden by the arguments
+  def add_block_constraint(block, incoming=nil, outgoing=nil)
+    # Incoming Flow
+    if not incoming
+      incoming = sum_incoming(block)
+    end
+    if incoming.length > 0
+      lhs = incoming + [[block, -1]]
+      ilp.add_constraint(lhs,"equal",0,"block_inflow_#{block.qname}", :structural)
+    end
+
+    # Outgoing Flow
+    if not outgoing
+      outgoing = sum_outgoing(block)
+      outgoing.push [IPETEdge.new(block,:exit,level),1] if block.may_return?
+    end
+    if outgoing.length > 0
+      lhs = outgoing + [[block, -1]]
+      ilp.add_constraint(lhs,"equal",0,"block_outflow_#{block.qname}",:structural)
+    end
   end
 
   # frequency of incoming is frequency of outgoing edges is 0
   def add_infeasible_block_constraint(block)
     add_block_constraint(block)
-    unless block.predecessors.empty?
-      ilp.add_constraint(sum_incoming(block),"equal",0,"structural_#{block.qname}_0in",:infeasible)
-    end
-    unless block.successors.empty?
-      ilp.add_constraint(sum_outgoing(block),"equal",0,"structural_#{block.qname}_0out",:infeasible)
-    end
-  end
-
-  # frequency of incoming edges is frequency of block
-  def add_block(block)
-    return if ilp.has_variable?(block)
-    ilp.add_variable(block)
-    lhs = block_frequency(block) + [[block, -1]]
-    ilp.add_constraint(lhs,"equal",0,"block_#{block.qname}", :structural)
+    ilp.add_constraint(block_frequency(block),"equal",0,"structural_#{block.qname}_infeasible",:infeasible)
   end
 
   def function_frequency(function, factor = 1)
     block_frequency(function.blocks.first, factor)
   end
 
-  def block_frequency(block, factor = 1)
-    if block.successors.empty? # return exit edge
-      [[IPETEdge.new(block,:exit,level),factor]]
-    else
-      sum_outgoing(block,factor)
-    end
+  def block_frequency(block, factor=1)
+    return [[block, factor]]
   end
 
   def edge_frequency(edge, factor = 1)
     [[IPETEdge.new(edge.source, edge.target ? edge.target : :exit, level), factor]]
   end
 
-  def sum_incoming(block, factor = 1)
-    return @sum_incoming_override[block].map { |e| [e, factor] } if @sum_incoming_override[block]
+  def sum_incoming(block, factor=1)
     block.predecessors.map do |pred|
       [IPETEdge.new(pred,block,level), factor]
     end
   end
 
-  def sum_outgoing(block, factor = 1)
-    return @sum_outgoing_override[block].map { |e| [e, factor] } if @sum_outgoing_override[block]
-
+  def sum_outgoing(block, factor=1)
     block.successors.map do |succ|
       [IPETEdge.new(block,succ,level), factor]
     end
@@ -363,6 +397,7 @@ class IPETModel
       edge.backedge?
     end
   end
+
 
   # returns all edges, plus all return blocks
   def each_edge(function)
@@ -375,42 +410,340 @@ class IPETModel
     end
   end
 
-  # returns all edges, plus all return blocks
-  def each_gcfg_edge(gcfg_edge)
-    die("not a gcfg") if level != "gcfg"
-    gcfg_edge.successors.each do |n_gcfg_edge|
-      yield IPETEdge.new(gcfg_edge,n_gcfg_edge,level)
+end # end of class IPETModel
+
+
+class GCFGIPETModel
+  attr_reader :builder, :ilp, :level, :wcet_variable
+  def initialize(builder, ilp, mc_model, level = :gcfg)
+    @builder, @ilp, @level = builder, ilp, level
+    @mc_model = mc_model
+    @entry_edges = []
+    @loops = Hash.new {|hsh, key| hsh[key] = {'entries' => [], 'backedges' => []} }
+  end
+
+  def assert_equal(lhs, rhs, name, tag)
+    @mc_model.assert_equal(lhs, rhs, name, tag)
+  end
+
+  ################################################################
+  # SSTG (static state transition graph) nodes
+  ################################################################
+
+  # Return successor nodes of the given SSTG node. Each return value
+  # is [edge, :local_or_:global]. :global means dispatching to another
+  # thread.
+  def each_edge(sstg_node)
+    [:local, :global].each {|level|
+      sstg_node.successors(level).each do |n_sstg_node|
+        yield [IPETEdge.new(sstg_node,n_sstg_node,:gcfg), level]
+      end
+    }
+    if sstg_node.is_sink
+      yield [IPETEdge.new(sstg_node,:exit,:gcfg), :global]
     end
-    yield IPETEdge.new(gcfg_edge,:exit,level) if gcfg_edge.may_return?
+  end
+
+  def edge_costs(sstg_ipet_edge, cost_block)
+    # Costs for the Edge between two SSTG Nodes
+    src, dst = sstg_ipet_edge.source, sstg_ipet_edge.target
+    cost = 0
+    cost += src.cost if src.cost
+    # Microstructure edges add no additional costs
+    return cost if src.microstructure
+
+    if src.abb
+      sstg_ipet_edge.static_context = src.abb
+
+      source_block = src.abb.get_region(:dst).exit_node
+      target_block = if dst == :exit
+                       :exit
+                     elsif dst.abb
+                       dst.abb.get_region(:dst).entry_node
+                     else
+                       :idle
+                     end
+      if not builder.options.ignore_instruction_timing
+        mc_edge = IPETEdge.new(source_block, target_block, :machinecode)
+        cost += cost_block.call(mc_edge)
+      end
+    end
+    return cost
+  end
+
+  def add_entry_constraint(sstg)
+    @wcet_variable = GlobalProgramPoint.new(sstg.name)
+    @ilp.add_variable(@wcet_variable, :gcfg, 10_000_000)
+
+    # Entry variables must add up to 1
+    lhs = @entry_edges.map {|e| [e, 1]}
+    @ilp.add_constraint(lhs, "equal", 1, "structural_gcfg_entry", :structural)
+  end
+
+  def add_loop_contraints
+    @loops.each {|loop_idx, data|
+      # p loop_idx, data['entries'], data['backedges']
+      # for each loop in the nodes, set a sufficiently large upper bound
+      lhs = data['entries'].map {|e| [e, -10000 / data['entries'].length]}
+      # / this is unexplainable, but it works with gurobi/lp_solve
+      rhs = data['backedges'].map {|e| [e, 1]}
+      @ilp.add_constraint(rhs+lhs, "less-equal", 0,
+                                  "gcfg_loop_#{loop_idx}", :structural)
+    }
+  end
+
+  def add_node(node)
+    @ilp.add_variable(node, :gcfg)
+
+    # Frequency variables are aliases for nodes
+    if node.frequency_variable
+      @ilp.add_variable(node.frequency_variable, :gcfg)
+      @ilp.add_constraint([[node.frequency_variable, -1], [node, 1]],
+                         "equal",0,"frequency_variable_#{node.frequency_variable}_#{node.qname}",
+                         :structural)
+    end
+  end
+
+  def add_node_constraint(node)
+    # Calculate all flows that go into this node
+    incoming = node.predecessors.map { |p| [IPETEdge.new(p,node,level), 1] }
+    # Some nodes have an additional input edge, if they are input nodes
+    if node.is_source
+      e = IPETEdge.new(:entry, node, level)
+      debug(builder.options, :ipet_global) {"Added entry edge #{e}"}
+      @ilp.add_variable(e)
+      @entry_edges.push(e)
+      incoming.push([e, 1]) if node.is_source
+    end
+
+    # Add the flow constraint
+    lhs = incoming + [[node, -1]]
+    ilp.add_constraint(lhs,"equal",0,"sstg_structural_inflow_#{node.qname}",:structural)
+
+    # Flow out of the Node
+    outgoing = node.successors.map { |s| [IPETEdge.new(node, s, level), 1] }
+    outgoing.push [IPETEdge.new(node,:exit, level),1] if node.is_sink
+    lhs = outgoing + [[node, -1]]
+    ilp.add_constraint(lhs,"equal",0,"sstg_structural_outflow_#{node.qname}",:structural)
+
+    # Loop Handling: Finding Headers; Finding backedges
+    node.loops.each { |loop_id|
+      header = false
+      backedges = []
+      entries = []
+      incoming.each { |ipet_edge, _|
+        loop_src = ipet_edge.source.kind_of?(Symbol) ? [] : ipet_edge.source.loops
+        assert("...") { ipet_edge.target == node }
+        if loop_src.member?(loop_id)
+          backedges.push(ipet_edge)
+        else
+          entries.push(ipet_edge)
+          header = true
+        end
+      }
+      if header
+        @loops[loop_id]['entries'] += entries
+        @loops[loop_id]['backedges'] += backedges
+      end
+    }
+  end
+
+  ################################################################
+  # Atomic Basic Blocks
+  ################################################################
+  def add_abb(abb)
+    debug(builder.options, :ipet) {"Add ABB: #{abb}"}
+    ilp.add_variable(abb)
   end
 
   def each_intra_abb_edge(abb)
     region = abb.get_region(:dst)
     region.nodes.each do |mbb|
       # Followup Blocks within
-      mbb.successors.each do |mbb2|
-        yield IPETEdge.new(mbb, mbb2, level) if region.nodes.member?(mbb2)
+      mbb.successors.each {|mbb2|
+        if mbb == region.exit_node and mbb2 == region.exit_node
+          next
+        end
+        if region.nodes.member?(mbb2)
+          yield IPETEdge.new(mbb, mbb2, :machinecode)
+        end
+      }
+      if mbb == region.exit_node
+        yield IPETEdge.new(mbb, :exit, :machinecode)
       end
-      yield IPETEdge.new(mbb, :exit, level) if mbb == region.exit_node
     end
   end
-end # end of class IPETModel
+
+  def add_abb_contents(abb, cost_block)
+    # Add Edge variables and their cost
+    each_intra_abb_edge(abb) do |ipet_edge|
+      # create a new variable in the overall ILP
+      @ilp.add_variable(ipet_edge)
+      # Edges to the ABB-Exit are not assigned a cost, since the cost is added on the ABB/State level:
+      cost = 0
+      # FIXME nobody really knows why we needed the option ignore_instruction_timing
+      if not builder.options.ignore_instruction_timing and ipet_edge.target != :exit
+        cost = cost_block.call(ipet_edge)
+        @ilp.add_cost(ipet_edge, cost)
+      end
+
+      debug(builder.options, :ipet) {"Intra-ABB Edge: #{ipet_edge} = #{cost}"}
+    end
+
+    basic_block_region = abb.get_region(:dst)
+    basic_block_region.nodes.each do |mbb|
+      if mbb == basic_block_region.entry_node
+        # ABB freq overrides incoming of ABB n
+        incoming = [[abb, 1]]
+      else
+        incoming = nil
+      end
+      if mbb == basic_block_region.exit_node
+        outgoing = [[IPETEdge.new(mbb, :exit, :machinecode), 1]]
+      else
+        outgoing = nil
+      end
+
+      @mc_model.add_block(mbb)
+      @mc_model.add_block_constraint(mbb, incoming, outgoing)
+    end
+  end
+
+  def flow_into_abb(abb, nodes, prefix="", factor = 1)
+    incoming, irq_activations = [], []
+
+    def find_resume_edges(current_node, stop_abb, result_set, visited)
+      current_node.successors.each { |successor|
+        next if visited.member?(successor)
+        visited.add(current_node)
+
+        if successor.abb == stop_abb
+          result_set.add([current_node, successor])
+        else
+          find_resume_edges(successor, stop_abb, result_set, visited)
+        end
+      }
+      return result_set
+    end
+
+
+    irq_resume_nodes = Set.new
+
+    nodes.each do |node|
+      # Per se a node is activated, as often, as one of its states is
+      # activated. Either by a local predecessor, by a
+      # global/dispatching predecessor, or by an concrete input edge
+      incoming += node.predecessors.map {|p|
+        [IPETEdge.new(p, node, :gcfg), factor]
+      }
+      incoming.push([IPETEdge.new(:entry, node, :gcfg), factor]) if node.is_source
+
+      # Suspend and Return Edges (especially IRQ returns) This is a
+      # tricky one!. The Problem with our ABB super structure is, that
+      # interrupts generate loops at computation blocks, where the
+      # resumes are additional edges into the computation block.
+      ##
+      # We remove this double accounting, by applying a quite complex
+      # construction. So here is the general outline:
+      # 1) Detect IRQ Activation Loops:
+      node.successors(:global).each {|successor|
+        #   1.1) The successor is a irq_entry node
+        next if not successor.isr_entry?
+        #   1.3) Find all possible resume edges
+        resumes = find_resume_edges(successor, node.abb, Set.new, Set.new)
+        next if resumes.length == 0
+        irq_resume_nodes.merge(resumes)
+        #   1.4) We will substract the number of irq activations
+        irq_activations.push([IPETEdge.new(node, successor, :gcfg),1])
+      }
+    end
+    irq_resumes = irq_resume_nodes.map {|pred, node|
+      [IPETEdge.new(pred, node, :gcfg), 1]
+    }
+
+    var = "#{prefix}#{abb.to_s}_in_state".to_sym
+    @ilp.add_variable(var)
+    assert_equal(incoming, [[var,1]], "abb_#{prefix}#{abb.qname}_in_state", :gcfg)
+
+    if irq_activations.length > 0
+      assert("There should always be a resume, if we detected an activation") {
+        irq_resumes.length > 0
+      }
+      debug(builder.options, :ipet_global) {
+        "Add IRQ Resume edges: #{abb.name} => irqs: #{irq_activations}, possible resumes: #{irq_resumes} "
+      }
+
+      sos_name = "#{prefix}#{abb.to_s}"
+      neg = (sos_name + "_additional_resumes").to_sym
+      pos = (sos_name + "_additional_interrupts").to_sym
+      ilp.add_sos1(sos_name, [pos, neg])
+
+      # pos - neg = (resumes - irqs) = 0;
+      irq_activations_var = "#{prefix}#{abb.to_s}_irq_activations".to_sym
+      @ilp.add_variable(irq_activations_var)
+      assert_equal(irq_activations, [[irq_activations_var,1]], "abb_#{prefix}#{abb.qname}_in_state", :gcfg)
+
+      irq_resumes_var = "#{prefix}#{abb.to_s}_irq_resumes".to_sym
+      @ilp.add_variable(irq_resumes_var)
+      assert_equal(irq_resumes, [[irq_resumes_var,1]], "abb_#{prefix}#{abb.qname}_in_state", :gcfg)
+
+      assert_equal([[pos, 1], [neg, -1]],
+                   [[irq_activations_var, 1], [irq_resumes_var, -1]],
+                   "resume_#{prefix}#{abb.qname}", :structural)
+      # Sometimes LP Solve is an unhappy beast
+      if @ilp.kind_of?(LpSolveILP)
+        ilp.add_constraint([[irq_resumes_var, -1], [pos, 1]], "less-equal", 0,
+                           "resume_ilp_happy_#{prefix}#{abb.qname}", :structural)
+      end
+      # 2. We substract all interrupt activations, BUT add all
+      # interrupt activations, that have no corresponding resume, i.e.
+      # extra interrupts
+
+      incoming += [[irq_activations_var, -1 * factor], [pos, factor]]
+    end
+
+    incoming
+  end
+
+  ################################################################
+  # Global Program Points and Timing
+  ################################################################
+
+  def add_total_time_variable(costs=nil)
+    # The gcfg_wcet_constraint assigns the global worst case response
+    # time to the @wcet_variable, this variable will hold the maximal
+    # cost for this ILP.
+    lhs = [[@wcet_variable, -1]]
+    # either use the costs (array of WCETs from WCEC analysis) or the ilp.costs
+    rhs = (costs || @ilp.costs).map {|e, f| [e, f] }
+
+    @ilp.add_constraint(lhs+rhs, "equal", 0, "global_wcet_equality", :gcfg)
+  end
+
+  def global_program_point(pp, factor=1)
+    [[pp, factor]]
+  end
+
+end # end of class GCFGIPETModel
 
 class IPETBuilder
-  attr_reader :ilp, :mc_model, :bc_model, :refinement, :call_edges
+  attr_reader :ilp, :mc_model, :bc_model, :gcfg_model, :refinement, :call_edges, :options, :abb_to_power_states
 
   def initialize(pml, options, ilp = nil)
     @ilp = ilp
     @mc_model = IPETModel.new(self, @ilp, 'machinecode')
+    @gcfg_model = GCFGIPETModel.new(self, @ilp, @mc_model, 'gcfg')
+
     if options.use_relation_graph
       @bc_model = IPETModel.new(self, @ilp, 'bitcode')
       @pml_level = { src: 'bitcode', dst: 'machinecode' }
       @relation_graph_level = { 'bitcode' => :src, 'machinecode' => :dst }
     end
-    @gcfg_model = IPETModel.new(self, @ilp, 'gcfg') if options.gcfg_analysis
 
     @ffcount = 0
     @pml, @options = pml, options
+
+    @abb_to_power_states = Hash.new { |hsh, key| hsh[key] = Set.new}
   end
 
   def pml_level(rg_level)
@@ -437,23 +770,133 @@ class IPETBuilder
     end
   end
 
+  # Build Fragment: Ugly as fuck, used by blocking-time
+  def build_fragment(entries, exits, blocks, flow_facts, cost_function)
+    @cost_function = cost_function # == edge_cost
+    entries = entries.dup
+    exits = exits.dup
+    incoming = {}
+    outgoing = {}
+    entry_frequency = {}
+    exit_frequency = {}
+
+
+    blocks.each {|mbb|
+      incoming[mbb] = []
+      outgoing[mbb] = []
+    }
+    entry_edges = []
+    exit_edges = []
+    blocks.each { |mbb|
+      mbb.successors.each {|mbb2|
+        if ! blocks.member?(mbb2)
+          next
+        end
+        edge = IPETEdge.new(mbb, mbb2, :machinecode)
+        @ilp.add_variable(edge)
+        outgoing[mbb].push(edge)
+        incoming[mbb2].push(edge)
+      }
+
+      freq, freq_idx = mbb, 0
+      @ilp.add_variable(freq)
+      entry_frequency[mbb] = freq
+      exit_frequency[mbb] = freq
+
+      mbb.callsites.each { |cs|
+        call_edges = []
+        return_edges = []
+        assert("Return Pad for call site must reside in same block") {
+          cs.next.block == cs.block
+        }
+        cs.callees.each { |mf|
+          mf = @pml.machine_functions.by_label(mf)
+          next if incoming[mf.blocks.first].nil?
+
+          e = IPETEdge.new(freq, mf.blocks.first, :machinecode)
+          @ilp.add_variable(e)
+          incoming[mf.blocks.first].push(e)
+          call_edges.push(e)
+          # Find all return edges of target function
+          rets = mf.blocks.select {|b| b.must_return? }
+          rets.each { |ret|
+            next if ! blocks.member?(ret)
+            e = IPETEdge.new(ret, cs, :machinecode)
+            @ilp.add_variable(e)
+            outgoing[ret].push(e)
+            return_edges.push(e)
+          }
+        }
+        next if call_edges.length == 0
+        # Call is Executed as often as the last instruction frequency
+        @ilp.add_variable(cs)
+        cost = cost_function.call(mbb.instructions[freq_idx], cs)
+        @ilp.add_cost(cs, cost)
+        @ilp.add_constraint([[cs, 1], [freq, -1]], "equal", 0, "callsite_#{cs}", :callsite)
+        rhs = [[cs, -1]]
+        lhs = call_edges.map { |e| [e, 1] }
+        @ilp.add_constraint(lhs + rhs, "less-equal", 0, "call_#{cs}", :callsite)
+
+        # Call is Executed as often as the last instruction frequency
+        @ilp.add_variable(cs.next)
+        rhs = [[cs.next, 1]]
+        lhs = return_edges.map { |e| [e, -1] }
+        if exits.member?(cs)
+          exit_edges += return_edges
+          exits.delete(cs)
+        end
+        @ilp.add_constraint(lhs + rhs, "less-equal", 0, "returnsite_#{cs}", :callsite)
+
+        # Cant return more often than activated
+        @ilp.add_constraint([[cs, -1], [cs.next, 1]], "less-equal", 0, "call_ret_#{cs}", :callsite)
+        freq, freq_idx = cs.next, cs.next.index
+        exit_frequency[mbb] = cs.next
+      }
+
+      if mbb.instructions.last
+        cost = cost_function.call(mbb.instructions[freq_idx], mbb.instructions.last)
+        @ilp.add_cost(freq, cost)
+      end
+    }
+    entry_edges += entries.map { |mi|
+      e = IPETEdge.new(:entry, mi.block, :machinecode)
+      @ilp.add_variable(e)
+      incoming[mi.block].push(e)
+      e
+    }
+    exit_edges += exits.map { |mi|
+      e = IPETEdge.new(mi.block, :exit, :machinecode)
+      @ilp.add_variable(e)
+      outgoing[mi.block].push(e)
+      e
+    }
+    @ilp.add_constraint(entry_edges.map{|e| [e, 1]}, "equal", 1, "entry_constraint", :structural)
+    @ilp.add_constraint(exit_edges.map{|e| [e, 1]}, "equal", 1, "exit_constraint", :structural)
+
+    blocks.each {|mbb|
+      lhs = incoming[mbb].map{|e| [e, 1]}
+      rhs = [[entry_frequency[mbb], -1]]
+      @ilp.add_constraint(lhs+rhs, "equal", 0, "block_entry_#{mbb}", :structural)
+      lhs = outgoing[mbb].map{|e| [e, 1]}
+      rhs = [[exit_frequency[mbb], -1]]
+      @ilp.add_constraint(lhs+rhs, "equal", 0, "block_exit_#{mbb}", :structural)
+    }
+
+  end
+
   # Build basic IPET structure.
   # yields basic blocks, so the caller can compute their cost
-  def build(entry, flowfacts, opts = { mbb_variables: false }, &cost_block)
-    assert("IPETBuilder#build called twice") { !@entry }
+  # This Function is only used in the flow fact transformation
+  # entry = {'machinecode'=> foo/1, 'bitcode'=> foo}
+  def build(entry, flowfacts, opts = { }, &cost_block)
+    assert("IPETBuilder#build called twice") { ! @entry }
     @entry = entry
     @markers = {}
     @call_edges = []
-    @mf_function_callers = {}
-    @options.mbb_variables = opts[:mbb_variables]
+    @mf_function_callers = Hash.new {|hsh, key| hsh[key] = [] }
 
     # build refinement to prune infeasible blocks and calls
     build_refinement(@entry, flowfacts)
-
-    if @options.gcfg_analysis
-      build_gcfg(entry, flowfacts, opts, cost_block)
-      return
-    end
 
     mf_functions = get_functions_reachable_from_function(@entry['machinecode'])
     mf_functions.each do |mf_function|
@@ -477,12 +920,13 @@ class IPETBuilder
 
   def add_function_with_blocks(mf_function, cost_block)
     # machinecode variables + cost
-    @mc_model.each_edge(mf_function) do |edge|
-      @ilp.add_variable(edge, :machinecode)
-      unless @options.ignore_instruction_timing
-        cost = cost_block.call(edge)
-        @ilp.add_cost(edge, cost)
+    @mc_model.each_edge(mf_function) do |ipet_edge|
+      @ilp.add_variable(ipet_edge, :machinecode)
+      if not @options.ignore_instruction_timing
+        cost = cost_block.call(ipet_edge)
+        @ilp.add_cost(ipet_edge, cost)
       end
+      ipet_edge.static_context = mf_function
     end
 
     # bitcode variables and markers
@@ -491,30 +935,37 @@ class IPETBuilder
     # Add block constraints
     mf_function.blocks.each_with_index do |block, ix|
       next if block.predecessors.empty? && ix != 0 # exclude data blocks (for e.g. ARM)
+      @mc_model.add_block(block)
       if @mc_model.infeasible?(block)
         @mc_model.add_infeasible_block_constraint(block)
         next
       end
       @mc_model.add_block_constraint(block)
-      @mc_model.add_block(block) if @options.mbb_variables
     end
+
+    # Return number of added basic blocks
+    mf_function.blocks.length
   end
 
   ################################################################
   # Function Calls
   ################################################################
-  def add_calls_in_function(mf_function)
+  def add_calls_in_function(mf_function, forbidden_targets=nil)
     mf_function.blocks.each do |block|
-      add_calls_in_block(block)
+      add_calls_in_block(block, forbidden_targets)
     end
   end
 
-  def add_calls_in_block(mbb)
-    return if @mc_model.infeasible?(mbb)
+  def add_calls_in_block(mbb, forbidden_targets=nil)
+    forbidden_targets = Set.new(forbidden_targets || [])
     mbb.callsites.each do |cs|
-      current_call_edges = @mc_model.add_callsite(cs, @mc_model.calltargets(cs))
+      call_targets = @mc_model.calltargets(cs)
+      call_targets -= forbidden_targets
+
+      current_call_edges = @mc_model.add_callsite(cs, call_targets)
       current_call_edges.each do |ce|
-        (@mf_function_callers[ce.target] ||= []).push(ce)
+        ce.static_context = cs.function
+        @mf_function_callers[ce.target].push(ce)
       end
       @call_edges += current_call_edges
     end
@@ -526,130 +977,340 @@ class IPETBuilder
     end
   end
 
-  # Build basic IPET Structure, when a GCFG is present
-  def build_gcfg(entry, flowfacts, opts, cost_block)
-    # Super Structure: set of reachable ABBs
-    abbs = Set.new
-    # WITH BLOCK => Default value []
-    abb_outgoing_edge = Hash.new { |hsh, key| hsh[key] = [] }
-    reachable_set(entry['gcfg']) do |node|
-      abb = node.abb
-      abbs.add(abb)
+  # Build basic IPET Structure, when a SSTG is present
+  # TODO: all references to gcfg need to be renamed to stg
+  # (all states are present in this structure, nothing is grouped by next ABB)
+  def build_sstg(sstg, flowfacts, opts={}, &cost_block)
+    # TODO WCEC: we ignore modelling of function calls for now! (duplication discriminating power states necessary)
 
-      # Every Super-structure edge has a variable
-      @gcfg_model.each_gcfg_edge(node) do |ipet_edge|
-        @ilp.add_variable(ipet_edge, :gcfg)
+    assert("IPETBuilder#build called twice") { ! @entry }
+    @call_edges = []
+    @mf_function_callers = Hash.new {|hsh, key| hsh[key] = [] }
 
-        # Every GCFG Edge is also a flow between two machine blocks
-        unless @options.ignore_instruction_timing
-          source_block = ipet_edge.source.abb.get_region(:dst).exit_node
-          if ipet_edge.target == :exit
-            target_block = :exit
-          else
-            target_block = ipet_edge.target.abb.get_region(:dst).entry_node
-          end
-          cost = cost_block.call(ipet_edge)
+    # Build refinement to prune infeasible blocks and calls
+    build_refinement(sstg, flowfacts)
 
-          @ilp.add_cost(ipet_edge, cost)
+    # Build SSTG super structure
+    sstg_edges, abb_to_nodes, function_to_nodes = build_sstg_structure(sstg)
 
-          # Collect all outgoing super structure edges into this abb
-          abb_outgoing_edge[abb].push(ipet_edge)
+    sstg_edges.each do |ipet_edge|
+      edge_cost = @gcfg_model.edge_costs(ipet_edge, cost_block)
+      @ilp.add_cost(ipet_edge, edge_cost)
+      debug(@options, :ipet_global) { "Added edge #{ipet_edge} with cost #{edge_cost}" }
+    end
 
-        end
+    # 3. Put the executed objects into place
+    #    3.1 All ABBs from nodes that are _not_ marked as microstructure
+    #    3.2 Collect functions called from the superstructure ABBs
+    #    3.3 Collect functions called from GCFG nodes
+    #    3.4 Add functions
+    full_mfs = Set.new    ## To be added
+    sstg_mfs = Set.new
+    sstg_mbbs = Set.new
+    toplevel_abb_count = 0 # statistics
+
+    abb_to_nodes.each { |abb, nodes|
+      @gcfg_model.add_abb(abb)
+
+      # 3.1 All ABBs from nodes that are _not_ marked as microstructure
+      microstructure = nodes.map { |x| x.microstructure }
+      next if microstructure.all?
+      assert("Microstructure state of #{abb} is inconsistent") { not microstructure.any? }
+      toplevel_abb_count += 1
+
+      # Add blocks within the ABB
+      # TODO WCEC: give add_abb_contents the STG nodes
+      # TODO WCEC: implement duplication for each power state
+      @gcfg_model.add_abb_contents(abb, cost_block)
+
+      # ABB Freq is the list of edges that have ABB.entry_node as source
+      # If this node has an ABB attached, the block frequency of the
+      region = abb.get_region(:dst)
+      debug(@options, :ipet_global) { "Added contents: #{abb} (#{region.nodes.length} basic blocks)" }
+
+      sstg_mfs.add(abb.function)
+
+      # 3.2 What functions are called from this ABB?
+      region.nodes.each { |bb|
+        sstg_mbbs.add(bb)
+        bb.callsites.each { |cs|
+          next if @mc_model.infeasible?(cs.block)
+          @mc_model.calltargets(cs).each { |f|
+            assert("calltargets(cs) is nil") { ! f.nil? }
+            full_mfs += get_functions_reachable_from_function(f)
+          }
+        }
+      }
+    }
+    # 3.3 Collect functions called from GCFG nodes
+    function_to_nodes.each { |mf, nodes|
+      microstructure = nodes.map { |x| x.microstructure }
+      next if microstructure.all?
+      assert("Microstructure state of #{mf} is inconsistent") { not microstructure.any? }
+      full_mfs += get_functions_reachable_from_function(mf)
+    }
+
+    ## Interlude: Sanity Check: No function that is called from the
+    ## superstructure can be a ABB function
+    assert("Functions #{(full_mfs & sstg_mfs).to_a} part of superstructure and called function") {
+      (full_mfs & sstg_mfs).length == 0
+    }
+
+    # 3.4 Add functions
+    full_mfs.each do |mf|
+      basic_blocks = add_function_with_blocks(mf, cost_block)
+      debug(@options, :ipet_global) { "Added contents: #{mf} (#{basic_blocks} blocks)" }
+    end
+
+    ##############################################
+    # All structures/objects/functions are in place
+
+    # 4. Connect the node frequencies to the underlying object
+    #    4.1 to ABB frequencies
+    #    4.2 to function frequencies
+    abb_to_nodes.each {|abb, nodes|
+      mc_entry_block = abb.get_region(:dst).entry_node
+      lhs = @mc_model.block_frequency(mc_entry_block)
+      # the folowing creates SOSs:
+      rhs = @gcfg_model.flow_into_abb(abb, nodes)
+
+      @gcfg_model.assert_equal(lhs, rhs, "abb_influx_#{abb.qname}", :gcfg)
+
+      # set abb frequency to 1
+      @gcfg_model.assert_equal(lhs, [[abb, 1]], "abb_#{abb.qname}", :gcfg)
+      if abb.frequency_variable
+        @ilp.add_variable(abb.frequency_variable, :gcfg)
+        @gcfg_model.assert_equal([[abb.frequency_variable, 1]],
+                                 [[abb, 1]],
+                                 "abb_copy_to_var_#{abb.qname}", :gcfg)
       end
-      @gcfg_model.add_block_constraint(node)
-      node.successors
-    end
+    }
+    #    4.2 to function frequencies
+    # (happens in our case for IRQs: function entry is ABB entry)
+    function_to_nodes.each {|mf, nodes|
+      mc_entry_block = mf.entry_block
+      lhs = @mc_model.block_frequency(mc_entry_block)
+      rhs = @gcfg_model.flow_into_abb(mf, nodes)
+      @gcfg_model.assert_equal(lhs, rhs, "abb_influx_#{mf.qname}", :gcfg)
+    }
 
-    # Add Constraint for the Super-Structure entry
-    @gcfg_model.add_gcfg_entry_constraint(entry['gcfg'])
 
-    # Super Structure: set of reachable machine basic blocks
-    abb_mbbs = []
-    gcfg_mfs = Set.new # Tracks all functions the super structure is working on
-    abbs.each do |abb|
-      # ABB belongs to function
-      gcfg_mfs.add(abb.function)
+    # 5. Add missing super-structure connections
+    #    5.1 Calls from embedded functions
+    #    5.2 Calls from super-structure ABBs
+    #    5.3 Add call constraints
+    #    5.4 Global timimg variable
 
-      abb_mbbs += abb.get_region(:dst).nodes
-      # Add inner structure of ABB
-      build_gcfg_abb(abb, abb_outgoing_edge[abb], flowfacts, opts, cost_block)
+    full_mfs.each do |mf|
+      add_calls_in_function(mf, forbidden = sstg_mfs)
     end
-
-    # Super Structure: what functions are activated from the super structure?
-    abb_mfs = Set.new
-    abb_mbbs.each do |bb|
-      bb.callsites.each do |cs|
-        next if @mc_model.infeasible?(cs.block)
-        @mc_model.calltargets(cs).each do |f|
-          assert("calltargets(cs) is nil") { !f.nil? }
-          funcs = get_functions_reachable_from_function(f)
-          abb_mfs += get_functions_reachable_from_function(f)
-        end
-      end
-    end
-
-    abb_mfs.each do |mf|
-      add_function_with_blocks(mf, cost_block)
-    end
-    abb_mfs.each do |mf|
-      add_calls_in_function(mf)
-    end
-    abb_mbbs.each do |bb|
+    #    5.2 Calls from super-structure ABBs
+    sstg_mbbs.each do |bb|
       add_calls_in_block(bb)
     end
+    #    5.3 Add call constraints
+    add_global_call_constraints()
 
-    assert("Function calls are not allowed into the super structure") do
-      (abb_mfs & gcfg_mfs).empty?
-    end
+    #    5.4 Global timimg variable
+    @gcfg_model.add_total_time_variable
 
-    add_global_call_constraints
+
+    flowfacts.each { |ff|
+      debug(@options, :ipet) { "adding flowfact #{ff}" }
+      add_flowfact(ff)
+    }
+
+    if not @options.wcec
+      statistics("WCA",
+                 "gcfg nodes" => sstg.nodes.length,
+                 "gcfg transitions" => sstg.nodes.inject(0) {|acc, n| acc + n.successors.length},
+                 "abbs toplevel" => toplevel_abb_count,
+                 "abbs microstructure" => abb_to_nodes.length - toplevel_abb_count
+                 ) if @options.stats
+     end
+
 
     die("Bitcode contraints are not implemented yet") if @bc_model
   end
 
-  def build_gcfg_abb(abb, outgoing_abb_flux, _flowfacts, _opts, cost_block)
-    # Restrict the influx of our ABB Region
-    region = abb.get_region(:dst)
 
-    # Add all edges within the ABB
-    edges = {}
-    region.nodes.each do |bb|
-      edges[bb] = { in: [], out: [] }
+  # IPET Structure for WCEC
+  # @param the complete STG (no state fragments)
+  # @param {abb => wcet} AND {node => wcet} in ONE hash
+  #        abb => wcet: WCET for non-interrupt blocks
+  #        node=> wcet: WCET of ISR activation collapsed into the irq_entry node
+  #                     All nodes that are within the ISR activation are microstructural
+  # @param flowfacts
+  def build_wcec_analysis(sstg, wcet, flowfacts)
+    assert("IPETBuilder#build called twice") { ! @entry }
+
+    # the multiplication with 3.3V needs to be done done later on
+    baseline_index = sstg.device_list.length
+    sstg.device_list.push(
+      {"energy_stay_off" => 10, # 10mA
+       "energy_stay_on"  => 8,
+       "energy_turn_off" => 0,
+       "energy_turn_on"  => 0,
+       "index"           => baseline_index,
+       "name"=>"Baseline"
+      }
+    )
+
+
+
+    # 0. setup mapping abb_to_power_states
+    sstg.nodes.each do |node|
+      node.devices.push(baseline_index)
+      abb_to_power_states[node.abb].add(node.devices)
     end
-    edges[:exit] = { in: [], out: [] }
 
-    @mc_model.each_intra_abb_edge(abb) do |ipet_edge|
-      @ilp.add_variable(ipet_edge)
-      unless @options.ignore_instruction_timing
-        cost = cost_block.call(ipet_edge)
-        @ilp.add_cost(ipet_edge, cost)
+    # 1. SSTG Super structure
+    edges, abb_to_nodes, function_to_nodes = build_sstg_structure(sstg)
+
+    # 2. Add Turn-on and Turn-off costs to SSTG edges
+    edges.each do |edge|
+      # Add Turn-On and Turn-off costs to the State->State edges
+      next if edge.source.kind_of?(Symbol) or edge.target.kind_of?(Symbol)
+      sstg.device_list.each do |device|
+        before = edge.source.devices.member?(device['index'])
+        after = edge.target.devices.member?(device['index'])
+        if before and not after
+          @ilp.add_cost(edge, device['energy_turn_off'])
+        end
+        if not before and after
+          @ilp.add_cost(edge, device['energy_turn_on'])
+        end
       end
-      # Collect edges
-      edges[ipet_edge.source][:out].push(ipet_edge)
-      edges[ipet_edge.target][:in].push(ipet_edge)
     end
-    # The first block is activated as often, as the ABB is left
-    edges[region.entry_node][:in] = outgoing_abb_flux
-    edges.each do |bb, e|
-      next if bb == :exit
-      incoming = e[:in].map { |x| [x, 1] }
-      outgoing = e[:out].map { |x| [x, -1] }
-      ilp.add_constraint(incoming + outgoing, "equal", 0,
-                         "abb_flux_#{bb.qname}", :structural)
 
-      # Override the incoming and outgoing frequencies
-      @mc_model.sum_incoming_override[bb] = e[:in]
-      @mc_model.sum_outgoing_override[bb] = e[:out]
+
+    # 2.2 Sanitiy Chack
+    toplevel_abb_count = 0 # statistics
+    abb_to_nodes.each { |abb, nodes|
+      # 2.3 All ABBs from nodes that are _not_ marked as microstructure
+      microstructure = nodes.map { |x| x.microstructure }
+      next if microstructure.all?
+      assert("Microstructure state of #{abb} is inconsistent") { not microstructure.any? }
+      toplevel_abb_count += 1
+    }
+
+    ##############################################
+    # All structures/objects/functions are in place
+    # 4. Connect the node frequencies to the underlying object
+    #    4.1 to ABB frequencies
+    #    4.2 to function frequencies
+
+    # Get the maximum power consumption per cycle for a given device list
+    def power_consumption(sstg, power_state)
+      ret = 0
+      label = []
+      sstg.device_list.each do |device|
+        if power_state.member?(device['index'])
+          ret += device['energy_stay_on']
+          label.push(device['name'])
+        else
+          ret += device['energy_stay_off']
+        end
+      end
+      [ret, label.sort.join(",")]
     end
-  end
+
+    # Add the power consumptions
+    abb_to_nodes.each {|abb, nodes|
+      @gcfg_model.add_abb(abb)
+
+      # The ABB frquency is distributed over many powerstates
+      abb_lhs = []
+
+      abb_to_power_states[abb].each do |power_state|
+        per_cycle, label = power_consumption(sstg, power_state)
+        power_state_nodes = nodes.select { |n| n.devices == power_state }
+
+        abb_in_power_state = [abb, label]
+        @ilp.add_variable(abb_in_power_state)
+
+        rhs = @gcfg_model.flow_into_abb(abb, power_state_nodes, label)
+        @gcfg_model.assert_equal([[abb_in_power_state, 1]], rhs,
+                                 "abb_influx_#{label}_#{abb.qname}", :gcfg)
+
+
+        abb_lhs.push([abb_in_power_state, 1])
+
+        # If an ABB is an microstructural ABB, we do not add a cost
+        if wcet.member?(abb)
+          time, _ = wcet[abb]
+          abb_energy = time * per_cycle
+
+          @ilp.add_cost(abb_in_power_state, abb_energy)
+          debug(@options, :ipet_global) { "Added #{abb_in_power_state} with cost #{abb_energy}" }
+        else
+          debug(@options, :ipet_global) { "Added #{abb_in_power_state} without cost" }
+        end
+      end
+
+      # All SSTG nodes
+      nodes.each do |node|
+        next unless wcet.member?(node)
+        assert ("Only IRQ Entry nodes can have a WCET") { node.isr_entry? }
+        # FIXME Power consumption for IRQ. We execute the ISR with the highest power configuration
+        time, power_states = wcet[node]
+        # For an IRQ we use the maximal power consumption of all blocks in the interruption
+        per_cycle, label = [0, ""]
+        power_states.each do |power_state|
+          a, b = power_consumption(sstg, power_state)
+          if a > per_cycle
+            per_cycle, label = [a, b]
+          end
+        end
+        debug(@options, :ipet_global) { "IRQ state #{node} use per_cycle=#{per_cycle} #{label}" }
+
+        @ilp.add_cost(node, time * per_cycle)
+      end
+
+
+      # set abb factor to 1 (ride-hand side constraint)
+      # left hand side is all incoming flow to abb on all possible power states
+      @gcfg_model.assert_equal(abb_lhs, [[abb, 1]], "abb_#{abb.qname}", :gcfg)
+      if abb.frequency_variable
+        @ilp.add_variable(abb.frequency_variable, :gcfg)
+        @gcfg_model.assert_equal([[abb.frequency_variable, 1]],
+                                 [[abb, 1]],
+                                 "abb_copy_to_var_#{abb.qname}", :gcfg)
+      end
+    }
+    # 4.2 to function frequencies
+    # (happens in our case for IRQs: function entry is ABB entry)
+    assert("Should not happen") {function_to_nodes.length == 0}
+
+
+    # 5.4 Global timimg variable from WCET (NOT ENERGY COSTS)
+    wcet_times = Hash.new
+    wcet.each { |var, data| wcet_times[var] = data[0] }
+    @gcfg_model.add_total_time_variable(wcet_times)
+
+
+    flowfacts.each { |ff|
+      debug(@options, :ipet) { "adding flowfact #{ff}" }
+      add_flowfact(ff)
+    }
+
+#    statistics("WCA",
+#               "gcfg nodes" => gcfg.nodes.length,
+#               "gcfg transitions" => gcfg.nodes.inject(0) {|acc, n| acc + n.successors.length},
+#               "abbs toplevel" => toplevel_abb_count,
+#               "abbs microstructure" => abb_to_nodes.length - toplevel_abb_count
+#               ) if @options.stats
+
+
+    die("Bitcode contraints are not implemented yet") if @bc_model
+ end
 
   #
   # Add flowfacts
   #
   def add_flowfact(ff, tag = :flowfact)
-    model = ff.level == "machinecode" ? @mc_model : @bc_model
-    raise Exception, "IPETBuilder#add_flowfact: cannot add bitcode flowfact without using relation graph" unless model
+    model = {'machinecode'=> @mc_model, 'bitcode'=> @bc_model, 'gcfg'=> @gcfg_model}[ff.level]
+    raise Exception.new("IPETBuilder#add_flowfact: cannot add bitcode flowfact without using relation graph") unless model
     unless ff.rhs.constant?
       warn("IPETBuilder#add_flowfact: cannot add flowfact with symbolic RHS to IPET: #{ff}")
       return false
@@ -662,18 +1323,34 @@ class IPETBuilder
         return false
       end
     end
-    lhs, rhs = [], ff.rhs.to_i
+    lhs, rhs = [], []
+    operator = ff.op
+    const = 0
+
     ff.lhs.each do |term|
       unless term.context.empty?
         warn("IPETBuilder#add_flowfact: context sensitive program points not supported: #{ff}")
         return false
       end
+
       if term.programpoint.kind_of?(Function)
         lhs += model.function_frequency(term.programpoint, term.factor)
       elsif term.programpoint.kind_of?(Block)
         lhs += model.block_frequency(term.programpoint, term.factor)
       elsif term.programpoint.kind_of?(Edge)
         lhs += model.edge_frequency(term.programpoint, term.factor)
+      elsif term.programpoint.kind_of?(ConstantProgramPoint)
+        # Constant Program Points can be used without declaration.
+        # They are used as mere constant within the flowfact
+        # expression. They are not eliminated in the flowfact transformation.
+        pp = term.programpoint
+        if not @ilp.has_variable?(pp)
+          @ilp.add_variable(pp)
+          @ilp.add_constraint([[pp, 1]], "equal", pp.value, pp.qname, :constant)
+        end
+        lhs += [[pp, term.factor]]
+      elsif term.programpoint.kind_of?(FrequencyVariable)
+        lhs += [[term.programpoint, term.factor]]
       elsif term.programpoint.kind_of?(Instruction)
         # XXX: exclusively used in refinement for now
         warn("IPETBuilder#add_flowfact: references instruction, not block or edge: #{ff}")
@@ -688,34 +1365,97 @@ class IPETBuilder
       return false
     end
     if scope.programpoint.kind_of?(Function)
-      lhs += model.function_frequency(scope.programpoint, -rhs)
+      rhs += model.function_frequency(scope.programpoint, -ff.rhs.to_i)
+    elsif scope.programpoint.kind_of?(Block)
+      lhs += model.block_frequency(scope.programpoint, -ff.rhs.to_i)
     elsif scope.programpoint.kind_of?(Loop)
-      lhs += model.sum_loop_entry(scope.programpoint, -rhs)
+      rhs += model.sum_loop_entry(scope.programpoint, -ff.rhs.to_i)
+    elsif scope.programpoint.kind_of?(GlobalProgramPoint)
+      rhs += model.global_program_point(scope.programpoint, -1)
     else
       raise Exception, "IPETBuilder#add_flowfact: Unknown scope type: #{scope.programpoint.class}"
     end
+
     begin
-      name = "ff_#{@ffcount += 1}"
-      ilp.add_constraint(lhs, ff.op, 0, name, tag)
+      name = "ff_#{@ffcount+=1}"
+      # Additional Flow Fact Transformations: Minimal/Maximal Interarrival Time
+      if ff.op.end_with?("interarrival-time")
+        # The Interarrival time is the right hand side constant
+        iat = ff.rhs.to_i
+        maximal = {"maximal-interarrival-time"=>true,
+                   "minimal-interarrival-time"=> false}[ff.op]
+        # The LHS for arrival times are arrival counts, therefore, we
+        # multiply them with the interrarrival time. For MAXIAT we
+        # need the negative sum:
+        # K * vec(LHS) - SPAN <= K  (MINIAT)
+        # SPAN - K * vec(LHS) <= K  (MAXIAT)
+
+        lhs = lhs.map {|v, f| [v, (maximal ? -iat : iat) * f]}
+        rhs = rhs.map {|v, f| [v, (maximal ? -1   : 1  ) * f]}
+        debug(@options, :ipet_global) {"#{maximal ? "Maximal" : "Minimal"} IAT: #{lhs+rhs} <= #{const}" }
+        operator = 'less-equal'
+        const += maximal ? 0 : iat
+      end
+      ilp.add_constraint(lhs + rhs, operator, const, name, tag)
       name
     rescue UnknownVariableException => detail
-      debug(@options,:transform) { "Skipping constraint: #{detail}" }
-      debug(@options,:ipet) { "Skipping constraint: #{detail}" }
+      debug(@options,:transform, :ipet, :ipet_global) {
+        " ... skipped constraint: #{detail} "
+      }
     end
   end
 
   # build the control-flow refinement (which provides additional
   # flow information used to prune the callgraph/CFG)
-  def build_refinement(entry, ffs)
+  def build_refinement(gcfg_or_hash, ffs)
     @refinement = {}
-    entry.each do |level,function|
-      cfr = ControlFlowRefinement.new(function, level)
+
+    entry = gcfg_or_hash.kind_of?(Hash) ? gcfg_or_hash: gcfg_or_hash.get_entry
+
+    entry.each do |level,functions|
+      cfr = ControlFlowRefinement.new(functions[0], level)
       ffs.each do |ff|
         next if ff.level != level
         cfr.add_flowfact(ff)
       end
       @refinement[level] = cfr
     end
+  end
+
+
+  def build_sstg_structure(sstg)
+    # For each function and each ABB we collect the nodes that activate it.
+    abb_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
+    function_to_nodes = Hash.new {|hsh, key| hsh[key] = [] }
+    edges = []
+
+    # 1. Pass over all states to create the super structure
+    #  1.1 Add node variables
+    #  1.2 Add edge variables
+    #  1.3 Collect activated artifacts
+    sstg.nodes.each do |node|
+      @gcfg_model.add_node(node)
+
+      # 1.2 Every Super-structure edge has a variable
+      @gcfg_model.each_edge(node) { |ipet_edge, level|
+        @ilp.add_variable(ipet_edge, :gcfg)
+        ipet_edge.static_context = node.abb if node.abb
+        edges.push(ipet_edge)
+      }
+
+      # 1.3 Collect activated artifacts
+      abb_to_nodes[node.abb].push(node) if node.abb
+      function_to_nodes[node.function].push(node) if node.function
+    end
+
+    # 2. Flow constraints for SST structure
+    sstg.nodes.each do |node|
+      @gcfg_model.add_node_constraint(node)
+    end
+    @gcfg_model.add_entry_constraint(sstg)
+    @gcfg_model.add_loop_contraints
+
+    [edges, abb_to_nodes, function_to_nodes]
   end
 
 private
@@ -766,8 +1506,10 @@ private
     return unless @pml.relation_graphs.has_named?(machine_function.name, :dst)
     rg = @pml.relation_graphs.by_name(machine_function.name, :dst)
     return unless rg.accept?(@options)
+
     bitcode_function = rg.get_function(:src)
     bitcode_function.blocks.each do |block|
+      @bc_model.add_block(block)
       @bc_model.add_block_constraint(block)
     end
     # Our LCTES 2013 paper describes 5 sets of constraints referenced below

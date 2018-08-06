@@ -7,6 +7,9 @@ require 'platin'
 require 'English'
 include PML
 
+require 'thwait'
+require 'thread'
+
 # Simple interface to gurobi_cl
 class GurobiILP < ILP
   INFEASIBLE = :GB_INFEASIBLE
@@ -15,6 +18,15 @@ class GurobiILP < ILP
   # Tolarable floating point error in objective
   def initialize(options = nil)
     super(options)
+
+    @lines_thread0 = []
+    @backlock_idx0 = 0
+
+    @lines_thread1 = []
+    @backlock_idx1 = 0
+
+    @lines_thread2 = []
+    @backlock_idx2 = 0
   end
 
   # run solver to find maximum cost
@@ -36,7 +48,7 @@ class GurobiILP < ILP
     # solve
     debug(options, :ilp) { dump(DebugIO.new) }
     start = Time.now
-    err, errmsg = solve_lp(lp_name, sol_name, ilp_name)
+    err, sol_name = solve_lp(lp_name, sol_name)
     @solvertime += (Time.now - start)
 
     unbounded = nil
@@ -83,6 +95,15 @@ private
       lp.print(" ", varname(index(v)))
     end
     lp.puts
+    lp.puts("SOS")
+    sos1.each { |name, sos|
+      assert("Invalid SOS crardinatlity") {sos[1] == 1}
+      lp.print("  #{name}: S1 :: ")
+      sos[0].each { |v|
+        lp.print("#{varname(index(v))}:1 ")
+      }
+      lp.puts
+    }
     lp.puts("End")
   end
 
@@ -102,6 +123,13 @@ private
     end
     # We could put the bounds in as constraints, but bounds should be faster
     lp.puts("Bounds")
+
+    # we are in big numeric trouble if we do not put any bounds at all
+    maximum_count = 1000_0000_0000
+    @variables.each do |v|
+      lp.puts(" #{varname(index(v))} <= #{maximum_count}")
+    end
+
     @constraints.each do |constr|
       # Bounds must have the form '[-1,1] x <= rhs'
       next unless constr.bound?
@@ -120,8 +148,9 @@ private
     vmap = {}
     sol.readlines.each do |line|
       if line =~ /# Objective value = ([0-9][0-9.+e]*)/
-        # Need to convert to float first, otherwise very large results that are printed in exp format
-        # are truncated to the first digit.
+        # Need to convert to float first, otherwise very large results
+        # that are printed in exp format are truncated to the first
+        # digit.
         obj = $1.to_f.to_i
       elsif line =~ /v_([0-9]*) ([0-9]*)/
         vmap[var_by_index($1.to_i)] = $2.to_i
@@ -152,17 +181,104 @@ private
     end
   end
 
-  def solve_lp(lp, sol, ilp)
-    out = IO.popen("gurobi_cl ResultFile=#{sol} ResultFile=#{ilp} #{lp}")
-    lines = out.readlines
+  # FIXME: THIS IS UGLY
+  def thread0(lp, sol)
+    out = IO.popen("gurobi_cl MIPFocus=1 ResultFile=#{sol} #{lp}")
+    @lines_thread0 = []
+    backlock_idx0 = 0
+    while line = out.gets do
+      @lines_thread0.push(line)
+      if @lines_thread0.length > 40 and @options.verbose
+        while backlock_idx0 < @lines_thread0.length do
+          puts(@lines_thread0[backlock_idx0])
+          backlock_idx0 += 1
+        end
+      end
+    end
+    $queue << [@lines_thread0, sol]
+    @lines_thread0
+  end
+
+  def thread1(lp, sol)
+    out = IO.popen("gurobi_cl MIPFocus=2 ResultFile=#{sol} #{lp}")
+    @lines_thread1 = []
+    backlock_idx1 = 0
+    while line = out.gets do
+      @lines_thread1.push(line)
+      if @lines_thread1.length > 10 and @options.verbose
+        while backlock_idx1 < @lines_thread1.length do
+          puts(@lines_thread1[backlock_idx1])
+          backlock_idx1 += 1
+        end
+      end
+    end
+    $queue << [@lines_thread1, sol]
+    @lines_thread1
+  end
+
+  def thread2(lp, sol)
+    out = IO.popen("gurobi_cl MIPFocus=3 ResultFile=#{sol} #{lp}")
+    @lines_thread2 = []
+    backlock_idx2 = 0
+    while line = out.gets do
+      @lines_thread2.push(line)
+      if @lines_thread2.length > 10 and @options.verbose
+        while backlock_idx2 < @lines_thread2.length do
+          puts(@lines_thread2[backlock_idx2])
+          backlock_idx2 += 1
+        end
+      end
+    end
+    $queue << [@lines_thread2, sol]
+    @lines_thread2
+  end
+
+  def solve_lp(lp, sol)
+    lines = []
+    # MIPFocus=1: focus on finding feasible solutions
+    # MIPFocus=2: focus on proving optimality
+    # MIPFocus=3: focus on improving the bound
+    # (unused: MIPGap=0.03  => stop at 3% gap between incubent and best bound)
+    # (unused: TimeLimit=600 => terminate after 600 seconds)
+    #out = IO.popen("gurobi_cl MIPFocus=2 ResultFile=#{sol} #{lp}")
+    #out = IO.popen("gurobi_cl Heuristics=0 Method=0 MIPFocus=2 ResultFile=#{sol} #{lp}")
+    #out = IO.popen("gurobi_cl AggFill=1000 ResultFile=#{sol} #{lp}")
+    #backlock_idx = 0
+    #while line = out.gets do
+      #lines.push(line)
+      #if lines.length > 40 or @options.verbose
+        #while backlock_idx < lines.length do
+          #puts(lines[backlock_idx])
+          #backlock_idx += 1
+        #end
+      #end
+    #end
+
+    $queue = Queue.new
+    sol0 = "#{sol}_th0.sol"
+    sol1 = "#{sol}_th1.sol"
+    sol2 = "#{sol}_th2.sol"
+    th0 = Thread.new { thread0(lp, sol0) }
+    th1 = Thread.new { thread1(lp, sol1) }
+    #th2 = Thread.new { thread2(lp, sol2) }
+
+    (lines, sol) = $queue.pop
+    sol_name = sol
+    th0.kill
+    th1.kill
+    #th2.kill
+
     # Detect error messages
-    return "Gurobi terminated unexpectedly (#{$CHILD_STATUS.exitstatus})" if $CHILD_STATUS.exitstatus > 0
+    if $? and $?.exitstatus > 0
+      return "Gurobi terminated unexpectedly (#{$?.exitstatus})", sol_name
+    end
+
     lines.each do |line|
       return [INFEASIBLE, line] if line =~ /Model is infeasible/
       return [UNBOUNDED, line] if line =~ /Model is unbounded/
-      return [nil, line] if line =~ /Optimal solution found/
+      return [nil, sol_name] if line =~ /Optimal solution found/
     end
-    [nil, nil] # No error
+    [nil, nil]
   end
 
   def gurobi_error_msg(msg)

@@ -201,10 +201,22 @@ module PML
       opts.separator("Options:")
       yield opts if block_given?
       opts.separator("")
-      opts.on("--stats", "print statistics") { options.stats = true }
-      opts.on("--verbose", "verbose output") { options.verbose = true }
+      opts.on("--stats", "print statistics") do
+        options.print_stats = true
+        options.stats = true
+      end
+      opts.on("--dref-stats <FILE>", "save statistics to file") do |v|
+        File.unlink(v) if File.exists?(v)
+        options.stats = true
+        options.dref_stats = v
+      end
+
+      opts.on("--verbose", "verbose output") do
+        options.verbose = true
+        options.verbosity_level = (options.verbosity_level  || 0) + 1
+      end
       opts.on("--debug [TYPE]", Array, "debug output (trace,ilp,ipet,costs,wca,ait,sweet,visualize,=all)") do |d|
-        options.debug_type = d ? d.map { |s| s.to_sym } : [:all]
+        options.debug_type = d ? d.map{ |s| s.to_sym } : [:all]
       end
       opts.on_tail("-h", "--help [TOPIC]", "Show help / help on topic (#{opts.help_topics.join(", ")})") do |topic|
         if topic.nil?
@@ -219,6 +231,10 @@ module PML
     end
     parser.parse!
     parser.check!(arg_range)
+    if ENV.key?("VERBOSE")
+      options.verbose = true
+      options.verbosity_level = (ENV["VERBOSE"] || "1").to_i
+    end
     [options, ARGV]
   end
 

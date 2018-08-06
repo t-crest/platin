@@ -381,13 +381,9 @@ class FlowFactTransformation
     end
   end
 
-  def transform(target_analysis_entry, flowfacts, target_level)
-    target_functions = if target_level == "machinecode"
-                         @pml.machine_functions
-                       else
-                         @pml.bitcode_functions
-                       end
-    rs, unresolved = target_functions.reachable_from(target_analysis_entry.name)
+  def transform(gcfg, flowfacts, target_level)
+    rs, unresolved = gcfg.reachable_functions(target_level)
+    target_analysis_entries = gcfg.get_entry[target_level]
 
     # partition local flow-facts by entry (if possible), rest is transformed in global scope
     flowfacts_by_entry = {}
@@ -432,24 +428,37 @@ class FlowFactTransformation
         ilp = build_model(entries, ffs, use_rg: true).ilp
 
         # If direction up/down, eliminate all vars but dst/src
-        elim_set = ilp.variables.select do |var|
-          ilp.vartype[var] != target_level.to_sym || !var.kind_of?(IPETEdge) || !var.cfg_edge?
-        end
+        elim_set = ilp.variables.select { |var|
+          if var.kind_of?(ConstantProgramPoint)
+            false # ConstantProgramPoints must live!
+          elsif var == entry
+            p var
+            false # Do not eliminate the entry
+          elsif ilp.vartype[var] != target_level.to_sym
+            true
+          elsif ! var.kind_of?(IPETEdge) || ! var.cfg_edge?
+            true
+          else
+            false
+          end
+        }
         ve = VariableElimination.new(ilp, options)
         new_constraints = ve.eliminate_set(elim_set)
         # Extract and add new flow facts
         new_ffs += extract_flowfacts(new_constraints, entries, target_level).select do |ff|
-          # FIXME: for now, we do not export interprocedural flow-facts relative to a function other than the entry,
+          # FIXME: for now, we do not export interprocedural
+          # flow-facts relative to a function other than the entry,
           # because this is not supported by any of the WCET analyses
-          r = ff.local? || ff.scope.function == target_analysis_entry
-          unless r
-            debug(options, :transform) do
-              "Skipping unsupported flow fact scope of transformed flow fact #{ff}: " \
-                "(function: #{ff.scope.function}, local: #{ff.local?})"
-            end
+          if ff.local?
+            debug(options, :transform) {
+              "Transformed flowfact #{ff}"
+            }
+            true
+          else
+            debug(options, :transform) { "Skipping unsupported flow fact scope of transformed flow fact #{ff}: "+
+                                         "(function: #{ff.scope.function}, local: #{ff.local? or ff.on_function_level?})" }
+            false
           end
-          puts "Transformed flowfact #{ff}" if options.verbose
-          r
         end
 
         stats_num_constraints_before += ilp.constraints.length
@@ -500,7 +509,7 @@ private
 
     # Build IPET (no cost) and add flow facts
     ffs = flowfacts.reject { |ff| ff.symbolic_bound? }
-    ipet.build(entry, ffs, mbb_variables: true) { |_edge| 0 }
+    ipet.build(entry, ffs) { |_edge| 0 }
     ipet
   end
 

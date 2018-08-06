@@ -62,7 +62,7 @@ class PMLDoc
     @machine_functions = FunctionList.new(@data['machine-functions'] || [], labelkey: 'mapsto')
     @relation_graphs   = RelationGraphList.new(@data['relation-graphs'] || [],
                                                @bitcode_functions, @machine_functions)
-    @global_cfgs       = GCFGList.new(@data['global-cfgs'] || [], @relation_graphs)
+    @global_cfgs       = GCFGList.new(@data['global-cfgs'] || [], self)
 
     # usually read-only sections, but might be modified by pml-config
     @data['analysis-configurations'] ||= []
@@ -354,18 +354,29 @@ class PMLDoc
     data
   end
 
-  def analysis_entry(options)
+  def analysis_gcfg(options)
     gcfg_name = options.analysis_entry.dup
     if gcfg_name.slice!(/^GCFG:/)
-      gcfg = global_cfgs.by_name(gcfg_name)
-      gcfg.entry_node if gcfg
+      global_cfgs.by_name(gcfg_name)
+    elsif global_cfgs.by_name(options.analysis_entry)
+      global_cfgs.by_name(options.analysis_entry)
     else
       machine_functions.by_label(options.analysis_entry)
+      entry = GCFG.new({'level'=>'bitcode',
+                        'name'=> options.analysis_entry,
+                        'entry-nodes'=>[0],
+                        'exit-nodes'=>[0],
+                        'nodes'=> [{'index'=>0,  'function'=>options.analysis_entry}]},
+                       self)
+      @global_cfgs.push(entry)
+      entry
     end
   end
 
-  def functions_for_level(level)
-    if level == 'bitcode'
+  def toplevel_objects_for_level(level)
+    if level == 'gcfg'
+      global_cfgs
+    elsif level == 'bitcode'
       bitcode_functions
     elsif level == 'machinecode'
       machine_functions
@@ -484,12 +495,24 @@ class PMLDoc
     time("Parsing PML Files") do
       streams = filenames.inject([]) do |list,f|
         begin
-          fstream = File.open(f) do |fh|
-            stream = YAML::load_stream(fh)
-            stream.documents if stream.respond_to?(:documents) # ruby 1.8 compat
-            [[f, stream]]
+          fm = f + ".bin"
+
+          if File.exists?(fm) and File.stat(fm).mtime > File.stat(f).mtime
+            fstream = File.open(fm) do |fhm|
+              stream = Marshal.load(fhm.read)
+              [[f, stream]]
+            end
+          else
+            fstream = File.open(f) do |fh|
+              stream = YAML::load_stream(fh)
+              stream.documents if stream.respond_to?(:documents) # ruby 1.8 compat
+              File.open(fm, "w+") do |fhm|
+                fhm.write(Marshal.dump(stream))
+              end
+              [[f, stream]]
+            end
           end
-          list + fstream
+          list+fstream
         rescue Exception => detail
           die("Failed to load PML document: #{detail}")
         end

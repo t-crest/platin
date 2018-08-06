@@ -148,9 +148,9 @@ private
       ret['opcode'] = instr.upcase
     when "sws", "swm", "swl", "swc", "lwl", "lwm", "lwc"
       ret['opcode'] = instr.upcase
-      ret['memode'] = { "s" => "store", "l" => "load" }[instr[0]]
-      ret['memtype'] = { "l" => "local", "m" => "memory", "s" => "stack", "c" => "cache" }[instr[2]]
-    when "ret", "retnd", "xret"
+      ret['memode'] = {"s"=> "store", "l"=>"load"}[instr[0]]
+      ret['memtype'] = {"l"=> "local", "m"=>"memory", "s"=>"stack", "c"=>"cache"}[instr[2]]
+    when "ret", "retnd", "xret", "xretnd"
       ret['opcode'] = instr.upcase
       ret['branch-type'] = "return"
     when "call", "callnd"
@@ -160,6 +160,8 @@ private
       # p args.strip # <- function call
     when "sspill", "sens"
       ret['opcode'] = instr.upcase + (reg_args == 1 ? "r" : "i")
+    when "trap"
+      ret['opcode'] = "TRAP"
     else
       ret['opcode'] = [instr, args]
       ret['invalid'] = true

@@ -3,9 +3,8 @@
 #
 # ILP module
 #
-require 'core/utils'
-require 'core/pml'
 require 'set'
+
 module PML
 
 class UnknownVariableException < Exception
@@ -167,10 +166,11 @@ end
 
 # ILP base class (FIXME)
 class ILP
-  attr_reader :variables, :constraints, :costs, :options, :vartype, :solvertime
+  attr_reader :variables, :constraints, :costs, :options, :vartype, :solvertime, :sos1
   # variables ... array of distinct, comparable items
   def initialize(options = nil)
     @solvertime = 0
+    @sos1 = {}
     @options = options
     @variables = []
     @indexmap = {}
@@ -196,16 +196,19 @@ class ILP
     io.puts("max " + costs.map { |v,c| "#{c} #{v}" }.join(" + "))
     @indexmap.each do |v,ix|
       next if @eliminated[ix]
-      io.puts " #{ix}: int #{v}"
+      io.puts " #{ix}: int #{v} #{costs[v]}"
+    end
+    @sos1.each do |v,ix|
+      io.puts " SOS: [#{ix}] #{v} "
     end
     @constraints.each_with_index do |c,ix|
-      io.puts " #{ix}: constraint #{c.name}: #{c}"
+      io.puts " #{ix}: constraint [#{c.name}]: #{c}"
     end
   end
 
   # index of a variable
   def index(variable)
-    @indexmap[variable] || raise(UnknownVariableException, "unknown variable: #{variable}")
+    @indexmap[variable] or raise UnknownVariableException.new("unknown variable: #{variable}")
   end
 
   # variable indices
@@ -235,6 +238,7 @@ class ILP
 
   # add cost to the specified variable
   def add_cost(variable, cost)
+    assert("Unknown variable: #{variable}") { not variable.nil? and has_variable?(variable)}
     @costs[variable] += cost
     debug(@options, :ilp) { "Adding costs #{variable} = #{cost}" }
   end
@@ -245,7 +249,7 @@ class ILP
   end
 
   # add a new variable
-  def add_variable(v, vartype = :machinecode)
+  def add_variable(v, vartype = :machinecode, upper_bound= 1000_0000)
     raise Exception, "Duplicate variable: #{v}" if @indexmap[v]
     assert("ILP#add_variable: type is not a symbol") { vartype.kind_of?(Symbol) }
     debug(@options, :ilp) { "Adding variable #{v} :: #{vartype.inspect}" }
@@ -255,8 +259,23 @@ class ILP
     @indexmap[v] = index
     @vartype[v] = vartype
     @eliminated.delete(v)
-    add_indexed_constraint({ index => -1 },"less-equal",0,"non_negative_v_#{index}",Set.new([:positive]))
+    add_constraint([[v, -1]], 'less-equal', 0,
+                   "lower_bound_v_#{index}", :range)
+    if upper_bound != :unbounded
+      add_constraint([[v, 1]], 'less-equal', upper_bound,
+                     "upper_bound_v_#{index}", :range)
+    end
+    # add_indexed_constraint({index => -1},"less-equal",0,,Set.new([:positive]))
     index
+  end
+
+  def add_sos1(name, variables, card=1, vartype= :machinecode)
+    raise Exception.new("Duplicate SOS: #{name}") if @sos1[name]
+    @sos1[name] = [variables, card]
+
+    variables.each { |v|
+      add_variable(v, vartype)
+    }
   end
 
   # add constraint:
