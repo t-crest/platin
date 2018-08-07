@@ -118,15 +118,15 @@ class ExtractSymbols
           if instruction.opcode != 'INLINEASM'
             instruction_data.push(instruction.data)
           else # INLINEASM instruction
-            addr, size = instruction.address, instruction.size
+            instaddr, size = instruction.address, instruction.size
             debug(@options,:elf) do
               "Replace INLINEASM block of size #{size} in #{function.label}"
             end
             while size > 0
-              instr = @instructions[function.label][addr]
-              assert("Could not disassemble address @ #{addr} #{instr}") { (instr != nil) && !instr['invalid'] }
+              instr = @instructions[function.label][instaddr]
+              assert("Could not disassemble address @ #{instaddr} #{instr}") { (instr != nil) && !instr['invalid'] }
               instruction_data.push(instr)
-              addr += instr['size']
+              instaddr += instr['size']
               size -= instr['size']
             end
             assert("Could not resolve INLINEASM block") do
