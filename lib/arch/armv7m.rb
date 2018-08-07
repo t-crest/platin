@@ -13,21 +13,57 @@ class ExtractSymbols
   OP_IMPLICIT_DEF = 8
   OPCODE_NAMES = { 233 => /mov/ }
   def self.run(cmd,extractor,pml,options)
-    r = IO.popen("#{cmd} -d --no-show-raw-insn '#{options.binary_file}'") do |io|
+    r = IO.popen("#{cmd} -d '#{options.binary_file}'") do |io|
       current_label, current_ix, current_function = nil, 0, nil
+      in_inline_asm, addr_after_inline_asm = false, 0
+      in_jumptable, addr_after_jumptable = false, 0
+      pml_ix = 0
       io.each_line do |line|
         if line =~ RE_FUNCTION_LABEL
           current_label, current_ix = $2, 0
+          pml_ix = 0
+          in_inline_asm, addr_after_inline_asm = false, 0
           current_function = pml.machine_functions.by_label(current_label, false)
           extractor.add_symbol(current_label,Integer("0x#{$1}"))
         elsif line =~ RE_INS_LABEL
-          addr, insname = $1, $2
+          addr, rawins, insname = $1, $2, $3
+          size = rawins.delete(' ').size / 2
           next unless current_function
-          instruction = current_function.instructions[current_ix]
+          if in_inline_asm && addr.to_i(16) == addr_after_inline_asm
+            in_inline_asm, addr_after_inline_asm = false, 0
+            pml_ix += 1
+          end
+          next if in_jumptable && addr.to_i(16) <= addr_after_jumptable
+          in_jumptable, addr_after_jumptable = false, 0
+
+          instruction = current_function.instructions[pml_ix]
           if instruction.nil?
             if insname[0] != "." && insname != "nop"
-              warn "No instruction found at #{current_function}+#{current_ix} instructions (#{insname})"
+              warn "No instruction found at #{current_function}+#{pml_ix} instructions (#{insname} #{addr})"
             end
+            next
+          end
+          if instruction.opcode == "INLINEASM"
+            current_addr = addr.to_i(16)
+            if not in_inline_asm
+              addr_after_inline_asm = current_addr + instruction.size
+              extractor.add_instruction_address(current_label,current_ix, Integer("0x#{addr}"))
+              current_ix +=1
+            end
+
+            instr = build_instruction(addr.to_i(16), size, instruction.opcode, insname)
+            extractor.add_instruction(current_label, addr.to_i(16), instr) if instr
+            in_inline_asm = true
+            next
+          elsif instruction.opcode == "JUMPTABLE_TBB"
+            extractor.add_instruction_address(current_label,current_ix, Integer("0x#{addr}"))
+            instr = build_instruction(addr.to_i(16), size, instruction.opcode, insname)
+            extractor.add_instruction(current_label, addr.to_i(16), instr) if instr
+            current_addr = addr.to_i(16)
+            in_jumptable = true
+            addr_after_jumptable = current_addr + instruction.size
+            current_ix += 1
+            pml_ix += 1
             next
           end
           next if instruction.opcode == OP_IMPLICIT_DEF # not in disassembly
@@ -37,6 +73,8 @@ class ExtractSymbols
           # this issue by skipping data entries if the opcode is not 121
           next if insname[0] == "." && instruction.opcode != OP_CONSTPOOL
           extractor.add_instruction_address(current_label,current_ix, Integer("0x#{addr}"))
+          instr = build_instruction(addr.to_i(16), size, instruction.opcode, insname)
+          extractor.add_instruction(current_label, addr.to_i(16), instr) if instr
 
           # SANITY CHECK (begin)
           if (re = OPCODE_NAMES[instruction.opcode])
@@ -45,10 +83,60 @@ class ExtractSymbols
           # SANITY CHECK (end)
 
           current_ix += 1
+          pml_ix += 1
         end
       end
     end
     die "The objdump command '#{cmd}' exited with status #{$CHILD_STATUS.exitstatus}" unless $CHILD_STATUS.success?
+  end
+  def self.build_instruction(addr, size, opcode, objdump_name)
+    ret = { 'address' => addr, 'size' => size, 'source' => 'objdump', 'opcode' => opcode }
+    # TODO Maybe check for pc in the arguments for mov and add
+    # TODO Maybe split of condition and size flags.
+    case opcode
+    when "INLINEASM"
+      ret['opcode'] = case objdump_name
+                      when "cpsie", "cpsid"
+                        "tCPS"
+                      when "nop"
+                        "tMOVr" # Just assume 'mov r8, r8' for nop
+                      when "dsb"
+                        "t2DSB" # invalid in analysis
+                      when "isb"
+                        "t2ISB" # invalid in analysis
+                      when "mrs", "mrsne"
+                        "t2MRS_M"
+                      when "msr"
+                        "t2MSR_M"
+                      when "wfi"
+                        "tWFI" # invalid in analysis
+                      when "str", "stmdbne", "strne.w"
+                        "tSTRi"
+                      when "ldr", "ldr.w", "ldmia.w"
+                        "tLDRi"
+                      when "bne.n", "bl", "blt.n"
+                        "tBcc"
+                      when "b.n"
+                        "tB"
+                      when "bx"
+                        "tBX"
+                      when "cmp"
+                        "tCMPr"
+                      when "bkpt"
+                        "tBKPT" # invalid in analysis
+                      when "svc"
+                        "tSVC" # invalid in analysis
+                      when "adds"
+                        "tADDi8"
+                      when "itt", "it"
+                        "t2IT"
+                      when "movw", "movs", "movt"
+                        "tMOVr"
+                      else
+                        die "UNKNOWN INLINE ASM OPCODE #{addr.to_s(16)} #{objdump_name}"
+                      end
+    end
+    ret
   end
   RE_HEX = /[0-9A-Fa-f]/
   RE_FUNCTION_LABEL = %r{ ^
@@ -57,6 +145,7 @@ class ExtractSymbols
   }x
   RE_INS_LABEL = %r{ ^ \s+
     ( #{RE_HEX}+ ): \s* # address
+    ( #{RE_HEX}{4}\ ?#{RE_HEX}{4}? ) \s* # raw instruction
     ( \S+ )             # instruction
     # rest
   }x
