@@ -286,7 +286,7 @@ module PML
     end
 
     def self.from_pml(pml, data, mode = 'platin')
-      fs = pml.functions_for_level(data['level'])
+      fs = pml.toplevel_objects_for_level(data['level'])
       ModelFact.new(ContextRef.from_pml(fs,data['program-point']),
                     data['type'], data['expression'],
                     ProgramInfoObject.attributes_from_pml(pml, data),
@@ -404,7 +404,7 @@ module PML
         # To use Flowfact.loop_bound, we need a scope at the level of our
         # programpoint easiest way to achieve this is to use ProgramPoint.from_pml...
         # Therefore, we fake the appropriate input here:
-        fs = pml.functions_for_level(level)
+        fs = pml.toplevel_objects_for_level(level)
         data = {}
         data['function'] = ppref.function.name
         data['loop']     = ppref.programpoint.block.name
