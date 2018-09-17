@@ -473,8 +473,12 @@ class WcetTool
       # Hacky: Extracttool modifys bitcode_functions, so the
       # with_temporary_sections below would tigger an invalid caching in the
       # second run. Therefore run the ExtractSymbolsTool ahead of time.
-      time("Read Symbols") do
-        ExtractSymbolsTool.run(pml,options)
+      if pml.text_symbols
+        puts("Using cached text-symbols")
+      else
+        time("Read Symbols") do
+          ExtractSymbolsTool.run(pml,options)
+        end
       end
 
       pml.with_temporary_sections([:flowfacts, :valuefacts]) do
