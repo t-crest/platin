@@ -6,7 +6,7 @@ properties([gitLabConnection('https://gitlab.cs.fau.de/'),
 node {
   gitlabBuilds(builds: ['build', 'lint', 'test']) {
 
-    gitlabCommitStatus("build") {
+    gitlabCommitStatus(name: "build") {
       stage('Preparation') {
         cleanWs()
           checkout scm
@@ -22,7 +22,7 @@ node {
       }
     }
 
-    gitlabCommitStatus("lint") {
+    gitlabCommitStatus(name: "lint") {
       stage('Lint') {
         sh """#!/usr/bin/env bash
           set -e
@@ -36,7 +36,7 @@ node {
     }
 
 
-    gitlabCommitStatus("test") {
+    gitlabCommitStatus(name: "test") {
       stage('Test') {
         sh """#!/usr/bin/env bash
           set -e
