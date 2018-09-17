@@ -42,7 +42,7 @@ node {
           set -e
           set -x
 
-          echo "Run tests here"
+          bundle exec ./test/testrunner.rb -v -v
           """
       }
     }
