@@ -479,6 +479,18 @@ class Architecture < PML::Architecture
   # FIXME: dummy stub
     false
   end
+
+  def time_per_cycle
+    # XMC4500 uses freq of 120MHz: 1/120MHz -> 8.3ns
+    8.33e-9
+  end
+
+  def cpu_current_consumption
+    # XMC4500 data sheet: 115 mA with peripherals disabled
+    {"energy_stay_off" => 115,
+     "energy_stay_on"  => 115,
+    }
+  end
 end
 
 end # module ARMv7m

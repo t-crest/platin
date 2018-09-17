@@ -657,6 +657,17 @@ class Architecture < PML::Architecture
     dma.set_attribute('shadow-stack-base', memsize - stack_size)
     dma.set_attribute('heap-end', memsize - stack_size * num_stacks * 2)
   end
+
+  def time_per_cycle
+    #TIME_PER_CYCLE=(1e-6) # 1MHz => 1us
+    1e-6
+  end
+
+  def cpu_current_consumption
+    {"energy_stay_off" => 10, # 10mA
+     "energy_stay_on"  => 8,
+    }
+  end
 end
 
 end # module patmos

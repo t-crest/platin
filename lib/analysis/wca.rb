@@ -16,8 +16,6 @@ require 'json'
 module PML
 
 class WCA
-  TIME_PER_CYCLE=(1e-6) # 1MHz => 1us
-
   def initialize(pml, options)
     @pml, @options = pml, options
   end
@@ -352,7 +350,7 @@ class WCA
                                'origin' => @options.timing_output || 'platin')
       info "best WCEC bound: #{cycles} mA*cy"
       # 1e3 => uJ => mJ
-      mJ = cycles * TIME_PER_CYCLE * 3.3
+      mJ = cycles * @pml.arch.time_per_cycle * 3.3
       info "best WCEC bound: #{mJ.round(3)} mJ (@3.3V)"
 
       # baseline (all always on):

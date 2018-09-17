@@ -1147,8 +1147,8 @@ class IPETBuilder
     # the multiplication with 3.3V needs to be done done later on
     baseline_index = sstg.device_list.length
     sstg.device_list.push(
-      {"energy_stay_off" => 10, # 10mA
-       "energy_stay_on"  => 8,
+      {"energy_stay_off" => @pml.arch.cpu_current_consumption["energy_stay_off"],
+       "energy_stay_on"  => @pml.arch.cpu_current_consumption["energy_stay_on"],
        "energy_turn_off" => 0,
        "energy_turn_on"  => 0,
        "index"           => baseline_index,
