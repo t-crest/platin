@@ -92,8 +92,8 @@ class Context
   def insert(label, val)
     list  = (@bindings[label] ||= [])
     entry = Entry.new(@level, val)
-    if !list.empty? && (list.last.level >= level)
-      raise PeachesBindingError, "Variable #{label} already bound at same scope #{level}"
+    if !list.empty? && (list.last.level >= @level)
+      raise PeachesBindingError, "Variable #{label} already bound at same scope #{@level}"
     end
     list << entry
 
@@ -621,7 +621,7 @@ class ReferenceCheckingVisitor < ASTVisitor
 
       @context.enter_scope
       decl.params.each do |id|
-        context.insert(id.label, true)
+        @context.insert(id.label, true)
       end
 
       decl.expr.visit self
