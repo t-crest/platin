@@ -1,0 +1,17 @@
+Class.new(superclass = PlatinTest::Test) do
+  def enabled?
+    true
+  end
+
+  def run
+    @result = Result.new(
+      success: true,
+      message: "Dummy",
+      output: "Dummy"
+    )
+  end
+
+  def id
+    File.basename(File.dirname(@path))
+  end
+end.new

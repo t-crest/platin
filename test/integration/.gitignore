@@ -1,0 +1,5 @@
+*.o
+gurobi.log
+ilp.svg
+constraints.json
+srchints.json
