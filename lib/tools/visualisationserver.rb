@@ -178,9 +178,10 @@ end
 
 class Server
   class SourceServlet < WEBrick::HTTPServlet::AbstractServlet
-    def initialize(server, srcroot)
+    def initialize(server, srcroot, directory_traversal: :loose)
       super server
       @srcroot = srcroot
+      @directory_traversal = directory_traversal
     end
 
     def resolve_file(basedir, path)
@@ -189,7 +190,7 @@ class Server
       begin
         realbase = Pathname.new(basedir).realpath.to_path
         realfile = Pathname.new(File.join(basedir, path)).realpath.to_path
-        return realfile if realfile.start_with? realbase
+        return realfile if realfile.start_with?(realbase) || @directory_traversal == :loose
       rescue StandardError
       end
       nil
@@ -343,8 +344,11 @@ class Server
     if [:ilp].include?(mode)
       assert("No source-root given") { opts.key?(:srcroot) }
       assert("#{opts[:srcroot]}: No such directory") { File.directory?(opts[:srcroot]) }
-      @server.mount '/api/srcinfo', SourceInfoServlet, opts[:srcroot]
-      @server.mount '/sourceview', SourceViewServlet, opts[:srcroot]
+
+      opts[:directory_traversal] ||= :strict
+
+      @server.mount '/api/srcinfo', SourceInfoServlet, opts[:srcroot], directory_traversal: opts[:directory_traversal]
+      @server.mount '/sourceview', SourceViewServlet, opts[:srcroot], directory_traversal: opts[:directory_traversal]
     end
 
     case mode

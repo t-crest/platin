@@ -412,6 +412,9 @@ class VisualizeCommand < Command
       assetdir = File.realpath(File.join(__dir__, '..', '..', 'assets'))
       assert("Not a directory #{assetdir}") { File.directory? assetdir }
 
+
+      puts "Prohibit_directory_traversal: #{opts.prohibit_directory_traversal }"
+
       server = VisualisationServer::Server.new( \
         :ilp, \
         { \
@@ -419,6 +422,7 @@ class VisualizeCommand < Command
           , srcroot: opts.source_path  \
           , assets: assetdir \
           , data: ilpdata  \
+          , directory_traversal: (opts.prohibit_directory_traversal ? :strict : :loose) \
         }, \
         BindAddress: opts.server_bind_addr, \
         Port: opts.server_port \
@@ -1169,6 +1173,8 @@ class InteractTool
     opts.on('--server-bind-addr IP', "adress to bind to") { |ip| options.server_bind_addr = ip }
     options.server_port = "2142"
     opts.on('--server-port PORT', Integer, "Port number to bind to") { |p| options.server_port = p }
+    options.prohibit_directory_traversal = true
+    opts.on('--[no-]allow-directory-traversal', "(not) allow directory traversal", "true or false") { |dt| options.prohibit_directory_traversal = !dt }
   end
 end
 
