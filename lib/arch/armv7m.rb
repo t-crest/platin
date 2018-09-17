@@ -301,14 +301,14 @@ class Architecture < PML::Architecture
       1
     when 't2Bcc', 't2B'
       1 + PIPELINE_REFILL
-    when 't2LDMIA_RET', 't2STRi8', 't2STRBi8', 't2STRHi8', 't2STRBi12', 't2STRHi12'
+    when 't2LDMIA_RET', 't2LDMIA', 't2STRi8', 't2STRBi8', 't2STRHi8', 't2STRBi12', 't2STRHi12', 't2STR_POST'
       2 + FLASH_WAIT_CYCLES
-    when 't2LDRi8', 't2LDRi12', 't2LDRBi12', 't2LDRSBi12', 't2LDRSHi12',
-         't2LDRSHi12', 't2LDRs'
+    when 't2LDRi8', 't2LDRBi8', 't2LDRi12', 't2LDRBi12', 't2LDRSBi12',
+         't2LDRSHi12', 't2LDRSHi12', 't2LDRs', 't2LDR_POST', 't2LDR_PRE'
       2 + FLASH_WAIT_CYCLES
     when /^t2LDRHi[0-9]+$/
       2 + FLASH_WAIT_CYCLES
-    when 't2LDRDi8', 't2STRDi8', 't2STMIA'
+    when 't2LDRDi8', 't2STRDi8', 't2STMIA', 't2STRs'
       1 + FLASH_WAIT_CYCLES * NUM_REGISTERS
     when 'PSEUDO_LOOPBOUND'
       0
@@ -330,10 +330,10 @@ class Architecture < PML::Architecture
     # store instructions
     when 't2STRi12'
       2 + FLASH_WAIT_CYCLES
-    when 't2CMPri', 't2CMPrs'
+    when 't2CMPri', 't2CMPrs', 't2CMNri'
       1
     # extend
-    when 't2SXTH', 't2SXTB', 't2UXTH', 't2UXTB'
+    when 't2SXTH', 't2SXTB', 't2UXTH', 't2UXTB', 't2UXTAB'
       1
     # bit field, extract unsigned, extract signed, clear, insert
     when 't2UBFX', 't2SBFX', 't2BFC', 't2BFI'
@@ -341,6 +341,8 @@ class Architecture < PML::Architecture
     # If-then-else
     when 't2IT'
       1
+    when 't2UDIV'
+      12
     else
       die("Unknown opcode: #{instr.opcode}")
     end
