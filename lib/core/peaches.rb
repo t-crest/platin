@@ -846,6 +846,7 @@ end # class Parser
 def self.build_context(program)
   parser = Peaches::Parser.new
   ast = parser.program.eof.parse! program
+  Rsec::Fail.reset
   rfv = Peaches::ReferenceCheckingVisitor.new
   # Errors if recursion is found. Ensures termination
   rfv.check_references(ast)
@@ -866,6 +867,7 @@ def self.evaluate_expression(context, expr, type)
   end
   parser = Peaches::Parser.new
   ast    = parser.send(exprparser).eof.parse!(expr)
+  Rsec::Fail.reset
   ASTExpr.assert_full_eval(ast, context, types).unbox
 end
 
