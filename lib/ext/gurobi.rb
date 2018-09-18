@@ -178,6 +178,7 @@ private
   # FIXME: THIS IS UGLY
   def thread0(lp, sol)
     out = IO.popen("gurobi_cl MIPFocus=1 ResultFile=#{sol} #{lp}")
+    Process.detach(out.pid)
     @lines_thread0 = []
     backlock_idx0 = 0
     while line = out.gets do
@@ -189,12 +190,14 @@ private
         end
       end
     end
+    out.close
     $queue << [@lines_thread0, sol]
     @lines_thread0
   end
 
   def thread1(lp, sol)
     out = IO.popen("gurobi_cl MIPFocus=2 ResultFile=#{sol} #{lp}")
+    Process.detach(out.pid)
     @lines_thread1 = []
     backlock_idx1 = 0
     while line = out.gets do
@@ -206,12 +209,14 @@ private
         end
       end
     end
+    out.close
     $queue << [@lines_thread1, sol]
     @lines_thread1
   end
 
   def thread2(lp, sol)
     out = IO.popen("gurobi_cl MIPFocus=3 ResultFile=#{sol} #{lp}")
+    Process.detach(out.pid)
     @lines_thread2 = []
     backlock_idx2 = 0
     while line = out.gets do
@@ -223,6 +228,7 @@ private
         end
       end
     end
+    out.close
     $queue << [@lines_thread2, sol]
     @lines_thread2
   end
