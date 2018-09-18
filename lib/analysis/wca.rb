@@ -86,8 +86,8 @@ class WCA
     end
 
     if @options.visualize_ilp
-      vis = ILPVisualisation.new(builder.ilp, [:bitcode, :machinecode, :relationgraph, :gcfg])
-      vfreqs = builder.ilp.debug_bound_frequencies(vfreqs)
+      vis = ILPVisualisation.new(ilp, [:bitcode, :machinecode, :relationgraph, :gcfg])
+      vfreqs = ilp.debug_bound_frequencies(vfreqs)
       svg = vis.visualize("ILP: #{@options.analysis_entry}", unbounded: vunbounded, freqmap: vfreqs)
       dot = vis.output(format: :dot)
       constraints = vis.get_constraints
