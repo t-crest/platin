@@ -42,6 +42,7 @@ node {
 
           export GEM_HOME="\$(pwd)/gems"
           export LD_LIBRARY_PATH="/usr/lib/lp_solve"
+          export PATH="\$(pwd):\$PATH"
           bundle exec ./test/testrunner.rb -v -v
           """
       }
