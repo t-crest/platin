@@ -16,7 +16,6 @@ node {
           set -x
 
           export GEM_HOME="\$(pwd)/gems"
-
           bundle install
           """
       }
@@ -29,7 +28,6 @@ node {
           set -x
 
           export GEM_HOME="\$(pwd)/gems"
-
           bundle exec pronto run -c "${gitlabBefore}"
           """
       }
@@ -42,6 +40,7 @@ node {
           set -e
           set -x
 
+          export GEM_HOME="\$(pwd)/gems"
           bundle exec ./test/testrunner.rb -v -v
           """
       }
