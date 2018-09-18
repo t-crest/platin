@@ -49,13 +49,20 @@ Class.new(superclass = PlatinTest::Test) do
       success &&= exists
     end
 
-    pattern = "∞ × 1"
-    output += "Expecting string #{pattern} in file ilp.svg: "
-    if File.readlines("ilp.svg").grep(/#{pattern}/).empty?
-      success = false
-      output += "not found\n"
+    output += "Checking for file ilp.svg"
+    if File.exist?("ilp.svg")
+      output += " success"
+      pattern = "∞ × 1"
+      output += "Expecting string #{pattern} in file ilp.svg: "
+      if File.readlines("ilp.svg").grep(/#{pattern}/).empty?
+        success = false
+        output += "not found\n"
+      else
+        output += "found\n"
+      end
     else
-      output += "found\n"
+      success = false
+      output += " failed"
     end
 
     @result = Result.new(
