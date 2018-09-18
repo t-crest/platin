@@ -386,7 +386,7 @@ class ILPVisualisation < Visualizer
   def get_level(var)
     if var.respond_to?(:level)
       var.level
-    elsif var.respond_to?(:function)
+    elsif var.respond_to?(:function) && var.function.respond_to?(:level)
       var.function.level
     else
       STDERR.puts "Cannot infer level for #{var}"
