@@ -113,8 +113,8 @@ class Test
     logn("Command exited with #{status}", level: Log::TRACE)
     logn(output, level: Log::TRACE)
     # match in reverse order: we want the last cycles
-    rev = output.lines.reverse.join('\n')
-    if rev =~ /cycles: (-?\d+)/m
+    cycles = output.lines.reverse.find {|l| l =~ /^\s+cycles: (-?\d+)/m}
+    unless cycles.nil?
       return Integer($1), output, status.exitstatus
     else
       logn("Failed to determine cycle bound", level: Log::WARN)
