@@ -1,4 +1,5 @@
 *.o
+*.bin
 gurobi.log
 ilp.svg
 constraints.json

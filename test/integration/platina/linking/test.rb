@@ -2,7 +2,7 @@ Class.new(superclass = PlatinTest::Test) do
 
   def initialize
     @description       = "Basic test for --link and --qualify-machincode"
-    @required_commands = ["arm-none-eabi-objdump"]
+    @required_commands = ["arm-none-eabi-objdump", "llvm-objdump"]
     @required_gems     = ["lpsolve"]
     @entry             = "c_entry"
     @elf               = "test"
@@ -17,6 +17,7 @@ Class.new(superclass = PlatinTest::Test) do
         " --report " \
 			  " --link " \
         " --qualify-machinecode " \
+        " --objdump llvm-objdump" \
         " --debug ilp "
   end
 
