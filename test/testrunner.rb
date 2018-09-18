@@ -76,6 +76,15 @@ class Test
     @result
   end
 
+  def register_exception(exception)
+    @result = Result.new(
+      success: false,
+      message: "Exception occured while running test: #{exception}",
+      output: exception.backtrace.join('\n')
+    )
+
+  end
+
   def self.have_executable(cmd)
     cmd = cmd.gsub('\'', '')
     `command -v '#{cmd}'`
@@ -149,7 +158,11 @@ class Runner
     active.map do |t|
       log("Running #{t}...")
       Dir.chdir(File.dirname(t.path)) do
-        t.run
+        begin
+          t.run
+        rescue StandardError => e
+          t.register_exception(e)
+        end
       end
       if t.result.success?
         log(" passed\n")
