@@ -1154,7 +1154,7 @@ class IPETBuilder
        "index"           => baseline_index,
        "name"=>"Baseline"
       }
-    )
+    ) unless sstg.device_list.any? { |dev| dev["name"] == "Baseline" }
 
 
 
