@@ -1,106 +1,107 @@
 #!/bin/bash
 #
+# vim: noexpandtab:tabstop=4:shiftwidth=4
 # ruby-runner
 
 # the installer will inject code to detect the ruby executable before
 if [ -z "${RUBY}" ] ; then
-    RUBY=ruby
+	RUBY=ruby
 fi
 
 # Set library path for installation
 
 KNOWN_COMMANDS="wcet tool-config pml analyze-trace extract-symbols pml-config\
-      transform visualize inspect ait2pml pml2ais pml2ffx sweet ff2pml wca late-bypass\
-      cfrg-one-one pmlstrip estimate-spill interact"
+		transform visualize inspect ait2pml pml2ais pml2ffx sweet ff2pml wca late-bypass\
+		cfrg-one-one pmlstrip estimate-spill interact"
 usage() {
-    cat <<EOF >&2
+	cat <<EOF >&2
 usage: platin <command> [<args>]
 
 The following platin tools are available and supported:
 
-  wcet            ... Calculate WCET (main driver)
-  tool-config     ... Configure tools, so the same HW config is used in
-                      compiler, WCA and simulator
-  pml-config      ... Create or modify PML machine configurations.
-  pml             ... Validate/Inspect/Visualize/Merge PML files
+  wcet			  ... Calculate WCET (main driver)
+  tool-config	  ... Configure tools, so the same HW config is used in
+					  compiler, WCA and simulator
+  pml-config	  ... Create or modify PML machine configurations.
+  pml			  ... Validate/Inspect/Visualize/Merge PML files
   analyze-trace   ... Analyze simulator trace and generate flow facts
   extract-symbols ... Extract addresses of symbols from ELF file
-  sweet           ... Run SWEET analysis tool
-  transform       ... Transform flowfacts from bitcode to machinecode
-                      (and vice versa)
-  visualize       ... Visualize IR and MC CFGs as well as relation graphs
-                      [alpha]
-  cfrg-one-one    ... Check for 1:1 mappings in relation graphs
-  pmlstrip        ... Strip user annotations from a .pml file
+  sweet			  ... Run SWEET analysis tool
+  transform		  ... Transform flowfacts from bitcode to machinecode
+					  (and vice versa)
+  visualize		  ... Visualize IR and MC CFGs as well as relation graphs
+					  [alpha]
+  cfrg-one-one	  ... Check for 1:1 mappings in relation graphs
+  pmlstrip		  ... Strip user annotations from a .pml file
   estimate-spill  ... Estimate the number of generated spill instructions
-  inspect         ... Inspect the program structure and flow facts/loop bounds
-  pml2ais         ... Translate program information to aiT's AIS format
-  pml2ffx         ... Translate program information to oRange/OTAWA's F4/FFX format
-  interact        ... Interactive, caching analysis REPL
+  inspect		  ... Inspect the program structure and flow facts/loop bounds
+  pml2ais		  ... Translate program information to aiT's AIS format
+  pml2ffx		  ... Translate program information to oRange/OTAWA's F4/FFX format
+  interact		  ... Interactive, caching analysis REPL
 
 The following tools are available for internal use only:
 
-  ait2pml         ... Add aiT analysis results to the PML database
-  ff2pml          ... Translate SWEET flowfacts to PML
-  wca             ... Calculate WCET cost using lp_solve
-  late-bypass     ... Rewrite memory instructions in the binary to bypass
-                      the data cache
+  ait2pml		  ... Add aiT analysis results to the PML database
+  ff2pml		  ... Translate SWEET flowfacts to PML
+  wca			  ... Calculate WCET cost using lp_solve
+  late-bypass	  ... Rewrite memory instructions in the binary to bypass
+					  the data cache
 
 EOF
-    UNKNOWN=`echo $(list_unknown_commands)`
-    if [ ! -z "${UNKNOWN}" ]; then
-	echo "Undocumented commands: ${UNKNOWN}" >&2
-	echo >&2
-    fi
-    echo "See 'platin help <command>' for more information on a specific command." >&2
+	UNKNOWN=`echo $(list_unknown_commands)`
+	if [ ! -z "${UNKNOWN}" ]; then
+		echo "Undocumented commands: ${UNKNOWN}" >&2
+		echo >&2
+	fi
+	echo "See 'platin help <command>' for more information on a specific command." >&2
 }
 
 show_help() {
-    COMMAND=$1
-    shift
-    ${RUBY} -I ${LIBDIR} ${LIBDIR}/tools/"${COMMAND}".rb --help
+	COMMAND=$1
+	shift
+	${RUBY} -I ${LIBDIR} ${LIBDIR}/tools/"${COMMAND}".rb --help
 }
 
 list_unknown_commands() {
-    for driver in $(ls "${LIBDIR}"/tools/*.rb) ; do
+	for driver in $(ls "${LIBDIR}"/tools/*.rb) ; do
 	name=$(basename "${driver}" .rb)
 	unset known
 	for cmd in ${KNOWN_COMMANDS} ; do
-	    if [ $name == $cmd ] ; then known=yes ; break ; fi
+		if [ $name == $cmd ] ; then known=yes ; break ; fi
 	done
 	if [ -z "${known}" ]; then echo ${name} ; fi
-    done
+	done
 }
 
 # Set LIBDIR fallback
 if [ -z "${RELATIVE_LIBDIR}" ] ; then
-    RELATIVE_LIBDIR=lib
+	RELATIVE_LIBDIR=lib
 fi
 if [ -z "${LIBDIR}" ] ; then
-    LIBDIR=$(dirname $0)/"${RELATIVE_LIBDIR}"
+	LIBDIR=$(dirname $0)/"${RELATIVE_LIBDIR}"
 fi
 
 # Select command
 COMMAND=$1
 shift
 if [ -z "${COMMAND}" ] ; then
-    usage
-    exit 1
-elif [ "${COMMAND}" == "help" -o "${COMMAND}" == "--help" ] ; then
-    if [ -z "${1}" ] ; then
 	usage
-    else
+	exit 1
+elif [ "${COMMAND}" == "help" -o "${COMMAND}" == "--help" ] ; then
+	if [ -z "${1}" ] ; then
+	usage
+	else
 	show_help $1
-    fi
-    exit 0
+	fi
+	exit 0
 fi
 
 # Define command script
 COMMAND_SCRIPT="${LIBDIR}"/tools/"${COMMAND}".rb
 if [ ! -e "${COMMAND_SCRIPT}" ] ; then
-    echo "Unknown command '${COMMAND}' (could not find implementation)" >&2
-    usage
-    exit 1
+	echo "Unknown command '${COMMAND}' (could not find implementation)" >&2
+	usage
+	exit 1
 fi
 
 # Run command
