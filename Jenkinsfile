@@ -15,6 +15,41 @@ node {
           set -e
           set -x
 
+          echo "###############################################################"
+          echo "# GITLAB PLUGIN OUTPUT"
+          echo "###############################################################"
+          echo ""
+          echo gitlabBranch                       \$gitlabBranch
+          echo gitlabSourceBranch                 \$gitlabSourceBranch
+          echo gitlabActionType                   \$gitlabActionType
+          echo gitlabUserName                     \$gitlabUserName
+          echo gitlabUserEmail                    \$gitlabUserEmail
+          echo gitlabSourceRepoHomepage           \$gitlabSourceRepoHomepage
+          echo gitlabSourceRepoName               \$gitlabSourceRepoName
+          echo gitlabSourceNamespace              \$gitlabSourceNamespace
+          echo gitlabSourceRepoURL                \$gitlabSourceRepoURL
+          echo gitlabSourceRepoSshUrl             \$gitlabSourceRepoSshUrl
+          echo gitlabSourceRepoHttpUrl            \$gitlabSourceRepoHttpUrl
+          echo gitlabMergeRequestTitle            \$gitlabMergeRequestTitle
+          echo gitlabMergeRequestDescription      \$gitlabMergeRequestDescription
+          echo gitlabMergeRequestId               \$gitlabMergeRequestId
+          echo gitlabMergeRequestIid              \$gitlabMergeRequestIid
+          echo gitlabMergeRequestState            \$gitlabMergeRequestState
+          echo gitlabMergedByUser                 \$gitlabMergedByUser
+          echo gitlabMergeRequestAssignee         \$gitlabMergeRequestAssignee
+          echo gitlabMergeRequestLastCommit       \$gitlabMergeRequestLastCommit
+          echo gitlabMergeRequestTargetProjectId  \$gitlabMergeRequestTargetProjectId
+          echo gitlabTargetBranch                 \$gitlabTargetBranch
+          echo gitlabTargetRepoName               \$gitlabTargetRepoName
+          echo gitlabTargetNamespace              \$gitlabTargetNamespace
+          echo gitlabTargetRepoSshUrl             \$gitlabTargetRepoSshUrl
+          echo gitlabTargetRepoHttpUrl            \$gitlabTargetRepoHttpUrl
+          echo gitlabBefore                       \$gitlabBefore
+          echo gitlabAfter                        \$gitlabAfter
+          echo gitlabTriggerPhrase                \$gitlabTriggerPhrase
+          echo "###############################################################"
+          echo ""
+
           export GEM_HOME="\$(pwd)/gems"
           bundle install
           """
@@ -28,7 +63,12 @@ node {
           set -x
 
           export GEM_HOME="\$(pwd)/gems"
-          bundle exec pronto run -c "${gitlabBefore}"
+          MERGE_BASE="\$(git merge-base ${gitlabBefore} ${gitlabAfter} || true)"
+          if [[ ! -z \${MERGE_BASE+x} ]]; then
+            echo "Could not determine MERGE_BASE: Assuming force push, using master as base"
+            MERGE_BASE="\$(git merge-base refs/remotes/origin/master ${gitlabAfter})"
+          fi
+          bundle exec pronto run -c "\${MERGE_BASE}"
           """
       }
     }
