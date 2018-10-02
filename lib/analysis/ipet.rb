@@ -965,7 +965,7 @@ class IPETBuilder
       current_call_edges = @mc_model.add_callsite(cs, call_targets)
       current_call_edges.each do |ce|
         ce.static_context = cs.function
-        @mf_function_callers[ce.target].push(ce)
+        @mf_function_callers[ce.target].push(ce) unless @mc_model.infeasible?(mbb)
       end
       @call_edges += current_call_edges
     end
