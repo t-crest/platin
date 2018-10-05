@@ -298,10 +298,11 @@ class ILP
   # Generate a nice string-representation of a frequencymap for
   # diganose_unbounded
   def debug_bound_frequencies(freq)
+    margin = BIGM/100_000
     freq.each do |v,k|
-      freq[v] = if k < BIGM
+      freq[v] = if k < BIGM - margin
                   k.to_i
-                elsif k == BIGM
+                elsif k >= BIGM - margin && k <= BIGM
                   "\u221e"
                 else
                   "c\u221e"
