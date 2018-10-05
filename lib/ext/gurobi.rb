@@ -124,12 +124,6 @@ private
     # We could put the bounds in as constraints, but bounds should be faster
     lp.puts("Bounds")
 
-    # we are in big numeric trouble if we do not put any bounds at all
-    maximum_count = 1000_0000_0000
-    @variables.each do |v|
-      lp.puts(" #{varname(index(v))} <= #{maximum_count}")
-    end
-
     @constraints.each do |constr|
       # Bounds must have the form '[-1,1] x <= rhs'
       next unless constr.bound?

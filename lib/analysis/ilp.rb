@@ -249,7 +249,7 @@ class ILP
   end
 
   # add a new variable
-  def add_variable(v, vartype = :machinecode, upper_bound= 1000_0000)
+  def add_variable(v, vartype = :machinecode, upper_bound = :unbounded)
     raise Exception, "Duplicate variable: #{v}" if @indexmap[v]
     assert("ILP#add_variable: type is not a symbol") { vartype.kind_of?(Symbol) }
     debug(@options, :ilp) { "Adding variable #{v} :: #{vartype.inspect}" }

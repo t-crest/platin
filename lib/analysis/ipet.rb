@@ -473,7 +473,7 @@ class GCFGIPETModel
 
   def add_entry_constraint(sstg)
     @wcet_variable = GlobalProgramPoint.new(sstg.name)
-    @ilp.add_variable(@wcet_variable, :gcfg, 10_000_000)
+    @ilp.add_variable(@wcet_variable, :gcfg)
 
     # Entry variables must add up to 1
     lhs = @entry_edges.map {|e| [e, 1]}
