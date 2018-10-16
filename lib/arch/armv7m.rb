@@ -397,10 +397,10 @@ class Architecture < PML::Architecture
       1
     when 't2Bcc', 't2B'
       1 + PIPELINE_REFILL
-    when 't2LDMIA_RET', 't2LDMIA', 't2STRi8', 't2STRBi8', 't2STRHi8', 't2STRBi12', 't2STRHi12', 't2STR_POST'
+    when 't2LDMIA_RET', 't2LDMIA', 't2STRi8', 't2STRBi8', 't2STRHi8', 't2STRBi12', 't2STRHi12', 't2STR_POST', 't2STRHs'
       2 + FLASH_WAIT_CYCLES
     when 't2LDRi8', 't2LDRBi8', 't2LDRi12', 't2LDRBi12', 't2LDRSBi12', 't2LDRSHi8',
-         't2LDRSHi12', 't2LDRSHi12', 't2LDRs', 't2LDR_POST', 't2LDR_PRE', 't2LDRSHs'
+         't2LDRSHi12', 't2LDRSHi12', 't2LDRs', 't2LDR_POST', 't2LDR_PRE', 't2LDRSHs', 't2LDRHs'
       2 + FLASH_WAIT_CYCLES
     when /^t2LDRHi[0-9]+$/
       2 + FLASH_WAIT_CYCLES
@@ -442,7 +442,7 @@ class Architecture < PML::Architecture
     when 'VMOVSR', 'VMOVRS', 'VMOVS'
       1
     # Floating point support
-    when 'VTOSIZS', 'VSITOS', 'VUITOS'
+    when 'VTOUIZS', 'VTOSIZS', 'VSITOS', 'VUITOS'
       1 + FPU_PIPELINE_STALL_CYCLES
     when 'VLDRS'
       2 + FLASH_WAIT_CYCLES
@@ -454,10 +454,14 @@ class Architecture < PML::Architecture
       3 + FPU_PIPELINE_STALL_CYCLES
     when 'VSUBS', 'VADDS'
       1 + FPU_PIPELINE_STALL_CYCLES
-    when 'VCMPES'
+    when 'VCMPES', 'VCMPEZS'
       1
+    when 'VNEGS'
+      1 + FPU_PIPELINE_STALL_CYCLES
     when 'VDIVS'
       14 + FPU_PIPELINE_STALL_CYCLES
+    when 'FCONSTS'
+      1
     when 'FMSTAT'
       # Internally compiled to VMRS
       1
