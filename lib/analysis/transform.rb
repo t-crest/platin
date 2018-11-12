@@ -17,7 +17,7 @@ class ConstraintRef
   attr_reader :cid, :constraint, :elim_vars
 
   # number of variables to eliminate; used as measure for equation selection
-  attr_reader :num_elim_vars
+  attr_reader :num_elim_vars, :num_unaffected_vars
 
   # Status is one out of :active, :garbage
   attr_accessor :status
@@ -29,6 +29,7 @@ class ConstraintRef
       @elim_vars.add(v) if all_elim_vars.include?(v)
     end
     @num_elim_vars = @elim_vars.size
+    @num_unaffected_vars = @constraint.lhs.keys.size - @num_elim_vars
     @elim_vars.freeze
     @status = :active
   end
@@ -63,7 +64,10 @@ class ConstraintRef
   end
 end
 
-# set of constraint refs ordered by elim_vars size
+# set of constraint refs ordered by elim_vars size first and by unaffected_vars
+# size second. This decreases the probability that information like
+# infeasibility annotations (i.e. constraints of the form v_x <= 0) are
+# considered for elimination, which would lead to loss of information.
 # efficient drop-in replacement for SortedSet
 #
 class RefSet
@@ -75,6 +79,7 @@ class RefSet
     sz = cref.num_elim_vars
     list = (@store[sz] ||= [])
     list.push(cref)
+    list.sort! { |a, b| a.num_unaffected_vars <=> b.num_unaffected_vars }
     @minsz = sz if !@minsz || sz < @minsz
   end
 
@@ -168,6 +173,17 @@ class VariableElimination
       elimvar ||= elim_vids.first
 
       # "Eliminating #{var_by_index(elimvar)}: #{eq_constraints[elimvar].size}/#{bound_constraints[elimvar].size}"
+
+      # Information provided by, for example, platina guards, may be deleted
+      # during the flow fact transformation, when the constraint is considered
+      # for elimination. The variable elimination is to make it unlikely, that
+      # this actually occurs. If this  assertion is triggered, this could mean
+      # one of the following:
+      # a) The assertion is too broad.
+      # b) The variable elimination is broken.
+      # c) A wrong constraint was introduced somewhere.
+      assert("Eliminating constraint #{elimeq.constraint}, which is of form v = 0! This may lead to loss of information provided by annotations!") {
+        !(elimeq.constraint.rhs == 0 && elimeq.constraint.op == 'equal' && elimeq.constraint.lhs.size == 1) } unless elimeq.nil?
 
       if elimeq # Substitution
         # mark equation as garbage and remove it from all eq_constraints
