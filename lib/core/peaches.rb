@@ -297,6 +297,9 @@ class ASTNumberLiteral < ASTValueLiteral
   end
 end
 
+class ASTSymbolListLiteral < ASTValueLiteral
+end
+
 class ASTSpecialLiteral < ASTLiteral
 end
 
@@ -678,21 +681,42 @@ class Parser
     ASTNumberLiteral.new Integer(num)
   end
   # Magic here: negative lookahead to prohibit keyword/symbol ambiguity
-  IDENTIFIER = seq((''.r ^ lazy { KEYWORD }), symbol_(/[a-zA-Z]\w*/)) do |_,id|
-                 ASTIdentifier.new(id)
-               end.expect('identifier')
-  IF         = word('if').expect 'keyword_if'
-  THEN       = word('then').expect 'keyword_then'
-  ELSE       = word('else').expect 'keyword_else'
-  CMP_OP     = symbol_(/(\<=|\<|\>=|\>|==|\/=)/).fail 'compare operator'
-  LOGIC_OP   = symbol_(/(&&|\|\|)/).fail 'logical operator'
-  MULT_OP    = symbol_(/[*\/%]/).fail 'multiplication operator'
-  ADD_OP     = symbol_(/[\+]/).fail 'addition operator'
-  SUB_OP     = symbol_(/[\-]/).fail 'subtraction operator'
-  BOOLEAN    = (symbol_('True')  { |_| ASTBoolLiteral.new(true) } |
-                symbol_('False') { |_| ASTBoolLiteral.new(false) }).fail 'boolean'
-  UNDEF      = symbol_('undefined')
-  ERROR      = symbol_('error')
+  IDENTIFIER      = seq((''.r ^ lazy { KEYWORD }), symbol_(/[a-zA-Z]\w*/)) do |_,id|
+                      ASTIdentifier.new(id)
+                    end.expect('identifier')
+  IF              = word('if').expect 'keyword_if'
+  THEN            = word('then').expect 'keyword_then'
+  ELSE            = word('else').expect 'keyword_else'
+  CMP_OP          = symbol_(/(\<=|\<|\>=|\>|==|\/=)/).fail 'compare operator'
+  LOGIC_OP        = symbol_(/(&&|\|\|)/).fail 'logical operator'
+  MULT_OP         = symbol_(/[*\/%]/).fail 'multiplication operator'
+  ADD_OP          = symbol_(/[\+]/).fail 'addition operator'
+  SUB_OP          = symbol_(/[\-]/).fail 'subtraction operator'
+  BOOLEAN         = (symbol_('True')  { |_| ASTBoolLiteral.new(true) } |
+                     symbol_('False') { |_| ASTBoolLiteral.new(false) }).fail 'boolean'
+  UNDEF           = symbol_('undefined')
+  ERROR           = symbol_('error')
+  LIST_BEGIN      = symbol_('[')
+  LIST_END        = symbol_(']')
+
+  # A function name must begin with an alphabetic letter or the underscore _
+  # character, but the other characters in the name can be chosen from the
+  # following groups:
+  # Any lower-case letter from a to z
+  # Any upper-case letter from A to Z
+  # Any digit from 0 to 9
+  # The underscore character _
+  FUNCTION_SYMBOL = symbol(/[^,\s\]]+/) do |sym|
+    # If we have a qualified identifier, perform patmos-clang-style
+    # namemangling (only for static identifiers)
+    puts "sym #{sym}" if DEBUG_PARSER
+    sym.sub(/^([^:]+):(.+)$/) do
+      fname = $2; # because, well, fuck you, we are using global variables
+                  # for our regex matching. scoping is for loosers.
+      $1.gsub(/[^0-9A-Za-z]/, '_') + '_' + fname
+    end
+  end
+
   KEYWORD    = IF | THEN | ELSE | BOOLEAN | UNDEF | ERROR
 
   def space
@@ -772,6 +796,7 @@ class Parser
                       ASTIf.new(cond, e1, e2)
                     end \
              | lazy { cond_expr } \
+             | lazy { symbollist } \
              | UNDEF \
              | ERROR \
              )
@@ -841,6 +866,30 @@ class Parser
     seq(/[\r\n]+/.r.maybe, program, /[\r\n]+/.r.maybe).eof { |_,p,_| ASTProgram.new(p.flatten) } \
       | /[\r\n]*/.r.maybe.eof { ASTProgram.new([]) }
   end
+
+  def symbollist
+    if @SYMBOLLIST.nil?
+      symbols = (seq_(FUNCTION_SYMBOL, /,/.r, lazy { symbols }) \
+                | FUNCTION_SYMBOL \
+                )
+      symbol_list = ( seq_(LIST_BEGIN, symbols, LIST_END, skip = CSPACE._?) { |_,l,_|
+                        list = listify(l)
+                        puts "Symbollist:[#{list.join(',')}]" if DEBUG_PARSER
+                        ASTSymbolListLiteral.new(list)
+                      } \
+                    | seq__(LIST_BEGIN, LIST_END) { |_,_|
+                        puts "Symbollist:[]" if DEBUG_PARSER
+                        ASTSymbolListLiteral.new([])
+                      } \
+                    )
+      @SYMBOLLIST = symbol_list
+    end
+    @SYMBOLLIST
+  end
+
+  def functions
+    FUNCTION_SYMBOL
+  end
 end # class Parser
 
 def self.build_context(program)
@@ -893,6 +942,15 @@ if __FILE__ == $PROGRAM_NAME
 
   puts "Running Tests..."
   # rubocop:disable Layout/EmptyLinesAroundArguments
+  require 'pp'
+  parser.functions.eof.parse! "a"
+  parser.expr.eof.parse! "[]"
+  parser.expr.eof.parse! "[ a ]"
+  parser.expr.eof.parse! "[a]"
+  parser.expr.eof.parse! "[a, b]"
+  parser.expr.eof.parse! "[a,b]"
+  parser.expr.eof.parse! "[sched.c:endless]"
+
   parser.expr.eof.parse! "ASDF > 0 || True"
 
   parser.expr.eof.parse! "a * b"
