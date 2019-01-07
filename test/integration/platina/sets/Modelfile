@@ -1,0 +1,5 @@
+-- Process counts
+NUM_TASKS = 42
+
+-- next sched prios
+NEXT_SCHED_PRIO_SET = {10, 20, 40}

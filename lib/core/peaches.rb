@@ -7,6 +7,7 @@
 require 'rsec'
 require 'pp'
 require 'English'
+require 'set'
 
 # Define AST-Nodes
 
@@ -276,6 +277,18 @@ class ASTLiteral < ASTNode
 end
 
 class ASTValueLiteral < ASTLiteral
+  def ==(o)
+    eql?(o)
+  end
+
+  def eql?(o)
+    o.class == self.class && o.unbox == value
+  end
+
+  def hash
+    value.hash
+  end
+
   def unbox
     value
   end
@@ -298,6 +311,15 @@ class ASTNumberLiteral < ASTValueLiteral
 end
 
 class ASTSymbolListLiteral < ASTValueLiteral
+  def to_symbollist
+    value
+  end
+end
+
+class ASTSetLiteral < ASTValueLiteral
+  def to_set
+    value
+  end
 end
 
 class ASTSpecialLiteral < ASTLiteral
@@ -462,6 +484,10 @@ class ASTExpr < ASTNode
         match = true if val.is_a?(ASTBoolLiteral)
       when :number
         match = true if val.is_a?(ASTNumberLiteral)
+      when :symbollist
+        match = true if val.is_a?(ASTSymbolListLiteral)
+      when :set
+        match = true if val.is_a?(ASTSetLiteral)
       else
         raise PeachesInternalError, "Unknown type: #{type}"
       end
@@ -602,6 +628,38 @@ class ASTCompareOp < ASTExpr
   end
 end
 
+class ASTBuiltinOperation < ASTExpr
+  DEBUG = false
+
+  def initialize(id, params, param_types, lambdaarg)
+    @id, @params, @paramtypes, @lambdaarg = id, params, param_types, lambdaarg
+  end
+
+  def evaluate(context)
+    puts "#{self.class.name}#Call: Evaluating #{self}: Args: #{@params}, Context: #{context}" if DEBUG
+    params = @params.zip(@paramtypes).map do |param, type|
+      val    = context.lookup(param.label).expr
+      # Only typechecks here. Evaluation of parameters already happend in the
+      # ASTCall
+      evaled = ASTExpr.assert_full_eval(val, context, [type])
+      # Unbox the literal
+      evaled.unbox
+    end
+    res = @lambdaarg.call(*params)
+    puts "#{self.class.name}#Call: Evaluated #{self}: Result (#{res.class.name}) #{res}" if DEBUG
+    res
+  end
+
+  def to_s
+    "builtin:#{@id}(#{@params})"
+  end
+
+  def visit(visitor)
+    visitor.visit_pre self
+    visitor.visit self
+  end
+end
+
 class ASTVisitor
   def visit(node)
     node
@@ -613,8 +671,8 @@ class ASTVisitor
 end
 
 class ReferenceCheckingVisitor < ASTVisitor
-  def initialize
-    @context = Context.new
+  def initialize(context = Context.new)
+    @context = context
     @current = nil
   end
 
@@ -681,23 +739,26 @@ class Parser
     ASTNumberLiteral.new Integer(num)
   end
   # Magic here: negative lookahead to prohibit keyword/symbol ambiguity
-  IDENTIFIER      = seq((''.r ^ lazy { KEYWORD }), symbol_(/[a-zA-Z]\w*/)) do |_,id|
-                      ASTIdentifier.new(id)
-                    end.expect('identifier')
-  IF              = word('if').expect 'keyword_if'
-  THEN            = word('then').expect 'keyword_then'
-  ELSE            = word('else').expect 'keyword_else'
-  CMP_OP          = symbol_(/(\<=|\<|\>=|\>|==|\/=)/).fail 'compare operator'
-  LOGIC_OP        = symbol_(/(&&|\|\|)/).fail 'logical operator'
-  MULT_OP         = symbol_(/[*\/%]/).fail 'multiplication operator'
-  ADD_OP          = symbol_(/[\+]/).fail 'addition operator'
-  SUB_OP          = symbol_(/[\-]/).fail 'subtraction operator'
-  BOOLEAN         = (symbol_('True')  { |_| ASTBoolLiteral.new(true) } |
-                     symbol_('False') { |_| ASTBoolLiteral.new(false) }).fail 'boolean'
-  UNDEF           = symbol_('undefined')
-  ERROR           = symbol_('error')
-  LIST_BEGIN      = symbol_('[')
-  LIST_END        = symbol_(']')
+  IDENTIFIER  = seq((''.r ^ lazy { KEYWORD }), symbol_(/[a-zA-Z]\w*/)) do |_,id|
+                  ASTIdentifier.new(id)
+                end.expect('identifier')
+  IF          = word('if').expect 'keyword_if'
+  THEN        = word('then').expect 'keyword_then'
+  ELSE        = word('else').expect 'keyword_else'
+  CMP_OP      = symbol_(/(\<=|\<|\>=|\>|==|\/=)/).fail 'compare operator'
+  LOGIC_OP    = symbol_(/(&&|\|\|)/).fail 'logical operator'
+  MULT_OP     = symbol_(/[*\/%]/).fail 'multiplication operator'
+  ADD_OP      = symbol_(/[\+]/).fail 'addition operator'
+  SUB_OP      = symbol_(/[\-]/).fail 'subtraction operator'
+  BOOLEAN     = (symbol_('True')  { |_| ASTBoolLiteral.new(true) } |
+                 symbol_('False') { |_| ASTBoolLiteral.new(false) }).fail 'boolean'
+  UNDEF       = symbol_('undefined')
+  ERROR       = symbol_('error')
+  LIST_BEGIN  = symbol_('[')
+  LIST_END    = symbol_(']')
+  SET_BEGIN   = symbol_('{')
+  SET_END     = symbol_('}')
+  SET_ELEMENT = NUM.fail "set_element"
 
   # A function name must begin with an alphabetic letter or the underscore _
   # character, but the other characters in the name can be chosen from the
@@ -797,6 +858,7 @@ class Parser
                     end \
              | lazy { cond_expr } \
              | lazy { symbollist } \
+             | lazy { setliteral } \
              | UNDEF \
              | ERROR \
              )
@@ -840,11 +902,51 @@ class Parser
 
       @DECL = seq__(declaration, '=', definition, comment.maybe) do |decl,_,expr|
         id, params = decl
-        puts "decl: #{id} = (#{decl})" if DEBUG_PARSER
+        puts "decl: #{id} #{params} = (#{expr})" if DEBUG_PARSER
         ASTDecl.new(id, listify(params), expr)
       end
     end
     @DECL
+  end
+
+  def symbollist
+    if @SYMBOLLIST.nil?
+      symbols = (seq_(FUNCTION_SYMBOL, /,/.r, lazy { symbols }) { |x,_,xs| [x,xs] } \
+                | FUNCTION_SYMBOL \
+                )
+      symbol_list = ( seq_(LIST_BEGIN, symbols, LIST_END, skip: CSPACE._?) { |_,l,_|
+                        list = listify(l)
+                        puts "Symbollist:[#{list.join(',')}]" if DEBUG_PARSER
+                        ASTSymbolListLiteral.new(list)
+                      } \
+                    | seq__(LIST_BEGIN, LIST_END) { |_,_|
+                        puts "Symbollist:[]" if DEBUG_PARSER
+                        ASTSymbolListLiteral.new([])
+                      } \
+                    )
+      @SYMBOLLIST = symbol_list.fail "symbol_list"
+    end
+    @SYMBOLLIST
+  end
+
+  def setliteral
+    if @SETLITERAL.nil?
+      setliterals = (seq__(SET_ELEMENT, /,/.r, lazy { setliterals }) { |x,_,xs| [x,xs] } \
+                | SET_ELEMENT \
+                )
+      set = ( seq_(SET_BEGIN, setliterals, SET_END, skip: CSPACE._?) { |_,l,_|
+                list = listify(l).to_set
+                puts "Set:{#{list.to_a.join(',')}}" if DEBUG_PARSER
+                ASTSetLiteral.new(list)
+              } \
+            | seq__(SET_BEGIN, SET_END) { |_,_|
+                puts "Set:{}" if DEBUG_PARSER
+                ASTSetLiteral.new([].to_set)
+              } \
+            )
+      @SETLITERAL = set.fail "set_literal"
+    end
+    @SETLITERAL
   end
 
   def listify(astlist)
@@ -859,47 +961,70 @@ class Parser
   end
 
   def program
-    program = (seq_(comment, lazy { program }, skip: /[\r\n]+/)[1] \
-              | seq_(decl, lazy { program }, skip: /[\r\n]+/) \
-              | seq_(decl, /[\r\n]+/.r.maybe) { |d, _| [d] } \
+    program = (seq_(comment, lazy { program }, skip: /[\r\n]+/.r) { |_,p,_|
+                  puts "Program variant 1: comment + program" if DEBUG_PARSER
+                  p
+                } \
+              | seq_(decl, lazy { program }, skip: /[\r\n]+/.r) { |d,p|
+                  puts "Program variant 2: decl + program" if DEBUG_PARSER
+                  [d,p]
+                } \
+              | seq_(decl, /[\r\n]+/.r.maybe) { |d, _|
+                  puts "Program variant 3: plain decl: #{d}" if DEBUG_PARSER
+                  [d]
+                } \
               )
     seq(/[\r\n]+/.r.maybe, program, /[\r\n]+/.r.maybe).eof { |_,p,_| ASTProgram.new(p.flatten) } \
       | /[\r\n]*/.r.maybe.eof { ASTProgram.new([]) }
   end
-
-  def symbollist
-    if @SYMBOLLIST.nil?
-      symbols = (seq_(FUNCTION_SYMBOL, /,/.r, lazy { symbols }) \
-                | FUNCTION_SYMBOL \
-                )
-      symbol_list = ( seq_(LIST_BEGIN, symbols, LIST_END, skip = CSPACE._?) { |_,l,_|
-                        list = listify(l)
-                        puts "Symbollist:[#{list.join(',')}]" if DEBUG_PARSER
-                        ASTSymbolListLiteral.new(list)
-                      } \
-                    | seq__(LIST_BEGIN, LIST_END) { |_,_|
-                        puts "Symbollist:[]" if DEBUG_PARSER
-                        ASTSymbolListLiteral.new([])
-                      } \
-                    )
-      @SYMBOLLIST = symbol_list
-    end
-    @SYMBOLLIST
-  end
-
-  def functions
-    FUNCTION_SYMBOL
-  end
 end # class Parser
 
+def self.define_builtins(context)
+  build_decl = lambda do |id, types, code|
+    params   = types.each_with_index.map {|t,i| Peaches::ASTIdentifier.new("tmp#{t}#{i}")}
+    expr     = Peaches::ASTBuiltinOperation.new(id, params, types, code)
+    decl     = Peaches::ASTDecl.new(Peaches::ASTIdentifier.new(id), params, expr)
+    context.insert(id, decl)
+  end
+  build_decl.call("set_min", [:set], lambda { |set|
+    if set.empty?
+      raise Peaches::PeachesArgumentError, "set_min called on empty set"
+    else
+      min = set.map{|x| x.unbox}.min
+      ASTNumberLiteral.new(min)
+    end
+  })
+  build_decl.call("set_max", [:set], lambda { |set|
+    if set.empty?
+      raise Peaches::PeachesArgumentError, "set_max called on empty set"
+    else
+      max = set.map{|x| x.unbox}.max
+      ASTNumberLiteral.new(max)
+    end
+  })
+  context
+end
+
 def self.build_context(program)
+  # Parse the program
   parser = Peaches::Parser.new
   ast = parser.program.eof.parse! program
   Rsec::Fail.reset
-  rfv = Peaches::ReferenceCheckingVisitor.new
+
+  # Build the default context (with builtins)
+  context = Peaches::Context.new
+  define_builtins(context)
+
+  # Check references
+  rfv = Peaches::ReferenceCheckingVisitor.new(context = context)
   # Errors if recursion is found. Ensures termination
   rfv.check_references(ast)
-  context = ast.evaluate
+
+  # Rebuild the default context (with builtins)
+  context = Peaches::Context.new
+  define_builtins(context)
+  # Evaluate the context as far as possible
+  context = ast.evaluate(context)
   context
 end
 
@@ -925,8 +1050,8 @@ end # module Peaches
 if __FILE__ == $PROGRAM_NAME
   parser = Peaches::Parser.new
 
-  assert_literal = lambda { |program, var, value|
-    decl = program.evaluate.lookup(var)
+  assert_literal_context = lambda { |var, value, context|
+    decl = context.lookup(var)
     unless decl.is_a?(Peaches::ASTDecl) &&
            decl.expr.is_a?(Peaches::ASTLiteral) &&
            decl.expr.unbox == value
@@ -934,22 +1059,37 @@ if __FILE__ == $PROGRAM_NAME
         ############## TEST FAILURE ##############
         #{program}
         ##########################################
-        #{expr} /= #{value}
+        #{decl.expr} /= #{value}
         ##########################################
       EOF
     end
   }
 
+  assert_literal = lambda { |program, var, value, context=Peaches::Context.new|
+    bindings = program.evaluate(context)
+    assert_literal_context.call(var, value, bindings)
+  }
+
   puts "Running Tests..."
   # rubocop:disable Layout/EmptyLinesAroundArguments
-  require 'pp'
-  parser.functions.eof.parse! "a"
   parser.expr.eof.parse! "[]"
   parser.expr.eof.parse! "[ a ]"
   parser.expr.eof.parse! "[a]"
   parser.expr.eof.parse! "[a, b]"
   parser.expr.eof.parse! "[a,b]"
   parser.expr.eof.parse! "[sched.c:endless]"
+
+  parser.setliteral.eof.parse! "{}"
+  parser.setliteral.eof.parse! "{1}"
+  parser.setliteral.eof.parse! "{1,23, 4}"
+  parser.setliteral.eof.parse! "{123,2,123,1}"
+  parser.expr.eof.parse! "{1, 2, 3, 4, 42}"
+  parser.program.eof.parse! "s = {1, 2, 3, 4, 42}"
+  parser.decl.eof.parse! "s = {1, 2, 3, 4, 42}"
+  parser.program.eof.parse! %[
+s = {1, 2, 3, 4, 42}
+y = set_min s
+]
 
   parser.expr.eof.parse! "ASDF > 0 || True"
 
@@ -1085,6 +1225,21 @@ y = not True
   program = parser.program.parse! "y = 4 - 3 + 3 - 3*4 + 8"
   assert_literal.call(program, "y", 0)
 
+  program = parser.program.parse! "y = [a, b, sched.c:endless]"
+  assert_literal.call(program, "y", ["a", "b", "sched_c_endless"])
+
+  program = parser.program.parse! "y = {1, 42}"
+  assert_literal.call(program, "y", \
+        [Peaches::ASTNumberLiteral.new(1),Peaches::ASTNumberLiteral.new(42)].to_set)
+
+  context = Peaches::build_context("y = set_min {1, 42}")
+  assert_literal_context.call("y", 1, context=context)
+
+  context = Peaches::build_context("y = set_max {1, 42}")
+  assert_literal_context.call("y", 42, context=context)
+
+  #context = Peaches::build_context("s = {1, 2, 3, 4, 42}\ny = set_max s")
+  #assert_literal_context.call("y", 42, context=context)
  # rubocop:enable Layout/EmptyLinesAroundArguments
 
   puts "All tests were successful"
