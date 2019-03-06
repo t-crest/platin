@@ -386,6 +386,49 @@ class WCA
         edge_cost(edge)
       end
 
+      if @options.stats
+        # count blocks and functions within the ipet
+        functions = Set.new;
+        blocks    = Set.new;
+
+        addvar = lambda do |var|
+          case var
+          when Function
+            functions.add(var)
+          when Block
+            blocks.add(var)
+            functions.add(var.function)
+          end
+        end
+
+        ilp.variables.each do |v|
+          if v.is_a?(IPETEdge)
+            addvar.call(v.source)
+            addvar.call(v.target)
+          else
+            addvar.call(v)
+          end
+        end
+
+        statistics("WCA",
+                   "flowfacts"        => flowfacts.length,
+                   "ipet variables"   => builder.ilp.num_variables,
+                   "ipet constraints" => builder.ilp.constraints.length,
+                   "ipet functions"   => functions.length,
+                   "ipet blocks"      => blocks.length
+                  )
+
+        if @options.verbose
+          functions.each do |f|
+            puts "IPETFunction: #{f.qname}"
+          end
+          blocks.each do |b|
+            puts "IPETBlock: #{b.qname} (Instructions: #{b.instructions.length})"
+          end
+        end
+      end
+
+
 
       # run cache analyses
       # FIXME: Cache analysis

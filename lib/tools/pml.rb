@@ -165,8 +165,14 @@ class PMLTool
       stats = {}
       stats['machine code functions'] = pml.machine_functions.length
       stats['machine code blocks'] = pml.machine_functions.map { |mf| mf.blocks.length }.inject(0,:+)
+      stats['machine code instructions'] = pml.machine_functions.map do |mf|
+        mf.blocks.map {|b| b.instructions.length}.inject(0, :+)
+      end.inject(0,:+)
       stats['bitcode functions'] = pml.bitcode_functions.length
       stats['bitcode blocks'] = pml.bitcode_functions.map { |b| b.blocks.length }.inject(0,:+)
+      stats['bitcode instructions'] = pml.bitcode_functions.map do |bf|
+        bf.blocks.map {|b| b.instructions.length}.inject(0, :+)
+      end.inject(0,:+)
       stats['relation graphs'] = pml.relation_graphs.length
       stats['relation graph nodes'] = pml.relation_graphs.map { |rg| rg.nodes.length }.inject(0,:+)
       stats['timing entries'] = pml.timing.length
