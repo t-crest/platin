@@ -2,7 +2,7 @@ Class.new(superclass = PlatinTest::Test) do
 
   def initialize
     @description       = "Basic test for the --modelfile parameter"
-    @required_commands = ["arm-none-eabi-objdump"]
+    @required_commands = ["arm-none-eabi-objdump", "llvm-objdump"]
     @required_gems     = ["lpsolve"]
     @entry             = "c_entry"
     @elf               = "test"
@@ -15,6 +15,7 @@ Class.new(superclass = PlatinTest::Test) do
         " --disable-ait " \
         " --enable-wca " \
         " --report " \
+        " --objdump llvm-objdump" \
 			  " --link " \
         " --qualify-machinecode " \
 			  " --modelfile ./Modelfile " \
