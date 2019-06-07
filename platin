@@ -117,7 +117,7 @@ if [ ! -e "${COMMAND_SCRIPT}" ] ; then
 	exit 1
 fi
 
-if command -v bundler >&/dev/null && [[ -z ${PLATIN_NO_BUNLDER+x} ]]; then
+if command -v bundler >&/dev/null && [[ -z ${PLATIN_NO_BUNDLER+x} ]]; then
 	BUNDLE_GEMFILE="${BASEDIR}/Gemfile"
 	export BUNDLE_GEMFILE
 	RUBY="bundler exec -- ${RUBY}"

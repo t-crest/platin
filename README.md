@@ -4,16 +4,25 @@ PLATIN toolset
 This directory contains the PLATIN tools for manipulating, generating
 and transforming PML files.
 
+Setup
+-----
+### Recommended
+* `./setup.sh`
+* `export PATH=<platin_dir>:$PATH`
+
+### Alternative
+* `./install.sh -i <build_dir>`
+* `export PATH=<build_dir>/bin/:$PATH`
+
 Requirements
 ------------
 
 * ruby 1.9 or newer (mandatory)
-    - Ubuntu 12.10
-      sudo aptitude install ruby1.9.1, ruby1.9.1-dev
-    - install the lpsolve library
-      sudo aptitude install liblpsolve55-dev
-    - run `bundle install` to install the required gems (rsec, ruby-graphviz, lpsolve)
-
+    - ruby 2.6.3 known to work
+* lpsolve
+    - sudo aptitude install liblpsolve55-dev
+* Ubuntu/Debian specific
+    - point LD_LIBRARY_PATH to the lpsolve library, e.g `export LD_LIBRARY_PATH=/usr/lib/lp_solve:$LD_LIBRARY_PATH`
 
 Basic Usage
 -----------

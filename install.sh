@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# platin installation script
+# platin installation script (deprecated)
 #
 
 function abspath() {
