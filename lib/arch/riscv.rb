@@ -139,7 +139,7 @@ class Architecture < PML::Architecture
   end
 
   def extract_symbols(extractor, pml, options)
-    cmd = "/srv/scratch/ve41vabe/freedom-e-sdk/work/build/riscv-gnu-toolchain/riscv64-unknown-elf/prefix/bin/riscv64-unknown-elf-objdump"
+    cmd = "riscv64-unknown-elf-objdump"
     ExtractSymbols.run(cmd, extractor, pml, options)
   end
 
