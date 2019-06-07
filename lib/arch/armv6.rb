@@ -143,11 +143,15 @@ class Architecture < PML::Architecture
     M5SimulatorTrace.new(options.binary_file, self, options)
   end
 
+  def objdump_command
+    "arm-none-eabi-objdump"
+  end
+
   def extract_symbols(extractor, pml, options)
     # prefix="armv6-#{@triple[2]}-#{@triple[3]}"
     # cmd = "#{prefix}-objdump"
   # FIXME hard coded tool name
-    cmd = "arm-none-eabi-objdump"
+    cmd = objdump_command
     ExtractSymbols.run(cmd, extractor, pml, options)
   end
 

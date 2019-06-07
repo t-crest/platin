@@ -138,8 +138,12 @@ class Architecture < PML::Architecture
     HiFive1SimulatorTrace.new(options.binary_file, self, options)
   end
 
+  def objdump_command
+    "riscv64-unknown-elf-objdump"
+  end
+
   def extract_symbols(extractor, pml, options)
-    cmd = "riscv64-unknown-elf-objdump"
+    cmd = objdump_command
     ExtractSymbols.run(cmd, extractor, pml, options)
   end
 

@@ -222,6 +222,10 @@ class Architecture < PML::Architecture
     SimulatorTrace.new(options.binary_file, self, options, watchpoints)
   end
 
+  def objdump_command
+    "patmos-llvm-objump"
+  end
+
   def extract_symbols(extractor, pml, options)
     ExtractSymbols.run(extractor, pml, options)
   end

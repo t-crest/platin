@@ -16,6 +16,7 @@ class ExtractSymbols
     @stats_address_count = 0
     @instruction_addresses = {}
     @instructions = {}
+    @options.objdump = @pml.arch.objdump_command unless @options.objdump
   end
 
   def add_symbol(label,address)
@@ -168,7 +169,6 @@ class ExtractSymbolsTool
       opts.options.text_sections = s.split(/\s*,\s*/)
     end
     opts.add_check do |options|
-      options.objdump = "patmos-llvm-objdump" unless options.objdump
       options.text_sections = [".text"] unless options.text_sections
     end
   end
@@ -178,7 +178,7 @@ class ExtractSymbolsTool
   end
 
   def self.run(pml, options)
-    needs_options(options, :objdump, :text_sections, :binary_file)
+    needs_options(options, :text_sections, :binary_file)
     ExtractSymbols.new(pml,options).analyze.update_pml
   end
 end
