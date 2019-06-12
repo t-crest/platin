@@ -80,7 +80,7 @@ class Test
     @result = Result.new(
       success: false,
       message: "Exception occured while running test: #{exception}",
-      output: exception.backtrace.join('\n')
+      output: exception.backtrace.join("\n\t")
     )
 
   end
@@ -115,12 +115,16 @@ class Test
     all_present
   end
 
-
-  def self.platin_getcycles(cmd)
+  def self.execute_platin(cmd)
     logn("Running command '#{cmd}'", level: Log::DEBUG)
     output, status = Open3.capture2e(cmd)
     logn("Command exited with #{status}", level: Log::TRACE)
     logn(output, level: Log::TRACE)
+    return output, status
+  end
+
+  def self.platin_getcycles(cmd)
+    output, status = self.execute_platin(cmd)
     # match in reverse order: we want the last cycles
     cycles = output.lines.reverse.find {|l| l =~ /^\s+cycles: (-?\d+)/m}
     unless cycles.nil?
