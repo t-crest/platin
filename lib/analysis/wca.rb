@@ -24,53 +24,53 @@ class WCA
     # get list of executed instructions
     branch_index = nil
     ilist =
-        if (edge.kind_of?(Block))
-          edge.instructions
+      if (edge.kind_of?(Block))
+        edge.instructions
+      else
+        # Special Case for GCFG Node+>Node Edges
+        if edge.level == :gcfg
+          src = edge.source.abb.get_region(:dst).exit_node
+          if edge.target == :exit
+            dst = :exit
+          else
+            dst = edge.target.abb.get_region(:dst).entry_node
+          end
         else
-          # Special Case for GCFG Node+>Node Edges
-          if edge.level == :gcfg
-            src = edge.source.abb.get_region(:dst).exit_node
-            if edge.target == :exit
-              dst = :exit
-            else
-              dst = edge.target.abb.get_region(:dst).entry_node
-            end
-          else
-            src = edge.source
-            dst = edge.target
-          end
-          src.instructions.each_with_index do |ins,ix|
-            if ins.returns? && (dst == :exit || edge.level == :gcfg)
-              branch_index = ix # last instruction that returns
-            elsif !ins.branch_targets.empty? && ins.branch_targets.include?(dst)
-              branch_index = ix # last instruction that branches to the target
-            elsif !ins.branch_targets.empty? && edge.level == :gcfg && dst != :exit
-              branch_index = ix
-            end
-          end
-          if !branch_index
-            src.instructions
-          else
-            slots = src.instructions[branch_index].delay_slots
-            slot_end = branch_index
-            instr = src.instructions[slot_end + 1]
-            while slots > 0 || (instr && instr.bundled?)
-              slots -= 1 unless instr && instr.bundled?
-              slot_end += 1
-              instr = src.instructions[slot_end + 1]
-            end
-            src.instructions[0..slot_end]
+          src = edge.source
+          dst = edge.target
+        end
+        src.instructions.each_with_index do |ins,ix|
+          if ins.returns? && (dst == :exit || edge.level == :gcfg)
+            branch_index = ix # last instruction that returns
+          elsif !ins.branch_targets.empty? && ins.branch_targets.include?(dst)
+            branch_index = ix # last instruction that branches to the target
+          elsif !ins.branch_targets.empty? && edge.level == :gcfg && dst != :exit
+            branch_index = ix
           end
         end
-      if @options.wca_count_instructions
-        path_wcet = ilist.length
-        edge_wcet = 0
-      else
-        path_wcet = @pml.arch.path_wcet(ilist)
-        edge_wcet = @pml.arch.edge_wcet(ilist,branch_index,edge)
+        if !branch_index
+          src.instructions
+        else
+          slots = src.instructions[branch_index].delay_slots
+          slot_end = branch_index
+          instr = src.instructions[slot_end + 1]
+          while slots > 0 || (instr && instr.bundled?)
+            slots -= 1 unless instr && instr.bundled?
+            slot_end += 1
+            instr = src.instructions[slot_end + 1]
+          end
+          src.instructions[0..slot_end]
+        end
       end
-      debug(@options,:costs) { "WCET edge costs for #{edge}: #{path_wcet} block, #{edge_wcet} edge" }
-      path_wcet + edge_wcet
+    if @options.wca_count_instructions
+      path_wcet = ilist.length
+      edge_wcet = 0
+    else
+      path_wcet = @pml.arch.path_wcet(ilist)
+      edge_wcet = @pml.arch.edge_wcet(ilist,branch_index,edge)
+    end
+    debug(@options,:costs) { "WCET edge costs for #{edge}: #{path_wcet} block, #{edge_wcet} edge" }
+    path_wcet + edge_wcet
   end
 
   def run_solver(ilp)
@@ -121,7 +121,7 @@ class WCA
   def analyze_fragment(entries, exists, blocks, &cost)
     # Builder and Analysis Entry
     ilp = GurobiILP.new(@options) if @options.use_gurobi
-    ilp = LpSolveILP.new(@options) unless ilp
+    ilp ||= LpSolveILP.new(@options)
 
     # flow facts
     ff_levels = ["machinecode", "gcfg"]
@@ -142,20 +142,20 @@ class WCA
   end
 
   def two_decimals(float_n)
-     float_n.round(3).to_s[0..3].to_f
+    float_n.round(3).to_s[0..3].to_f
   end
+
   def three_decimals(float_n)
-     float_n.round(4).to_s[0..4].to_f
+    float_n.round(4).to_s[0..4].to_f
   end
 
   def analyze(entry_label)
-
     # Builder and Analysis Entry
     ilp = GurobiILP.new(@options) if @options.use_gurobi
-    ilp = LpSolveILP.new(@options) unless ilp
+    ilp ||= LpSolveILP.new(@options)
 
     gcfg = @pml.analysis_gcfg(@options)
-    machine_entry = gcfg.get_entry()['machinecode'].first
+    machine_entry = gcfg.get_entry['machinecode'].first
 
     # PLAYING: VCFGs
     #bcffs,mcffs = ['bitcode','machinecode'].map { |level|
@@ -182,10 +182,10 @@ class WCA
     # flow facts
     ff_levels = ["machinecode", "gcfg"]
     flowfacts = @pml.flowfacts.filter(@pml,
-                                     @options.flow_fact_selection,
-                                     @options.flow_fact_srcs,
-                                     ff_levels,
-                                     true)
+                                      @options.flow_fact_selection,
+                                      @options.flow_fact_srcs,
+                                      ff_levels,
+                                      true)
 
     # units
     # info ("Assuming time per cycle: #{TIME_PER_CYCLE} second")
@@ -202,8 +202,8 @@ class WCA
 
     if @options.stats
       # count blocks and functions within the ipet
-      functions = Set.new;
-      blocks    = Set.new;
+      functions = Set.new
+      blocks    = Set.new
 
       addvar = lambda do |var|
         case var
@@ -229,8 +229,7 @@ class WCA
                  "ipet variables"   => builder.ilp.num_variables,
                  "ipet constraints" => builder.ilp.constraints.length,
                  "ipet functions"   => functions.length,
-                 "ipet blocks"      => blocks.length
-                )
+                 "ipet blocks"      => blocks.length)
 
       if @options.verbose
         functions.each do |f|
@@ -241,8 +240,6 @@ class WCA
         end
       end
     end
-
-
 
     # run cache analyses
     # FIXME: Cache analysis
@@ -256,7 +253,7 @@ class WCA
                  "ipet constraints" => builder.ilp.constraints.length)
     end
 
-    cycles, freqs, unbounded = run_solver(ilp)
+    cycles, freqs, _unbounded = run_solver(ilp)
 
     # report result
     profile = Profile.new([])
@@ -272,6 +269,7 @@ class WCA
 
         next if v.kind_of?(Instruction)         # Stack-Cache Cost
         next if v.kind_of?(IPETEdgeSCA)         # Stack-Cache Cost (graph-based)
+
         ref = nil
         if v.kind_of?(IPETEdge)
           if v.level != :gcfg
@@ -296,13 +294,13 @@ class WCA
         next
       end
       edgefreq = edgefreqs[ref]
-      profile.add(ProfileEntry.new(ref, edgecost, edgefreqs[ref], totalcosts[ref]))
+      profile.add(ProfileEntry.new(ref, edgecost, edgefreq, totalcosts[ref]))
     end
 
     ca.summarize(@options, freqs, Hash[freqs.map{ |v,freq| [v,freq * builder.ilp.get_cost(v)] }], report)
 
     def grouped_report_by(ilp, freqs, key, print_activations=true)
-      groups = freqs.group_by { |v, freq|
+      groups = freqs.group_by { |v, _freq|
         v.static_context(key) if v.kind_of?(IPETEdge)
       }
 
@@ -314,19 +312,18 @@ class WCA
         combined_cost = edges.map {|v, freq| freq * ilp.get_cost(v) }.inject(0, :+)
         next if (combined_cost + activation_count) == 0
 
-        yield (label ? label : "<unspecified>"), combined_cost, activation_count
+        yield (label || "<unspecified>"), combined_cost, activation_count
       }
     end
 
     if @options.stats
       statistics("WCA", "cycles" => cycles)
       irqs, timers = 0, 0
-      grouped_report_by(builder.ilp, freqs, 'function') do
-        | label, cost, activation_count |
+      grouped_report_by(builder.ilp, freqs, 'function') do |label, _cost, activation_count|
         irqs   = activation_count if label == 'irq_entry'
         timers = activation_count if label == 'timer_isr'
         if label =~ /^timing_/
-          statistics("WCA", "functions" => {label=>activation_count})
+          statistics("WCA", "functions" => {label => activation_count})
         end
       end
       # Count alarm activations
@@ -346,23 +343,20 @@ class WCA
 
     if @options.verbose
       puts "Subtask Profile:"
-      grouped_report_by(builder.ilp, freqs, 'subtask', false) do
-        | label, cost, activation_count |
+      grouped_report_by(builder.ilp, freqs, 'subtask', false) do |label, cost, _activation_count|
         printf "%42s:", label
         printf " %6d cycles", cost
         printf "\n"
       end
       puts "ABB Profile:"
-      grouped_report_by(builder.ilp, freqs, 'abb') do
-          | label, cost, activation_count |
+      grouped_report_by(builder.ilp, freqs, 'abb') do |label, cost, activation_count|
         printf "%42s:", label
         printf " %6d cycles", cost
         printf " %4d activations", activation_count
         printf "\n"
       end
       puts "Function Profile:"
-      grouped_report_by(builder.ilp, freqs, 'function') do
-        | label, cost, activation_count |
+      grouped_report_by(builder.ilp, freqs, 'function') do |label, cost, activation_count|
         printf "%42s:", label
         printf " %6d cycles", cost
         printf " %4d activations", activation_count
@@ -372,6 +366,7 @@ class WCA
         puts "\nEdge Profile:"
         freqs.sort_by { |v,freq| [v.to_s, freq] }.each { |v, freq|
           next if freq == 0
+
           printf "%4d cyc %4d freq  %s\n", freq * builder.ilp.get_cost(v), freq, v
         }
       end

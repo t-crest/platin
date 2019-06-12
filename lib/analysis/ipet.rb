@@ -950,13 +950,13 @@ class IPETBuilder
   ################################################################
   # Function Calls
   ################################################################
-  def add_calls_in_function(mf_function, forbidden_targets=nil)
+  def add_calls_in_function(mf_function, forbidden_targets = nil)
     mf_function.blocks.each do |block|
       add_calls_in_block(block, forbidden_targets)
     end
   end
 
-  def add_calls_in_block(mbb, forbidden_targets=nil)
+  def add_calls_in_block(mbb, forbidden_targets = nil)
     forbidden_targets = Set.new(forbidden_targets || [])
     mbb.callsites.each do |cs|
       call_targets = @mc_model.calltargets(cs)
@@ -980,12 +980,12 @@ class IPETBuilder
   # Build basic IPET Structure, when a SSTG is present
   # TODO: all references to gcfg need to be renamed to stg
   # (all states are present in this structure, nothing is grouped by next ABB)
-  def build_sstg(sstg, flowfacts, opts={}, &cost_block)
+  def build_sstg(sstg, flowfacts, opts = {}, &cost_block)
     # TODO WCEC: we ignore modelling of function calls for now! (duplication discriminating power states necessary)
 
-    assert("IPETBuilder#build called twice") { ! @entry }
+    assert("IPETBuilder#build called twice") { !@entry }
     @call_edges = []
-    @mf_function_callers = Hash.new {|hsh, key| hsh[key] = [] }
+    @mf_function_callers = Hash.new { |hsh, key| hsh[key] = [] }
 
     # Build refinement to prune infeasible blocks and calls
     build_refinement(sstg, flowfacts)
@@ -1004,18 +1004,19 @@ class IPETBuilder
     #    3.2 Collect functions called from the superstructure ABBs
     #    3.3 Collect functions called from GCFG nodes
     #    3.4 Add functions
-    full_mfs = Set.new    ## To be added
+    full_mfs = Set.new # To be added
     sstg_mfs = Set.new
     sstg_mbbs = Set.new
     toplevel_abb_count = 0 # statistics
 
-    abb_to_nodes.each { |abb, nodes|
+    abb_to_nodes.each do |abb, nodes|
       @gcfg_model.add_abb(abb)
 
       # 3.1 All ABBs from nodes that are _not_ marked as microstructure
       microstructure = nodes.map { |x| x.microstructure }
       next if microstructure.all?
-      assert("Microstructure state of #{abb} is inconsistent") { not microstructure.any? }
+
+      assert("Microstructure state of #{abb} is inconsistent") { microstructure.none? }
       toplevel_abb_count += 1
 
       # Add blocks within the ABB
@@ -1031,30 +1032,33 @@ class IPETBuilder
       sstg_mfs.add(abb.function)
 
       # 3.2 What functions are called from this ABB?
-      region.nodes.each { |bb|
+      region.nodes.each do |bb|
         sstg_mbbs.add(bb)
-        bb.callsites.each { |cs|
+        bb.callsites.each do |cs|
           next if @mc_model.infeasible?(cs.block)
-          @mc_model.calltargets(cs).each { |f|
-            assert("calltargets(cs) is nil") { ! f.nil? }
+
+          @mc_model.calltargets(cs).each do |f|
+            assert("calltargets(cs) is nil") { !f.nil? }
             full_mfs += get_functions_reachable_from_function(f)
-          }
-        }
-      }
-    }
+          end
+        end
+      end
+    end
+
     # 3.3 Collect functions called from GCFG nodes
-    function_to_nodes.each { |mf, nodes|
+    function_to_nodes.each do |mf, nodes|
       microstructure = nodes.map { |x| x.microstructure }
       next if microstructure.all?
-      assert("Microstructure state of #{mf} is inconsistent") { not microstructure.any? }
+
+      assert("Microstructure state of #{mf} is inconsistent") { microstructure.none? }
       full_mfs += get_functions_reachable_from_function(mf)
-    }
+    end
 
     ## Interlude: Sanity Check: No function that is called from the
     ## superstructure can be a ABB function
-    assert("Functions #{(full_mfs & sstg_mfs).to_a} part of superstructure and called function") {
-      (full_mfs & sstg_mfs).length == 0
-    }
+    assert("Functions #{(full_mfs & sstg_mfs).to_a} part of superstructure and called function") do
+      (full_mfs & sstg_mfs).empty?
+    end
 
     # 3.4 Add functions
     full_mfs.each do |mf|
@@ -1068,7 +1072,7 @@ class IPETBuilder
     # 4. Connect the node frequencies to the underlying object
     #    4.1 to ABB frequencies
     #    4.2 to function frequencies
-    abb_to_nodes.each {|abb, nodes|
+    abb_to_nodes.each do |abb, nodes|
       mc_entry_block = abb.get_region(:dst).entry_node
       lhs = @mc_model.block_frequency(mc_entry_block)
       # the folowing creates SOSs:
@@ -1084,16 +1088,15 @@ class IPETBuilder
                                  [[abb, 1]],
                                  "abb_copy_to_var_#{abb.qname}", :gcfg)
       end
-    }
+    end
     #    4.2 to function frequencies
     # (happens in our case for IRQs: function entry is ABB entry)
-    function_to_nodes.each {|mf, nodes|
+    function_to_nodes.each do |mf, nodes|
       mc_entry_block = mf.entry_block
       lhs = @mc_model.block_frequency(mc_entry_block)
       rhs = @gcfg_model.flow_into_abb(mf, nodes)
       @gcfg_model.assert_equal(lhs, rhs, "abb_influx_#{mf.qname}", :gcfg)
-    }
-
+    end
 
     # 5. Add missing super-structure connections
     #    5.1 Calls from embedded functions
@@ -1102,37 +1105,33 @@ class IPETBuilder
     #    5.4 Global timimg variable
 
     full_mfs.each do |mf|
-      add_calls_in_function(mf, forbidden = sstg_mfs)
+      add_calls_in_function(mf, sstg_mfs)
     end
     #    5.2 Calls from super-structure ABBs
     sstg_mbbs.each do |bb|
       add_calls_in_block(bb)
     end
     #    5.3 Add call constraints
-    add_global_call_constraints()
+    add_global_call_constraints
 
     #    5.4 Global timimg variable
     @gcfg_model.add_total_time_variable
 
-
-    flowfacts.each { |ff|
+    flowfacts.each do |ff|
       debug(@options, :ipet) { "adding flowfact #{ff}" }
       add_flowfact(ff)
-    }
+    end
 
-    if not @options.wcec
+    if !@options.wcec && @options.stats
       statistics("WCA",
                  "gcfg nodes" => sstg.nodes.length,
-                 "gcfg transitions" => sstg.nodes.inject(0) {|acc, n| acc + n.successors.length},
+                 "gcfg transitions" => sstg.nodes.inject(0) { |acc, n| acc + n.successors.length },
                  "abbs toplevel" => toplevel_abb_count,
-                 "abbs microstructure" => abb_to_nodes.length - toplevel_abb_count
-                 ) if @options.stats
-     end
-
+                 "abbs microstructure" => abb_to_nodes.length - toplevel_abb_count)
+    end
 
     die("Bitcode contraints are not implemented yet") if @bc_model
   end
-
 
   # IPET Structure for WCEC
   # @param the complete STG (no state fragments)
