@@ -128,3 +128,30 @@ Style/Documentation:
 
 Style/MultilineBlockChain:
   Enabled: false
+
+Layout/LeadingCommentSpace:
+  Enabled: false
+
+Layout/EmptyLines:
+  Enabled: false
+
+Layout/SpaceAroundEqualsInParameterDefault:
+  Enabled: false
+
+Layout/SpaceInsideBlockBraces:
+  Enabled: false
+
+Style/BlockDelimiters:
+  Enabled: false
+
+Layout/SpaceInsideHashLiteralBraces:
+  Enabled: false
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+Style/RedundantParentheses:
+  Enabled: false
+
+Style/ParenthesesAroundCondition:
+  Enabled: false
