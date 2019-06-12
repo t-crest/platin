@@ -312,7 +312,7 @@ class Architecture < PML::Architecture
       1
 
     # branch and link: BL = inst32
-    when 'tBL'
+    when 'tBL', 'tBLXi', 'tBLXr'
       1 + PIPELINE_REFILL
 
     # NOTE: pseudo instruction that maps to tBL
