@@ -190,10 +190,199 @@ class WCA
     # units
     # info ("Assuming time per cycle: #{TIME_PER_CYCLE} second")
 
-    # Build IPET using costs from @pml.arch
-    local_builder = nil
-    ## FIXME: FIXME: UGLY
+    # WCEC uses its own ilp construction and returns custom TimeEntries
     if @options.wcec
+      return analyze_gcfg_wcec(gcfg, machine_entry, builder, flowfacts)
+    end
+
+    # Build IPET using costs from @pml.arch
+    builder.build_sstg(gcfg, flowfacts) do |edge|
+      edge_cost(edge)
+    end
+
+    if @options.stats
+      # count blocks and functions within the ipet
+      functions = Set.new;
+      blocks    = Set.new;
+
+      addvar = lambda do |var|
+        case var
+        when Function
+          functions.add(var)
+        when Block
+          blocks.add(var)
+          functions.add(var.function)
+        end
+      end
+
+      ilp.variables.each do |v|
+        if v.is_a?(IPETEdge)
+          addvar.call(v.source)
+          addvar.call(v.target)
+        else
+          addvar.call(v)
+        end
+      end
+
+      statistics("WCA",
+                 "flowfacts"        => flowfacts.length,
+                 "ipet variables"   => builder.ilp.num_variables,
+                 "ipet constraints" => builder.ilp.constraints.length,
+                 "ipet functions"   => functions.length,
+                 "ipet blocks"      => blocks.length
+                )
+
+      if @options.verbose
+        functions.each do |f|
+          puts "IPETFunction: #{f.qname}"
+        end
+        blocks.each do |b|
+          puts "IPETBlock: #{b.qname} (Instructions: #{b.instructions.length})"
+        end
+      end
+    end
+
+
+
+    # run cache analyses
+    # FIXME: Cache analysis
+    ca = CacheAnalysis.new(builder.refinement['machinecode'], @pml, @options)
+    #ca.analyze(entry['machinecode'], builder)
+
+    if @options.stats
+      statistics("WCA",
+                 "flowfacts" => flowfacts.length,
+                 "ipet variables" => builder.ilp.num_variables,
+                 "ipet constraints" => builder.ilp.constraints.length)
+    end
+
+    cycles, freqs, unbounded = run_solver(ilp)
+
+    # report result
+    profile = Profile.new([])
+    report = TimingEntry.new(machine_entry, cycles, profile,
+                             'level' => 'machinecode', 'origin' => @options.timing_output || 'platin')
+
+    # collect edge timings
+    edgefreqs, edgecosts, totalcosts = {}, Hash.new(0), Hash.new(0)
+    freqs.each do |v,freq|
+      edgecost = builder.ilp.get_cost(v)
+      freq = freq.to_i
+      if edgecost > 0 || (v.kind_of?(IPETEdge) && v.cfg_edge?)
+
+        next if v.kind_of?(Instruction)         # Stack-Cache Cost
+        next if v.kind_of?(IPETEdgeSCA)         # Stack-Cache Cost (graph-based)
+        ref = nil
+        if v.kind_of?(IPETEdge)
+          if v.level != :gcfg
+            die("ILP cost: source is not a block") unless v.source.kind_of?(Block)
+            die("ILP cost: target is not a block") unless v.target == :exit || v.target.kind_of?(Block)
+            ref = ContextRef.new(v.cfg_edge, Context.empty)
+          else
+            ref = ContextRef.new(v.gcfg_edge, Context.empty)
+          end
+          edgefreqs[ref] = freq
+        elsif v.kind_of?(MemoryEdge)
+          ref = ContextRef.new(v.edgeref, Context.empty)
+        end
+        edgecosts[ref] += edgecost
+        totalcosts[ref] += edgecost * freq
+      end
+    end
+
+    edgecosts.each do |ref, edgecost|
+      unless edgefreqs.include?(ref)
+        warn("edge cost (#{ref} -> #{edgecost}), but no corresponding IPETEdge variable")
+        next
+      end
+      edgefreq = edgefreqs[ref]
+      profile.add(ProfileEntry.new(ref, edgecost, edgefreqs[ref], totalcosts[ref]))
+    end
+
+    ca.summarize(@options, freqs, Hash[freqs.map{ |v,freq| [v,freq * builder.ilp.get_cost(v)] }], report)
+
+    def grouped_report_by(ilp, freqs, key, print_activations=true)
+      groups = freqs.group_by { |v, freq|
+        v.static_context(key) if v.kind_of?(IPETEdge)
+      }
+
+      groups.sort_by {|k,v| k.to_s}.map {|label, edges|
+        activation_count = edges.select {|v, freq|
+          v.is_entry_in_static_context(key) if v.kind_of?(IPETEdge)
+        }.reduce(0) {|acc, n| acc + n[1]}
+
+        combined_cost = edges.map {|v, freq| freq * ilp.get_cost(v) }.inject(0, :+)
+        next if (combined_cost + activation_count) == 0
+
+        yield (label ? label : "<unspecified>"), combined_cost, activation_count
+      }
+    end
+
+    if @options.stats
+      statistics("WCA", "cycles" => cycles)
+      irqs, timers = 0, 0
+      grouped_report_by(builder.ilp, freqs, 'function') do
+        | label, cost, activation_count |
+        irqs   = activation_count if label == 'irq_entry'
+        timers = activation_count if label == 'timer_isr'
+        if label =~ /^timing_/
+          statistics("WCA", "functions" => {label=>activation_count})
+        end
+      end
+      # Count alarm activations
+      alarms = 0
+      freqs.each { |v, freq|
+        if v.to_s =~ /^GCFG:.*CheckAlarm.*(ActivateTask|SetEvent)/
+          alarms += freq
+        end
+      }
+      statistics("WCA",
+                 "interrupt requests" => irqs,
+                 "timer ticks" => timers,
+                 "alarm activations" => alarms)
+    end
+
+    info "Cycles: #{cycles}"
+
+    if @options.verbose
+      puts "Subtask Profile:"
+      grouped_report_by(builder.ilp, freqs, 'subtask', false) do
+        | label, cost, activation_count |
+        printf "%42s:", label
+        printf " %6d cycles", cost
+        printf "\n"
+      end
+      puts "ABB Profile:"
+      grouped_report_by(builder.ilp, freqs, 'abb') do
+          | label, cost, activation_count |
+        printf "%42s:", label
+        printf " %6d cycles", cost
+        printf " %4d activations", activation_count
+        printf "\n"
+      end
+      puts "Function Profile:"
+      grouped_report_by(builder.ilp, freqs, 'function') do
+        | label, cost, activation_count |
+        printf "%42s:", label
+        printf " %6d cycles", cost
+        printf " %4d activations", activation_count
+        printf "\n"
+      end
+      if @options.verbosity_level > 1
+        puts "\nEdge Profile:"
+        freqs.sort_by { |v,freq| [v.to_s, freq] }.each { |v, freq|
+          next if freq == 0
+          printf "%4d cyc %4d freq  %s\n", freq * builder.ilp.get_cost(v), freq, v
+        }
+      end
+    end
+
+    report
+  end
+
+  def analyze_gcfg_wcec(gcfg, machine_entry, builder, flowfacts)
+    ## FIXME: FIXME: UGLY
+    local_builder = nil
       # We calculate WCETs for each ABB and every function that is
       # directly called
       wcet = Hash.new
@@ -381,193 +570,8 @@ class WCA
 
 
       return report
-    else # @options.wcec == false
-      builder.build_sstg(gcfg, flowfacts) do |edge|
-        edge_cost(edge)
-      end
-
-      if @options.stats
-        # count blocks and functions within the ipet
-        functions = Set.new;
-        blocks    = Set.new;
-
-        addvar = lambda do |var|
-          case var
-          when Function
-            functions.add(var)
-          when Block
-            blocks.add(var)
-            functions.add(var.function)
-          end
-        end
-
-        ilp.variables.each do |v|
-          if v.is_a?(IPETEdge)
-            addvar.call(v.source)
-            addvar.call(v.target)
-          else
-            addvar.call(v)
-          end
-        end
-
-        statistics("WCA",
-                   "flowfacts"        => flowfacts.length,
-                   "ipet variables"   => builder.ilp.num_variables,
-                   "ipet constraints" => builder.ilp.constraints.length,
-                   "ipet functions"   => functions.length,
-                   "ipet blocks"      => blocks.length
-                  )
-
-        if @options.verbose
-          functions.each do |f|
-            puts "IPETFunction: #{f.qname}"
-          end
-          blocks.each do |b|
-            puts "IPETBlock: #{b.qname} (Instructions: #{b.instructions.length})"
-          end
-        end
-      end
-
-
-
-      # run cache analyses
-      # FIXME: Cache analysis
-      ca = CacheAnalysis.new(builder.refinement['machinecode'], @pml, @options)
-      #ca.analyze(entry['machinecode'], builder)
-
-      # END: remove me soon
-    end
-
-    if @options.stats
-      statistics("WCA",
-                 "flowfacts" => flowfacts.length,
-                 "ipet variables" => builder.ilp.num_variables,
-                 "ipet constraints" => builder.ilp.constraints.length)
-    end
-
-    cycles, freqs, unbounded = run_solver(ilp)
-
-    # report result
-    profile = Profile.new([])
-    report = TimingEntry.new(machine_entry, cycles, profile,
-                             'level' => 'machinecode', 'origin' => @options.timing_output || 'platin')
-
-    # collect edge timings
-    edgefreqs, edgecosts, totalcosts = {}, Hash.new(0), Hash.new(0)
-    freqs.each do |v,freq|
-      edgecost = builder.ilp.get_cost(v)
-      freq = freq.to_i
-      if edgecost > 0 || (v.kind_of?(IPETEdge) && v.cfg_edge?)
-
-        next if v.kind_of?(Instruction)         # Stack-Cache Cost
-        next if v.kind_of?(IPETEdgeSCA)         # Stack-Cache Cost (graph-based)
-        ref = nil
-        if v.kind_of?(IPETEdge)
-          if v.level != :gcfg
-            die("ILP cost: source is not a block") unless v.source.kind_of?(Block)
-            die("ILP cost: target is not a block") unless v.target == :exit || v.target.kind_of?(Block)
-            ref = ContextRef.new(v.cfg_edge, Context.empty)
-          else
-            ref = ContextRef.new(v.gcfg_edge, Context.empty)
-          end
-          edgefreqs[ref] = freq
-        elsif v.kind_of?(MemoryEdge)
-          ref = ContextRef.new(v.edgeref, Context.empty)
-        end
-        edgecosts[ref] += edgecost
-        totalcosts[ref] += edgecost * freq
-      end
-    end
-
-    edgecosts.each do |ref, edgecost|
-      unless edgefreqs.include?(ref)
-        warn("edge cost (#{ref} -> #{edgecost}), but no corresponding IPETEdge variable")
-        next
-      end
-      edgefreq = edgefreqs[ref]
-      profile.add(ProfileEntry.new(ref, edgecost, edgefreqs[ref], totalcosts[ref]))
-    end
-
-    ca.summarize(@options, freqs, Hash[freqs.map{ |v,freq| [v,freq * builder.ilp.get_cost(v)] }], report)
-
-    def grouped_report_by(ilp, freqs, key, print_activations=true)
-      groups = freqs.group_by { |v, freq|
-        v.static_context(key) if v.kind_of?(IPETEdge)
-      }
-
-      groups.sort_by {|k,v| k.to_s}.map {|label, edges|
-        activation_count = edges.select {|v, freq|
-          v.is_entry_in_static_context(key) if v.kind_of?(IPETEdge)
-        }.reduce(0) {|acc, n| acc + n[1]}
-
-        combined_cost = edges.map {|v, freq| freq * ilp.get_cost(v) }.inject(0, :+)
-        next if (combined_cost + activation_count) == 0
-
-        yield (label ? label : "<unspecified>"), combined_cost, activation_count
-      }
-    end
-
-    if @options.stats
-      statistics("WCA", "cycles" => cycles)
-      irqs, timers = 0, 0
-      grouped_report_by(builder.ilp, freqs, 'function') do
-        | label, cost, activation_count |
-        irqs   = activation_count if label == 'irq_entry'
-        timers = activation_count if label == 'timer_isr'
-        if label =~ /^timing_/
-          statistics("WCA", "functions" => {label=>activation_count})
-        end
-      end
-      # Count alarm activations
-      alarms = 0
-      freqs.each { |v, freq|
-        if v.to_s =~ /^GCFG:.*CheckAlarm.*(ActivateTask|SetEvent)/
-          alarms += freq
-        end
-      }
-      statistics("WCA",
-                 "interrupt requests" => irqs,
-                 "timer ticks" => timers,
-                 "alarm activations" => alarms)
-    end
-
-    info "Cycles: #{cycles}"
-
-    if @options.verbose
-      puts "Subtask Profile:"
-      grouped_report_by(builder.ilp, freqs, 'subtask', false) do
-        | label, cost, activation_count |
-        printf "%42s:", label
-        printf " %6d cycles", cost
-        printf "\n"
-      end
-      puts "ABB Profile:"
-      grouped_report_by(builder.ilp, freqs, 'abb') do
-          | label, cost, activation_count |
-        printf "%42s:", label
-        printf " %6d cycles", cost
-        printf " %4d activations", activation_count
-        printf "\n"
-      end
-      puts "Function Profile:"
-      grouped_report_by(builder.ilp, freqs, 'function') do
-        | label, cost, activation_count |
-        printf "%42s:", label
-        printf " %6d cycles", cost
-        printf " %4d activations", activation_count
-        printf "\n"
-      end
-      if @options.verbosity_level > 1
-        puts "\nEdge Profile:"
-        freqs.sort_by { |v,freq| [v.to_s, freq] }.each { |v, freq|
-          next if freq == 0
-          printf "%4d cyc %4d freq  %s\n", freq * builder.ilp.get_cost(v), freq, v
-        }
-      end
-    end
-
-    report
   end
+
 end
 
 end # module PML
