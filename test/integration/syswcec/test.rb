@@ -1,3 +1,4 @@
+# typed: false
 Class.new(superclass = PlatinTest::Test) do
 
   def initialize
@@ -33,8 +34,8 @@ Class.new(superclass = PlatinTest::Test) do
     unless wcec.nil?
       bound, output, status = Float($1), output, status.exitstatus
     else
-      Test::logn("Failed to determine wcec bound", level: Log::WARN)
-      Test::logn(output, level: Log::DEBUG)
+      Test::logn("Failed to determine wcec bound", level: PlatinTest::Log::WARN)
+      Test::logn(output, level: PlatinTest::Log::DEBUG)
       bound, output, status = nil, output, status.exitstatus
     end
     @result = Result.new(

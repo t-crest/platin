@@ -1,3 +1,4 @@
+# typed: false
 Class.new(superclass = PlatinTest::Test) do
 
   def initialize
