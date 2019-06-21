@@ -1,3 +1,4 @@
+# typed: ignore
 #
 # platin toolchain: extract-symbols
 #

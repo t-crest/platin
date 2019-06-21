@@ -1,10 +1,11 @@
+# typed: false
 #
 # PLATIN tool set
 #
 # Bindings to lp_solve
 #
 require 'platin'
-include PML
+require 'analysis/ilp'
 begin
   require 'rubygems'
   require "lpsolve"
@@ -16,6 +17,7 @@ rescue Exception => details
   exit 1
 end
 
+module PML
 # Simple interface to lp_solve
 class LpSolveILP < ILP
   # Tolarable floating point error in objective
@@ -143,4 +145,6 @@ private
   def lp_solve_error(r)
     "LPSolver Error: #{lp_solve_error_msg(r)} (E#{r})"
   end
+end
+
 end

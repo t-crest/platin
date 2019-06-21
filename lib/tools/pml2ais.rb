@@ -1,3 +1,4 @@
+# typed: ignore
 #
 # PSK toolset
 #

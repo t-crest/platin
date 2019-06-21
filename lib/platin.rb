@@ -1,3 +1,4 @@
+# typed: strong
 #
 # PLATIN tool set
 #

@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# typed: false
 
 # TODO: Proper ahead of time type inference
 #       ADTs

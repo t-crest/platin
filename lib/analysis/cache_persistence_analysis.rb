@@ -1,3 +1,4 @@
+# typed: false
 #
 # platin tool set
 #
@@ -6,6 +7,7 @@
 # See Article [TODO]
 
 require 'set'
+require 'analysis/scopegraph'
 
 #
 # local persistence analysis
@@ -17,8 +19,10 @@ class PersistenceDataFlowAnalysis
   #  NO set:   other tags possibly accessed on paths where T is not accessed at all
   #  IN set:   other tags possibly accessed up to the first access of T
   #  OUT set:  other tags possibly accessed from the last acces to T on
-  #
-  #
+
+  # Resolve class constants for sorbet
+  ScopeGraph = PML::ScopeGraph
+  RegionGraph = PML::RegionGraph
 
   # forward declaration
   class TagSet
@@ -354,6 +358,9 @@ end
 
 class PersistenceAnalysis
   attr_reader :options
+
+  # Resolve class constants for sorbet
+  ScopeGraph = PML::ScopeGraph
 
   def initialize(cache_analysis, options)
     @analysis, @options = cache_analysis, options

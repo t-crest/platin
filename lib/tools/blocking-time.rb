@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# typed: ignore
 # coding: utf-8
 #
 # platin tool set

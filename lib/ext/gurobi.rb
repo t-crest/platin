@@ -1,3 +1,4 @@
+# typed: false
 #
 # PLATIN tool set
 #
@@ -5,11 +6,12 @@
 #
 require 'platin'
 require 'English'
-include PML
+require 'analysis/ilp'
 
 require 'thwait'
 require 'thread'
 
+module PML
 # Simple interface to gurobi_cl
 class GurobiILP < ILP
   INFEASIBLE = :GB_INFEASIBLE
@@ -288,4 +290,6 @@ private
   def gurobi_error(msg)
     raise Exception, gurobi_error_msg(msg)
   end
+end
+
 end

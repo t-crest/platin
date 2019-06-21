@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# typed: false
 # Prototype for patmos-clang driver replacement for WCET guided optimization
 
 require 'ostruct'

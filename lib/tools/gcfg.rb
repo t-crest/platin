@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# typed: ignore
 
 require 'platin'
 require 'English'

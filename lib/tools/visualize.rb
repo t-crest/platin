@@ -1,14 +1,22 @@
 #!/usr/bin/env ruby
+# typed: false
 #
 # PLATIN tool set
 #
 # Simple visualizer (should be expanded to do proper report generation)
 #
+include PML
+
 require 'set'
 require 'platin'
 require 'analysis/scopegraph'
 require 'English'
-include PML
+
+require 'core/pml'
+require 'core/program'
+require 'core/programinfo'
+require 'analysis/ipet'
+
 
 begin
   require 'rubygems'
@@ -38,6 +46,8 @@ protected
 end
 
 class CallGraphVisualizer < Visualizer
+  include PML
+
   def initialize(pml, options); @pml, @options = pml, options; end
 
   def visualize_callgraph(function)
@@ -89,6 +99,8 @@ class PlainCallGraphVisualizer < Visualizer
 end
 
 class ScopeGraphVisualizer < Visualizer
+  include PML
+
   def initialize(pml, options); @pml, @options = pml, options; end
 
   def visualize_scopegraph(function)
@@ -112,6 +124,8 @@ class ScopeGraphVisualizer < Visualizer
 end
 
 class FlowGraphVisualizer < Visualizer
+  include PML
+
   def initialize(pml, options); @pml, @options = pml, options; end
 
   def extract_timing(function, timing)
@@ -309,6 +323,8 @@ class FlowGraphVisualizer < Visualizer
   end
 end
 class RelationGraphVisualizer < Visualizer
+  include PML
+
   def initialize(options); @options = options; end
 
   def visualize(rg)
@@ -341,6 +357,8 @@ class RelationGraphVisualizer < Visualizer
 end
 
 class ILPVisualisation < Visualizer
+  include PML
+
   INFEASIBLE_COLOUR = 'red'
   INFEASIBLE_FILL   = '#e76f6f'
 
@@ -783,5 +801,5 @@ if __FILE__ == $PROGRAM_NAME
     opts.callstring_length
     VisualizeTool.add_options(opts)
   end
-  VisualizeTool.run(PMLDoc.from_files(options.input, options), options)
+  VisualizeTool.run(PML::PMLDoc.from_files(options.input, options), options)
 end

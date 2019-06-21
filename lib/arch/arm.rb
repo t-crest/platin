@@ -1,3 +1,4 @@
+# typed: false
 #
 # PLATIN tool set
 #

@@ -1,3 +1,4 @@
+# typed: ignore
 #
 # PML toolset
 #

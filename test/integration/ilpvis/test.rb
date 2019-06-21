@@ -27,7 +27,7 @@ Class.new(superclass = PlatinTest::Test) do
   end
 
   def enabled?
-    Test::check_commands(*@required_commands) && Test::check_gems(*@required_gems)
+    PlatinTest::Test::check_commands(*@required_commands) && PlatinTest::Test::check_gems(*@required_gems)
   end
 
   def rmf(file)
@@ -40,7 +40,7 @@ Class.new(superclass = PlatinTest::Test) do
       rmf(f)
     end
 
-    cycles, output, status = Test::platin_getcycles(@platininvocation)
+    cycles, output, status = PlatinTest::Test::platin_getcycles(@platininvocation)
 
     success = true
     output += "\nVerifying artifacts exist:\n"
@@ -66,7 +66,7 @@ Class.new(superclass = PlatinTest::Test) do
       output += " failed"
     end
 
-    @result = Result.new(
+    @result = PlatinTest::Result.new(
       success: status == 0 && check_cycles(cycles) && success,
       message: "Exitstatus: #{status}\tCycles: #{cycles}",
       output: output

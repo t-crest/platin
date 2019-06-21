@@ -1,3 +1,4 @@
+# typed: false
 # Peaches is the expression language used for evaluating annotations over a
 # given model.
 

@@ -1,3 +1,4 @@
+# typed: ignore
 require 'platin'
 include PML
 

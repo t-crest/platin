@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 Class.new(superclass = PlatinTest::Test) do
 
   def initialize
@@ -24,21 +24,21 @@ Class.new(superclass = PlatinTest::Test) do
   end
 
   def enabled?
-    Test::check_commands(*@required_commands) && Test::check_gems(*@required_gems)
+    PlatinTest::Test::check_commands(*@required_commands) && PlatinTest::Test::check_gems(*@required_gems)
   end
 
   def run
-    output, status = Test::execute_platin(@platininvocation)
+    output, status = PlatinTest::Test::execute_platin(@platininvocation)
     # match in reverse order: we want the last cycles
     wcec = output.lines.reverse.find {|l| l =~ /best WCEC bound: (-?\d+(\.\d+)?) mJ/m}
     unless wcec.nil?
       bound, output, status = Float($1), output, status.exitstatus
     else
-      Test::logn("Failed to determine wcec bound", level: PlatinTest::Log::WARN)
-      Test::logn(output, level: PlatinTest::Log::DEBUG)
+      PlatinTest::Test::logn("Failed to determine wcec bound", level: PlatinTest::Log::WARN)
+      PlatinTest::Test::logn(output, level: PlatinTest::Log::DEBUG)
       bound, output, status = nil, output, status.exitstatus
     end
-    @result = Result.new(
+    @result = PlatinTest::Result.new(
       success: status == 0 && check_bound(bound),
       message: "Exitstatus: #{status}\tWCEC: #{bound}",
       output: output

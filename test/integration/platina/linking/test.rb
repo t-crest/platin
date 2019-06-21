@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 Class.new(superclass = PlatinTest::Test) do
 
   def initialize
@@ -27,12 +27,12 @@ Class.new(superclass = PlatinTest::Test) do
   end
 
   def enabled?
-    Test::check_commands(*@required_commands) && Test::check_gems(*@required_gems)
+    PlatinTest::Test::check_commands(*@required_commands) && PlatinTest::Test::check_gems(*@required_gems)
   end
 
   def run
-    cycles, output, status = Test::platin_getcycles(@platininvocation)
-    @result = Result.new(
+    cycles, output, status = PlatinTest::Test::platin_getcycles(@platininvocation)
+    @result = PlatinTest::Result.new(
       success: status == 0 && check_cycles(cycles),
       message: "Exitstatus: #{status}\tCycles: #{cycles}",
       output: output

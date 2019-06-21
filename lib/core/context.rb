@@ -1,3 +1,4 @@
+# typed: false
 #
 # platin tool set
 #
@@ -645,8 +646,9 @@ end # module PML
 # in-module testing
 if __FILE__ == $PROGRAM_NAME
   require 'test/unit'
-  include PML
   class TestContext < Test::Unit::TestCase
+    include PML
+
     def setup
       @ctxm1 = ContextManager.new(2)
       @ctxm2 = ContextManager.new(2,1,2)

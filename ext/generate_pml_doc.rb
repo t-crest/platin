@@ -1,3 +1,4 @@
+# typed: false
 #
 # This file is part of platin
 #

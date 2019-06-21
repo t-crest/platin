@@ -1,3 +1,4 @@
+# typed: false
 #
 # PLATIN tool set
 #
@@ -7,6 +8,40 @@
 require 'English'
 
 module ARMv7m
+
+#
+# Class to (lazily) read m5 simulator trace
+# yields [program_counter, cycles] pairs
+#
+class M5SimulatorTrace
+  TIME_PER_TICK = 500
+
+  attr_reader :stats_num_items
+  def initialize(elf, options)
+    @elf, @options = elf, options
+    @stats_num_items = 0
+  end
+
+  def each
+    die("No M5 trace file specified") unless @options.trace_file
+    file_open(@options.trace_file) do |fh|
+      fh.each_line do |line|
+        yield parse(line)
+        @stats_num_items += 1
+      end
+    end
+  end
+
+private
+
+  def parse(line)
+    return nil unless line
+    time,event,pc,rest = line.split(/\s*:\s*/,4)
+    return nil unless event =~ /system\.cpu/
+    [Integer(pc), time.to_i / TIME_PER_TICK, @stats_num_items]
+  end
+end
+
 
 class ExtractSymbols
   OP_CONSTPOOL = 121

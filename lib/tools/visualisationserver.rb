@@ -1,3 +1,4 @@
+# typed: false
 require 'webrick'
 require 'pathname'
 require 'json'
@@ -383,7 +384,7 @@ end # module
 
 if __FILE__ == $PROGRAM_NAME
   assert("Usage: #{$PROGRAM_NAME} srcroot artifactsdir") { ARGV.length == 2 }
-  server = Server.new(:ilp, \
+  server = VisualisationServer::Server.new(:ilp, \
                       { \
                         srcroot: ARGV[0], \
                         assets:  ARGV[1], \
