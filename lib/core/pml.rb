@@ -16,11 +16,6 @@ require 'pathname'
 require 'set'
 require 'English'
 
-# preferably, we would have something like:
-# include PML::Kernel
-# to have assert and friends in scope
-include PML
-
 module PML
 
 # class providing convenient accessors and additional program information derived

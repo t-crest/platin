@@ -2,7 +2,6 @@
 #   srb rbi todo
 
 # typed: strong
-module ::Test::Unit::TestCase; end
 module REXML::Formatters::Transitive; end
 module REXML::Formatters::Transitive; end
 module REXML::Formatters::Transitive; end

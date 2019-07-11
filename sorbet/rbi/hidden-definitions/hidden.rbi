@@ -25875,18 +25875,38 @@ class REXML::SourceFactory
   def self.create_from(arg); end
 end
 
-class REXML::SyncEnumerator
-  include ::Enumerable
-  def each(); end
+module REXML::StreamListener
+  def attlistdecl(element_name, attributes, raw_content); end
 
-  def initialize(*enums); end
+  def cdata(content); end
 
-  def length(); end
+  def comment(comment); end
 
-  def size(); end
+  def doctype(name, pub_sys, long_name, uri); end
+
+  def doctype_end(); end
+
+  def elementdecl(content); end
+
+  def entity(content); end
+
+  def entitydecl(content); end
+
+  def instruction(name, instruction); end
+
+  def notationdecl(content); end
+
+  def tag_end(name); end
+
+  def tag_start(name, attrs); end
+
+  def text(text); end
+
+  def xmldecl(version, encoding, standalone); end
 end
 
-class REXML::SyncEnumerator
+module REXML::StreamListener
+  extend ::T::Sig
 end
 
 class REXML::Text
@@ -26076,6 +26096,7 @@ class REXML::XPathParser
   def predicate(path, nodeset); end
 
   def variables=(vars=T.unsafe(nil)); end
+  DEBUG = ::T.let(nil, ::T.untyped)
   LITERAL = ::T.let(nil, ::T.untyped)
 end
 
@@ -40275,6 +40296,542 @@ class Tempfile::Remover
 end
 
 class Tempfile::Remover
+end
+
+module Test::Unit::Assertions
+  def add_assertion(); end
+
+  def assert(object=T.unsafe(nil), message=T.unsafe(nil), &block); end
+
+  def assert_alias_method(object, alias_name, original_name, message=T.unsafe(nil)); end
+
+  def assert_block(message=T.unsafe(nil)); end
+
+  def assert_boolean(actual, message=T.unsafe(nil)); end
+
+  def assert_compare(expected, operator, actual, message=T.unsafe(nil)); end
+
+  def assert_const_defined(object, constant_name, message=T.unsafe(nil)); end
+
+  def assert_empty(object, message=T.unsafe(nil)); end
+
+  def assert_equal(expected, actual, message=T.unsafe(nil)); end
+
+  def assert_fail_assertion(message=T.unsafe(nil)); end
+
+  def assert_false(actual, message=T.unsafe(nil)); end
+
+  def assert_in_delta(expected_float, actual_float, delta=T.unsafe(nil), message=T.unsafe(nil)); end
+
+  def assert_in_epsilon(expected_float, actual_float, epsilon=T.unsafe(nil), message=T.unsafe(nil)); end
+
+  def assert_include(collection, object, message=T.unsafe(nil)); end
+
+  def assert_includes(collection, object, message=T.unsafe(nil)); end
+
+  def assert_instance_of(klass, object, message=T.unsafe(nil)); end
+
+  def assert_kind_of(klass, object, message=T.unsafe(nil)); end
+
+  def assert_match(pattern, string, message=T.unsafe(nil)); end
+
+  def assert_nil(object, message=T.unsafe(nil)); end
+
+  def assert_no_match(regexp, string, message=T.unsafe(nil)); end
+
+  def assert_not_const_defined(object, constant_name, message=T.unsafe(nil)); end
+
+  def assert_not_empty(object, message=T.unsafe(nil)); end
+
+  def assert_not_equal(expected, actual, message=T.unsafe(nil)); end
+
+  def assert_not_in_delta(expected_float, actual_float, delta=T.unsafe(nil), message=T.unsafe(nil)); end
+
+  def assert_not_in_epsilon(expected_float, actual_float, epsilon=T.unsafe(nil), message=T.unsafe(nil)); end
+
+  def assert_not_include(collection, object, message=T.unsafe(nil)); end
+
+  def assert_not_includes(collection, object, message=T.unsafe(nil)); end
+
+  def assert_not_instance_of(klass, object, message=T.unsafe(nil)); end
+
+  def assert_not_kind_of(klass, object, message=T.unsafe(nil)); end
+
+  def assert_not_match(regexp, string, message=T.unsafe(nil)); end
+
+  def assert_not_nil(object, message=T.unsafe(nil)); end
+
+  def assert_not_operator(object1, operator, object2, message=T.unsafe(nil)); end
+
+  def assert_not_predicate(object, predicate, message=T.unsafe(nil)); end
+
+  def assert_not_respond_to(object, method, message=T.unsafe(nil)); end
+
+  def assert_not_same(expected, actual, message=T.unsafe(nil)); end
+
+  def assert_not_send(send_array, message=T.unsafe(nil)); end
+
+  def assert_nothing_raised(*args); end
+
+  def assert_nothing_thrown(message=T.unsafe(nil), &proc); end
+
+  def assert_operator(object1, operator, object2, message=T.unsafe(nil)); end
+
+  def assert_path_exist(path, message=T.unsafe(nil)); end
+
+  def assert_path_not_exist(path, message=T.unsafe(nil)); end
+
+  def assert_predicate(object, predicate, message=T.unsafe(nil)); end
+
+  def assert_raise(*args, &block); end
+
+  def assert_raise_kind_of(*args, &block); end
+
+  def assert_raise_message(expected, message=T.unsafe(nil)); end
+
+  def assert_raises(*args, &block); end
+
+  def assert_respond_to(object, method, message=T.unsafe(nil)); end
+
+  def assert_same(expected, actual, message=T.unsafe(nil)); end
+
+  def assert_send(send_array, message=T.unsafe(nil)); end
+
+  def assert_throw(expected_object, message=T.unsafe(nil), &proc); end
+
+  def assert_throws(expected_object, message=T.unsafe(nil), &proc); end
+
+  def assert_true(actual, message=T.unsafe(nil)); end
+
+  def build_message(user_message, template=T.unsafe(nil), *arguments); end
+
+  def flunk(message=T.unsafe(nil)); end
+
+  def refute(object, message=T.unsafe(nil)); end
+
+  def refute_empty(object, message=T.unsafe(nil)); end
+
+  def refute_equal(expected, actual, message=T.unsafe(nil)); end
+
+  def refute_in_delta(expected_float, actual_float, delta=T.unsafe(nil), message=T.unsafe(nil)); end
+
+  def refute_in_epsilon(expected_float, actual_float, epsilon=T.unsafe(nil), message=T.unsafe(nil)); end
+
+  def refute_includes(collection, object, message=T.unsafe(nil)); end
+
+  def refute_instance_of(klass, object, message=T.unsafe(nil)); end
+
+  def refute_kind_of(klass, object, message=T.unsafe(nil)); end
+
+  def refute_match(regexp, string, message=T.unsafe(nil)); end
+
+  def refute_nil(object, message=T.unsafe(nil)); end
+
+  def refute_operator(object1, operator, object2, message=T.unsafe(nil)); end
+
+  def refute_predicate(object, predicate, message=T.unsafe(nil)); end
+
+  def refute_respond_to(object, method, message=T.unsafe(nil)); end
+
+  def refute_same(expected, actual, message=T.unsafe(nil)); end
+  NOT_SPECIFIED = ::T.let(nil, ::T.untyped)
+end
+
+module Test::Unit::Assertions
+  extend ::T::Sig
+  def self.use_pp=(value); end
+end
+
+module Test::Unit::Attribute
+  def [](name); end
+
+  def attributes(); end
+end
+
+module Test::Unit::Attribute
+  extend ::T::Sig
+  def self.included(base); end
+end
+
+class Test::Unit::AutoRunner
+  def base(); end
+
+  def base=(base); end
+
+  def collector=(collector); end
+
+  def color_scheme(); end
+
+  def color_scheme=(color_scheme); end
+
+  def default_test_paths(); end
+
+  def default_test_paths=(default_test_paths); end
+
+  def exclude(); end
+
+  def exclude=(exclude); end
+
+  def filters(); end
+
+  def filters=(filters); end
+
+  def initialize(standalone); end
+
+  def keyword_display(keywords); end
+
+  def listeners(); end
+
+  def listeners=(listeners); end
+
+  def load_config(file); end
+
+  def options(); end
+
+  def pattern(); end
+
+  def pattern=(pattern); end
+
+  def prepare(); end
+
+  def process_args(args=T.unsafe(nil)); end
+
+  def run(); end
+
+  def runner=(runner); end
+
+  def runner_options(); end
+
+  def stop_on_failure=(stop_on_failure); end
+
+  def stop_on_failure?(); end
+
+  def suite(); end
+
+  def to_run(); end
+
+  def to_run=(to_run); end
+
+  def workdir(); end
+
+  def workdir=(workdir); end
+  ADDITIONAL_OPTIONS = ::T.let(nil, ::T.untyped)
+  COLLECTORS = ::T.let(nil, ::T.untyped)
+  PREPARE_HOOKS = ::T.let(nil, ::T.untyped)
+  RUNNERS = ::T.let(nil, ::T.untyped)
+end
+
+class Test::Unit::AutoRunner::StopOnFailureListener
+  def attach_to_mediator(mediator); end
+end
+
+class Test::Unit::AutoRunner::StopOnFailureListener
+end
+
+class Test::Unit::AutoRunner
+  def self.collector(id); end
+
+  def self.default_runner(); end
+
+  def self.default_runner=(id); end
+
+  def self.need_auto_run=(need); end
+
+  def self.need_auto_run?(); end
+
+  def self.prepare(hook=T.unsafe(nil), &block); end
+
+  def self.register_collector(id, collector_builder=T.unsafe(nil), &block); end
+
+  def self.register_color_scheme(id, scheme); end
+
+  def self.register_runner(id, runner_builder=T.unsafe(nil), &block); end
+
+  def self.run(force_standalone=T.unsafe(nil), default_dir=T.unsafe(nil), argv=T.unsafe(nil), &block); end
+
+  def self.runner(id); end
+
+  def self.setup_option(option_builder=T.unsafe(nil), &block); end
+
+  def self.standalone?(); end
+end
+
+module Test::Unit::Data
+end
+
+module Test::Unit::Data
+  extend ::T::Sig
+  def self.included(base); end
+end
+
+module Test::Unit::ErrorHandler
+  NOT_PASS_THROUGH_EXCEPTIONS = ::T.let(nil, ::T.untyped)
+  NOT_PASS_THROUGH_EXCEPTION_NAMES = ::T.let(nil, ::T.untyped)
+  PASS_THROUGH_EXCEPTIONS = ::T.let(nil, ::T.untyped)
+  PASS_THROUGH_EXCEPTION_NAMES = ::T.let(nil, ::T.untyped)
+end
+
+module Test::Unit::ErrorHandler
+  extend ::T::Sig
+  def self.included(base); end
+end
+
+module Test::Unit::ExceptionHandler
+end
+
+module Test::Unit::ExceptionHandler
+  extend ::T::Sig
+  def self.exception_handlers(); end
+
+  def self.included(base); end
+end
+
+module Test::Unit::FailureHandler
+  def add_failure(message, backtrace, options=T.unsafe(nil)); end
+end
+
+module Test::Unit::FailureHandler
+  extend ::T::Sig
+  def self.included(base); end
+end
+
+module Test::Unit::Fixture
+end
+
+module Test::Unit::Fixture
+  extend ::T::Sig
+  def self.included(base); end
+end
+
+module Test::Unit::NotificationHandler
+end
+
+module Test::Unit::NotificationHandler
+  extend ::T::Sig
+  def self.included(base); end
+end
+
+module Test::Unit::OmissionHandler
+end
+
+module Test::Unit::OmissionHandler
+  extend ::T::Sig
+  def self.included(base); end
+end
+
+module Test::Unit::PendingHandler
+end
+
+module Test::Unit::PendingHandler
+  extend ::T::Sig
+  def self.included(base); end
+end
+
+module Test::Unit::Priority
+  def priority_setup(); end
+
+  def priority_teardown(); end
+end
+
+module Test::Unit::Priority
+  extend ::T::Sig
+  def self.available_values(); end
+
+  def self.default(); end
+
+  def self.default=(default); end
+
+  def self.disable(); end
+
+  def self.enable(); end
+
+  def self.enabled?(); end
+
+  def self.included(base); end
+end
+
+class Test::Unit::TestCase
+  include ::Test::Unit::Attribute
+  include ::Test::Unit::Fixture
+  include ::Test::Unit::ExceptionHandler
+  include ::Test::Unit::ErrorHandler
+  include ::Test::Unit::FailureHandler
+  include ::Test::Unit::TestCasePendingSupport
+  include ::Test::Unit::PendingHandler
+  include ::Test::Unit::TestCaseOmissionSupport
+  include ::Test::Unit::OmissionHandler
+  include ::Test::Unit::TestCaseNotificationSupport
+  include ::Test::Unit::NotificationHandler
+  include ::Test::Unit::Priority
+  include ::Test::Unit::Data
+  include ::Test::Unit::Assertions
+  include ::Test::Unit::Util::BacktraceFilter
+  include ::Test::Unit::Util::Output
+  def ==(other); end
+
+  def add_pass(); end
+
+  def assign_test_data(label, data); end
+
+  def cleanup(); end
+
+  def data(); end
+
+  def data_label(); end
+
+  def default_test(); end
+
+  def description(); end
+
+  def elapsed_time(); end
+
+  def initialize(test_method_name); end
+
+  def interrupted?(); end
+
+  def local_name(); end
+
+  def method_name(); end
+
+  def name(); end
+
+  def passed?(); end
+
+  def problem_occurred(); end
+
+  def run(result); end
+
+  def setup(); end
+
+  def size(); end
+
+  def start_time(); end
+
+  def teardown(); end
+
+  def valid?(); end
+  AVAILABLE_ORDERS = ::T.let(nil, ::T.untyped)
+  DESCENDANTS = ::T.let(nil, ::T.untyped)
+  FINISHED = ::T.let(nil, ::T.untyped)
+  FINISHED_OBJECT = ::T.let(nil, ::T.untyped)
+  STARTED = ::T.let(nil, ::T.untyped)
+  STARTED_OBJECT = ::T.let(nil, ::T.untyped)
+end
+
+class Test::Unit::TestCase::InternalData
+  def assign_test_data(label, data); end
+
+  def elapsed_time(); end
+
+  def have_test_data?(); end
+
+  def interrupted(); end
+
+  def interrupted?(); end
+
+  def passed?(); end
+
+  def problem_occurred(); end
+
+  def start_time(); end
+
+  def test_data(); end
+
+  def test_data_label(); end
+
+  def test_finished(); end
+
+  def test_started(); end
+end
+
+class Test::Unit::TestCase::InternalData
+end
+
+class Test::Unit::TestCase
+  def self.added_method_names(); end
+
+  def self.description(value, target=T.unsafe(nil)); end
+
+  def self.find_locations(query); end
+
+  def self.include(*modules, &block); end
+
+  def self.inherited(sub_class); end
+
+  def self.shutdown(); end
+
+  def self.startup(); end
+
+  def self.sub_test_case(name, &block); end
+
+  def self.suite(); end
+
+  def self.test(*test_description_or_targets, &block); end
+
+  def self.test_defined?(query); end
+
+  def self.test_order(); end
+
+  def self.test_order=(order); end
+end
+
+module Test::Unit::TestCaseNotificationSupport
+  def notify(message, options=T.unsafe(nil), &block); end
+end
+
+module Test::Unit::TestCaseNotificationSupport
+  extend ::T::Sig
+  def self.included(base); end
+end
+
+module Test::Unit::TestCaseOmissionSupport
+  def omit(message=T.unsafe(nil), &block); end
+
+  def omit_if(condition, *args, &block); end
+
+  def omit_unless(condition, *args, &block); end
+end
+
+module Test::Unit::TestCaseOmissionSupport
+  extend ::T::Sig
+  def self.included(base); end
+end
+
+module Test::Unit::TestCasePendingSupport
+  def pend(message=T.unsafe(nil), &block); end
+end
+
+module Test::Unit::TestCasePendingSupport
+  extend ::T::Sig
+  def self.included(base); end
+end
+
+module Test::Unit::Util::BacktraceFilter
+  POWERASSERT_PREFIX = ::T.let(nil, ::T.untyped)
+  TESTUNIT_FILE_SEPARATORS = ::T.let(nil, ::T.untyped)
+  TESTUNIT_PREFIX = ::T.let(nil, ::T.untyped)
+  TESTUNIT_RB_FILE = ::T.let(nil, ::T.untyped)
+end
+
+module Test::Unit::Util::BacktraceFilter
+  extend ::T::Sig
+  def self.filter_backtrace(backtrace, prefix=T.unsafe(nil)); end
+end
+
+module Test::Unit::Util::Output
+  def capture_output(); end
+end
+
+module Test::Unit::Util::Output
+  extend ::T::Sig
+end
+
+module Test::Unit
+  extend ::T::Sig
+end
+
+module Test
+  extend ::T::Sig
 end
 
 class Thread

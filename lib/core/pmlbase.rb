@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 #
 # PLATIN tool set
 #
@@ -16,6 +16,8 @@ module PML
   # Mixin for entities which are identified by a qualified name (qname), and use this
   # identifier for comparison and hashing
   module QNameObject
+    include PML
+    
     def qname
       assert("QNameObject: @qname not set (fatal)") { @qname }
       @qname
@@ -44,6 +46,9 @@ module PML
   # at a specific representation level, stored in (attr_reader) 'attributes'
   #
   module ProgramInfoObject
+    attr_reader :attributes
+    attr_accessor :data
+    
     def self.attribute_list
       %w{origin level}
     end

@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 #
 # platin toolkit
 #
@@ -271,6 +271,7 @@ module PML
   class ModelFact < PMLObject
     attr_reader :attributes, :ppref, :type, :expr, :mode
     include ProgramInfoObject
+    include PML
 
     def initialize(ppref, type, expr, attrs, mode, data = nil)
       assert("ModelFact#initialize: program point reference has wrong type (#{ppref.class})") do
@@ -567,7 +568,7 @@ module PML
       flowfact
     end
 
-    def FlowFact.from_string(pml, ff)
+    def self.from_string(pml, ff)
       x = ff.split(/\s*:\s*/)
       assert("Invalid Flow Fact format #{ff} ( <scope> : <context> : <fact> = <const> )") {
         x.length == 3
