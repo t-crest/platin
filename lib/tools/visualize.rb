@@ -5,8 +5,6 @@
 #
 # Simple visualizer (should be expanded to do proper report generation)
 #
-include PML
-
 require 'set'
 require 'platin'
 require 'analysis/scopegraph'
@@ -361,6 +359,7 @@ class ILPVisualisation < Visualizer
 
   INFEASIBLE_COLOUR = 'red'
   INFEASIBLE_FILL   = '#e76f6f'
+  WORST_CASE_PATH_COLOUR = '#f00000'
 
   attr_reader :ilp
 
@@ -524,7 +523,7 @@ class ILPVisualisation < Visualizer
     end
   end
 
-  def annotate_freqs(freqmap)
+  def annotate_freqs(freqmap, colorizeworstcase = false)
     freqmap.each do |v,f|
       if v.is_a?(IPETEdge)
         # Labelstrings are an own class... Therefore, we have to do strange type
@@ -532,6 +531,11 @@ class ILPVisualisation < Visualizer
         s = @mapping[v][:label]
         s = s ? s.to_ruby.gsub(/(^"|"$)/, "") : ""
         @mapping[v][:label] = "#{f} \u00d7 #{s}"
+        if f > 0 && colorizeworstcase
+          @mapping[v][:color] = WORST_CASE_PATH_COLOUR
+          @mapping[v][:fillcolor] = WORST_CASE_PATH_COLOUR
+          @mapping[v][:style] = "filled"
+        end
       end
     end
   end
@@ -591,7 +595,7 @@ class ILPVisualisation < Visualizer
 
     mark_unbounded(opts[:unbounded]) if opts[:unbounded]
 
-    annotate_freqs(opts[:freqmap]) if opts[:freqmap]
+    annotate_freqs(opts[:freqmap], opts[:colorizeworstcase]) if opts[:freqmap]
 
     @graph
   end
