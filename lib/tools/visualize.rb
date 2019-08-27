@@ -101,9 +101,9 @@ class ScopeGraphVisualizer < Visualizer
 
   def initialize(pml, options); @pml, @options = pml, options; end
 
-  def visualize_scopegraph(function)
-    g = digraph("Scopegraph for #{function}")
-    refinement = ControlFlowRefinement.new(function, 'machinecode')
+  def visualize_scopegraph(function, level)
+    g = digraph("Scopegraph #{level} for #{function}")
+    refinement = ControlFlowRefinement.new(function, level)
     sg = ScopeGraph.new(function, refinement, @pml, @options)
     nodes, nids = {}, {}
     sg.nodes.each_with_index { |n,i| nids[n] = i }
@@ -715,11 +715,13 @@ class VisualizeTool
       # Visualize Scope Graph
       sgv = ScopeGraphVisualizer.new(pml,options)
       begin
-        mf = pml.machine_functions.by_label(target)
-        graph = sgv.visualize_scopegraph(mf)
-        file = File.join(outdir, target + ".sg" + suffix)
-        sgv.generate(graph, file)
-        html.add(target,"sg",file) if options.html
+        {'bitcode'     => pml.bitcode_functions.by_name(target),
+         'machinecode' => pml.machine_functions.by_label(target) }.each_pair do |level, function|
+          graph = sgv.visualize_scopegraph(function, level)
+          file = File.join(outdir, target + "_" + level + ".sg" + suffix)
+          sgv.generate(graph, file)
+          html.add(target,"#{level}_sg",file) if options.html
+        end
       rescue Exception => detail
         puts "Failed to visualize scopegraph for #{target}: #{detail}"
         puts detail.backtrace
