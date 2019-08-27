@@ -336,8 +336,8 @@ private
       current = -1
       slice_groups[b] ||= [] # empty blocks
       slice_groups[b].each do |bs|
-        assert("Block slices not complete: #{b}") { bs.first.index == current + 1 }
-        current = bs.last.index
+        assert("Block slices not complete: #{b}") { bs.first.index.to_i == current + 1 }
+        current = bs.last.index.to_i
       end
       assert("Block slices not complete: #{b}") { current + 1 == b.instructions.length }
     end

@@ -531,7 +531,7 @@ class ILPVisualisation < Visualizer
         s = @mapping[v][:label]
         s = s ? s.to_ruby.gsub(/(^"|"$)/, "") : ""
         @mapping[v][:label] = "#{f} \u00d7 #{s}"
-        if f > 0 && colorizeworstcase
+        if f.to_i > 0 && colorizeworstcase
           @mapping[v][:color] = WORST_CASE_PATH_COLOUR
           @mapping[v][:fillcolor] = WORST_CASE_PATH_COLOUR
           @mapping[v][:style] = "filled"
@@ -800,7 +800,8 @@ if __FILE__ == $PROGRAM_NAME
   Visualize bitcode and machine code CFGS, and the control-flow relation
   graph of the specified set of functions
   EOF
-  options, args = PML::optparse([],"", SYNOPSIS) do |opts|
+  include PML
+  options, _args = PML::optparse([],"", SYNOPSIS) do |opts|
     opts.needs_pml
     opts.callstring_length
     VisualizeTool.add_options(opts)

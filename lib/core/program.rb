@@ -797,7 +797,7 @@ module PML
     end
 
     def index
-      data['index']
+      data['index'].to_i
     end
 
     def to_pml_ref
