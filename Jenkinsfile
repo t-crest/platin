@@ -1,9 +1,10 @@
 #!groovy
 
+def executors = 'Ubuntu-18.04'
 properties([gitLabConnection('https://gitlab.cs.fau.de/'),
            ])
 
-node {
+node(executors) {
   gitlabBuilds(builds: ['build', 'lint', 'test']) {
 
     gitlabCommitStatus(name: "build") {
@@ -51,6 +52,7 @@ node {
           echo ""
 
           export GEM_HOME="\$(pwd)/gems"
+          gem install rake
           bundle install
           """
       }
