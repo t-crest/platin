@@ -715,12 +715,13 @@ class VisualizeTool
       # Visualize Scope Graph
       sgv = ScopeGraphVisualizer.new(pml,options)
       begin
-        {'bitcode'     => pml.bitcode_functions.by_name(target),
-         'machinecode' => pml.machine_functions.by_label(target) }.each_pair do |level, function|
+        {'bitcode'     => ["bc", pml.bitcode_functions.by_name(target)],
+         'machinecode' => ["mc", pml.machine_functions.by_label(target)]}.each_pair do |level, params|
+          tag, function = *params
           graph = sgv.visualize_scopegraph(function, level)
-          file = File.join(outdir, target + "_" + level + ".sg" + suffix)
+          file = File.join(outdir, target + "." + tag + ".sg" + suffix)
           sgv.generate(graph, file)
-          html.add(target,"#{level}_sg",file) if options.html
+          html.add(target,"#{tag}.sg",file) if options.html
         end
       rescue Exception => detail
         puts "Failed to visualize scopegraph for #{target}: #{detail}"
