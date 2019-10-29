@@ -806,7 +806,7 @@ module PML
 
     def self.from_qname(functions,qn)
       fn,bn,iname = qn.split('/',3).map { |n| YAML::load(n) }
-      functions.by_name(fn).blocks.by_name(bn.to_s).instructions[iname]
+      functions.by_name(fn.to_s).blocks.by_name(bn.to_s).instructions[iname]
     end
 
     def marker
