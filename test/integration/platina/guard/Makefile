@@ -38,7 +38,7 @@ PLATINFLAGS=--analysis-entry $(ENTRY) \
 			-i ./$(FILE).c.pml -b $(FILE) \
 			--disable-ait --enable-wca --report \
 			--link --qualify-machinecode \
-			--debug ilp
+			--debug ilp --objdump llvm-objdump
 
 
 

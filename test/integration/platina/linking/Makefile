@@ -1,4 +1,4 @@
-CC=/home/noctux/Studium/Masterarbeit/build/bin/patmos-clang
+CC=patmos-clang
 CFLAGS=-nostdinc \
 	   -isystem /srv/scratch/fo21qixo/swan/builds/patmos-llvm/bin/../lib/clang/3.8.0/include \
 	   -mlittle-endian \
@@ -38,7 +38,7 @@ PLATINFLAGS=--analysis-entry $(ENTRY) \
 			-i ./$(FILE).c.pml -i ./sched.c.pml -b $(FILE) \
 			--disable-ait --enable-wca --report \
 			--link --qualify-machinecode \
-			--debug ilp
+			--debug ilp --objdump arm-none-eabi-objdump
 
 export PATH := $(shell pwd):$(PATH)
 
