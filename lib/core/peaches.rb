@@ -736,11 +736,11 @@ class Parser
     symbol(pattern, CSPACE, &p)
   end
 
-  NUM = prim :int64 do |num|
+  NUM = prim :int64 do |(num)|
     ASTNumberLiteral.new Integer(num)
   end
   # Magic here: negative lookahead to prohibit keyword/symbol ambiguity
-  IDENTIFIER  = seq((''.r ^ lazy { KEYWORD }), symbol_(/[a-zA-Z]\w*/)) do |_,id|
+  IDENTIFIER  = seq((''.r ^ lazy { KEYWORD }), symbol_(/[a-zA-Z]\w*/)) do |(_,id)|
                   ASTIdentifier.new(id)
                 end.expect('identifier')
   IF          = word('if').expect 'keyword_if'
@@ -768,7 +768,7 @@ class Parser
   # Any upper-case letter from A to Z
   # Any digit from 0 to 9
   # The underscore character _
-  FUNCTION_SYMBOL = symbol(/[^,\s\]]+/) do |sym|
+  FUNCTION_SYMBOL = symbol(/[^,\s\]]+/) do |(sym)|
     # If we have a qualified identifier, perform patmos-clang-style
     # namemangling (only for static identifiers)
     puts "sym #{sym}" if DEBUG_PARSER
@@ -796,19 +796,19 @@ class Parser
 
   def arith_expr
     if @ARITH_EXPR.nil?
-      arith_expr = (seq__(lazy { sub_term }, ADD_OP, lazy { arith_expr }) do |lhs, op, rhs|
+      arith_expr = (seq__(lazy { sub_term }, ADD_OP, lazy { arith_expr }) do |(lhs, op, rhs)|
                         puts "arith_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
                       end \
                    | lazy { sub_term } \
                    )
-      sub_term   = (seq__(lazy { term }, SUB_OP, lazy { sub_term }) do |lhs, op, rhs|
+      sub_term   = (seq__(lazy { term }, SUB_OP, lazy { sub_term }) do |(lhs, op, rhs)|
                         puts "arith_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
                       end \
                    | lazy { term } \
                    )
-      term       = (seq__(lazy { factor }, MULT_OP, lazy { term }) do |lhs, op, rhs|
+      term       = (seq__(lazy { factor }, MULT_OP, lazy { term }) do |(lhs, op, rhs)|
                         puts "term: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                         ASTArithmeticOp.new(lhs, op, rhs)
                       end\
@@ -827,17 +827,17 @@ class Parser
 
   def cond_expr
     if @COND_EXPR.nil?
-      cond_expr = (seq__(lazy { ao_expr }, LOGIC_OP, lazy { cond_expr }) do |lhs, op, rhs|
+      cond_expr = (seq__(lazy { ao_expr }, LOGIC_OP, lazy { cond_expr }) do |(lhs, op, rhs)|
                        puts "cond_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                        ASTLogicalOp.new(lhs, op, rhs)
                      end \
-                  | seq__(lazy { ao_expr }, CMP_OP, lazy { cond_expr }) do |lhs, op, rhs|
+                  | seq__(lazy { ao_expr }, CMP_OP, lazy { cond_expr }) do |(lhs, op, rhs)|
                       puts "cond_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                       ASTCompareOp.new(lhs, op, rhs)
                     end \
                   | lazy { ao_expr } \
                   )
-      ao_expr   = (seq__(lazy { arith_expr }, CMP_OP, lazy { arith_expr }) do |lhs, op, rhs|
+      ao_expr   = (seq__(lazy { arith_expr }, CMP_OP, lazy { arith_expr }) do |(lhs, op, rhs)|
                        puts "ao_expr: (#{lhs}) #{op} (#{rhs})" if DEBUG_PARSER
                        ASTCompareOp.new(lhs, op, rhs)
                      end \
@@ -853,7 +853,7 @@ class Parser
 
   def expr
     if @EXPR.nil?
-      expr = (seq__(IF, lazy { cond_expr }, THEN, lazy { expr }, ELSE, lazy { expr }) do |_,cond,_,e1,_,e2|
+      expr = (seq__(IF, lazy { cond_expr }, THEN, lazy { expr }, ELSE, lazy { expr }) do |(_,cond,_,e1,_,e2)|
                       puts "IF #{cond} then {#{e1}} else {#{e2}}" if DEBUG_PARSER
                       ASTIf.new(cond, e1, e2)
                     end \
@@ -882,7 +882,7 @@ class Parser
       callsite =  (seq__(IDENTIFIER, arg_list) \
                   | IDENTIFIER \
                   )
-      @CALL = seq(''.r, callsite).cached do |_,xs|
+      @CALL = seq(''.r, callsite).cached do |(_,xs)|
         id, args = *xs
         puts "CALL: #{id}(#{listify(args).join(',')})" if DEBUG_PARSER
         ASTCall.new(id.label, listify(args))
@@ -901,7 +901,7 @@ class Parser
                     ).fail "function declaration"
       definition  = expr
 
-      @DECL = seq__(declaration, '=', definition, comment.maybe) do |decl,_,expr|
+      @DECL = seq__(declaration, '=', definition, comment.maybe) do |(decl,_,expr)|
         id, params = decl
         puts "decl: #{id} #{params} = (#{expr})" if DEBUG_PARSER
         ASTDecl.new(id, listify(params), expr)
@@ -912,15 +912,15 @@ class Parser
 
   def symbollist
     if @SYMBOLLIST.nil?
-      symbols = (seq_(FUNCTION_SYMBOL, /,/.r, lazy { symbols }) { |x,_,xs| [x,xs] } \
+      symbols = (seq_(FUNCTION_SYMBOL, /,/.r, lazy { symbols }) { |(x,_,xs)| [x,xs] } \
                 | FUNCTION_SYMBOL \
                 )
-      symbol_list = ( seq_(LIST_BEGIN, symbols, LIST_END, skip: CSPACE._?) { |_,l,_|
+      symbol_list = ( seq_(LIST_BEGIN, symbols, LIST_END, skip: CSPACE._?) { |(_,l,_)|
                         list = listify(l)
                         puts "Symbollist:[#{list.join(',')}]" if DEBUG_PARSER
                         ASTSymbolListLiteral.new(list)
                       } \
-                    | seq__(LIST_BEGIN, LIST_END) { |_,_|
+                    | seq__(LIST_BEGIN, LIST_END) { |(_,_)|
                         puts "Symbollist:[]" if DEBUG_PARSER
                         ASTSymbolListLiteral.new([])
                       } \
@@ -932,15 +932,15 @@ class Parser
 
   def setliteral
     if @SETLITERAL.nil?
-      setliterals = (seq__(SET_ELEMENT, /,/.r, lazy { setliterals }) { |x,_,xs| [x,xs] } \
+      setliterals = (seq__(SET_ELEMENT, /,/.r, lazy { setliterals }) { |(x,_,xs)| [x,xs] } \
                 | SET_ELEMENT \
                 )
-      set = ( seq_(SET_BEGIN, setliterals, SET_END, skip: CSPACE._?) { |_,l,_|
+      set = ( seq_(SET_BEGIN, setliterals, SET_END, skip: CSPACE._?) { |(_,l,_)|
                 list = listify(l).to_set
                 puts "Set:{#{list.to_a.join(',')}}" if DEBUG_PARSER
                 ASTSetLiteral.new(list)
               } \
-            | seq__(SET_BEGIN, SET_END) { |_,_|
+            | seq__(SET_BEGIN, SET_END) { |(_,_)|
                 puts "Set:{}" if DEBUG_PARSER
                 ASTSetLiteral.new([].to_set)
               } \
@@ -962,20 +962,22 @@ class Parser
   end
 
   def program
-    program = (seq_(comment, lazy { program }, skip: /[\r\n]+/.r) { |_,p,_|
+    program = (seq_(comment, lazy { program }, skip: /[\r\n]+/.r) { |(_,p,_)|
                   puts "Program variant 1: comment + program" if DEBUG_PARSER
                   p
                 } \
-              | seq_(decl, lazy { program }, skip: /[\r\n]+/.r) { |d,p|
+              | seq_(decl, lazy { program }, skip: /[\r\n]+/.r) { |(d,p)|
                   puts "Program variant 2: decl + program" if DEBUG_PARSER
                   [d,p]
                 } \
-              | seq_(decl, /[\r\n]+/.r.maybe) { |d, _|
+              | seq_(decl, /[\r\n]+/.r.maybe) { |(d, _)|
                   puts "Program variant 3: plain decl: #{d}" if DEBUG_PARSER
                   [d]
                 } \
               )
-    seq(/[\r\n]+/.r.maybe, program, /[\r\n]+/.r.maybe).eof { |_,p,_| ASTProgram.new(p.flatten) } \
+    seq(/[\r\n]+/.r.maybe, program, /[\r\n]+/.r.maybe).eof { |(_,p,_)|
+          ASTProgram.new(p.flatten)
+        } \
       | /[\r\n]*/.r.maybe.eof { ASTProgram.new([]) }
   end
 end # class Parser
@@ -987,19 +989,19 @@ def self.define_builtins(context)
     decl     = Peaches::ASTDecl.new(Peaches::ASTIdentifier.new(id), params, expr)
     context.insert(id, decl)
   end
-  build_decl.call("set_min", [:set], lambda { |set|
+  build_decl.call("set_min", [:set], lambda { |(set)|
     if set.empty?
       raise Peaches::PeachesArgumentError, "set_min called on empty set"
     else
-      min = set.map{|x| x.unbox}.min
+      min = set.map{|(x)| x.unbox}.min
       ASTNumberLiteral.new(min)
     end
   })
-  build_decl.call("set_max", [:set], lambda { |set|
+  build_decl.call("set_max", [:set], lambda { |(set)|
     if set.empty?
       raise Peaches::PeachesArgumentError, "set_max called on empty set"
     else
-      max = set.map{|x| x.unbox}.max
+      max = set.map{|(x)| x.unbox}.max
       ASTNumberLiteral.new(max)
     end
   })

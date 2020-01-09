@@ -8,7 +8,6 @@ require 'platin'
 require 'English'
 require 'analysis/ilp'
 
-require 'thwait'
 require 'thread'
 
 module PML

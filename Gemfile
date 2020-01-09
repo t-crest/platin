@@ -14,6 +14,7 @@ gem 'pronto', group: :development
 gem 'pronto-rubocop', group: :development
 gem 'pry-byebug', group: :development
 gem 'irb', group: :development
+gem 'reek', group: :development
 gem 'rubocop', group: :development
 
 gem 'sorbet', :group => :development
