@@ -449,6 +449,7 @@ class PMLDoc
     final.delete("flowfacts") if @data["flowfacts"] == []
     final.delete("valuefacts") if @data["valuefacts"] == []
     final.delete("timing") if @data["timing"] == []
+    final.delete("modelfacts") if @data["modelfacts"] == []
     final
   end
 
