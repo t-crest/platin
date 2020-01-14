@@ -31,7 +31,7 @@ class PMLDoc
   # constructor expects a YAML document or a list of YAML documents
   def initialize(stream, options = OpenStruct.new)
     stream = [stream] unless stream.kind_of?(Array)
-    if stream.length == 1 && stream[0][1].length == 1
+    if stream.length == 1 && stream[0][1].length == 1 && !options.qualify_machinecode
       @data = stream[0][1][0]
     else
       @data = PMLDoc.merge_stream(stream)
