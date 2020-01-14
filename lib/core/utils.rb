@@ -315,6 +315,23 @@ module PML
     "[platin] #{tag}: #{msg}"
   end
 
+  # Deeply copy a given object which has to be serializeable
+  #
+  # @param obj [Object] object to clone
+  # @returns [Object] the copied object
+  def deep_copy(obj)
+    Marshal.load(Marshal.dump(obj))
+  end
+
+  # Deeply compare two objects a and b, which must be serializeable
+  #
+  # @param a [Object] First object to compare
+  # @param b [Object] Second object to compare
+  # @return [Bool] whether both objects are equal
+  def deep_compare(a, b)
+    Marshal.dump(a) == Marshal.dump(b)
+  end
+
 end
 
 class String
