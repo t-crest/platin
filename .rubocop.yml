@@ -30,6 +30,9 @@ Style/ParallelAssignment:
 Metrics/MethodLength:
   Enabled: false
 
+Metrics/ModuleLength:
+  Enabled: false
+
 Metrics/AbcSize:
   Enabled: false
 
