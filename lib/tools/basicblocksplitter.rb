@@ -40,10 +40,10 @@ private
     @options = options
     # Mapping programpoints to their updated target
     # T::Hash[String, T::Array[PML::ProgramPoint]]
-    @updates = Hash.new
+    @updates = {}
     # Mapping basic blocks to their splits
     # T::Hash[PML::Block, T::Array[PML::Block]}
-    @splits  = Hash.new
+    @splits  = {}
   end
 
   # Split a basic block at call sides
@@ -62,13 +62,17 @@ private
       splits.last.push(p)
       # does this point constitute a splitpoint?
       if ins.last != i && splitpoints.include?(i)
+        assert("Breaking an block with instruction using delayslots! This is unsupported! Ins: #{i}") {
+          i.delay_slots == 0
+        }
+
         splits.push([])
       end
     end
     splits
   end
 
-  SEPERATOR = ":split"
+  SEPERATOR = ".split"
   def gen_name(prefix, idx)
     prefix + SEPERATOR + idx.to_s
   end
@@ -192,7 +196,9 @@ private
   def patch_blockchain(original)
     pml = original.to_pml
     pml = pml.zip(original).flat_map do |p,o|
-      p['successors'] = p['successors'].zip(o.successors).map do |p,succ|
+      subst = @updates[o.qname] || [p]
+
+      subst.last['successors'] = subst.last['successors'].zip(o.successors).map do |p,succ|
         u = @updates[succ.qname]
         if u.nil?
           p
@@ -201,7 +207,7 @@ private
         end
       end
 
-      p['predecessors'] = p['predecessors'].zip(o.predecessors).map do |p,pred|
+      subst.first['predecessors'] = subst.first['predecessors'].zip(o.predecessors).map do |p,pred|
         u = @updates[pred.qname]
         if u.nil?
           p
@@ -211,17 +217,20 @@ private
       end
 
       unless p['loops'].nil?
-        p['loops'] = p['loops'].zip(o.loops).map do |p,loop|
-            u = @updates[loop.loopheader.qname]
-            if u.nil?
+        loops = p['loops'] = p['loops'].zip(o.loops).map do |p,loop|
+          u = @updates[loop.loopheader.qname]
+          if u.nil?
             p
-            else
-            u.last['name']
-            end
+          else
+            u.first['name']
+          end
+        end
+        subst.each do |block|
+          block['loops'] = loops
         end
       end
 
-      @updates[o.qname] || [p]
+      subst
     end
     pml
   end
@@ -235,6 +244,7 @@ private
     pml = pml.zip(original).flat_map do |p,o|
       ['src', 'dst'].each do |level|
         next if p["#{level}-successors"].nil?
+
         p["#{level}-successors"] = p["#{level}-successors"].zip(o.successors(level.to_sym)).map do |p,succ|
           u = @updates[succ.qname]
           if u.nil?
@@ -247,6 +257,76 @@ private
 
       @updates[o.qname] || [p]
     end
+    pml
+  end
+
+  # Patch a given program point according to updates from @updates
+  # @param pp [PML::ProgramPoint] The programpoint to patch
+  # @returns [T::Hash[String,any]] The patched pml representation
+  def patch_programpoint(pp, pml)
+    if pml.key?('loop')
+      block, field = pp.loopheader, 'loop'
+    elsif pml.key?('block')
+      block, field = pp.block, 'block'
+    else
+      return pml
+    end
+
+    update = @updates[block.qname]
+    return pml if update.nil?
+
+    newblock = nil
+    if pml.key?('instruction')
+      idx = pml['instruction'].to_i
+      update.each do |block|
+        size = block['instructions'].size
+        if size > idx
+          newblock = block
+          pml['instruction'] = idx.to_s
+          break
+        else
+          idx -= size
+        end
+      end
+    else
+      newblock = update.first
+    end
+
+    assert("Failed to identify new corresponding basic block for #{block} from #{pp}") { !newblock.nil? }
+
+    pml[field] = newblock['name']
+    pml
+  end
+
+  def patch_programpoints(topatch)
+    # Locations to patch:
+    # 1. valuefacts: vf.programpoint <-> data['program-point']
+    topatch['valuefacts'] = @pml.valuefacts.zip(topatch['valuefacts'] || []).map do |vf, pml|
+      pml['program-point'] = patch_programpoint(vf.programpoint, pml['program-point']) if pml.key?('program-point')
+      pml
+    end
+    # 2. flowfacts
+    topatch['flowfacts'] = @pml.flowfacts.zip(topatch['flowfacts'] || []).map do |ff, pml|
+      # 2.1 flowfacts: ff.scope <-> data['scope']
+      pml['scope'] = patch_programpoint(ff.scope.programpoint, pml['scope']) if pml.key?('scope')
+      # 2.2 flowfacts: ff.lhs[i].programpoint <-> data['lhs'][i]['program-point']
+      pml['lhs'] = ff.lhs.zip(pml['lhs'] || []).map do |term, tpml|
+        tpml['program-point'] = patch_programpoint(term.programpoint, tpml['program-point']) if tpml.key?('program-point')
+        tpml
+      end
+      pml
+    end
+    # 3. modelfacts: mf.programpoint <-> data['program-point']
+    topatch['modelfacts'] = @pml.modelfacts.zip(topatch['modelfacts'] || []).map do |mf, pml|
+      pml['program-point'] = patch_programpoint(mf.programpoint, pml['program-point']) if pml.key?('program-point')
+      pml
+    end
+
+    ["valuefacts", "flowfacts", "modelfacts"].each do |member|
+      topatch.delete(member) if topatch[member].empty?
+    end
+
+    topatch
   end
 
   def patch_pml
@@ -256,7 +336,7 @@ private
       pml['blocks'] = patch_blockchain(mf.blocks)
       pml
     end
-    patched['bitcode-functions'] = @pml.machine_functions.zip(patched['bitcode-functions']).map do |bf,pml|
+    patched['bitcode-functions'] = @pml.bitcode_functions.zip(patched['bitcode-functions']).map do |bf,pml|
       pml['blocks'] = patch_blockchain(bf.blocks)
       pml
     end
@@ -266,8 +346,8 @@ private
       pml
     end
 
-    # todo: patch all flow/modelfacts
-    
+    patched = patch_programpoints(patched)
+
     patched
   end
 end
