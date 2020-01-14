@@ -424,7 +424,7 @@ class PMLDoc
     end
   end
 
-  def dump(io, write_config = false)
+  def to_pml(write_config = false)
     @data["bitcode-functions"] = @bitcode_functions.to_pml
     @data["machine-functions"] = @machine_functions.to_pml
     @data["relation-graphs"]   = @relation_graphs.to_pml
@@ -449,11 +449,20 @@ class PMLDoc
     final.delete("flowfacts") if @data["flowfacts"] == []
     final.delete("valuefacts") if @data["valuefacts"] == []
     final.delete("timing") if @data["timing"] == []
+    final
+  end
+
+  def dump(io, write_config = false)
+    final = to_pml(write_config)
     io.write(YAML::dump(final))
   end
 
   def deep_data_clone
-    cloned_data = @data.dup
+    self.class.deep_data_clone(@data)
+  end
+
+  def self.deep_data_clone(data)
+    cloned_data = data.dup
     worklist = [cloned_data]
     until worklist.empty?
       d = worklist.pop
