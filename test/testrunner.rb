@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# typed: false
+# typed: true
 
 require 'find'
 require 'open3'
@@ -10,7 +10,7 @@ module PlatinTest
 module Abstract
   def abstract_methods(*args)
     args.each do |name|
-      class_eval(<<-END, __FILE__, __LINE__)
+      Module.class_eval(<<-END, __FILE__, __LINE__)
         def #{name}(*args)
           raise NotImplementedError.new("You must implement #{name}.")
         end
@@ -53,7 +53,7 @@ module Log
 
   def die(msg)
     log(msg, level: ERROR)
-    exit(-1)
+    Kernel.exit(-1)
   end
 end
 
@@ -73,7 +73,7 @@ class Test
   end
 
   def result
-    die("#{self.to_s}: No result found") if @result.nil?
+    Log.die("#{self.to_s}: No result found") if @result.nil?
     @result
   end
 
@@ -219,7 +219,7 @@ class Runner
 end
 end
 
-if __FILE__ == $PROGRAM_NAME
+if File.expand_path(__FILE__) == File.expand_path($PROGRAM_NAME)
   require 'optparse'
 
   testdir = File.dirname(__FILE__)

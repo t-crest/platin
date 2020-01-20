@@ -1,0 +1,71 @@
+.before_ubuntu: &before_ubuntu
+  - >
+    apt-get update -qq &&      \
+      apt-get install -y -qq   \
+        binutils-arm-none-eabi \
+        build-essential        \
+        cmake                  \
+        git                    \
+        graphviz               \
+        libgraphviz-dev        \
+        liblpsolve55-dev       \
+        libssh2-1              \
+        libssh2-1-dev          \
+        libssl-dev             \
+        llvm                   \
+        locales                \
+        lp-solve               \
+        pkg-config             \
+        rake                   \
+        ruby                   \
+        ruby-bundler           \
+        ruby-dev
+  - sed -i -e 's/# C.UTF-8 UTF-8/C.UTF-8 UTF-8/' /etc/locale.gen
+  - dpkg-reconfigure --frontend=noninteractive locales
+  - update-locale LANG=C.UTF-8
+  - export LD_LIBRARY_PATH="/usr/lib/lp_solve:$LD_LIBRARY_PATH"
+  - export LANG=C.UTF-8
+
+.before_gems: &before_gems
+  - export GEM_HOME="$(pwd)/gems"
+  - gem install rake
+  - bundle install
+  - export PATH="$(pwd):$PATH"
+
+.tests:
+  stage:  test
+  script: bundle exec ruby ./test/testrunner.rb -v -v
+
+test:ubuntu:latest:
+  extends: .tests
+  image: ubuntu:latest
+  before_script:
+    - *before_ubuntu
+    - *before_gems
+
+test:ubuntu:rolling:
+  extends: .tests
+  image: ubuntu:rolling
+  before_script:
+    - *before_ubuntu
+    - *before_gems
+
+test:archlinux:rolling:
+  extends: .tests
+  image: archlinux:latest
+  before_script:
+    - >
+      pacman -Syy &&             \
+        pacman -S --noconfirm    \
+          arm-none-eabi-binutils \
+          base-devel             \
+          cmake                  \
+          git                    \
+          graphviz               \
+          lpsolve                \
+          llvm                   \
+          ruby                   \
+          ruby-bundler           \
+          ruby-rake              \
+          rubygems
+    - *before_gems
