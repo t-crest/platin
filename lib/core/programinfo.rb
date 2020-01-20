@@ -449,10 +449,11 @@ module PML
         # namemangling (only for static identifiers)
         entries.map! do |entry|
           entry.sub(/^([^:]+):(.+)$/) do
-          fname = $2; # because, well, fuck you, we are using global variables
-                      # for our regex matching. scoping is for loosers.
-          $1.gsub(/[^0-9A-Za-z]/, '_') + '_' + fname
-        end end
+            fname = $2; # because, well, fuck you, we are using global variables
+                        # for our regex matching. scoping is for loosers.
+            $1.gsub(/[^0-9A-Za-z]/, '_') + '_' + fname
+          end
+        end
 
         mutation = PMLMachineCalleeMutation.new(ppref.programpoint, entries)
         mutation
