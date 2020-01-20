@@ -16,7 +16,7 @@ Class.new(superclass = PlatinTest::Test) do
         " --disable-ait " \
         " --enable-wca " \
         " --report " \
-        " --objdump llvm-objdump" \
+        " --objdump ./arm--eabi-objdump" \
         " --debug ilp "
   end
 
@@ -29,12 +29,15 @@ Class.new(superclass = PlatinTest::Test) do
   end
 
   def run
+    oldpath  = ENV["PATH"]
+    ENV["PATH"] = "#{Dir.pwd}:#{oldpath}"
     cycles, output, status = PlatinTest::Test::platin_getcycles(@platininvocation)
     @result = PlatinTest::Result.new(
       success: status == 0 && check_cycles(cycles),
       message: "Exitstatus: #{status}\tCycles: #{cycles}",
       output: output
     )
+    ENV["PATH"] = oldpath
   end
 
   def id
