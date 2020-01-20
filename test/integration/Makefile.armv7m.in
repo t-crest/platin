@@ -1,0 +1,43 @@
+LD=arm-none-eabi-gcc
+LDFLAGS= \
+	-march=armv7-m -mthumb -nostartfiles -g
+
+CFLAGS = \
+  -nostdinc \
+	-g \
+	-target armv7m-none-eabi \
+	$(TEST_CFLAGS)
+
+PLATINARCH = armv7-none-none-eabi
+
+SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+include $(SELF_DIR)Makefile.generic.in
+
+# Armv7a, convoluted
+# LDFLAGS= \
+#     -mabi=aapcs-linux \
+# 		-mfpu=vfp -funwind-tables \
+# 		-march=armv7-a -msoft-float \
+# 		-U arm -fno-PIE \
+# 	  -g
+# CFLAGS=-nostdinc \
+# 	   -mlittle-endian \
+# 	   -Qunused-arguments \
+# 	   -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
+# 	   -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration \
+# 	   -Wno-format-security -target arm-none-eabi -gcc-toolchain ./ \
+# 	   -no-integrated-as -std=gnu89 -fno-dwarf2-cfi-asm \
+# 	   -mabi=aapcs-linux -mfpu=vfp -marm -march=armv7-a \
+# 	   -msoft-float -Uarm -fno-PIE \
+# 	   -Wframe-larger-than=1024 -fno-stack-protector \
+# 	   -Wno-unused-variable -Wno-format-invalid-specifier \
+# 	   -Wno-gnu -Wno-asm-operand-widths \
+# 	   -Wno-initializer-overrides -fno-builtin \
+# 	   -Wno-tautological-compare -fomit-frame-pointer \
+# 	   -g -Wdeclaration-after-statement -Wno-pointer-sign \
+# 	   -fno-strict-overflow -Werror=implicit-int \
+# 	   -Werror=strict-prototypes -Werror=date-time \
+# 	   -Wno-initializer-overrides -Wno-unused-value \
+# 	   -Wno-format -Wno-unknown-warning-option \
+# 	   -Wno-sign-compare -Wno-format-zero-length \
+# 	   -Wno-uninitialized -O0 \

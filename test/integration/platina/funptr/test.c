@@ -1,7 +1,7 @@
 #include "test.h"
 
-void _exit () {}
-int main () { _exit(); }
+void _exit (int e) {}
+int main () { _exit(42); }
 
 volatile int _val;
 

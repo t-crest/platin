@@ -1,0 +1,20 @@
+LD=arm-none-eabi-gcc
+LDFLAGS= \
+	-march=armv7-a \
+	-mfpu=vfp -msoft-float \
+	-U arm -fno-PIE \
+	-g
+
+CFLAGS = \
+  -nostdinc \
+  -mlittle-endian \
+  -target arm-none-eabi \
+  -mabi=aapcs-linux -mfpu=vfp -marm -march=armv7-a \
+  -msoft-float -Uarm -fno-PIE \
+  -g \
+  $(TEST_CFLAGS)
+
+PLATINARCH = armv7-none--eabi
+
+SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+include $(SELF_DIR)Makefile.generic.in

@@ -1,6 +1,6 @@
 ---
 format:          pml-0.1
-triple:          armv7-none-none-eabi
+triple:          armv7-none--eabi
 bitcode-functions: 
   - name:            _exit
     level:           bitcode
@@ -12,7 +12,7 @@ bitcode-functions:
         src-hint:        'test.c:1'
         instructions:    
           - index:           '0'
-            opcode:          ret
+            opcode:          unreachable
     linkage:         ExternalLinkage
   - name:            main
     level:           bitcode
@@ -37,14 +37,17 @@ bitcode-functions:
         instructions:    
           - index:           '0'
             opcode:          call
+            intrinsic:       true
           - index:           '1'
             opcode:          call
+            intrinsic:       true
           - index:           '2'
             opcode:          icmp
           - index:           '3'
             opcode:          select
           - index:           '4'
             opcode:          call
+            intrinsic:       true
           - index:           '5'
             opcode:          ret
     linkage:         ExternalLinkage
@@ -59,19 +62,17 @@ bitcode-functions:
         instructions:    
           - index:           '0'
             opcode:          call
+            intrinsic:       true
           - index:           '1'
             opcode:          call
+            callees:         [ foo ]
           - index:           '2'
-            opcode:          call
-          - index:           '3'
-            opcode:          call
-          - index:           '4'
             opcode:          ret
     linkage:         ExternalLinkage
 ...
 ---
 format:          pml-0.1
-triple:          armv7-none-none-eabi
+triple:          armv7-none--eabi
 relation-graphs: 
   - src:             
       function:        _exit
@@ -140,7 +141,7 @@ relation-graphs:
 ...
 ---
 format:          pml-0.1
-triple:          armv7-none-none-eabi
+triple:          armv7-none--eabi
 machine-functions: 
   - name:            '0'
     level:           machinecode
@@ -151,9 +152,6 @@ machine-functions:
         mapsto:          entry
         predecessors:    [  ]
         successors:      [  ]
-        src-hint:        'test.c:1'
-        instructions:    
-          - { index: '0', opcode: BX_RET, size: 4, branch-type: return }
     linkage:         ExternalLinkage
   - name:            '1'
     level:           machinecode
@@ -197,7 +195,10 @@ machine-functions:
         successors:      [  ]
         src-hint:        'test.c:15'
         instructions:    
-          - { index: '0', opcode: MOVi, size: 4 }
-          - { index: '1', opcode: BX_RET, size: 4, branch-type: return }
+          - { index: '0', opcode: STMDB_UPD, size: 4, memmode: store }
+          - { index: '1', opcode: MOVr, size: 4 }
+          - { index: '2', opcode: MOVi, size: 4 }
+          - { index: '3', opcode: BL_pred, callees: [ foo ], size: 4, branch-type: call }
+          - { index: '4', opcode: LDMIA_RET, size: 4, branch-type: return }
     linkage:         ExternalLinkage
 ...

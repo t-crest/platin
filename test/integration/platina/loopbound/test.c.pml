@@ -12,7 +12,15 @@ bitcode-functions:
         src-hint:        'test.c:1'
         instructions:    
           - index:           '0'
-            opcode:          ret
+            opcode:          alloca
+          - index:           '1'
+            opcode:          store
+            memmode:         store
+          - index:           '2'
+            opcode:          call
+            intrinsic:       true
+          - index:           '3'
+            opcode:          unreachable
     linkage:         ExternalLinkage
   - name:            main
     level:           bitcode
@@ -24,10 +32,15 @@ bitcode-functions:
         src-hint:        'test.c:2'
         instructions:    
           - index:           '0'
+            opcode:          alloca
+          - index:           '1'
+            opcode:          store
+            memmode:         store
+          - index:           '2'
             opcode:          call
             callees:         [ _exit ]
-          - index:           '1'
-            opcode:          ret
+          - index:           '3'
+            opcode:          unreachable
     linkage:         ExternalLinkage
   - name:            c_entry
     level:           bitcode
@@ -49,13 +62,16 @@ bitcode-functions:
             memmode:         store
           - index:           '4'
             opcode:          call
+            intrinsic:       true
           - index:           '5'
             opcode:          call
+            intrinsic:       true
           - index:           '6'
             opcode:          store
             memmode:         store
           - index:           '7'
             opcode:          call
+            intrinsic:       true
           - index:           '8'
             opcode:          store
             memmode:         store
@@ -82,6 +98,7 @@ bitcode-functions:
         instructions:    
           - index:           '0'
             opcode:          call
+            intrinsic:       true
           - index:           '1'
             opcode:          load
             memmode:         load
@@ -207,9 +224,11 @@ machine-functions:
         mapsto:          entry
         predecessors:    [  ]
         successors:      [  ]
-        src-hint:        'test.c:1'
         instructions:    
-          - { index: '0', opcode: BX_RET, size: 4, branch-type: return }
+          - { index: '0', opcode: tSUBspi, size: 2 }
+          - { index: '1', opcode: tMOVr, size: 2 }
+          - { index: '2', opcode: tSTRspi, size: 2, memmode: store }
+          - { index: '3', opcode: tSTRspi, size: 2, memmode: store }
     linkage:         ExternalLinkage
   - name:            '1'
     level:           machinecode
@@ -222,11 +241,13 @@ machine-functions:
         successors:      [  ]
         src-hint:        'test.c:2'
         instructions:    
-          - { index: '0', opcode: STMDB_UPD, size: 4, memmode: store }
-          - { index: '1', opcode: BL_pred, callees: [ _exit ], size: 4, 
-              branch-type: call }
-          - { index: '2', opcode: MOVi, size: 4 }
-          - { index: '3', opcode: LDMIA_RET, size: 4, branch-type: return }
+          - { index: '0', opcode: tPUSH, size: 2, memmode: store }
+          - { index: '1', opcode: tMOVr, size: 2 }
+          - { index: '2', opcode: tSUBspi, size: 2 }
+          - { index: '3', opcode: tMOVi8, size: 2 }
+          - { index: '4', opcode: tSTRspi, size: 2, memmode: store }
+          - { index: '5', opcode: tMOVi8, size: 2 }
+          - { index: '6', opcode: tBL, callees: [ _exit ], size: 4, branch-type: call }
     linkage:         ExternalLinkage
   - name:            '2'
     level:           machinecode
@@ -239,16 +260,16 @@ machine-functions:
         successors:      [ '1' ]
         src-hint:        'test.c:16'
         instructions:    
-          - { index: '0', opcode: SUBri, size: 4 }
-          - { index: '1', opcode: MOVr, size: 4 }
-          - { index: '2', opcode: STRi12, size: 4, memmode: store }
-          - { index: '3', opcode: MOVi, size: 4 }
-          - { index: '4', opcode: STRi12, size: 4, memmode: store }
-          - { index: '5', opcode: MOVi16, size: 4 }
-          - { index: '6', opcode: MOVTi16, size: 4 }
-          - { index: '7', opcode: STRi12, size: 4, memmode: store }
-          - { index: '8', opcode: STRi12, size: 4, memmode: store }
-          - { index: '9', opcode: B, size: 4, branch-type: unconditional }
+          - { index: '0', opcode: tSUBspi, size: 2 }
+          - { index: '1', opcode: tMOVr, size: 2 }
+          - { index: '2', opcode: tSTRspi, size: 2, memmode: store }
+          - { index: '3', opcode: tMOVi8, size: 2 }
+          - { index: '4', opcode: tSTRspi, size: 2, memmode: store }
+          - { index: '5', opcode: t2MOVi16, size: 4 }
+          - { index: '6', opcode: t2MOVTi16, size: 4 }
+          - { index: '7', opcode: tSTRspi, size: 2, memmode: store }
+          - { index: '8', opcode: tSTRspi, size: 2, memmode: store }
+          - { index: '9', opcode: tB, size: 2, branch-type: unconditional }
       - name:            '1'
         mapsto:          while.cond
         predecessors:    [ '0', '2' ]
@@ -256,10 +277,10 @@ machine-functions:
         loops:           [ '1' ]
         src-hint:        'test.c:18'
         instructions:    
-          - { index: '0', opcode: LDRi12, size: 4, memmode: load }
-          - { index: '1', opcode: CMPri, size: 4 }
-          - { index: '2', opcode: Bcc, size: 4, branch-type: conditional }
-          - { index: '3', opcode: B, size: 4, branch-type: unconditional }
+          - { index: '0', opcode: tLDRspi, size: 2, memmode: load }
+          - { index: '1', opcode: tCMPi8, size: 2 }
+          - { index: '2', opcode: tBcc, size: 2, branch-type: conditional }
+          - { index: '3', opcode: tB, size: 2, branch-type: unconditional }
       - name:            '2'
         mapsto:          while.body
         predecessors:    [ '1' ]
@@ -267,21 +288,21 @@ machine-functions:
         loops:           [ '1' ]
         src-hint:        'test.c:20'
         instructions:    
-          - { index: '0', opcode: LDRi12, size: 4, memmode: load }
-          - { index: '1', opcode: LDRi12, size: 4, memmode: load }
-          - { index: '2', opcode: STRi12, size: 4, memmode: store }
-          - { index: '3', opcode: LDRi12, size: 4, memmode: load }
-          - { index: '4', opcode: ADDri, size: 4 }
-          - { index: '5', opcode: STRi12, size: 4, memmode: store }
-          - { index: '6', opcode: B, size: 4, branch-type: unconditional }
+          - { index: '0', opcode: tLDRspi, size: 2, memmode: load }
+          - { index: '1', opcode: tLDRi, size: 2, memmode: load }
+          - { index: '2', opcode: tSTRspi, size: 2, memmode: store }
+          - { index: '3', opcode: tLDRspi, size: 2, memmode: load }
+          - { index: '4', opcode: tADDi8, size: 2 }
+          - { index: '5', opcode: tSTRspi, size: 2, memmode: store }
+          - { index: '6', opcode: tB, size: 2, branch-type: unconditional }
       - name:            '3'
         mapsto:          while.end
         predecessors:    [ '1' ]
         successors:      [  ]
         src-hint:        'test.c:23'
         instructions:    
-          - { index: '0', opcode: LDRi12, size: 4, memmode: load }
-          - { index: '1', opcode: ADDri, size: 4 }
-          - { index: '2', opcode: BX_RET, size: 4, branch-type: return }
+          - { index: '0', opcode: tLDRspi, size: 2, memmode: load }
+          - { index: '1', opcode: tADDspi, size: 2 }
+          - { index: '2', opcode: tBX_RET, size: 2, branch-type: return }
     linkage:         ExternalLinkage
 ...

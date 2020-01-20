@@ -1,5 +1,5 @@
-void _exit () {}
-int main () { _exit(); }
+void _exit (int e) {}
+int main () { _exit(42); }
 
 volatile int j = 0;
 

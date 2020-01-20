@@ -1,0 +1,68 @@
+CC      =  patmos-clang
+OBJDUMP ?= llvm-objdump
+
+.DEFAULT_GOAL ?= platin-wcet
+
+CFLAGS_PML = \
+		 -mserialize-auto \
+	   -mllvm -mserialize-all
+
+OBJS   = $(SRC:%.c=%.o)
+PMLS   = $(SRC:%.c=%.c.pml)
+
+PLATINFLAGS_PML = $(patsubst %,-i %,$(PMLS))
+
+PLATINFLAGS_WCET = \
+			-b $(BINARY) \
+			--analysis-entry $(ENTRY)
+
+ifeq ($(words $(SRC)), 1)
+	PLATINFLAGS_LINKING =
+else
+	PLATINFLAGS_LINKING = --link --qualify-machinecode
+endif
+
+PLATINFLAGS_WCA = \
+			$(PLATINFLAGS_WCET) \
+			--disable-ait --enable-wca --report \
+			--debug ilp \
+			--objdump $(OBJDUMP)
+
+PLATINFLAGS = \
+			$(PLATINFLAGS_PML) \
+			$(TEST_PLATINFLAGS)
+
+MKFILE_BASEDIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+TESTRUNNER     := $(shell readlink -f "$(MKFILE_BASEDIR)/../testrunner.rb")
+TESTCASE_DIR   := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+
+$(BINARY): $(OBJS)
+	$(LD) $(LDFLAGS) -o $@ $^
+%.o %.c.pml : %.c
+	$(CC) $(CFLAGS) $(CFLAGS_PML) -c -o $(patsubst %.c,%.o,$<) $<
+ifneq ($(origin PLATINARCH), undefined)
+	@# patch target triple if the testcase requested an overwrite
+	@sed -ri 's/^(triple:\s*)(\S+)$$/\1$(PLATINARCH)/g' $<.pml
+endif
+
+export PATH := $(shell pwd):$(PATH)
+
+.PHONY: clean platin-wcet platin-interact platin-visualize test
+
+compile: $(BINARY)
+
+platin-interact: $(BINARY) $(PMLS)
+	platin interact $(PLATINFLAGS) $(PLATINFLAGS_WCA) $(PLATINFLAGS_LINKING)
+
+platin-wcet: $(BINARY) $(PMLS)
+	platin wcet $(PLATINFLAGS) $(PLATINFLAGS_WCA) $(PLATINFLAGS_LINKING)
+
+platin-visualize: $(PMLS)
+	platin visualize --function $(ENTRY) $(PLATINFLAGS_PML) $(PLATINFLAGS_LINKING)
+
+platin-test:
+	bundle exec ruby $(TESTRUNNER) -vvv -d $(TESTCASE_DIR)
+
+clean::
+	rm -f $(BINARY) $(OBJS) $(SRC:%.c=%.c.bc) $(PMLS) $(PMLS:%.pml=%.pml.bin) $(ENTRY).*.png ./gurobi.log
+
