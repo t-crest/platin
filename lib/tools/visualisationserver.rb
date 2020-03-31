@@ -6,6 +6,14 @@ require 'erb'
 require 'pp'
 require 'English'
 
+
+class ERB
+  def warn(*args)
+    Kernel.warn(*args)
+  end
+end
+
+
 module VisualisationServer
 
 class Templates
@@ -49,7 +57,7 @@ class Templates
     </html>
     }
 
-    ERB.new(page, 1).result(context)
+    ERB.new(page, safe_level=0).result(context)
   end
 
   def view_source(file)
@@ -178,6 +186,8 @@ class Templates
 end
 
 class Server
+  define_method :assert, PML.instance_method(:assert)
+
   class SourceServlet < WEBrick::HTTPServlet::AbstractServlet
     def initialize(server, srcroot, directory_traversal: :loose)
       super server
