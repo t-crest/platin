@@ -452,12 +452,12 @@ private
   end
 
   def rchain
-    spec = paren(seq(lazy { expr },sym(','),sym('+'),sym(','),lazy { expr }),'{','}').map do |a,_,_,_,b|
+    spec = paren(seq(lazy { expr },sym(','),sym('+'),sym(','),lazy { expr }),'{','}').map do |(a,_,_,_,b)|
       [a,b]
     end
     flags = paren(flag,'<','>')
     loop = paren(loopname,'<','>')
-    seq(spec,flags * (0..5),loop).map do |s,f,l|
+    seq(spec,flags * (0..5),loop).map do |(s,f,l)|
       a,b = s
       SEAffineRec.new(a,b,l,f)
     end
