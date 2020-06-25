@@ -1,4 +1,5 @@
 .before_ubuntu: &before_ubuntu
+  - export DEBIAN_FRONTEND="noninteractive"
   - >
     apt-get update -qq &&      \
       apt-get install -y -qq   \
