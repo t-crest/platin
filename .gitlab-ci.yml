@@ -66,10 +66,15 @@ test:archlinux:rolling:
           cmake                  \
           git                    \
           graphviz               \
-          lpsolve                \
+          libpng                 \
+          librsvg                \
           llvm                   \
+          lpsolve                \
           ruby                   \
           ruby-bundler           \
           ruby-rake              \
           rubygems
+    # Some docker configurations break chroot and thus graphviz-pluginconfig
+    # in graphviz .postinstall script, therefore rerun it
+    - /usr/bin/dot -c
     - *before_gems
