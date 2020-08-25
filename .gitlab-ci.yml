@@ -13,17 +13,20 @@ variables:
         graphviz               \
         libgraphviz-dev        \
         liblpsolve55-dev       \
+        liblzma-dev            \
         libssh2-1              \
         libssh2-1-dev          \
         libssl-dev             \
         llvm                   \
         locales                \
         lp-solve               \
+        patch                  \
         pkg-config             \
         rake                   \
         ruby                   \
         ruby-bundler           \
-        ruby-dev
+        ruby-dev               \
+        zlib1g-dev
   - sed -i -e 's/# C.UTF-8 UTF-8/C.UTF-8 UTF-8/' /etc/locale.gen
   - dpkg-reconfigure --frontend=noninteractive locales
   - update-locale LANG=C.UTF-8
