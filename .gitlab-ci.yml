@@ -59,14 +59,13 @@ test:ubuntu:rolling:
 
 test:archlinux:rolling:
   extends: .tests
-  image: archlinux:latest
+  image: archlinux:base-devel
   before_script:
     - >
       pacman -Syy &&               \
         pacman -Syu --noconfirm && \
         pacman -S --noconfirm      \
           arm-none-eabi-binutils   \
-          base-devel               \
           cmake                    \
           git                      \
           graphviz                 \
