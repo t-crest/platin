@@ -1,7 +1,7 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
-.before_ubuntu: &before_ubuntu
+.before_debianlike: &before_debianlike
   - export DEBIAN_FRONTEND="noninteractive"
   - >
     apt-get update -qq &&      \
@@ -47,14 +47,21 @@ test:ubuntu:latest:
   extends: .tests
   image: ubuntu:latest
   before_script:
-    - *before_ubuntu
+    - *before_debianlike
     - *before_gems
 
 test:ubuntu:rolling:
   extends: .tests
   image: ubuntu:rolling
   before_script:
-    - *before_ubuntu
+    - *before_debianlike
+    - *before_gems
+
+test:debian:stable:
+  extends: .tests
+  image: debian:stable
+  before_script:
+    - *before_debianlike
     - *before_gems
 
 test:archlinux:rolling:
