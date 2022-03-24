@@ -482,7 +482,7 @@ class FlowFactTransformation
         stats_num_constraints_after += new_constraints.length
         stats_elim_steps += ve.elim_steps
       rescue Exception => ex
-        warn("Failed to transfrom flowfacts for entry #{entry}: #{ex}")
+        warn("Failed to transform flowfacts for entry #{entry}: #{ex}")
         raise ex
       end
     end
