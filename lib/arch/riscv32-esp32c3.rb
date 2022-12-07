@@ -2,8 +2,12 @@
 #
 # PLATIN tool set
 #
-# RISCV specific functionality
+# RISCV specific functionality for the ESP32C3
 #
+# Despite the manuals were consulted with care, all information in this document
+# came from measurements of the Cycle Counter events from the performance
+# counters of the ESP32C3, as the information provided in the manuals did not
+# yield usable timings.
 
 require 'English'
 
