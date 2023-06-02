@@ -41,7 +41,12 @@ variables:
 
 .tests:
   stage:  test
-  script: bundle exec ruby ./test/testrunner.rb -v -v
+  script: bundle exec ruby ./test/testrunner.rb -v -v 2>&1 | tee output.log
+  artifacts:
+    when: always
+    paths:
+      - output.log
+
 
 test:ubuntu:latest:
   extends: .tests
