@@ -17,6 +17,7 @@ variables:
         libssh2-1              \
         libssh2-1-dev          \
         libssl-dev             \
+        libyaml-dev            \
         llvm                   \
         locales                \
         lp-solve               \
