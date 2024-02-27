@@ -99,8 +99,12 @@ class ExtractSymbols
       last_addr, last_size = nil, nil
       current_label, current_function = nil, 0, nil
       pml_instr_ix, pml_instr, pml_instr_len = 0, nil, 0
+	  skip = 6
       io.each_line do |line|
-        if line =~ RE_FUNCTION_LABEL
+	    if skip != 0
+		  # skip initial non-disassembly lines
+		  skip = skip - 1
+        elsif line =~ RE_FUNCTION_LABEL
           current_label = $1
           current_function = pml.machine_functions.by_label(current_label, false)
         elsif line =~ RE_INS_LABEL
@@ -171,10 +175,10 @@ private
   end
   RE_HEX = /[0-9A-Fa-f]/
   RE_FUNCTION_LABEL = %r{ ^
-    ([^.: ][^: ]*):             # label
+    ( #{RE_HEX}+ )\s<(.*)>:          # label
   }x
   RE_INS_LABEL = %r{ ^ \s+
-    ( #{RE_HEX}+ ): \t       # addr
+    ( #{RE_HEX}+ ): \s       # addr
     ( (?: #{RE_HEX}{2}\s)+) \s+ # opcode
     \s+
     ( (?: \( [^)]+ \) )? )     # condition codes
