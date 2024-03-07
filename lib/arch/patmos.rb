@@ -228,7 +228,7 @@ class Architecture < PML::Architecture
   end
 
   def objdump_command
-    "patmos-llvm-objump"
+    "patmos-llvm-objdump"
   end
 
   def extract_symbols(extractor, pml, options)

@@ -245,7 +245,7 @@ class WCA
     # run cache analyses
     # FIXME: Cache analysis
     ca = CacheAnalysis.new(builder.refinement['machinecode'], @pml, @options)
-    #ca.analyze(entry['machinecode'], builder)
+    ca.analyze(machine_entry, builder)
 
     if @options.stats
       statistics("WCA",
