@@ -514,6 +514,7 @@ class WcetTool
     opts.flow_fact_selection
     opts.accept_corrected_rgs
     opts.calculates_wcet
+    opts.arch
     opts.model_file
     # rubocop:disable Metrics/LineLength
     opts.on("--batch", "run in batch processing mode, reading analysis targets and configuration from PML file") { opts.options.batch = true }
