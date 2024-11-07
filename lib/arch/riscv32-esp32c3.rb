@@ -250,6 +250,6 @@ end # module RISCV
 module PML
 
 # Register architecture
-Architecture.register("riscv32", RISCV32::Architecture)
+# Architecture.register("riscv32", RISCV32::Architecture)
 
 end # module PML
